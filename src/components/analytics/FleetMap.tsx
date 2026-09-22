@@ -1,5 +1,5 @@
 import { APIProvider, Map, Marker } from "@vis.gl/react-google-maps";
-import { DARK_MAP_STYLE } from "../../lib/darkMapStyle";
+import { MUTED_MAP_STYLE } from "../../lib/mapStyle";
 import { getVehicleIcon } from "../../lib/markerIcon";
 import type { Position, Vehicle } from "../../lib/types";
 
@@ -18,7 +18,7 @@ export function FleetMap({
 
   if (!apiKey) {
     return (
-      <div className="flex h-80 items-center justify-center text-sm text-zinc-500">
+      <div className="flex h-80 items-center justify-center text-sm text-slate-400">
         Falta configurar VITE_GOOGLE_MAPS_API_KEY.
       </div>
     );
@@ -33,7 +33,7 @@ export function FleetMap({
           defaultZoom={center ? 12 : 4}
           gestureHandling="greedy"
           disableDefaultUI
-          styles={DARK_MAP_STYLE}
+          styles={MUTED_MAP_STYLE}
         >
           {vehicles.map((vehicle) => {
             const position = positions[vehicle.id];

@@ -6,7 +6,7 @@ const PADDING = 8;
 
 export function SpeedTrendChart({ points }: { points: HourlySpeedPoint[] }) {
   if (points.length < 2) {
-    return <p className="text-sm text-zinc-500">Sin datos suficientes todavía hoy.</p>;
+    return <p className="text-sm text-slate-400">Sin datos suficientes todavía hoy.</p>;
   }
 
   const maxSpeed = Math.max(...points.map((p) => p.avgSpeed), 1);
@@ -25,19 +25,19 @@ export function SpeedTrendChart({ points }: { points: HourlySpeedPoint[] }) {
     <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} className="w-full" preserveAspectRatio="none">
       <defs>
         <linearGradient id="speedTrendFill" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#60a5fa" stopOpacity={0.25} />
-          <stop offset="100%" stopColor="#60a5fa" stopOpacity={0} />
+          <stop offset="0%" stopColor="#a78bfa" stopOpacity={0.25} />
+          <stop offset="100%" stopColor="#a78bfa" stopOpacity={0} />
         </linearGradient>
       </defs>
       <path d={area} fill="url(#speedTrendFill)" />
-      <path d={line} fill="none" stroke="#60a5fa" strokeWidth={2} strokeLinejoin="round" />
+      <path d={line} fill="none" stroke="#a78bfa" strokeWidth={2} strokeLinejoin="round" />
       {points.map((p, i) => (
         <text
           key={p.hour}
           x={coords[i]!.x}
           y={HEIGHT}
           textAnchor="middle"
-          className="fill-zinc-500 text-[9px]"
+          className="fill-slate-400 text-[9px]"
         >
           {i % 3 === 0 ? `${p.hour}h` : ""}
         </text>

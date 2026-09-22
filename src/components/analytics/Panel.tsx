@@ -10,8 +10,8 @@ export function Panel({
   children: ReactNode;
 }) {
   return (
-    <div className={`rounded-xl border border-zinc-800 bg-zinc-900/60 p-5 ${className}`}>
-      <p className="mb-4 text-xs font-medium tracking-wide text-zinc-400 uppercase">{title}</p>
+    <div className={`rounded-2xl border border-violet-100 bg-white p-5 shadow-sm shadow-violet-100 ${className}`}>
+      <p className="mb-4 text-xs font-medium tracking-wide text-slate-400 uppercase">{title}</p>
       {children}
     </div>
   );

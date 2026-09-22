@@ -1,10 +1,11 @@
-import { BarChart3, LogOut, Map, Smartphone, Truck } from "lucide-react";
+import { BarChart3, Gauge, LogOut, Map, Smartphone, Truck } from "lucide-react";
 import { NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { AlertsPanel } from "../AlertsPanel";
 
 const NAV_ITEMS = [
   { to: "/", label: "Mapa", icon: Map, end: true },
+  { to: "/cockpit", label: "Cockpit", icon: Gauge, end: false },
   { to: "/analiticas", label: "Analíticas", icon: BarChart3, end: false },
   { to: "/vehiculos", label: "Vehículos", icon: Truck, end: false },
   { to: "/dispositivos", label: "Dispositivos", icon: Smartphone, end: false },
@@ -14,10 +15,10 @@ export function AppLayout() {
   const { currentUser, logout } = useAuth();
 
   return (
-    <div className="flex h-screen bg-slate-50">
-      <aside className="flex w-60 shrink-0 flex-col border-r border-slate-200 bg-white">
-        <div className="flex items-center gap-2 border-b border-slate-200 px-5 py-4">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-sm font-bold text-white">
+    <div className="flex h-screen bg-violet-50">
+      <aside className="flex w-60 shrink-0 flex-col border-r border-violet-100 bg-white">
+        <div className="flex items-center gap-2 border-b border-violet-100 px-5 py-4">
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-violet-600 text-sm font-bold text-white shadow-sm shadow-violet-200">
             OS
           </div>
           <span className="text-lg font-semibold text-slate-900">OneSystem</span>
@@ -30,10 +31,10 @@ export function AppLayout() {
               to={to}
               end={end}
               className={({ isActive }) =>
-                `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition ${
+                `flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition ${
                   isActive
-                    ? "bg-blue-50 text-blue-700"
-                    : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                    ? "bg-violet-100 text-violet-700"
+                    : "text-slate-600 hover:bg-violet-50 hover:text-slate-900"
                 }`
               }
             >
@@ -45,7 +46,7 @@ export function AppLayout() {
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex items-center justify-between border-b border-slate-200 bg-white px-6 py-3">
+        <header className="flex items-center justify-between border-b border-violet-100 bg-white px-6 py-3">
           <div>
             <p className="text-sm font-semibold text-slate-900">{currentUser?.orgName ?? "..."}</p>
             <p className="text-xs text-slate-500">{currentUser?.email}</p>
@@ -55,7 +56,7 @@ export function AppLayout() {
             <AlertsPanel />
             <button
               onClick={logout}
-              className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+              className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm text-slate-500 transition hover:bg-violet-50 hover:text-slate-900"
             >
               <LogOut className="h-4 w-4" />
               Salir

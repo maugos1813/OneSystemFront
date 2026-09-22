@@ -17,7 +17,7 @@ function DeviceSelect({
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
     >
       <option value="">Sin dispositivo</option>
       {devices.map((d) => (
@@ -87,7 +87,7 @@ function VehicleRow({
           <button
             onClick={save}
             disabled={saving}
-            className="mr-2 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+            className="mr-2 rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-violet-700 disabled:opacity-50"
           >
             Guardar
           </button>
@@ -158,7 +158,7 @@ export function VehiclesPage() {
 
       <form
         onSubmit={handleCreate}
-        className="mb-6 flex items-end gap-3 rounded-xl border border-slate-200 bg-white p-4"
+        className="mb-6 flex items-end gap-3 rounded-xl border border-violet-100 bg-white p-4"
       >
         <div className="flex-1">
           <label className="mb-1 block text-sm font-medium text-slate-700">Nombre</label>
@@ -167,7 +167,7 @@ export function VehiclesPage() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Camión 1"
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
           />
         </div>
         <div className="w-32">
@@ -175,7 +175,7 @@ export function VehiclesPage() {
           <input
             value={plate}
             onChange={(e) => setPlate(e.target.value)}
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
           />
         </div>
         <div className="w-48">
@@ -185,7 +185,7 @@ export function VehiclesPage() {
         <button
           type="submit"
           disabled={submitting}
-          className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700 disabled:opacity-50"
+          className="flex items-center gap-1.5 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-violet-700 disabled:opacity-50"
         >
           <Plus className="h-4 w-4" />
           Crear
@@ -199,9 +199,9 @@ export function VehiclesPage() {
       )}
 
       {!loading && vehicles.length > 0 && (
-        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+        <div className="overflow-hidden rounded-xl border border-violet-100 bg-white">
           <table className="w-full text-left text-sm">
-            <thead className="border-b border-slate-200 bg-slate-50 text-xs text-slate-500 uppercase">
+            <thead className="border-b border-violet-100 bg-violet-50 text-xs text-slate-500 uppercase">
               <tr>
                 <th className="px-4 py-2 font-medium">Nombre</th>
                 <th className="px-4 py-2 font-medium">Patente</th>

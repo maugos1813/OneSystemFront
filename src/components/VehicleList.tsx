@@ -12,8 +12,8 @@ export function VehicleList({ vehicles, devices, selectedVehicleId, onSelect }: 
   const deviceById = new Map(devices.map((d) => [d.id, d]));
 
   return (
-    <aside className="flex h-full w-72 shrink-0 flex-col overflow-y-auto border-r border-slate-200 bg-white">
-      <div className="border-b border-slate-200 px-4 py-3">
+    <aside className="flex h-full w-72 shrink-0 flex-col overflow-y-auto border-r border-violet-100 bg-white">
+      <div className="border-b border-violet-100 px-4 py-3">
         <h2 className="text-sm font-semibold text-slate-900">Vehículos</h2>
       </div>
 
@@ -30,7 +30,7 @@ export function VehicleList({ vehicles, devices, selectedVehicleId, onSelect }: 
             key={vehicle.id}
             onClick={() => onSelect(vehicle.id)}
             className={`flex w-full flex-col gap-1 border-b border-slate-100 px-4 py-3 text-left transition ${
-              selected ? "bg-blue-50" : "hover:bg-slate-50"
+              selected ? "bg-violet-50" : "hover:bg-slate-50"
             }`}
           >
             <span className="font-medium text-slate-900">{vehicle.name}</span>

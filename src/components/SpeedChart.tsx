@@ -35,8 +35,8 @@ export function SpeedChart({ positions }: { positions: Position[] }) {
   return (
     <div>
       <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} className="w-full" preserveAspectRatio="none">
-        <path d={area} fill="#dbeafe" />
-        <path d={line} fill="none" stroke="#2563eb" strokeWidth={2} strokeLinejoin="round" />
+        <path d={area} fill="#ede9fe" />
+        <path d={line} fill="none" stroke="#7c3aed" strokeWidth={2} strokeLinejoin="round" />
       </svg>
       <div className="mt-1 flex justify-between text-xs text-slate-500">
         <span>Máx {maxSpeed} km/h</span>

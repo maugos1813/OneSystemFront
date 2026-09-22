@@ -23,14 +23,14 @@ export function AnalyticsPage() {
   }
 
   return (
-    <div className="h-full overflow-y-auto bg-zinc-950 p-8">
-      <h1 className="text-xl font-semibold text-zinc-100">Analíticas de flota</h1>
-      <p className="mb-6 text-sm text-zinc-500">Resumen general de tus vehículos, hoy.</p>
+    <div className="h-full overflow-y-auto bg-violet-50 p-8">
+      <h1 className="text-xl font-semibold text-slate-900">Analíticas de flota</h1>
+      <p className="mb-6 text-sm text-slate-500">Resumen general de tus vehículos, hoy.</p>
 
       <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
         <StatCard label="Vehículos" value={String(summary.total)} />
         <StatCard label="En línea" value={String(summary.online)} accent="text-emerald-400" />
-        <StatCard label="En movimiento" value={String(summary.moving)} accent="text-blue-400" />
+        <StatCard label="En movimiento" value={String(summary.moving)} accent="text-violet-400" />
         <StatCard label="Vel. promedio" value={`${summary.avgSpeedMoving} km/h`} />
         <StatCard label="Encendidos hoy" value={String(todayEvents.ignitionChanges)} />
         <StatCard label="Movimientos hoy" value={String(todayEvents.movementChanges)} />

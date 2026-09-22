@@ -48,7 +48,7 @@ export function MapView({
           {historyPath && historyPath.length > 1 && (
             <Polyline
               path={historyPath.map((p) => ({ lat: p.lat, lng: p.lng }))}
-              strokeColor="#2563eb"
+              strokeColor="#7c3aed"
               strokeOpacity={0.8}
               strokeWeight={4}
             />
@@ -79,7 +79,7 @@ export function MapView({
 
 function MapLegend() {
   return (
-    <div className="absolute bottom-4 left-4 flex flex-col gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600 shadow">
+    <div className="absolute bottom-4 left-4 flex flex-col gap-1.5 rounded-lg border border-violet-100 bg-white px-3 py-2 text-xs text-slate-600 shadow">
       <div className="flex items-center gap-2">
         <span className="h-2.5 w-2.5 rounded-full bg-red-600" />
         Apagado

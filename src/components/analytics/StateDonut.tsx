@@ -20,7 +20,7 @@ export function StateDonut({ entries }: { entries: StateDistributionEntry[] }) {
     <div className="flex items-center gap-6">
       <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`}>
         <g transform={`rotate(-90 ${SIZE / 2} ${SIZE / 2})`}>
-          <circle cx={SIZE / 2} cy={SIZE / 2} r={RADIUS} fill="none" stroke="#27272a" strokeWidth={STROKE} />
+          <circle cx={SIZE / 2} cy={SIZE / 2} r={RADIUS} fill="none" stroke="#ede9fe" strokeWidth={STROKE} />
           {total > 0 &&
             entries
               .filter((e) => e.count > 0)
@@ -48,7 +48,7 @@ export function StateDonut({ entries }: { entries: StateDistributionEntry[] }) {
           y={SIZE / 2}
           textAnchor="middle"
           dominantBaseline="central"
-          className="fill-zinc-100 text-2xl font-semibold"
+          className="fill-slate-900 text-2xl font-semibold"
         >
           {total}
         </text>
@@ -56,13 +56,13 @@ export function StateDonut({ entries }: { entries: StateDistributionEntry[] }) {
 
       <ul className="space-y-2">
         {entries.map((entry) => (
-          <li key={entry.state} className="flex items-center gap-2 text-sm text-zinc-300">
+          <li key={entry.state} className="flex items-center gap-2 text-sm text-slate-700">
             <span
               className="h-2.5 w-2.5 rounded-full"
               style={{ backgroundColor: STATE_META[entry.state].color }}
             />
             {STATE_META[entry.state].label}
-            <span className="text-zinc-500">{entry.count}</span>
+            <span className="text-slate-400">{entry.count}</span>
           </li>
         ))}
       </ul>
