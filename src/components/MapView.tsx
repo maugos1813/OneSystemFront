@@ -1,4 +1,5 @@
 import { APIProvider, Map, Marker, Polyline } from "@vis.gl/react-google-maps";
+import { getVehicleIcon } from "../lib/markerIcon";
 import type { Position, Vehicle } from "../lib/types";
 
 interface MapViewProps {
@@ -35,38 +36,62 @@ export function MapView({
   }
 
   return (
-    <APIProvider apiKey={apiKey}>
-      <Map
-        className="h-full flex-1"
-        defaultCenter={center ? { lat: center.lat, lng: center.lng } : DEFAULT_CENTER}
-        defaultZoom={center ? 14 : 4}
-        gestureHandling="greedy"
-        disableDefaultUI={false}
-      >
-        {historyPath && historyPath.length > 1 && (
-          <Polyline
-            path={historyPath.map((p) => ({ lat: p.lat, lng: p.lng }))}
-            strokeColor="#2563eb"
-            strokeOpacity={0.8}
-            strokeWeight={4}
-          />
-        )}
-
-        {vehicles.map((vehicle) => {
-          const position = positions[vehicle.id];
-          if (!position) return null;
-
-          return (
-            <Marker
-              key={vehicle.id}
-              position={{ lat: position.lat, lng: position.lng }}
-              title={vehicle.name}
-              onClick={() => onSelectVehicle(vehicle.id)}
-              opacity={vehicle.id === selectedVehicleId ? 1 : 0.75}
+    <div className="relative h-full flex-1">
+      <APIProvider apiKey={apiKey}>
+        <Map
+          className="h-full"
+          defaultCenter={center ? { lat: center.lat, lng: center.lng } : DEFAULT_CENTER}
+          defaultZoom={center ? 14 : 4}
+          gestureHandling="greedy"
+          disableDefaultUI={false}
+        >
+          {historyPath && historyPath.length > 1 && (
+            <Polyline
+              path={historyPath.map((p) => ({ lat: p.lat, lng: p.lng }))}
+              strokeColor="#2563eb"
+              strokeOpacity={0.8}
+              strokeWeight={4}
             />
-          );
-        })}
-      </Map>
-    </APIProvider>
+          )}
+
+          {vehicles.map((vehicle) => {
+            const position = positions[vehicle.id];
+            if (!position) return null;
+
+            return (
+              <Marker
+                key={vehicle.id}
+                position={{ lat: position.lat, lng: position.lng }}
+                title={vehicle.name}
+                onClick={() => onSelectVehicle(vehicle.id)}
+                opacity={vehicle.id === selectedVehicleId ? 1 : 0.75}
+                icon={getVehicleIcon(position)}
+              />
+            );
+          })}
+        </Map>
+      </APIProvider>
+
+      <MapLegend />
+    </div>
+  );
+}
+
+function MapLegend() {
+  return (
+    <div className="absolute bottom-4 left-4 flex flex-col gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600 shadow">
+      <div className="flex items-center gap-2">
+        <span className="h-2.5 w-2.5 rounded-full bg-red-600" />
+        Apagado
+      </div>
+      <div className="flex items-center gap-2">
+        <span className="h-2.5 w-2.5 rounded-full bg-orange-500" />
+        Encendido, detenido
+      </div>
+      <div className="flex items-center gap-2">
+        <span className="text-green-600">▲</span>
+        En movimiento
+      </div>
+    </div>
   );
 }
