@@ -38,6 +38,7 @@ export interface Position {
 
 // Well-known AVL IDs used in the detail panel — see OneSystemBack's avlIds.ts.
 export const AVL_ID = {
+  TOTAL_ODOMETER: "16",
   IGNITION: "239",
   EXTERNAL_VOLTAGE: "66",
   BATTERY_VOLTAGE: "67",

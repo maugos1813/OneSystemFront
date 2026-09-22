@@ -1,10 +1,11 @@
-import { LogOut, Map, Smartphone, Truck } from "lucide-react";
+import { BarChart3, LogOut, Map, Smartphone, Truck } from "lucide-react";
 import { NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { AlertsPanel } from "../AlertsPanel";
 
 const NAV_ITEMS = [
   { to: "/", label: "Mapa", icon: Map, end: true },
+  { to: "/analiticas", label: "Analíticas", icon: BarChart3, end: false },
   { to: "/vehiculos", label: "Vehículos", icon: Truck, end: false },
   { to: "/dispositivos", label: "Dispositivos", icon: Smartphone, end: false },
 ];
