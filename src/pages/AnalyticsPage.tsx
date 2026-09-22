@@ -23,20 +23,20 @@ export function AnalyticsPage() {
   }
 
   return (
-    <div className="h-full overflow-y-auto bg-violet-50 p-8">
+    <div className="h-full overflow-y-auto bg-slate-50 p-8">
       <h1 className="text-xl font-semibold text-slate-900">Analíticas de flota</h1>
       <p className="mb-6 text-sm text-slate-500">Resumen general de tus vehículos, hoy.</p>
 
-      <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
+      <div className="mb-4 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
         <StatCard label="Vehículos" value={String(summary.total)} />
-        <StatCard label="En línea" value={String(summary.online)} accent="text-emerald-400" />
-        <StatCard label="En movimiento" value={String(summary.moving)} accent="text-violet-400" />
-        <StatCard label="Vel. promedio" value={`${summary.avgSpeedMoving} km/h`} />
+        <StatCard label="En línea" value={String(summary.online)} variant="mint" />
+        <StatCard label="En movimiento" value={String(summary.moving)} variant="violet" />
+        <StatCard label="Vel. promedio" value={String(summary.avgSpeedMoving)} suffix="km/h" />
         <StatCard label="Encendidos hoy" value={String(todayEvents.ignitionChanges)} />
         <StatCard label="Movimientos hoy" value={String(todayEvents.movementChanges)} />
       </div>
 
-      <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
+      <div className="mb-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
         <Panel title="Velocidad promedio de la flota (hoy)" className="lg:col-span-2">
           <SpeedTrendChart points={speedTrend} />
         </Panel>

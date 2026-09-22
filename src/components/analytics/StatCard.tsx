@@ -1,16 +1,29 @@
+const VARIANT_CLASSES = {
+  plain: "bg-white text-slate-900",
+  mint: "bg-gradient-to-br from-emerald-100 via-white to-white text-slate-900",
+  violet: "bg-gradient-to-br from-violet-200 via-indigo-100 to-white text-slate-900",
+} as const;
+
 export function StatCard({
   label,
   value,
-  accent = "text-slate-900",
+  suffix,
+  variant = "plain",
 }: {
   label: string;
   value: string;
-  accent?: string;
+  suffix?: string;
+  variant?: keyof typeof VARIANT_CLASSES;
 }) {
   return (
-    <div className="rounded-2xl border border-violet-100 bg-white p-5 shadow-sm shadow-violet-100">
-      <p className="mb-1 text-xs font-medium tracking-wide text-slate-400 uppercase">{label}</p>
-      <p className={`text-3xl font-semibold ${accent}`}>{value}</p>
+    <div
+      className={`rounded-[28px] border border-white p-5 shadow-lg shadow-slate-200/50 ${VARIANT_CLASSES[variant]}`}
+    >
+      <p className="text-4xl font-semibold tracking-tight">
+        {value}
+        {suffix && <span className="ml-1 text-lg font-medium text-slate-400">{suffix}</span>}
+      </p>
+      <p className="mt-1 text-xs font-medium text-slate-500">{label}</p>
     </div>
   );
 }

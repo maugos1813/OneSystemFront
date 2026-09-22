@@ -1,8 +1,22 @@
 import type { HourlySpeedPoint } from "../../hooks/useFleetSpeedTrend";
 
 const WIDTH = 600;
-const HEIGHT = 140;
+const HEIGHT = 200;
 const PADDING = 8;
+
+function smoothPath(coords: Array<{ x: number; y: number }>): string {
+  let d = `M${coords[0]!.x},${coords[0]!.y}`;
+  for (let i = 0; i < coords.length - 1; i++) {
+    const curr = coords[i]!;
+    const next = coords[i + 1]!;
+    const mx = (curr.x + next.x) / 2;
+    const my = (curr.y + next.y) / 2;
+    d += ` Q${curr.x},${curr.y} ${mx},${my}`;
+  }
+  const last = coords[coords.length - 1]!;
+  d += ` L${last.x},${last.y}`;
+  return d;
+}
 
 export function SpeedTrendChart({ points }: { points: HourlySpeedPoint[] }) {
   if (points.length < 2) {
@@ -18,19 +32,23 @@ export function SpeedTrendChart({ points }: { points: HourlySpeedPoint[] }) {
     return { x, y };
   });
 
-  const line = `M${coords.map((c) => `${c.x.toFixed(1)},${c.y.toFixed(1)}`).join(" L")}`;
+  const line = smoothPath(coords);
   const area = `${line} L${coords[coords.length - 1]!.x},${HEIGHT - PADDING} L${coords[0]!.x},${HEIGHT - PADDING} Z`;
 
   return (
     <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} className="w-full" preserveAspectRatio="none">
       <defs>
         <linearGradient id="speedTrendFill" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#a78bfa" stopOpacity={0.25} />
-          <stop offset="100%" stopColor="#a78bfa" stopOpacity={0} />
+          <stop offset="0%" stopColor="#7c3aed" stopOpacity={0.28} />
+          <stop offset="100%" stopColor="#7c3aed" stopOpacity={0} />
+        </linearGradient>
+        <linearGradient id="speedTrendStroke" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor="#818cf8" />
+          <stop offset="100%" stopColor="#7c3aed" />
         </linearGradient>
       </defs>
       <path d={area} fill="url(#speedTrendFill)" />
-      <path d={line} fill="none" stroke="#a78bfa" strokeWidth={2} strokeLinejoin="round" />
+      <path d={line} fill="none" stroke="url(#speedTrendStroke)" strokeWidth={3} strokeLinejoin="round" strokeLinecap="round" />
       {points.map((p, i) => (
         <text
           key={p.hour}
