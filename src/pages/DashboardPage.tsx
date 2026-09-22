@@ -55,6 +55,7 @@ export function DashboardPage() {
             vehicle={selectedVehicle}
             position={positions[selectedVehicle.id] ?? null}
             events={events}
+            history={history}
             historyRangeHours={historyRangeHours}
             onHistoryRangeChange={setHistoryRangeHours}
             onClose={() => {

@@ -1,10 +1,12 @@
 import { X } from "lucide-react";
 import { AVL_ID, type DeviceEvent, type Position, type Vehicle } from "../lib/types";
+import { SpeedChart } from "./SpeedChart";
 
 interface VehicleDetailPanelProps {
   vehicle: Vehicle;
   position: Position | null;
   events: DeviceEvent[];
+  history: Position[];
   historyRangeHours: number | null;
   onHistoryRangeChange: (hours: number | null) => void;
   onClose: () => void;
@@ -46,6 +48,7 @@ export function VehicleDetailPanel({
   vehicle,
   position,
   events,
+  history,
   historyRangeHours,
   onHistoryRangeChange,
   onClose,
@@ -101,6 +104,15 @@ export function VehicleDetailPanel({
             </button>
           ))}
         </div>
+
+        {historyRangeHours !== null && (
+          <div className="mt-3">
+            <p className="mb-1 text-xs font-semibold tracking-wide text-slate-400 uppercase">
+              Velocidad
+            </p>
+            <SpeedChart positions={history} />
+          </div>
+        )}
       </div>
 
       <div className="mt-4">
