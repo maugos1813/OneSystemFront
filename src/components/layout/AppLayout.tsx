@@ -18,9 +18,7 @@ export function AppLayout() {
     <div className="flex h-screen bg-violet-50">
       <aside className="flex w-60 shrink-0 flex-col border-r border-violet-100 bg-white">
         <div className="flex items-center gap-2 border-b border-violet-100 px-5 py-4">
-          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-violet-600 text-sm font-bold text-white shadow-sm shadow-violet-200">
-            OS
-          </div>
+          <img src="/logo.jpg" alt="OneSystem" className="h-9 w-9 rounded-xl object-cover shadow-sm shadow-violet-200" />
           <span className="text-lg font-semibold text-slate-900">OneSystem</span>
         </div>
 
