@@ -1,6 +1,10 @@
-const SIZE = 330;
+// Logical coordinate space for the SVG viewBox — the actual rendered size is
+// responsive (set by the wrapping container), this just needs enough margin around
+// the ring so tick labels never get clipped regardless of how large it's displayed.
+const VIEWBOX = 380;
+const CENTER = VIEWBOX / 2;
 const STROKE = 20;
-const RADIUS = (SIZE - STROKE) / 2 - 26; // leave room outside the ring for tick marks/labels
+const RADIUS = 125;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 const SWEEP_DEG = 270; // 270° arc, 90° gap centered at the bottom
 const SWEEP_FRACTION = SWEEP_DEG / 360;
@@ -14,7 +18,6 @@ const STATE_LABEL: Record<string, string> = {
   moving: "EN MOVIMIENTO",
 };
 
-const CENTER = SIZE / 2;
 const ARC_OUTER = RADIUS + STROKE / 2;
 
 /** Position on the gauge for a given speed value, as a compass angle (0 = top, clockwise). */
@@ -48,10 +51,10 @@ function Tick({ speed }: { speed: number }) {
       />
       {isMajor && (
         <text
-          {...polarPoint(angle, outer + 14)}
+          {...polarPoint(angle, outer + 16)}
           textAnchor="middle"
           dominantBaseline="central"
-          className="fill-slate-400 text-[10px] font-medium"
+          className="fill-slate-400 text-[13px] font-medium"
         >
           {speed}
         </text>
@@ -69,8 +72,8 @@ export function SpeedGauge({ speed, state }: { speed: number; state: "off" | "id
   for (let v = 0; v <= MAX_SPEED; v += MINOR_STEP) ticks.push(v);
 
   return (
-    <div className="relative flex items-center justify-center" style={{ width: SIZE, height: SIZE }}>
-      <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`}>
+    <div className="relative mx-auto aspect-square w-full max-w-[300px]">
+      <svg viewBox={`0 0 ${VIEWBOX} ${VIEWBOX}`} className="h-full w-full overflow-visible">
         <g transform={`rotate(135 ${CENTER} ${CENTER})`}>
           <circle
             cx={CENTER}
@@ -104,8 +107,8 @@ export function SpeedGauge({ speed, state }: { speed: number; state: "off" | "id
         </defs>
       </svg>
 
-      <div className="absolute flex flex-col items-center">
-        <span className="text-6xl font-bold text-slate-900 tabular-nums">{Math.round(speed)}</span>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span className="text-5xl font-bold text-slate-900 tabular-nums">{Math.round(speed)}</span>
         <span className="text-sm font-medium text-slate-400">km/h</span>
         <span className="mt-2 text-xs font-semibold tracking-wider text-violet-600">
           {STATE_LABEL[state]}
