@@ -1,12 +1,16 @@
 import {
   BarChart3,
+  BellRing,
   Gauge,
+  HeartPulse,
   History,
   Key,
   LogOut,
   Map,
+  MapPin,
   PanelLeftClose,
   PanelLeftOpen,
+  Settings,
   ShieldCheck,
   Smartphone,
   Truck,
@@ -23,9 +27,13 @@ const NAV_ITEMS = [
   { to: "/analiticas", label: "Analíticas", icon: BarChart3, end: false },
   { to: "/historial", label: "Historial", icon: History, end: false },
   { to: "/conduccion", label: "Conducción", icon: ShieldCheck, end: false },
+  { to: "/alertas", label: "Alertas", icon: BellRing, end: false },
+  { to: "/geocercas", label: "Geocercas", icon: MapPin, end: false },
+  { to: "/salud-dispositivos", label: "Salud del dispositivo", icon: HeartPulse, end: false },
   { to: "/vehiculos", label: "Vehículos", icon: Truck, end: false },
   { to: "/dispositivos", label: "Dispositivos", icon: Smartphone, end: false },
   { to: "/api-keys", label: "API Keys", icon: Key, end: false },
+  { to: "/ajustes", label: "Ajustes", icon: Settings, end: false },
 ];
 
 /** Below `lg` there isn't room for the nav rail *and* the vehicle list *and* the map, so it starts collapsed there. */

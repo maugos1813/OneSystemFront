@@ -1,5 +1,17 @@
 import { clearToken, getToken } from "./auth";
-import type { ApiKey, CreatedApiKey, CurrentUser, Device, DeviceEvent, Position, Vehicle } from "./types";
+import type {
+  AlertPreferences,
+  ApiKey,
+  CreatedApiKey,
+  CurrentUser,
+  Device,
+  DeviceEvent,
+  Geofence,
+  OrgSettings,
+  Position,
+  Vehicle,
+  WorkingHours,
+} from "./types";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -135,4 +147,47 @@ export function createApiKey(name: string): Promise<CreatedApiKey> {
 
 export function revokeApiKey(id: string): Promise<void> {
   return request(`/api-keys/${id}`, { method: "DELETE" });
+}
+
+// --- Settings ---
+
+export function getSettings(): Promise<OrgSettings> {
+  return request("/settings");
+}
+
+export interface UpdateSettingsInput {
+  orgName?: string;
+  workingHours?: Partial<WorkingHours>;
+  alerts?: Partial<AlertPreferences>;
+}
+
+export function updateSettings(input: UpdateSettingsInput): Promise<OrgSettings> {
+  return request("/settings", { method: "PATCH", body: JSON.stringify(input) });
+}
+
+// --- Geofences ---
+
+export function listGeofences(): Promise<Geofence[]> {
+  return request("/geofences");
+}
+
+export interface GeofenceInput {
+  name: string;
+  lat: number;
+  lng: number;
+  radiusMeters: number;
+  alertOnEnter?: boolean;
+  alertOnExit?: boolean;
+}
+
+export function createGeofence(input: GeofenceInput): Promise<Geofence> {
+  return request("/geofences", { method: "POST", body: JSON.stringify(input) });
+}
+
+export function updateGeofence(id: string, input: Partial<GeofenceInput>): Promise<Geofence> {
+  return request(`/geofences/${id}`, { method: "PATCH", body: JSON.stringify(input) });
+}
+
+export function deleteGeofence(id: string): Promise<void> {
+  return request(`/geofences/${id}`, { method: "DELETE" });
 }

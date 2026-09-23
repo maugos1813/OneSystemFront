@@ -1,6 +1,6 @@
-import type { Position } from "./types";
+import type { Geofence, Position } from "./types";
 
-function haversineKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
+export function haversineKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
   const R = 6371;
   const dLat = ((b.lat - a.lat) * Math.PI) / 180;
   const dLng = ((b.lng - a.lng) * Math.PI) / 180;
@@ -55,4 +55,8 @@ export function formatDuration(ms: number): string {
   const h = Math.floor(totalMinutes / 60);
   const m = totalMinutes % 60;
   return h === 0 ? `${m}m` : `${h}h ${m}m`;
+}
+
+export function isInsideGeofence(position: { lat: number; lng: number }, geofence: Geofence): boolean {
+  return haversineKm(position, geofence) * 1000 <= geofence.radiusMeters;
 }

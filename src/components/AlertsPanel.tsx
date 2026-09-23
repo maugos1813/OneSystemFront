@@ -1,12 +1,11 @@
 import { Bell } from "lucide-react";
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useFleet } from "../context/FleetContext";
-import { computeAlerts } from "../lib/alerts";
 
 export function AlertsPanel() {
-  const { vehicles, devices, positions } = useFleet();
+  const { alerts } = useFleet();
   const [open, setOpen] = useState(false);
-  const alerts = computeAlerts(vehicles, devices, positions);
 
   return (
     <div className="relative">
@@ -27,13 +26,9 @@ export function AlertsPanel() {
         <>
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
           <div className="absolute right-0 z-20 mt-2 w-[85vw] max-w-80 rounded-2xl border border-violet-100 bg-white p-2 shadow-lg shadow-violet-100">
-            <p className="px-2 py-1 text-xs font-semibold tracking-wide text-slate-400 uppercase">
-              Alertas
-            </p>
-            {alerts.length === 0 && (
-              <p className="px-2 py-3 text-sm text-slate-500">Sin alertas activas.</p>
-            )}
-            {alerts.map((alert, i) => (
+            <p className="px-2 py-1 text-xs font-semibold tracking-wide text-slate-400 uppercase">Alertas</p>
+            {alerts.length === 0 && <p className="px-2 py-3 text-sm text-slate-500">Sin alertas activas.</p>}
+            {alerts.slice(0, 6).map((alert, i) => (
               <div
                 key={`${alert.vehicleId}-${alert.type}-${i}`}
                 className="rounded-lg px-2 py-2 text-sm text-slate-700 hover:bg-violet-50"
@@ -41,6 +36,15 @@ export function AlertsPanel() {
                 {alert.message}
               </div>
             ))}
+            {alerts.length > 0 && (
+              <Link
+                to="/alertas"
+                onClick={() => setOpen(false)}
+                className="mt-1 block rounded-lg px-2 py-2 text-center text-xs font-semibold text-violet-600 hover:bg-violet-50"
+              >
+                Ver todas ({alerts.length})
+              </Link>
+            )}
           </div>
         </>
       )}

@@ -74,3 +74,44 @@ export interface ApiKey {
 export interface CreatedApiKey extends ApiKey {
   key: string;
 }
+
+export interface WorkingHoursDay {
+  enabled: boolean;
+  start: string; // "HH:MM"
+  end: string; // "HH:MM"
+}
+
+export type WeekdayKey = "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday" | "sunday";
+
+export type WorkingHours = Record<WeekdayKey, WorkingHoursDay>;
+
+export interface AlertPreferences {
+  afterHoursEnabled: boolean;
+  deviceOfflineEnabled: boolean;
+  deviceOfflineHours: number;
+  lowBatteryEnabled: boolean;
+  lowBatteryVoltage: number;
+  speedingEnabled: boolean;
+  speedLimitKmh: number;
+  excessiveIdlingEnabled: boolean;
+  excessiveIdlingMinutes: number;
+  geofenceEnabled: boolean;
+}
+
+export interface OrgSettings {
+  orgName: string;
+  workingHours: WorkingHours;
+  alerts: AlertPreferences;
+}
+
+export interface Geofence {
+  id: string;
+  orgId: string;
+  name: string;
+  lat: number;
+  lng: number;
+  radiusMeters: number;
+  alertOnEnter: boolean;
+  alertOnExit: boolean;
+  createdAt: string;
+}
