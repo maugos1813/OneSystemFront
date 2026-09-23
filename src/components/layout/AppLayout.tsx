@@ -7,6 +7,7 @@ import {
   Map,
   PanelLeftClose,
   PanelLeftOpen,
+  ShieldCheck,
   Smartphone,
   Truck,
 } from "lucide-react";
@@ -21,6 +22,7 @@ const NAV_ITEMS = [
   { to: "/cockpit", label: "Cockpit", icon: Gauge, end: false },
   { to: "/analiticas", label: "Analíticas", icon: BarChart3, end: false },
   { to: "/historial", label: "Historial", icon: History, end: false },
+  { to: "/conduccion", label: "Conducción", icon: ShieldCheck, end: false },
   { to: "/vehiculos", label: "Vehículos", icon: Truck, end: false },
   { to: "/dispositivos", label: "Dispositivos", icon: Smartphone, end: false },
   { to: "/api-keys", label: "API Keys", icon: Key, end: false },
