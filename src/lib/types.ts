@@ -59,3 +59,18 @@ export interface DeviceEvent {
   type: string;
   payload: IoData;
 }
+
+export interface ApiKey {
+  id: string;
+  orgId: string;
+  name: string;
+  keyPrefix: string;
+  lastUsedAt: string | null;
+  revokedAt: string | null;
+  createdAt: string;
+}
+
+/** Only returned once, right after creation — the server never stores the plaintext key. */
+export interface CreatedApiKey extends ApiKey {
+  key: string;
+}

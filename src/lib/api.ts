@@ -1,5 +1,5 @@
 import { clearToken, getToken } from "./auth";
-import type { CurrentUser, Device, DeviceEvent, Position, Vehicle } from "./types";
+import type { ApiKey, CreatedApiKey, CurrentUser, Device, DeviceEvent, Position, Vehicle } from "./types";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -121,4 +121,18 @@ export function getPositionHistory(vehicleId: string, range: DateRangeQuery = {}
 
 export function getDeviceEvents(vehicleId: string, range: DateRangeQuery = {}): Promise<DeviceEvent[]> {
   return request(`/vehicles/${vehicleId}/events${dateRangeQueryString(range)}`);
+}
+
+// --- API keys ---
+
+export function listApiKeys(): Promise<ApiKey[]> {
+  return request("/api-keys");
+}
+
+export function createApiKey(name: string): Promise<CreatedApiKey> {
+  return request("/api-keys", { method: "POST", body: JSON.stringify({ name }) });
+}
+
+export function revokeApiKey(id: string): Promise<void> {
+  return request(`/api-keys/${id}`, { method: "DELETE" });
 }
