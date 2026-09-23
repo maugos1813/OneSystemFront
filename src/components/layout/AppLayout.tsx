@@ -1,4 +1,4 @@
-import { BarChart3, Gauge, Key, LogOut, Map, Menu, Smartphone, Truck, X } from "lucide-react";
+import { BarChart3, Gauge, Key, LogOut, Map, PanelLeftClose, PanelLeftOpen, Smartphone, Truck } from "lucide-react";
 import { useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
@@ -14,77 +14,88 @@ const NAV_ITEMS = [
   { to: "/api-keys", label: "API Keys", icon: Key, end: false },
 ];
 
+/** Below `lg` there isn't room for the nav rail *and* the vehicle list *and* the map, so it starts collapsed there. */
+function prefersOpenByDefault(): boolean {
+  return typeof window !== "undefined" && window.matchMedia("(min-width: 1024px)").matches;
+}
+
 export function AppLayout() {
   const { currentUser, logout } = useAuth();
-  const [navOpen, setNavOpen] = useState(false);
+  const [navOpen, setNavOpen] = useState(prefersOpenByDefault);
 
   return (
     <div className="flex h-screen bg-[#f5f6fb]">
       {navOpen && (
         <div
-          className="fixed inset-0 z-30 bg-slate-900/30 md:hidden"
+          className="fixed inset-0 z-30 bg-slate-900/30 lg:hidden"
           onClick={() => setNavOpen(false)}
         />
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex w-64 shrink-0 flex-col border-r border-violet-100 bg-white transition-transform duration-200 md:static md:z-auto md:translate-x-0 ${
-          navOpen ? "translate-x-0" : "-translate-x-full"
+        className={`fixed inset-y-0 left-0 z-40 max-w-[85vw] overflow-hidden border-r border-violet-100 bg-white transition-all duration-200 lg:static lg:z-auto ${
+          navOpen
+            ? "w-64 translate-x-0"
+            : "w-64 -translate-x-full lg:w-0 lg:translate-x-0 lg:border-transparent"
         }`}
       >
-        <div className="flex items-center justify-between gap-2 border-b border-violet-100 px-5 py-4">
-          <div className="flex items-center gap-2">
-            <img
-              src="/logo.jpg"
-              alt="OneSystem"
-              className="h-9 w-9 rounded-2xl object-cover shadow-md shadow-blue-200/60"
-            />
-            <span className="text-lg font-semibold text-slate-900">
-              One<span className="brand-text-gradient">System</span>
-            </span>
-          </div>
-          <button
-            onClick={() => setNavOpen(false)}
-            className="rounded-lg p-1 text-slate-400 hover:bg-violet-50 md:hidden"
-            aria-label="Cerrar menú"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-
-        <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
-          {NAV_ITEMS.map(({ to, label, icon: Icon, end }) => (
-            <NavLink
-              key={to}
-              to={to}
-              end={end}
+        <div className="flex h-full w-64 flex-col">
+          <div className="flex items-center justify-between gap-2 border-b border-violet-100 px-5 py-4">
+            <div className="flex min-w-0 items-center gap-2">
+              <img
+                src="/logo.jpg"
+                alt="OneSystem"
+                className="h-9 w-9 shrink-0 rounded-2xl object-cover shadow-md shadow-blue-200/60"
+              />
+              <span className="truncate text-lg font-semibold text-slate-900">
+                One<span className="brand-text-gradient">System</span>
+              </span>
+            </div>
+            <button
               onClick={() => setNavOpen(false)}
-              onMouseMove={trackGlow}
-              className={({ isActive }) =>
-                `glow flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition ${
-                  isActive
-                    ? "brand-button"
-                    : "text-slate-600 hover:bg-violet-50 hover:text-slate-900"
-                }`
-              }
+              className="shrink-0 rounded-lg p-1.5 text-slate-400 hover:bg-violet-50 hover:text-slate-700"
+              aria-label="Ocultar menú"
             >
-              <Icon className="h-4 w-4" />
-              {label}
-            </NavLink>
-          ))}
-        </nav>
+              <PanelLeftClose className="h-5 w-5" />
+            </button>
+          </div>
+
+          <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
+            {NAV_ITEMS.map(({ to, label, icon: Icon, end }) => (
+              <NavLink
+                key={to}
+                to={to}
+                end={end}
+                onClick={() => setNavOpen(prefersOpenByDefault())}
+                onMouseMove={trackGlow}
+                className={({ isActive }) =>
+                  `glow flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition ${
+                    isActive
+                      ? "brand-button"
+                      : "text-slate-600 hover:bg-violet-50 hover:text-slate-900"
+                  }`
+                }
+              >
+                <Icon className="h-4 w-4" />
+                {label}
+              </NavLink>
+            ))}
+          </nav>
+        </div>
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex items-center justify-between gap-3 border-b border-violet-100 bg-white px-4 py-3 sm:px-6">
           <div className="flex min-w-0 items-center gap-3">
-            <button
-              onClick={() => setNavOpen(true)}
-              className="rounded-lg p-1.5 text-slate-500 hover:bg-violet-50 md:hidden"
-              aria-label="Abrir menú"
-            >
-              <Menu className="h-5 w-5" />
-            </button>
+            {!navOpen && (
+              <button
+                onClick={() => setNavOpen(true)}
+                className="shrink-0 rounded-lg p-1.5 text-slate-500 hover:bg-violet-50 hover:text-slate-900"
+                aria-label="Mostrar menú"
+              >
+                <PanelLeftOpen className="h-5 w-5" />
+              </button>
+            )}
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold text-slate-900">
                 {currentUser?.orgName ?? "..."}

@@ -21,101 +21,108 @@ body {
   background: #f5f6fb;
 }
 
-/* Brand gradient primitives, sampled from the ONE SYSTEM mark (cyan -> blue -> violet). */
-.brand-gradient {
-  background: var(--brand-gradient);
-}
+/*
+ * Custom component classes live in Tailwind's `components` layer, which always loses to the
+ * `utilities` layer regardless of source order — so a Tailwind utility (e.g. `absolute`) on the
+ * same element can never be silently overridden by one of these (e.g. `.glow`'s `position: relative`).
+ */
+@layer components {
+  /* Brand gradient primitives, sampled from the ONE SYSTEM mark (cyan -> blue -> violet). */
+  .brand-gradient {
+    background: var(--brand-gradient);
+  }
 
-.brand-gradient-soft {
-  background: var(--brand-gradient-soft);
-}
+  .brand-gradient-soft {
+    background: var(--brand-gradient-soft);
+  }
 
-.brand-text-gradient {
-  background: var(--brand-gradient);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
+  .brand-text-gradient {
+    background: var(--brand-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
 
-.brand-border-glow {
-  border: 1px solid transparent;
-  background:
-    linear-gradient(white, white) padding-box,
-    var(--brand-gradient) border-box;
-}
+  .brand-border-glow {
+    border: 1px solid transparent;
+    background:
+      linear-gradient(white, white) padding-box,
+      var(--brand-gradient) border-box;
+  }
 
-.brand-button {
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
-  background: var(--brand-gradient);
-  color: white;
-  box-shadow: 0 6px 20px -6px rgba(59, 130, 246, 0.55);
-  transition:
-    box-shadow 0.25s ease,
-    transform 0.15s ease,
-    filter 0.25s ease;
-}
-.brand-button:hover {
-  filter: brightness(1.08);
-  box-shadow: 0 10px 30px -6px rgba(124, 58, 237, 0.6);
-}
-.brand-button:active {
-  transform: scale(0.98);
-}
-.brand-button:disabled {
-  filter: grayscale(0.3) brightness(0.95);
-  box-shadow: none;
-}
+  .brand-button {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    background: var(--brand-gradient);
+    color: white;
+    box-shadow: 0 6px 20px -6px rgba(59, 130, 246, 0.55);
+    transition:
+      box-shadow 0.25s ease,
+      transform 0.15s ease,
+      filter 0.25s ease;
+  }
+  .brand-button:hover {
+    filter: brightness(1.08);
+    box-shadow: 0 10px 30px -6px rgba(124, 58, 237, 0.6);
+  }
+  .brand-button:active {
+    transform: scale(0.98);
+  }
+  .brand-button:disabled {
+    filter: grayscale(0.3) brightness(0.95);
+    box-shadow: none;
+  }
 
-/* Spotlight that tracks the cursor — set --glow-x/--glow-y from onMouseMove (see src/lib/glow.ts). */
-.glow {
-  position: relative;
-  overflow: hidden;
-  isolation: isolate;
-}
-.glow::after {
-  content: "";
-  position: absolute;
-  left: var(--glow-x, 50%);
-  top: var(--glow-y, 50%);
-  width: 280px;
-  height: 280px;
-  transform: translate(-50%, -50%);
-  background: radial-gradient(circle, rgba(56, 189, 248, 0.22), rgba(124, 58, 237, 0.12) 45%, transparent 70%);
-  opacity: 0;
-  transition: opacity 0.35s ease;
-  pointer-events: none;
-  z-index: 0;
-}
-.glow:hover::after {
-  opacity: 1;
-}
-.glow > * {
-  position: relative;
-  z-index: 1;
-}
+  /* Spotlight that tracks the cursor — set --glow-x/--glow-y from onMouseMove (see src/lib/glow.ts). */
+  .glow {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+  }
+  .glow::after {
+    content: "";
+    position: absolute;
+    left: var(--glow-x, 50%);
+    top: var(--glow-y, 50%);
+    width: 280px;
+    height: 280px;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(circle, rgba(56, 189, 248, 0.22), rgba(124, 58, 237, 0.12) 45%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.35s ease;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .glow:hover::after {
+    opacity: 1;
+  }
+  .glow > * {
+    position: relative;
+    z-index: 1;
+  }
 
-.field-input {
-  transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease;
-}
-.field-input:focus {
-  outline: none;
-  border-color: var(--brand-blue);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
-}
+  .field-input {
+    transition:
+      border-color 0.2s ease,
+      box-shadow 0.2s ease;
+  }
+  .field-input:focus {
+    outline: none;
+    border-color: var(--brand-blue);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+  }
 
-/* Soft lift + colored halo on hover, for floating glass cards. */
-.float-card {
-  transition:
-    transform 0.25s ease,
-    box-shadow 0.25s ease;
-}
-.float-card:hover {
-  transform: translateY(-3px);
-  box-shadow:
-    0 4px 12px rgba(15, 23, 42, 0.06),
-    0 24px 56px -16px rgba(99, 102, 241, 0.35);
+  /* Soft lift + colored halo on hover, for floating glass cards. */
+  .float-card {
+    transition:
+      transform 0.25s ease,
+      box-shadow 0.25s ease;
+  }
+  .float-card:hover {
+    transform: translateY(-3px);
+    box-shadow:
+      0 4px 12px rgba(15, 23, 42, 0.06),
+      0 24px 56px -16px rgba(99, 102, 241, 0.35);
+  }
 }
