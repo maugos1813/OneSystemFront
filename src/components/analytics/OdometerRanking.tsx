@@ -17,7 +17,7 @@ export function OdometerRanking({ entries }: { entries: OdometerEntry[] }) {
           </div>
           <div className="h-2 rounded-full bg-violet-100">
             <div
-              className="h-2 rounded-full bg-violet-600"
+              className="brand-gradient h-2 rounded-full"
               style={{ width: `${(entry.km / max) * 100}%` }}
             />
           </div>

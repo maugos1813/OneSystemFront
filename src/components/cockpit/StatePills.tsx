@@ -14,8 +14,8 @@ export function StatePills({ current }: { current: VehicleState }) {
         {OPTIONS.map((opt) => (
           <div
             key={opt.state}
-            className={`rounded-xl px-4 py-1.5 text-center text-xs font-medium ${
-              opt.state === current ? "bg-violet-600 text-white shadow-sm" : "text-slate-400"
+            className={`rounded-xl px-4 py-1.5 text-center text-xs font-medium transition ${
+              opt.state === current ? "brand-button" : "text-slate-400"
             }`}
           >
             {opt.label}

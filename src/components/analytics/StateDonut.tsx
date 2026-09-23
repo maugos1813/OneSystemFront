@@ -23,7 +23,8 @@ export function StateDonut({ entries }: { entries: StateDistributionEntry[] }) {
       <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`} className="shrink-0">
         <defs>
           <linearGradient id="donutMovingGradient" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#818cf8" />
+            <stop offset="0%" stopColor="#38bdf8" />
+            <stop offset="50%" stopColor="#3b82f6" />
             <stop offset="100%" stopColor="#7c3aed" />
           </linearGradient>
         </defs>
@@ -68,7 +69,9 @@ export function StateDonut({ entries }: { entries: StateDistributionEntry[] }) {
               className="h-2.5 w-2.5 rounded-full"
               style={{
                 background:
-                  entry.state === "moving" ? "linear-gradient(135deg,#818cf8,#7c3aed)" : STATE_META[entry.state].color,
+                  entry.state === "moving"
+                    ? "linear-gradient(135deg,#38bdf8,#3b82f6,#7c3aed)"
+                    : STATE_META[entry.state].color,
               }}
             />
             {STATE_META[entry.state].label}

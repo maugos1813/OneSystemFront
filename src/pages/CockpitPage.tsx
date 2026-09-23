@@ -9,6 +9,7 @@ import { StatusList } from "../components/cockpit/StatusList";
 import { useFleet } from "../context/FleetContext";
 import { useTodayTripStats } from "../hooks/useTodayTripStats";
 import { classifyVehicleState } from "../lib/fleetStats";
+import { trackGlow } from "../lib/glow";
 import { AVL_ID } from "../lib/types";
 
 export function CockpitPage() {
@@ -49,7 +50,7 @@ export function CockpitPage() {
                 onClick={() => setSelectedId(v.id)}
                 className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
                   v.id === selectedId
-                    ? "bg-violet-600 text-white"
+                    ? "brand-button"
                     : "bg-white text-slate-500 hover:bg-violet-100"
                 }`}
               >
@@ -71,8 +72,8 @@ export function CockpitPage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 rounded-3xl border border-violet-100 bg-white/60 p-4 shadow-sm shadow-violet-100 sm:p-6 lg:grid-cols-[260px_1fr_260px]">
-          <div className="rounded-2xl bg-violet-50/60 p-3">
+        <div className="brand-border-glow grid grid-cols-1 gap-4 rounded-3xl p-4 shadow-lg shadow-blue-100/40 sm:p-6 lg:grid-cols-[260px_1fr_260px]">
+          <div onMouseMove={trackGlow} className="glow float-card rounded-2xl bg-violet-50/60 p-3">
             <p className="mb-2 px-1 text-xs font-semibold tracking-wide text-slate-400 uppercase">
               Ubicación
             </p>
@@ -83,7 +84,7 @@ export function CockpitPage() {
             <SpeedGauge speed={position?.speed ?? 0} state={state} />
           </div>
 
-          <div className="rounded-2xl bg-violet-50/60 p-4">
+          <div onMouseMove={trackGlow} className="glow float-card rounded-2xl bg-violet-50/60 p-4">
             <p className="mb-4 px-1 text-xs font-semibold tracking-wide text-slate-400 uppercase">
               Estado del vehículo
             </p>
@@ -92,19 +93,28 @@ export function CockpitPage() {
         </div>
 
         <div className="mt-4 grid grid-cols-2 gap-4 lg:grid-cols-12">
-          <div className="col-span-1 flex items-center justify-center rounded-3xl border border-violet-100 bg-white p-4 shadow-sm shadow-violet-100 lg:col-span-2">
+          <div
+            onMouseMove={trackGlow}
+            className="glow float-card col-span-1 flex items-center justify-center rounded-3xl border border-white bg-white p-4 shadow-lg shadow-slate-200/50 lg:col-span-2"
+          >
             <GForceGauge eventCount={harshEvents.length} />
           </div>
           <div className="col-span-1 lg:col-span-2">
             <MileageCard label="Total recorrido" km={totalKm} />
           </div>
-          <div className="col-span-2 rounded-3xl border border-violet-100 bg-white p-4 shadow-sm shadow-violet-100 lg:col-span-4">
+          <div
+            onMouseMove={trackGlow}
+            className="glow float-card col-span-2 rounded-3xl border border-white bg-white p-4 shadow-lg shadow-slate-200/50 lg:col-span-4"
+          >
             <DrivingScoreCard score={score} events={harshEvents} />
           </div>
           <div className="col-span-1 lg:col-span-2">
             <MileageCard label="Recorrido hoy" km={tripKm} />
           </div>
-          <div className="col-span-1 flex items-center justify-center rounded-3xl border border-violet-100 bg-white p-4 shadow-sm shadow-violet-100 lg:col-span-2">
+          <div
+            onMouseMove={trackGlow}
+            className="glow float-card col-span-1 flex items-center justify-center rounded-3xl border border-white bg-white p-4 shadow-lg shadow-slate-200/50 lg:col-span-2"
+          >
             <StatePills current={state} />
           </div>
         </div>

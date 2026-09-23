@@ -54,7 +54,7 @@ export function VehicleDetailPanel({
   onClose,
 }: VehicleDetailPanelProps) {
   return (
-    <div className="fixed inset-x-0 bottom-0 z-10 max-h-[75vh] overflow-y-auto rounded-t-2xl border border-violet-100 bg-white p-4 shadow-lg sm:absolute sm:inset-x-auto sm:top-4 sm:right-4 sm:bottom-auto sm:max-h-[calc(100%-2rem)] sm:w-80 sm:rounded-xl">
+    <div className="fixed inset-x-0 bottom-0 z-10 max-h-[75vh] overflow-y-auto rounded-t-3xl border border-white bg-white p-4 shadow-xl shadow-slate-300/30 sm:absolute sm:inset-x-auto sm:top-4 sm:right-4 sm:bottom-auto sm:max-h-[calc(100%-2rem)] sm:w-80 sm:rounded-3xl">
       <div className="mb-3 flex items-start justify-between">
         <div>
           <h2 className="font-semibold text-slate-900">{vehicle.name}</h2>
@@ -96,7 +96,7 @@ export function VehicleDetailPanel({
               onClick={() => onHistoryRangeChange(range.hours)}
               className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${
                 historyRangeHours === range.hours
-                  ? "bg-violet-600 text-white"
+                  ? "brand-button"
                   : "bg-slate-100 text-slate-600 hover:bg-slate-200"
               }`}
             >

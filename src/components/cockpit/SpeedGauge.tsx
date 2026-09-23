@@ -101,7 +101,8 @@ export function SpeedGauge({ speed, state }: { speed: number; state: "off" | "id
         ))}
         <defs>
           <linearGradient id="speedGaugeGradient" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#a78bfa" />
+            <stop offset="0%" stopColor="#38bdf8" />
+            <stop offset="50%" stopColor="#3b82f6" />
             <stop offset="100%" stopColor="#7c3aed" />
           </linearGradient>
         </defs>
@@ -110,7 +111,7 @@ export function SpeedGauge({ speed, state }: { speed: number; state: "off" | "id
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <span className="text-5xl font-bold text-slate-900 tabular-nums">{Math.round(speed)}</span>
         <span className="text-sm font-medium text-slate-400">km/h</span>
-        <span className="mt-2 text-xs font-semibold tracking-wider text-violet-600">
+        <span className="brand-text-gradient mt-2 text-xs font-semibold tracking-wider">
           {STATE_LABEL[state]}
         </span>
       </div>

@@ -2,6 +2,7 @@ import { BarChart3, Gauge, Key, LogOut, Map, Menu, Smartphone, Truck, X } from "
 import { useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { trackGlow } from "../../lib/glow";
 import { AlertsPanel } from "../AlertsPanel";
 
 const NAV_ITEMS = [
@@ -18,7 +19,7 @@ export function AppLayout() {
   const [navOpen, setNavOpen] = useState(false);
 
   return (
-    <div className="flex h-screen bg-violet-50">
+    <div className="flex h-screen bg-[#f5f6fb]">
       {navOpen && (
         <div
           className="fixed inset-0 z-30 bg-slate-900/30 md:hidden"
@@ -36,9 +37,11 @@ export function AppLayout() {
             <img
               src="/logo.jpg"
               alt="OneSystem"
-              className="h-9 w-9 rounded-xl object-cover shadow-sm shadow-violet-200"
+              className="h-9 w-9 rounded-2xl object-cover shadow-md shadow-blue-200/60"
             />
-            <span className="text-lg font-semibold text-slate-900">OneSystem</span>
+            <span className="text-lg font-semibold text-slate-900">
+              One<span className="brand-text-gradient">System</span>
+            </span>
           </div>
           <button
             onClick={() => setNavOpen(false)}
@@ -56,10 +59,11 @@ export function AppLayout() {
               to={to}
               end={end}
               onClick={() => setNavOpen(false)}
+              onMouseMove={trackGlow}
               className={({ isActive }) =>
-                `flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition ${
+                `glow flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition ${
                   isActive
-                    ? "bg-violet-100 text-violet-700"
+                    ? "brand-button"
                     : "text-slate-600 hover:bg-violet-50 hover:text-slate-900"
                 }`
               }

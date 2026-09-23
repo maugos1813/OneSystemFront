@@ -6,6 +6,7 @@ import { VehicleList } from "../components/VehicleList";
 import { useFleet } from "../context/FleetContext";
 import { useDeviceEvents } from "../hooks/useDeviceEvents";
 import { usePositionHistory } from "../hooks/usePositionHistory";
+import { trackGlow } from "../lib/glow";
 
 export function DashboardPage() {
   const { vehicles, devices, positions, loading, error } = useFleet();
@@ -57,7 +58,8 @@ export function DashboardPage() {
 
         <button
           onClick={() => setListOpen(true)}
-          className="absolute top-4 left-4 flex items-center gap-1.5 rounded-full bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-md md:hidden"
+          onMouseMove={trackGlow}
+          className="glow float-card absolute top-4 left-4 flex items-center gap-1.5 rounded-full bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-lg shadow-slate-300/40 md:hidden"
         >
           <List className="h-4 w-4" />
           Vehículos ({vehicles.length})

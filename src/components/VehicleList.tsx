@@ -1,4 +1,5 @@
 import { X } from "lucide-react";
+import { trackGlow } from "../lib/glow";
 import type { Device, Vehicle } from "../lib/types";
 import { StatusBadge } from "./StatusBadge";
 
@@ -57,8 +58,9 @@ export function VehicleList({
                 onSelect(vehicle.id);
                 onClose();
               }}
-              className={`flex w-full flex-col gap-1 border-b border-slate-100 px-4 py-3 text-left transition ${
-                selected ? "bg-violet-50" : "hover:bg-slate-50"
+              onMouseMove={trackGlow}
+              className={`glow flex w-full flex-col gap-1 border-b border-slate-100 px-4 py-3 text-left transition ${
+                selected ? "brand-gradient-soft" : "hover:bg-slate-50"
               }`}
             >
               <span className="font-medium text-slate-900">{vehicle.name}</span>

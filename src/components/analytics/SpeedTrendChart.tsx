@@ -39,11 +39,12 @@ export function SpeedTrendChart({ points }: { points: HourlySpeedPoint[] }) {
     <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} className="w-full" preserveAspectRatio="none">
       <defs>
         <linearGradient id="speedTrendFill" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#7c3aed" stopOpacity={0.28} />
+          <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.28} />
           <stop offset="100%" stopColor="#7c3aed" stopOpacity={0} />
         </linearGradient>
         <linearGradient id="speedTrendStroke" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stopColor="#818cf8" />
+          <stop offset="0%" stopColor="#38bdf8" />
+          <stop offset="50%" stopColor="#3b82f6" />
           <stop offset="100%" stopColor="#7c3aed" />
         </linearGradient>
       </defs>

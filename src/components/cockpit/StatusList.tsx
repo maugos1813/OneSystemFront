@@ -15,7 +15,7 @@ function Row({
 }) {
   return (
     <div className="flex items-center gap-3">
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-600">
+      <div className="brand-gradient-soft flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-blue-600">
         {icon}
       </div>
       <div className="min-w-0 flex-1">
@@ -25,7 +25,7 @@ function Row({
         </div>
         <div className="h-1.5 rounded-full bg-violet-100">
           <div
-            className="h-1.5 rounded-full bg-violet-500"
+            className="brand-gradient h-1.5 rounded-full"
             style={{ width: `${Math.max(0, Math.min(100, pct))}%` }}
           />
         </div>

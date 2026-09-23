@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { AuthLayout } from "../components/layout/AuthLayout";
 import { useAuth } from "../context/AuthContext";
+import { trackGlow } from "../lib/glow";
 
 export function RegisterPage() {
   const { isAuthenticated, register, loading, error } = useAuth();
@@ -19,7 +20,11 @@ export function RegisterPage() {
 
   return (
     <AuthLayout>
-      <form onSubmit={handleSubmit} className="w-full max-w-sm rounded-xl bg-white p-6 shadow-sm sm:p-8">
+      <form
+        onSubmit={handleSubmit}
+        onMouseMove={trackGlow}
+        className="glow w-full max-w-sm rounded-3xl bg-white p-6 shadow-xl shadow-slate-200/60 sm:p-8"
+      >
         <h1 className="mb-1 text-xl font-semibold text-slate-900">Creá tu cuenta</h1>
         <p className="mb-6 text-sm text-slate-500">Empezá a monitorear tu flota en minutos</p>
 
@@ -33,7 +38,7 @@ export function RegisterPage() {
           minLength={2}
           value={orgName}
           onChange={(e) => setOrgName(e.target.value)}
-          className="mb-4 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+          className="field-input mb-4 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
         />
 
         <label className="mb-1 block text-sm font-medium text-slate-700" htmlFor="email">
@@ -45,7 +50,7 @@ export function RegisterPage() {
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="mb-4 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+          className="field-input mb-4 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
         />
 
         <label className="mb-1 block text-sm font-medium text-slate-700" htmlFor="password">
@@ -58,7 +63,7 @@ export function RegisterPage() {
           minLength={8}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="mb-4 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+          className="field-input mb-4 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
         />
         <p className="-mt-3 mb-4 text-xs text-slate-400">Mínimo 8 caracteres</p>
 
@@ -67,14 +72,14 @@ export function RegisterPage() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-violet-700 disabled:opacity-50"
+          className="brand-button w-full rounded-xl px-4 py-2 text-sm font-medium disabled:opacity-50"
         >
           {loading ? "Creando cuenta..." : "Crear cuenta"}
         </button>
 
         <p className="mt-4 text-center text-sm text-slate-500">
           ¿Ya tenés cuenta?{" "}
-          <Link to="/login" className="font-medium text-violet-600 hover:underline">
+          <Link to="/login" className="font-medium text-blue-600 hover:underline">
             Iniciá sesión
           </Link>
         </p>
