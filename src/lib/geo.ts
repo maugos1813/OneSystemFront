@@ -18,3 +18,41 @@ export function computeTripDistanceKm(positions: Position[]): number {
   }
   return Math.round(total * 10) / 10;
 }
+
+const MIN_STOP_MS = 3 * 60 * 1000;
+
+/** Counts separate trips — a new trip starts whenever movement resumes after being
+ * stopped for at least MIN_STOP_MS, so brief stops (a red light) don't fragment one trip
+ * into several. `positions` must be ordered oldest -> newest. */
+export function computeTripCount(positions: Position[]): number {
+  let trips = 0;
+  let inTrip = false;
+  let lastMovingIdx = -1;
+
+  for (let i = 0; i < positions.length; i++) {
+    const moving = positions[i]!.speed > 0;
+    if (moving) {
+      if (!inTrip) {
+        const gapMs =
+          lastMovingIdx === -1
+            ? Infinity
+            : new Date(positions[i]!.ts).getTime() - new Date(positions[lastMovingIdx]!.ts).getTime();
+        if (gapMs >= MIN_STOP_MS) trips++;
+        inTrip = true;
+      }
+      lastMovingIdx = i;
+    } else {
+      inTrip = false;
+    }
+  }
+
+  return trips;
+}
+
+/** Wall-clock time spanned by the range, e.g. "3h 12m" or "45m". */
+export function formatDuration(ms: number): string {
+  const totalMinutes = Math.max(0, Math.round(ms / 60000));
+  const h = Math.floor(totalMinutes / 60);
+  const m = totalMinutes % 60;
+  return h === 0 ? `${m}m` : `${h}h ${m}m`;
+}

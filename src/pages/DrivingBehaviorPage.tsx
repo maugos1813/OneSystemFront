@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { Panel } from "../components/analytics/Panel";
+import { FleetScoreTable, type FleetRow } from "../components/driving/FleetScoreTable";
 import { IncidentList } from "../components/driving/IncidentList";
 import { IncidentMap } from "../components/driving/IncidentMap";
 import { ScoreRing } from "../components/driving/ScoreRing";
 import { useFleet } from "../context/FleetContext";
-import { usePositionHistory } from "../hooks/usePositionHistory";
+import { useFleetPositionHistory } from "../hooks/useFleetPositionHistory";
 import {
   computeCategoryScores,
   computeIncidents,
@@ -12,6 +13,8 @@ import {
   type CategoryCounts,
   type IncidentType,
 } from "../lib/drivingBehavior";
+import { computeTripCount, computeTripDistanceKm } from "../lib/geo";
+import type { Position } from "../lib/types";
 
 const RANGES: Array<{ label: string; hours: number }> = [
   { label: "24h", hours: 24 },
@@ -30,6 +33,10 @@ const DEFAULT_SPEED_LIMIT_KMH = 120;
 
 type Selection = "overall" | IncidentType;
 
+// Stable reference so useMemo below doesn't see a "new" array (and recompute) on every
+// render just because the selected vehicle has no history loaded yet.
+const EMPTY_HISTORY: Position[] = [];
+
 export function DrivingBehaviorPage() {
   const { vehicles, loading: fleetLoading } = useFleet();
   const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
@@ -43,7 +50,8 @@ export function DrivingBehaviorPage() {
   }, [selectedVehicleId, vehicles]);
 
   const from = useMemo(() => new Date(Date.now() - rangeHours * 60 * 60 * 1000), [rangeHours]);
-  const { history, loading: historyLoading } = usePositionHistory(selectedVehicleId, from);
+  const { historyByVehicle, loading: historyLoading } = useFleetPositionHistory(vehicles, from);
+  const history = (selectedVehicleId && historyByVehicle[selectedVehicleId]) || EMPTY_HISTORY;
 
   useEffect(() => {
     setSelection("overall");
@@ -61,15 +69,42 @@ export function DrivingBehaviorPage() {
     [incidents, selection],
   );
 
+  const fleetRows = useMemo<FleetRow[]>(
+    () =>
+      vehicles.map((v) => {
+        const vHistory = historyByVehicle[v.id] ?? [];
+        const vIncidents = computeIncidents(vHistory, speedLimit);
+        const vScores = computeCategoryScores(vIncidents);
+        const score = selection === "overall" ? vScores.overall : vScores[selection];
+        const events = selection === "overall" ? vIncidents.length : vScores.counts[selection];
+        const durationMs =
+          vHistory.length >= 2
+            ? new Date(vHistory[vHistory.length - 1]!.ts).getTime() - new Date(vHistory[0]!.ts).getTime()
+            : 0;
+        return {
+          vehicleId: v.id,
+          name: v.name,
+          plate: v.plate,
+          score,
+          events,
+          distanceKm: computeTripDistanceKm(vHistory),
+          trips: computeTripCount(vHistory),
+          durationMs,
+        };
+      }),
+    [vehicles, historyByVehicle, speedLimit, selection],
+  );
+
   const vehicle = vehicles.find((v) => v.id === selectedVehicleId) ?? null;
   const loading = fleetLoading || historyLoading;
+  const categoryLabel = selection === "overall" ? "General" : INCIDENT_LABELS[selection];
 
   return (
     <div className="h-full overflow-y-auto bg-[#f5f6fb] p-4 sm:p-6 lg:p-8">
       <h1 className="text-xl font-semibold text-slate-900">Conducción</h1>
       <p className="mb-6 text-sm text-slate-500">
         Puntaje de manejo por vehículo — hacé click en cualquier puntaje para ver dónde y cuándo pasó cada
-        incidente.
+        incidente, y comparar toda la flota en esa métrica.
       </p>
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
@@ -145,7 +180,7 @@ export function DrivingBehaviorPage() {
             ))}
           </div>
 
-          <Panel title={selection === "overall" ? "Todos los incidentes" : INCIDENT_LABELS[selection]}>
+          <Panel title={selection === "overall" ? "Todos los incidentes" : INCIDENT_LABELS[selection]} className="mb-6">
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_320px]">
               <div className="h-72 overflow-hidden rounded-2xl sm:h-80">
                 <IncidentMap incidents={visibleIncidents} activeIndex={activeIncidentIndex} />
@@ -156,6 +191,15 @@ export function DrivingBehaviorPage() {
                 onSelect={setActiveIncidentIndex}
               />
             </div>
+          </Panel>
+
+          <Panel title={`Flota — ${categoryLabel}`}>
+            <FleetScoreTable
+              rows={fleetRows}
+              categoryLabel={categoryLabel}
+              selectedVehicleId={selectedVehicleId}
+              onSelectVehicle={setSelectedVehicleId}
+            />
           </Panel>
         </>
       )}
