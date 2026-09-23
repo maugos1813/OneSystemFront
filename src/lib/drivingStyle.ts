@@ -5,6 +5,10 @@ export type HarshEventType = "braking" | "acceleration" | "cornering";
 export interface HarshEvent {
   type: HarshEventType;
   ts: string;
+  lat: number;
+  lng: number;
+  /** Human-readable specifics — a speed delta for braking/acceleration, an angle for cornering. */
+  detail: string;
 }
 
 // Estimated from consecutive GPS samples — noisier than the device's own accelerometer,
@@ -27,16 +31,34 @@ export function detectHarshEvents(positions: Position[]): HarshEvent[] {
 
     const speedDelta = curr.speed - prev.speed;
     if (speedDelta <= -SPEED_DELTA_THRESHOLD_KMH) {
-      events.push({ type: "braking", ts: curr.ts });
+      events.push({
+        type: "braking",
+        ts: curr.ts,
+        lat: curr.lat,
+        lng: curr.lng,
+        detail: `${Math.round(prev.speed)} → ${Math.round(curr.speed)} km/h`,
+      });
     } else if (speedDelta >= SPEED_DELTA_THRESHOLD_KMH) {
-      events.push({ type: "acceleration", ts: curr.ts });
+      events.push({
+        type: "acceleration",
+        ts: curr.ts,
+        lat: curr.lat,
+        lng: curr.lng,
+        detail: `${Math.round(prev.speed)} → ${Math.round(curr.speed)} km/h`,
+      });
     }
 
     if (prev.speed >= MIN_SPEED_FOR_CORNERING_KMH && curr.speed >= MIN_SPEED_FOR_CORNERING_KMH) {
       let angleDelta = Math.abs(curr.angle - prev.angle);
       if (angleDelta > 180) angleDelta = 360 - angleDelta;
       if (angleDelta >= CORNERING_ANGLE_THRESHOLD_DEG) {
-        events.push({ type: "cornering", ts: curr.ts });
+        events.push({
+          type: "cornering",
+          ts: curr.ts,
+          lat: curr.lat,
+          lng: curr.lng,
+          detail: `Giro de ${Math.round(angleDelta)}° a ${Math.round(curr.speed)} km/h`,
+        });
       }
     }
   }

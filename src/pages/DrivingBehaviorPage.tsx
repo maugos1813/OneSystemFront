@@ -1,8 +1,17 @@
-import { useMemo, useState } from "react";
-import { VehicleScoreCard } from "../components/driving/VehicleScoreCard";
+import { useEffect, useMemo, useState } from "react";
+import { Panel } from "../components/analytics/Panel";
+import { IncidentList } from "../components/driving/IncidentList";
+import { IncidentMap } from "../components/driving/IncidentMap";
+import { ScoreRing } from "../components/driving/ScoreRing";
 import { useFleet } from "../context/FleetContext";
-import { useFleetPositionHistory } from "../hooks/useFleetPositionHistory";
-import { computeCategoryScores } from "../lib/drivingBehavior";
+import { usePositionHistory } from "../hooks/usePositionHistory";
+import {
+  computeCategoryScores,
+  computeIncidents,
+  INCIDENT_LABELS,
+  type CategoryCounts,
+  type IncidentType,
+} from "../lib/drivingBehavior";
 
 const RANGES: Array<{ label: string; hours: number }> = [
   { label: "24h", hours: 24 },
@@ -10,25 +19,72 @@ const RANGES: Array<{ label: string; hours: number }> = [
   { label: "30 días", hours: 24 * 30 },
 ];
 
+const CATEGORY_ORDER: Array<keyof CategoryCounts> = [
+  "harshBraking",
+  "harshAcceleration",
+  "harshCornering",
+  "speeding",
+];
+
 const DEFAULT_SPEED_LIMIT_KMH = 120;
+
+type Selection = "overall" | IncidentType;
 
 export function DrivingBehaviorPage() {
   const { vehicles, loading: fleetLoading } = useFleet();
+  const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
   const [rangeHours, setRangeHours] = useState(24 * 7);
   const [speedLimit, setSpeedLimit] = useState(DEFAULT_SPEED_LIMIT_KMH);
+  const [selection, setSelection] = useState<Selection>("overall");
+  const [activeIncidentIndex, setActiveIncidentIndex] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!selectedVehicleId && vehicles.length > 0) setSelectedVehicleId(vehicles[0]!.id);
+  }, [selectedVehicleId, vehicles]);
 
   const from = useMemo(() => new Date(Date.now() - rangeHours * 60 * 60 * 1000), [rangeHours]);
-  const { historyByVehicle, loading: historyLoading } = useFleetPositionHistory(vehicles, from);
+  const { history, loading: historyLoading } = usePositionHistory(selectedVehicleId, from);
 
+  useEffect(() => {
+    setSelection("overall");
+    setActiveIncidentIndex(null);
+  }, [selectedVehicleId, rangeHours]);
+
+  useEffect(() => {
+    setActiveIncidentIndex(null);
+  }, [selection, speedLimit]);
+
+  const incidents = useMemo(() => computeIncidents(history, speedLimit), [history, speedLimit]);
+  const scores = useMemo(() => computeCategoryScores(incidents), [incidents]);
+  const visibleIncidents = useMemo(
+    () => (selection === "overall" ? incidents : incidents.filter((i) => i.type === selection)),
+    [incidents, selection],
+  );
+
+  const vehicle = vehicles.find((v) => v.id === selectedVehicleId) ?? null;
   const loading = fleetLoading || historyLoading;
 
   return (
     <div className="h-full overflow-y-auto bg-[#f5f6fb] p-4 sm:p-6 lg:p-8">
       <h1 className="text-xl font-semibold text-slate-900">Conducción</h1>
       <p className="mb-6 text-sm text-slate-500">
-        Puntaje de manejo de cada vehículo de tu flota — frenadas, aceleraciones y curvas bruscas, y excesos de
-        velocidad, todo del 1 al 100%.
+        Puntaje de manejo por vehículo — hacé click en cualquier puntaje para ver dónde y cuándo pasó cada
+        incidente.
       </p>
+
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        {vehicles.map((v) => (
+          <button
+            key={v.id}
+            onClick={() => setSelectedVehicleId(v.id)}
+            className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
+              v.id === selectedVehicleId ? "brand-button" : "bg-white text-slate-500 hover:bg-violet-50"
+            }`}
+          >
+            {v.name}
+          </button>
+        ))}
+      </div>
 
       <div className="mb-6 flex flex-wrap items-center gap-2">
         {RANGES.map((r) => (
@@ -63,16 +119,42 @@ export function DrivingBehaviorPage() {
         <p className="text-sm text-slate-500">Todavía no hay vehículos cargados.</p>
       )}
 
-      {loading && vehicles.length > 0 && <p className="text-sm text-slate-500">Calculando puntajes...</p>}
+      {vehicle && loading && <p className="text-sm text-slate-500">Calculando puntajes...</p>}
 
-      {!loading && vehicles.length > 0 && (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {vehicles.map((v) => {
-            const history = historyByVehicle[v.id] ?? [];
-            const scores = computeCategoryScores(history, speedLimit);
-            return <VehicleScoreCard key={v.id} vehicleName={v.name} plate={v.plate} scores={scores} />;
-          })}
-        </div>
+      {vehicle && !loading && (
+        <>
+          <div className="glow float-card mb-4 flex flex-wrap items-center justify-center gap-2 rounded-3xl border border-white bg-white/70 p-6 shadow-lg shadow-blue-100/40 sm:gap-4">
+            <ScoreRing
+              label="General"
+              score={scores.overall}
+              active={selection === "overall"}
+              onClick={() => setSelection("overall")}
+              size={120}
+            />
+            {CATEGORY_ORDER.map((key) => (
+              <ScoreRing
+                key={key}
+                label={INCIDENT_LABELS[key]}
+                score={scores[key]}
+                active={selection === key}
+                onClick={() => setSelection(key)}
+              />
+            ))}
+          </div>
+
+          <Panel title={selection === "overall" ? "Todos los incidentes" : INCIDENT_LABELS[selection]}>
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_320px]">
+              <div className="h-72 overflow-hidden rounded-2xl sm:h-80">
+                <IncidentMap incidents={visibleIncidents} activeIndex={activeIncidentIndex} />
+              </div>
+              <IncidentList
+                incidents={visibleIncidents}
+                activeIndex={activeIncidentIndex}
+                onSelect={setActiveIncidentIndex}
+              />
+            </div>
+          </Panel>
+        </>
       )}
     </div>
   );
