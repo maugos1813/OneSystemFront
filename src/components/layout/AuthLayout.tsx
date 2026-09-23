@@ -20,7 +20,9 @@ export function AuthLayout({ children }: { children: ReactNode }) {
         <p className="text-xs text-violet-200">© {new Date().getFullYear()} OneSystem</p>
       </div>
 
-      <div className="flex w-full items-center justify-center bg-violet-50 lg:w-1/2">{children}</div>
+      <div className="flex w-full items-center justify-center overflow-y-auto bg-violet-50 px-4 py-8 lg:w-1/2">
+        {children}
+      </div>
     </div>
   );
 }

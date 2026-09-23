@@ -19,8 +19,8 @@ export function StateDonut({ entries }: { entries: StateDistributionEntry[] }) {
   let cumulative = 0;
 
   return (
-    <div className="flex items-center gap-6">
-      <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`}>
+    <div className="flex flex-col items-center gap-4 sm:flex-row sm:gap-6">
+      <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`} className="shrink-0">
         <defs>
           <linearGradient id="donutMovingGradient" x1="0" y1="0" x2="1" y2="1">
             <stop offset="0%" stopColor="#818cf8" />

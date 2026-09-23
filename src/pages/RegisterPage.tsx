@@ -19,7 +19,7 @@ export function RegisterPage() {
 
   return (
     <AuthLayout>
-      <form onSubmit={handleSubmit} className="w-full max-w-sm rounded-xl bg-white p-8 shadow-sm">
+      <form onSubmit={handleSubmit} className="w-full max-w-sm rounded-xl bg-white p-6 shadow-sm sm:p-8">
         <h1 className="mb-1 text-xl font-semibold text-slate-900">Creá tu cuenta</h1>
         <p className="mb-6 text-sm text-slate-500">Empezá a monitorear tu flota en minutos</p>
 

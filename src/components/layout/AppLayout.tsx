@@ -1,4 +1,5 @@
-import { BarChart3, Gauge, Key, LogOut, Map, Smartphone, Truck } from "lucide-react";
+import { BarChart3, Gauge, Key, LogOut, Map, Menu, Smartphone, Truck, X } from "lucide-react";
+import { useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { AlertsPanel } from "../AlertsPanel";
@@ -14,21 +15,47 @@ const NAV_ITEMS = [
 
 export function AppLayout() {
   const { currentUser, logout } = useAuth();
+  const [navOpen, setNavOpen] = useState(false);
 
   return (
     <div className="flex h-screen bg-violet-50">
-      <aside className="flex w-60 shrink-0 flex-col border-r border-violet-100 bg-white">
-        <div className="flex items-center gap-2 border-b border-violet-100 px-5 py-4">
-          <img src="/logo.jpg" alt="OneSystem" className="h-9 w-9 rounded-xl object-cover shadow-sm shadow-violet-200" />
-          <span className="text-lg font-semibold text-slate-900">OneSystem</span>
+      {navOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-slate-900/30 md:hidden"
+          onClick={() => setNavOpen(false)}
+        />
+      )}
+
+      <aside
+        className={`fixed inset-y-0 left-0 z-40 flex w-64 shrink-0 flex-col border-r border-violet-100 bg-white transition-transform duration-200 md:static md:z-auto md:translate-x-0 ${
+          navOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <div className="flex items-center justify-between gap-2 border-b border-violet-100 px-5 py-4">
+          <div className="flex items-center gap-2">
+            <img
+              src="/logo.jpg"
+              alt="OneSystem"
+              className="h-9 w-9 rounded-xl object-cover shadow-sm shadow-violet-200"
+            />
+            <span className="text-lg font-semibold text-slate-900">OneSystem</span>
+          </div>
+          <button
+            onClick={() => setNavOpen(false)}
+            className="rounded-lg p-1 text-slate-400 hover:bg-violet-50 md:hidden"
+            aria-label="Cerrar menú"
+          >
+            <X className="h-5 w-5" />
+          </button>
         </div>
 
-        <nav className="flex-1 space-y-1 px-3 py-4">
+        <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
           {NAV_ITEMS.map(({ to, label, icon: Icon, end }) => (
             <NavLink
               key={to}
               to={to}
               end={end}
+              onClick={() => setNavOpen(false)}
               className={({ isActive }) =>
                 `flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition ${
                   isActive
@@ -45,20 +72,31 @@ export function AppLayout() {
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex items-center justify-between border-b border-violet-100 bg-white px-6 py-3">
-          <div>
-            <p className="text-sm font-semibold text-slate-900">{currentUser?.orgName ?? "..."}</p>
-            <p className="text-xs text-slate-500">{currentUser?.email}</p>
+        <header className="flex items-center justify-between gap-3 border-b border-violet-100 bg-white px-4 py-3 sm:px-6">
+          <div className="flex min-w-0 items-center gap-3">
+            <button
+              onClick={() => setNavOpen(true)}
+              className="rounded-lg p-1.5 text-slate-500 hover:bg-violet-50 md:hidden"
+              aria-label="Abrir menú"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold text-slate-900">
+                {currentUser?.orgName ?? "..."}
+              </p>
+              <p className="hidden truncate text-xs text-slate-500 sm:block">{currentUser?.email}</p>
+            </div>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex shrink-0 items-center gap-2 sm:gap-4">
             <AlertsPanel />
             <button
               onClick={logout}
-              className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm text-slate-500 transition hover:bg-violet-50 hover:text-slate-900"
+              className="flex items-center gap-1.5 rounded-xl px-2 py-1.5 text-sm text-slate-500 transition hover:bg-violet-50 hover:text-slate-900 sm:px-3"
             >
               <LogOut className="h-4 w-4" />
-              Salir
+              <span className="hidden sm:inline">Salir</span>
             </button>
           </div>
         </header>

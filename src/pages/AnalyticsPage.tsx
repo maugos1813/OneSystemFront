@@ -23,7 +23,7 @@ export function AnalyticsPage() {
   }
 
   return (
-    <div className="h-full overflow-y-auto bg-slate-50 p-8">
+    <div className="h-full overflow-y-auto bg-slate-50 p-4 sm:p-6 lg:p-8">
       <h1 className="text-xl font-semibold text-slate-900">Analíticas de flota</h1>
       <p className="mb-6 text-sm text-slate-500">Resumen general de tus vehículos, hoy.</p>
 

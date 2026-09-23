@@ -39,7 +39,7 @@ export function CockpitPage() {
   const totalKm = Math.round(Number(position?.ioData[AVL_ID.TOTAL_ODOMETER] ?? 0) / 100) / 10;
 
   return (
-    <div className="h-full overflow-y-auto bg-violet-50 p-8">
+    <div className="h-full overflow-y-auto bg-violet-50 p-4 sm:p-6 lg:p-8">
       <div className="mx-auto max-w-5xl">
         {vehicles.length > 1 && (
           <div className="mb-6 flex flex-wrap gap-2">
@@ -59,17 +59,19 @@ export function CockpitPage() {
           </div>
         )}
 
-        <div className="mb-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold tracking-wide text-slate-900">{vehicle.name.toUpperCase()}</h1>
+        <div className="mb-4 flex items-center justify-between gap-2">
+          <div className="min-w-0">
+            <h1 className="truncate text-lg font-bold tracking-wide text-slate-900 sm:text-xl">
+              {vehicle.name.toUpperCase()}
+            </h1>
             {vehicle.plate && <p className="text-sm text-slate-400">{vehicle.plate}</p>}
           </div>
-          <p className="text-sm text-slate-400">
+          <p className="shrink-0 text-sm text-slate-400">
             {new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
           </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 rounded-3xl border border-violet-100 bg-white/60 p-6 shadow-sm shadow-violet-100 lg:grid-cols-[260px_1fr_260px]">
+        <div className="grid grid-cols-1 gap-4 rounded-3xl border border-violet-100 bg-white/60 p-4 shadow-sm shadow-violet-100 sm:p-6 lg:grid-cols-[260px_1fr_260px]">
           <div className="rounded-2xl bg-violet-50/60 p-3">
             <p className="mb-2 px-1 text-xs font-semibold tracking-wide text-slate-400 uppercase">
               Ubicación

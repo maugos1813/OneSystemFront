@@ -26,7 +26,7 @@ export function AlertsPanel() {
       {open && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 z-20 mt-2 w-80 rounded-2xl border border-violet-100 bg-white p-2 shadow-lg shadow-violet-100">
+          <div className="absolute right-0 z-20 mt-2 w-[85vw] max-w-80 rounded-2xl border border-violet-100 bg-white p-2 shadow-lg shadow-violet-100">
             <p className="px-2 py-1 text-xs font-semibold tracking-wide text-slate-400 uppercase">
               Alertas
             </p>

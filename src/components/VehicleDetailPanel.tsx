@@ -54,7 +54,7 @@ export function VehicleDetailPanel({
   onClose,
 }: VehicleDetailPanelProps) {
   return (
-    <div className="absolute top-4 right-4 w-80 max-h-[calc(100%-2rem)] overflow-y-auto rounded-xl border border-violet-100 bg-white p-4 shadow-lg">
+    <div className="fixed inset-x-0 bottom-0 z-10 max-h-[75vh] overflow-y-auto rounded-t-2xl border border-violet-100 bg-white p-4 shadow-lg sm:absolute sm:inset-x-auto sm:top-4 sm:right-4 sm:bottom-auto sm:max-h-[calc(100%-2rem)] sm:w-80 sm:rounded-xl">
       <div className="mb-3 flex items-start justify-between">
         <div>
           <h2 className="font-semibold text-slate-900">{vehicle.name}</h2>

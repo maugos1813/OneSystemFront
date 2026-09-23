@@ -1,3 +1,4 @@
+import { List } from "lucide-react";
 import { useMemo, useState } from "react";
 import { MapView } from "../components/MapView";
 import { VehicleDetailPanel } from "../components/VehicleDetailPanel";
@@ -10,6 +11,7 @@ export function DashboardPage() {
   const { vehicles, devices, positions, loading, error } = useFleet();
   const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
   const [historyRangeHours, setHistoryRangeHours] = useState<number | null>(null);
+  const [listOpen, setListOpen] = useState(false);
 
   const historyFrom = useMemo(() => {
     if (historyRangeHours === null) return null;
@@ -41,6 +43,8 @@ export function DashboardPage() {
         devices={devices}
         selectedVehicleId={selectedVehicleId}
         onSelect={selectVehicle}
+        open={listOpen}
+        onClose={() => setListOpen(false)}
       />
       <div className="relative flex-1">
         <MapView
@@ -50,6 +54,15 @@ export function DashboardPage() {
           onSelectVehicle={selectVehicle}
           historyPath={history}
         />
+
+        <button
+          onClick={() => setListOpen(true)}
+          className="absolute top-4 left-4 flex items-center gap-1.5 rounded-full bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-md md:hidden"
+        >
+          <List className="h-4 w-4" />
+          Vehículos ({vehicles.length})
+        </button>
+
         {selectedVehicle && (
           <VehicleDetailPanel
             vehicle={selectedVehicle}

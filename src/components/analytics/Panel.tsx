@@ -12,7 +12,9 @@ export function Panel({
   children: ReactNode;
 }) {
   return (
-    <div className={`rounded-[28px] border border-white bg-white p-6 shadow-lg shadow-slate-200/50 ${className}`}>
+    <div
+      className={`rounded-[28px] border border-white bg-white p-4 shadow-lg shadow-slate-200/50 sm:p-6 ${className}`}
+    >
       <div className="mb-4 flex items-center justify-between">
         <p className="text-sm font-semibold text-slate-700">{title}</p>
         {action}

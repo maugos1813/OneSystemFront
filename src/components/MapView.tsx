@@ -79,7 +79,7 @@ export function MapView({
 
 function MapLegend() {
   return (
-    <div className="absolute bottom-4 left-4 flex flex-col gap-1.5 rounded-lg border border-violet-100 bg-white px-3 py-2 text-xs text-slate-600 shadow">
+    <div className="absolute bottom-4 left-4 z-0 flex flex-col gap-1.5 rounded-lg border border-violet-100 bg-white px-2.5 py-2 text-[11px] text-slate-600 shadow sm:px-3 sm:text-xs">
       <div className="flex items-center gap-2">
         <span className="h-2.5 w-2.5 rounded-full bg-red-600" />
         Apagado
