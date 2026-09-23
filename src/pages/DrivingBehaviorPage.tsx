@@ -123,19 +123,22 @@ export function DrivingBehaviorPage() {
 
       {vehicle && !loading && (
         <>
-          <div className="glow float-card mb-4 flex flex-wrap items-center justify-center gap-2 rounded-3xl border border-white bg-white/70 p-6 shadow-lg shadow-blue-100/40 sm:gap-4">
+          <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-5">
             <ScoreRing
               label="General"
               score={scores.overall}
+              count={incidents.length}
+              countLabel="incidentes en total"
               active={selection === "overall"}
               onClick={() => setSelection("overall")}
-              size={120}
             />
             {CATEGORY_ORDER.map((key) => (
               <ScoreRing
                 key={key}
                 label={INCIDENT_LABELS[key]}
                 score={scores[key]}
+                count={scores.counts[key]}
+                countLabel="eventos"
                 active={selection === key}
                 onClick={() => setSelection(key)}
               />

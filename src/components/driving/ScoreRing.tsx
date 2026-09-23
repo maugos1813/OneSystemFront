@@ -1,53 +1,61 @@
 import { scoreColor } from "../../lib/drivingBehavior";
+import { trackGlow } from "../../lib/glow";
+
+const SIZE = 60;
+const STROKE = 6;
+const RADIUS = (SIZE - STROKE) / 2;
+const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
 interface ScoreRingProps {
   label: string;
   score: number;
+  count: number;
+  countLabel: string;
   active: boolean;
   onClick: () => void;
-  size?: number;
 }
 
-export function ScoreRing({ label, score, active, onClick, size = 88 }: ScoreRingProps) {
-  const stroke = size >= 110 ? 11 : 9;
-  const radius = (size - stroke) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const dash = (Math.max(0, Math.min(100, score)) / 100) * circumference;
+/** A single ring lives in its own floating card so a full row of them spreads edge to
+ * edge — the active one "pops" forward with a bigger shadow and a slight lift. */
+export function ScoreRing({ label, score, count, countLabel, active, onClick }: ScoreRingProps) {
+  const clamped = Math.max(0, Math.min(100, score));
+  const dash = (clamped / 100) * CIRCUMFERENCE;
   const color = scoreColor(score);
 
   return (
     <button
       onClick={onClick}
-      className="flex flex-col items-center gap-2 rounded-2xl p-3 transition hover:bg-white/70"
-      style={
-        active
-          ? { backgroundColor: "white", boxShadow: `0 0 0 2px ${color}, 0 12px 28px -14px rgba(15,23,42,0.25)` }
-          : undefined
-      }
+      onMouseMove={trackGlow}
+      className={`glow relative flex min-w-0 items-center gap-3 rounded-3xl border border-white bg-white p-4 text-left shadow-lg shadow-slate-200/50 transition-all duration-200 ${
+        active ? "z-10 -translate-y-1 shadow-2xl shadow-slate-300/70 sm:scale-[1.04]" : "hover:-translate-y-0.5"
+      }`}
     >
-      <div className="relative" style={{ width: size, height: size }}>
-        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-          <g transform={`rotate(-90 ${size / 2} ${size / 2})`}>
-            <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="#f1f5f9" strokeWidth={stroke} />
+      <div className="relative shrink-0" style={{ width: SIZE, height: SIZE }}>
+        <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`}>
+          <g transform={`rotate(-90 ${SIZE / 2} ${SIZE / 2})`}>
+            <circle cx={SIZE / 2} cy={SIZE / 2} r={RADIUS} fill="none" stroke="#f1f5f9" strokeWidth={STROKE} />
             <circle
-              cx={size / 2}
-              cy={size / 2}
-              r={radius}
+              cx={SIZE / 2}
+              cy={SIZE / 2}
+              r={RADIUS}
               fill="none"
               stroke={color}
-              strokeWidth={stroke}
+              strokeWidth={STROKE}
               strokeLinecap="round"
-              strokeDasharray={`${dash} ${circumference}`}
+              strokeDasharray={`${dash} ${CIRCUMFERENCE}`}
             />
           </g>
         </svg>
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-lg font-bold tabular-nums text-slate-900" style={size >= 110 ? { fontSize: "1.5rem" } : undefined}>
-            {score}%
-          </span>
+          <span className="text-sm font-bold tabular-nums text-slate-900">{score}%</span>
         </div>
       </div>
-      <span className="max-w-[7rem] text-center text-xs font-medium text-slate-600">{label}</span>
+      <div className="min-w-0">
+        <p className="text-sm leading-tight font-semibold text-slate-900">{label}</p>
+        <p className="mt-0.5 text-xs leading-tight text-slate-400">
+          {count} {countLabel}
+        </p>
+      </div>
     </button>
   );
 }
