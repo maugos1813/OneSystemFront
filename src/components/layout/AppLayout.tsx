@@ -1,4 +1,15 @@
-import { BarChart3, Gauge, Key, LogOut, Map, PanelLeftClose, PanelLeftOpen, Smartphone, Truck } from "lucide-react";
+import {
+  BarChart3,
+  Gauge,
+  History,
+  Key,
+  LogOut,
+  Map,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Smartphone,
+  Truck,
+} from "lucide-react";
 import { useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
@@ -9,6 +20,7 @@ const NAV_ITEMS = [
   { to: "/", label: "Mapa", icon: Map, end: true },
   { to: "/cockpit", label: "Cockpit", icon: Gauge, end: false },
   { to: "/analiticas", label: "Analíticas", icon: BarChart3, end: false },
+  { to: "/historial", label: "Historial", icon: History, end: false },
   { to: "/vehiculos", label: "Vehículos", icon: Truck, end: false },
   { to: "/dispositivos", label: "Dispositivos", icon: Smartphone, end: false },
   { to: "/api-keys", label: "API Keys", icon: Key, end: false },

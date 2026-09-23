@@ -10,9 +10,10 @@ const COLOR_MOVING = "#16a34a"; // green-600: en movimiento
  * sentido horario — coincide con `rotation` de google.maps.Symbol) cuando se mueve.
  */
 export function getVehicleIcon(position: Position | undefined): google.maps.Symbol | undefined {
-  // The Maps JS script may not have finished loading on the very first render;
-  // undefined falls back to the marker's default pin until it does.
-  if (typeof google === "undefined" || !google.maps) return undefined;
+  // The Maps JS script may not have finished loading on the very first render — core
+  // `google.maps` can exist before its `SymbolPath` sub-namespace does — so undefined
+  // falls back to the marker's default pin until everything we use here is ready.
+  if (typeof google === "undefined" || !google.maps?.SymbolPath) return undefined;
 
   if (!position) {
     return {

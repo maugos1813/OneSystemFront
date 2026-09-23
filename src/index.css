@@ -125,4 +125,9 @@ body {
       0 4px 12px rgba(15, 23, 42, 0.06),
       0 24px 56px -16px rgba(99, 102, 241, 0.35);
   }
+
+  /* Native range input themed with the brand palette — used by the history playback scrubber. */
+  .brand-range {
+    accent-color: var(--brand-blue);
+  }
 }
