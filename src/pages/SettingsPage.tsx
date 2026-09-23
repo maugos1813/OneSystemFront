@@ -127,31 +127,36 @@ export function SettingsPage() {
             {DAYS.map(({ key, label }) => {
               const day = form.workingHours[key];
               return (
-                <div key={key} className="flex flex-wrap items-center gap-3 rounded-xl bg-slate-50 px-3 py-2">
-                  <label className="flex w-28 shrink-0 items-center gap-2 text-sm font-medium text-slate-700">
+                <div
+                  key={key}
+                  className="rounded-xl bg-slate-50 px-3 py-2.5 sm:flex sm:items-center sm:gap-3 sm:py-2"
+                >
+                  <label className="mb-2 flex items-center gap-2 text-sm font-medium text-slate-700 sm:mb-0 sm:w-28 sm:shrink-0">
                     <input
                       type="checkbox"
                       checked={day.enabled}
                       onChange={(e) => updateDay(key, { enabled: e.target.checked })}
-                      className="brand-range h-4 w-4"
+                      className="brand-range h-4 w-4 shrink-0"
                     />
                     {label}
                   </label>
-                  <input
-                    type="time"
-                    value={day.start}
-                    disabled={!day.enabled}
-                    onChange={(e) => updateDay(key, { start: e.target.value })}
-                    className="field-input rounded-lg border border-slate-300 px-2 py-1 text-sm disabled:opacity-40"
-                  />
-                  <span className="text-sm text-slate-400">a</span>
-                  <input
-                    type="time"
-                    value={day.end}
-                    disabled={!day.enabled}
-                    onChange={(e) => updateDay(key, { end: e.target.value })}
-                    className="field-input rounded-lg border border-slate-300 px-2 py-1 text-sm disabled:opacity-40"
-                  />
+                  <div className="flex items-center gap-2 pl-6 sm:pl-0">
+                    <input
+                      type="time"
+                      value={day.start}
+                      disabled={!day.enabled}
+                      onChange={(e) => updateDay(key, { start: e.target.value })}
+                      className="field-input min-w-0 flex-1 rounded-lg border border-slate-300 px-2 py-1.5 text-sm disabled:opacity-40 sm:flex-none"
+                    />
+                    <span className="shrink-0 text-sm text-slate-400">a</span>
+                    <input
+                      type="time"
+                      value={day.end}
+                      disabled={!day.enabled}
+                      onChange={(e) => updateDay(key, { end: e.target.value })}
+                      className="field-input min-w-0 flex-1 rounded-lg border border-slate-300 px-2 py-1.5 text-sm disabled:opacity-40 sm:flex-none"
+                    />
+                  </div>
                 </div>
               );
             })}
