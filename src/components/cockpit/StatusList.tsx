@@ -25,7 +25,7 @@ function Row({
         </div>
         <div className="h-1.5 rounded-full bg-violet-100">
           <div
-            className="brand-gradient h-1.5 rounded-full"
+            className="brand-gradient h-1.5 rounded-full transition-[width] duration-700 ease-out"
             style={{ width: `${Math.max(0, Math.min(100, pct))}%` }}
           />
         </div>

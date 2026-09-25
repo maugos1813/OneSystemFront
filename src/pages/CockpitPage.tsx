@@ -7,6 +7,7 @@ import { SpeedGauge } from "../components/cockpit/SpeedGauge";
 import { StatePills } from "../components/cockpit/StatePills";
 import { StatusList } from "../components/cockpit/StatusList";
 import { useFleet } from "../context/FleetContext";
+import { useSmoothedPosition } from "../hooks/useSmoothedPosition";
 import { useTodayTripStats } from "../hooks/useTodayTripStats";
 import { classifyVehicleState } from "../lib/fleetStats";
 import { trackGlow } from "../lib/glow";
@@ -22,6 +23,7 @@ export function CockpitPage() {
 
   const vehicle = vehicles.find((v) => v.id === selectedId) ?? null;
   const position = vehicle ? (positions[vehicle.id] ?? null) : null;
+  const smoothed = useSmoothedPosition(position);
   const { score, harshEvents, tripKm } = useTodayTripStats(vehicle?.id ?? null);
 
   if (loading) {
@@ -81,7 +83,7 @@ export function CockpitPage() {
           </div>
 
           <div className="flex items-center justify-center py-6">
-            <SpeedGauge speed={position?.speed ?? 0} state={state} />
+            <SpeedGauge speed={smoothed?.speed ?? 0} state={state} />
           </div>
 
           <div onMouseMove={trackGlow} className="glow float-card rounded-2xl bg-violet-50/60 p-4">

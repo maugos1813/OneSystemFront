@@ -1,4 +1,5 @@
 import { APIProvider, Map, Marker, Polyline } from "@vis.gl/react-google-maps";
+import { useSmoothedPosition } from "../hooks/useSmoothedPosition";
 import { getVehicleIcon } from "../lib/markerIcon";
 import type { Position, Vehicle } from "../lib/types";
 
@@ -11,6 +12,30 @@ interface MapViewProps {
 }
 
 const DEFAULT_CENTER = { lat: 41.9028, lng: 12.4964 }; // Roma, como fallback sin posiciones aún
+
+interface AnimatedVehicleMarkerProps {
+  vehicle: Vehicle;
+  position: Position;
+  selected: boolean;
+  onSelect: (vehicleId: string) => void;
+}
+
+/** Glides between real reports instead of snapping — see useSmoothedPosition. Split out
+ * so each vehicle's animation is its own hook instance, independent of the others. */
+function AnimatedVehicleMarker({ vehicle, position, selected, onSelect }: AnimatedVehicleMarkerProps) {
+  const smoothed = useSmoothedPosition(position);
+  if (!smoothed) return null;
+
+  return (
+    <Marker
+      position={{ lat: smoothed.lat, lng: smoothed.lng }}
+      title={vehicle.name}
+      onClick={() => onSelect(vehicle.id)}
+      opacity={selected ? 1 : 0.75}
+      icon={getVehicleIcon({ ...position, angle: smoothed.angle })}
+    />
+  );
+}
 
 export function MapView({
   vehicles,
@@ -59,13 +84,12 @@ export function MapView({
             if (!position) return null;
 
             return (
-              <Marker
+              <AnimatedVehicleMarker
                 key={vehicle.id}
-                position={{ lat: position.lat, lng: position.lng }}
-                title={vehicle.name}
-                onClick={() => onSelectVehicle(vehicle.id)}
-                opacity={vehicle.id === selectedVehicleId ? 1 : 0.75}
-                icon={getVehicleIcon(position)}
+                vehicle={vehicle}
+                position={position}
+                selected={vehicle.id === selectedVehicleId}
+                onSelect={onSelectVehicle}
               />
             );
           })}
