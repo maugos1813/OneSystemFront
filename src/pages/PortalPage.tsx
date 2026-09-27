@@ -9,6 +9,7 @@ import type { Product } from "../lib/types";
 /** Real brand logos for products that have one; the rest fall back to an initial badge. */
 const PRODUCT_LOGOS: Record<string, string> = {
   driver: "/logos/gamonal-driver.png",
+  farmacy: "/logos/gamonal-farmacy.png",
   nakamacar: "/logos/nakamacar.png",
 };
 
