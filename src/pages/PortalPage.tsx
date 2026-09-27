@@ -6,6 +6,11 @@ import { listProducts } from "../lib/api";
 import { trackGlow } from "../lib/glow";
 import type { Product } from "../lib/types";
 
+/** Real brand logos for products that have one; the rest fall back to an initial badge. */
+const PRODUCT_LOGOS: Record<string, string> = {
+  driver: "/logos/gamonal-driver.png",
+};
+
 export function PortalPage() {
   const { currentUser, logout } = useAuth();
   const navigate = useNavigate();
@@ -63,16 +68,30 @@ export function PortalPage() {
           <p className="text-sm text-slate-400">Cargando...</p>
         ) : (
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {products.map((product) => (
-              <button
-                key={product.key}
-                onClick={() => openProduct(product)}
-                onMouseMove={trackGlow}
-                className="glow float-card rounded-3xl border border-white bg-white p-8 text-left shadow-lg shadow-slate-200/50 transition hover:shadow-xl"
-              >
-                <p className="text-lg font-semibold text-slate-900">{product.name}</p>
-              </button>
-            ))}
+            {products.map((product) => {
+              const logo = PRODUCT_LOGOS[product.key];
+              return (
+                <button
+                  key={product.key}
+                  onClick={() => openProduct(product)}
+                  onMouseMove={trackGlow}
+                  className="glow float-card group flex flex-col items-center gap-4 rounded-3xl border border-white bg-white p-8 text-center shadow-lg shadow-slate-200/50 transition hover:shadow-xl"
+                >
+                  {logo ? (
+                    <img
+                      src={logo}
+                      alt={product.name}
+                      className="h-20 w-20 object-contain transition group-hover:scale-105"
+                    />
+                  ) : (
+                    <div className="brand-gradient-soft flex h-20 w-20 items-center justify-center rounded-2xl text-2xl font-bold text-blue-600">
+                      {product.name.charAt(0)}
+                    </div>
+                  )}
+                  <p className="text-lg font-semibold text-slate-900">{product.name}</p>
+                </button>
+              );
+            })}
           </div>
         )}
       </main>
