@@ -1,5 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { ProtectedRoute } from "./components/layout/ProtectedRoute";
+import { RequireAuth } from "./components/layout/RequireAuth";
 import { AuthProvider } from "./context/AuthContext";
 import { AlertsPage } from "./pages/AlertsPage";
 import { AnalyticsPage } from "./pages/AnalyticsPage";
@@ -12,6 +13,7 @@ import { DrivingBehaviorPage } from "./pages/DrivingBehaviorPage";
 import { GeofencesPage } from "./pages/GeofencesPage";
 import { HistoryPage } from "./pages/HistoryPage";
 import { LoginPage } from "./pages/LoginPage";
+import { PortalPage } from "./pages/PortalPage";
 import { RegisterPage } from "./pages/RegisterPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { VehiclesPage } from "./pages/VehiclesPage";
@@ -24,8 +26,12 @@ export default function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
 
+          <Route element={<RequireAuth />}>
+            <Route path="/" element={<PortalPage />} />
+          </Route>
+
           <Route element={<ProtectedRoute />}>
-            <Route path="/" element={<DashboardPage />} />
+            <Route path="/gps" element={<DashboardPage />} />
             <Route path="/cockpit" element={<CockpitPage />} />
             <Route path="/analiticas" element={<AnalyticsPage />} />
             <Route path="/historial" element={<HistoryPage />} />

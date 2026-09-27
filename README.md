@@ -1,6 +1,6 @@
 # OneSystem Front
 
-Frontend de la plataforma de rastreo de flotas OneSystem. Dashboard tipo SaaS con mapa
+Frontend de la plataforma de rastreo de flotas OneSystec. Dashboard tipo SaaS con mapa
 de Google, histórico de recorridos y alertas básicas, multi-tenant (cada empresa ve solo
 su propia flota). Consume la API de [OneSystemBack](https://github.com/maugos1813/OneSystemBack).
 

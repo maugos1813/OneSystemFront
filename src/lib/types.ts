@@ -115,3 +115,13 @@ export interface Geofence {
   alertOnExit: boolean;
   createdAt: string;
 }
+
+export type ProductType = "internal" | "external";
+
+export interface Product {
+  key: string;
+  name: string;
+  type: ProductType;
+  path?: string;
+  url?: string;
+}

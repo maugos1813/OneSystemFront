@@ -9,6 +9,7 @@ import type {
   Geofence,
   OrgSettings,
   Position,
+  Product,
   Vehicle,
   WorkingHours,
 } from "./types";
@@ -190,4 +191,10 @@ export function updateGeofence(id: string, input: Partial<GeofenceInput>): Promi
 
 export function deleteGeofence(id: string): Promise<void> {
   return request(`/geofences/${id}`, { method: "DELETE" });
+}
+
+// --- Products ---
+
+export function listProducts(): Promise<Product[]> {
+  return request("/products");
 }

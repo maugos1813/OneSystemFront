@@ -14,14 +14,14 @@ export function AuthLayout({ children }: { children: ReactNode }) {
         />
 
         <div className="relative flex items-center gap-2">
-          <img src="/logo.jpg" alt="OneSystem" className="h-9 w-9 rounded-2xl object-cover shadow-lg" />
-          <span className="text-lg font-semibold">OneSystem</span>
+          <img src="/logo.jpg" alt="OneSystec" className="h-9 w-9 rounded-2xl object-cover shadow-lg" />
+          <span className="text-lg font-semibold">OneSystec</span>
         </div>
 
         <div className="relative">
           <img
             src="/logo.jpg"
-            alt="OneSystem"
+            alt="OneSystec"
             className="mb-4 h-20 w-20 rounded-3xl object-cover shadow-xl shadow-black/20"
           />
           <h2 className="mb-2 text-2xl font-semibold">Monitoreo de flota en tiempo real</h2>
@@ -30,7 +30,7 @@ export function AuthLayout({ children }: { children: ReactNode }) {
           </p>
         </div>
 
-        <p className="relative text-xs text-sky-100">© {new Date().getFullYear()} OneSystem</p>
+        <p className="relative text-xs text-sky-100">© {new Date().getFullYear()} OneSystec</p>
       </div>
 
       <div className="flex w-full items-center justify-center overflow-y-auto bg-[#f5f6fb] px-4 py-8 lg:w-1/2">

@@ -16,13 +16,13 @@ import {
   Truck,
 } from "lucide-react";
 import { useState } from "react";
-import { NavLink, Outlet } from "react-router-dom";
+import { Link, NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { trackGlow } from "../../lib/glow";
 import { AlertsPanel } from "../AlertsPanel";
 
 const NAV_ITEMS = [
-  { to: "/", label: "Mapa", icon: Map, end: true },
+  { to: "/gps", label: "Mapa", icon: Map, end: true },
   { to: "/cockpit", label: "Cockpit", icon: Gauge, end: false },
   { to: "/analiticas", label: "Analíticas", icon: BarChart3, end: false },
   { to: "/historial", label: "Historial", icon: History, end: false },
@@ -63,16 +63,16 @@ export function AppLayout() {
       >
         <div className="flex h-full w-64 flex-col">
           <div className="flex items-center justify-between gap-2 border-b border-violet-100 px-5 py-4">
-            <div className="flex min-w-0 items-center gap-2">
+            <Link to="/" className="flex min-w-0 items-center gap-2" title="Volver al portal OneSystec">
               <img
                 src="/logo.jpg"
-                alt="OneSystem"
+                alt="OneSystec"
                 className="h-9 w-9 shrink-0 rounded-2xl object-cover shadow-md shadow-blue-200/60"
               />
               <span className="truncate text-lg font-semibold text-slate-900">
-                One<span className="brand-text-gradient">System</span>
+                One<span className="brand-text-gradient">Systec</span>
               </span>
-            </div>
+            </Link>
             <button
               onClick={() => setNavOpen(false)}
               className="shrink-0 rounded-lg p-1.5 text-slate-400 hover:bg-violet-50 hover:text-slate-700"
