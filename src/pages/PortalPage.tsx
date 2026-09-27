@@ -9,6 +9,7 @@ import type { Product } from "../lib/types";
 /** Real brand logos for products that have one; the rest fall back to an initial badge. */
 const PRODUCT_LOGOS: Record<string, string> = {
   driver: "/logos/gamonal-driver.png",
+  nakamacar: "/logos/nakamacar.png",
 };
 
 export function PortalPage() {
@@ -81,7 +82,7 @@ export function PortalPage() {
                     <img
                       src={logo}
                       alt={product.name}
-                      className="h-20 w-20 object-contain transition group-hover:scale-105"
+                      className="h-20 w-auto max-w-[160px] object-contain transition group-hover:scale-105"
                     />
                   ) : (
                     <div className="brand-gradient-soft flex h-20 w-20 items-center justify-center rounded-2xl text-2xl font-bold text-blue-600">
