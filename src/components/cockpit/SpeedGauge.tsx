@@ -45,7 +45,7 @@ function Tick({ speed }: { speed: number }) {
         y1={p1.y}
         x2={p2.x}
         y2={p2.y}
-        stroke={isMajor ? "#a78bfa" : "#ddd6fe"}
+        className={isMajor ? "stroke-violet-400 dark:stroke-blue-500/60" : "stroke-violet-200 dark:stroke-white/10"}
         strokeWidth={isMajor ? 2 : 1.5}
         strokeLinecap="round"
       />
@@ -54,7 +54,7 @@ function Tick({ speed }: { speed: number }) {
           {...polarPoint(angle, outer + 16)}
           textAnchor="middle"
           dominantBaseline="central"
-          className="fill-slate-400 text-[13px] font-medium"
+          className="fill-slate-400 text-[13px] font-medium dark:fill-slate-500"
         >
           {speed}
         </text>
@@ -80,7 +80,7 @@ export function SpeedGauge({ speed, state }: { speed: number; state: "off" | "id
             cy={CENTER}
             r={RADIUS}
             fill="none"
-            stroke="#ede9fe"
+            className="stroke-violet-100 dark:stroke-white/10"
             strokeWidth={STROKE}
             strokeLinecap="round"
             strokeDasharray={`${trackLength} ${CIRCUMFERENCE}`}
@@ -109,8 +109,8 @@ export function SpeedGauge({ speed, state }: { speed: number; state: "off" | "id
       </svg>
 
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-5xl font-bold text-slate-900 tabular-nums">{Math.round(speed)}</span>
-        <span className="text-sm font-medium text-slate-400">km/h</span>
+        <span className="text-5xl font-bold text-slate-900 tabular-nums dark:text-white">{Math.round(speed)}</span>
+        <span className="text-sm font-medium text-slate-400 dark:text-slate-500">km/h</span>
         <span className="brand-text-gradient mt-2 text-xs font-semibold tracking-wider">
           {STATE_LABEL[state]}
         </span>

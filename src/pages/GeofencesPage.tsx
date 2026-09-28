@@ -3,9 +3,10 @@ import { MapPin, Plus, Trash2, X } from "lucide-react";
 import { useState } from "react";
 import { Panel } from "../components/analytics/Panel";
 import { useFleet } from "../context/FleetContext";
+import { useTheme } from "../context/ThemeContext";
 import { createGeofence, deleteGeofence, updateGeofence } from "../lib/api";
 import { trackGlow } from "../lib/glow";
-import { MUTED_MAP_STYLE } from "../lib/mapStyle";
+import { DARK_MAP_STYLE, MUTED_MAP_STYLE } from "../lib/mapStyle";
 import type { Geofence } from "../lib/types";
 
 const DEFAULT_CENTER = { lat: 41.9028, lng: 12.4964 };
@@ -40,6 +41,7 @@ export function GeofencesPage() {
   const [saving, setSaving] = useState(false);
 
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+  const { theme } = useTheme();
   const center = draft ?? geofences[0] ?? DEFAULT_CENTER;
 
   function startNew() {
@@ -99,7 +101,7 @@ export function GeofencesPage() {
 
   if (!apiKey) {
     return (
-      <div className="flex h-full items-center justify-center text-sm text-slate-400">
+      <div className="flex h-full items-center justify-center text-sm text-slate-400 dark:text-slate-500">
         Falta configurar VITE_GOOGLE_MAPS_API_KEY.
       </div>
     );
@@ -108,14 +110,19 @@ export function GeofencesPage() {
   const visibleExisting = geofences.filter((g) => g.id !== draft?.id);
 
   return (
-    <div className="h-full overflow-y-auto bg-[#f5f6fb] p-4 sm:p-6 lg:p-8">
+    <div className="h-full overflow-y-auto bg-[#f5f6fb] p-4 sm:p-6 lg:p-8 dark:bg-[#0a0e1a]">
       <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-slate-900">Geocercas</h1>
-          <p className="text-sm text-slate-500">Zonas circulares — te avisamos cuando un vehículo entra o sale.</p>
+          <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Geocercas</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Zonas circulares — te avisamos cuando un vehículo entra o sale.
+          </p>
         </div>
         {!draft && !placing && (
-          <button onClick={startNew} className="brand-button flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-medium">
+          <button
+            onClick={startNew}
+            className="brand-button flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-medium"
+          >
             <Plus className="h-4 w-4" />
             Nueva geocerca
           </button>
@@ -124,7 +131,7 @@ export function GeofencesPage() {
 
       <Panel title="Mapa" className="mb-6">
         {placing && (
-          <p className="mb-3 rounded-xl bg-violet-50 px-3 py-2 text-sm text-violet-700">
+          <p className="mb-3 rounded-xl bg-violet-50 px-3 py-2 text-sm text-violet-700 dark:bg-violet-500/15 dark:text-violet-300">
             Hacé click en el mapa para ubicar el centro de la geocerca.
           </p>
         )}
@@ -136,7 +143,7 @@ export function GeofencesPage() {
               defaultZoom={13}
               gestureHandling="greedy"
               disableDefaultUI
-              styles={MUTED_MAP_STYLE}
+              styles={theme === "dark" ? DARK_MAP_STYLE : MUTED_MAP_STYLE}
               onClick={handleMapClick}
             >
               {visibleExisting.map((g) => (
@@ -175,29 +182,29 @@ export function GeofencesPage() {
         <Panel title={draft.id ? "Editar geocerca" : "Nueva geocerca"} className="mb-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
             <div className="flex-1">
-              <label className="mb-1 block text-sm font-medium text-slate-700">Nombre</label>
+              <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Nombre</label>
               <input
                 value={draft.name}
                 onChange={(e) => setDraft((d) => d && { ...d, name: e.target.value })}
                 placeholder="Depósito central"
-                className="field-input w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                className="field-input w-full rounded-xl border border-slate-300 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
               />
             </div>
             <div className="w-full sm:w-36">
-              <label className="mb-1 block text-sm font-medium text-slate-700">Radio (m)</label>
+              <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Radio (m)</label>
               <input
                 type="number"
                 min={10}
                 max={50000}
                 value={Math.round(draft.radiusMeters)}
                 onChange={(e) => setDraft((d) => d && { ...d, radiusMeters: Number(e.target.value) || 0 })}
-                className="field-input w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                className="field-input w-full rounded-xl border border-slate-300 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
               />
             </div>
           </div>
 
           <div className="mt-3 flex flex-wrap gap-4">
-            <label className="flex items-center gap-2 text-sm text-slate-600">
+            <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
               <input
                 type="checkbox"
                 checked={draft.alertOnEnter}
@@ -206,7 +213,7 @@ export function GeofencesPage() {
               />
               Avisar al entrar
             </label>
-            <label className="flex items-center gap-2 text-sm text-slate-600">
+            <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
               <input
                 type="checkbox"
                 checked={draft.alertOnExit}
@@ -227,7 +234,7 @@ export function GeofencesPage() {
             </button>
             <button
               onClick={cancelDraft}
-              className="flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-medium text-slate-500 hover:bg-slate-100"
+              className="flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-medium text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-white/5"
             >
               <X className="h-4 w-4" />
               Cancelar
@@ -237,7 +244,7 @@ export function GeofencesPage() {
       )}
 
       {!loading && geofences.length === 0 && !draft && (
-        <p className="text-sm text-slate-500">Todavía no creaste ninguna geocerca.</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400">Todavía no creaste ninguna geocerca.</p>
       )}
 
       {geofences.length > 0 && (
@@ -246,26 +253,33 @@ export function GeofencesPage() {
             <div
               key={g.id}
               onMouseMove={trackGlow}
-              className="glow float-card flex items-center gap-3 rounded-2xl border border-white bg-white p-3 shadow-sm shadow-slate-200/50"
+              className="glow float-card flex items-center gap-3 rounded-2xl border border-white bg-white p-3 shadow-sm shadow-slate-200/50 dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40"
             >
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-600">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-600 dark:bg-violet-500/15 dark:text-violet-400">
                 <MapPin className="h-4 w-4" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-slate-900">{g.name}</p>
-                <p className="text-xs text-slate-400">
-                  {g.radiusMeters} m de radio · {g.alertOnEnter && g.alertOnExit ? "entrada y salida" : g.alertOnEnter ? "solo entrada" : g.alertOnExit ? "solo salida" : "sin alertas"}
+                <p className="truncate text-sm font-medium text-slate-900 dark:text-white">{g.name}</p>
+                <p className="text-xs text-slate-400 dark:text-slate-500">
+                  {g.radiusMeters} m de radio ·{" "}
+                  {g.alertOnEnter && g.alertOnExit
+                    ? "entrada y salida"
+                    : g.alertOnEnter
+                      ? "solo entrada"
+                      : g.alertOnExit
+                        ? "solo salida"
+                        : "sin alertas"}
                 </p>
               </div>
               <button
                 onClick={() => setDraft(draftFromGeofence(g))}
-                className="rounded-lg px-3 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-100"
+                className="rounded-lg px-3 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-white/5"
               >
                 Editar
               </button>
               <button
                 onClick={() => handleDelete(g.id)}
-                className="rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600"
+                className="rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600 dark:text-slate-500 dark:hover:bg-red-500/10 dark:hover:text-red-400"
                 aria-label="Eliminar"
               >
                 <Trash2 className="h-4 w-4" />

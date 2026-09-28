@@ -35,11 +35,13 @@ export function DashboardPage() {
   }
 
   if (loading) {
-    return <div className="flex h-full items-center justify-center text-slate-500">Cargando...</div>;
+    return (
+      <div className="flex h-full items-center justify-center text-slate-500 dark:text-slate-400">Cargando...</div>
+    );
   }
 
   if (error) {
-    return <div className="flex h-full items-center justify-center text-red-600">{error}</div>;
+    return <div className="flex h-full items-center justify-center text-red-600 dark:text-red-400">{error}</div>;
   }
 
   return (
@@ -65,7 +67,7 @@ export function DashboardPage() {
           <button
             onClick={() => setListOpen(true)}
             onMouseMove={trackGlow}
-            className="glow float-card absolute top-16 left-4 flex items-center gap-1.5 rounded-full bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-lg shadow-slate-300/40"
+            className="glow float-card absolute top-16 left-4 flex items-center gap-1.5 rounded-full bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-lg shadow-slate-300/40 dark:bg-[#111729] dark:text-slate-200 dark:shadow-black/40"
           >
             <List className="h-4 w-4" />
             Vehículos ({vehicles.length})

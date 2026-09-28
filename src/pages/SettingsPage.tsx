@@ -27,7 +27,7 @@ function AlertRow({
 }) {
   return (
     <div className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between">
-      <label className="flex items-center gap-2.5 text-sm font-medium text-slate-800">
+      <label className="flex items-center gap-2.5 text-sm font-medium text-slate-800 dark:text-slate-200">
         <input
           type="checkbox"
           checked={enabled}
@@ -36,7 +36,9 @@ function AlertRow({
         />
         {label}
       </label>
-      <div className={`text-sm text-slate-500 sm:pl-4 ${enabled ? "" : "opacity-40"}`}>{children}</div>
+      <div className={`text-sm text-slate-500 sm:pl-4 dark:text-slate-400 ${enabled ? "" : "opacity-40"}`}>
+        {children}
+      </div>
     </div>
   );
 }
@@ -65,7 +67,7 @@ function NumberField({
         max={max}
         step={step}
         onChange={(e) => onChange(Number(e.target.value) || 0)}
-        className="field-input w-20 rounded-lg border border-slate-300 px-2 py-1 text-sm"
+        className="field-input w-20 rounded-lg border border-slate-300 px-2 py-1 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
       />
       {suffix}
     </span>
@@ -83,7 +85,9 @@ export function SettingsPage() {
   }, [settings, form]);
 
   if (!form) {
-    return <div className="flex h-full items-center justify-center text-slate-500">Cargando...</div>;
+    return (
+      <div className="flex h-full items-center justify-center text-slate-500 dark:text-slate-400">Cargando...</div>
+    );
   }
 
   function updateDay(day: WeekdayKey, patch: Partial<WorkingHoursDay>) {
@@ -108,17 +112,19 @@ export function SettingsPage() {
   }
 
   return (
-    <div className="h-full overflow-y-auto bg-[#f5f6fb] p-4 sm:p-6 lg:p-8">
-      <h1 className="text-xl font-semibold text-slate-900">Ajustes</h1>
-      <p className="mb-6 text-sm text-slate-500">Empresa, horario laboral y preferencias de alertas.</p>
+    <div className="h-full overflow-y-auto bg-[#f5f6fb] p-4 sm:p-6 lg:p-8 dark:bg-[#0a0e1a]">
+      <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Ajustes</h1>
+      <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">
+        Empresa, horario laboral y preferencias de alertas.
+      </p>
 
       <div className="max-w-3xl space-y-6">
         <Panel title="Empresa">
-          <label className="mb-1 block text-sm font-medium text-slate-700">Nombre</label>
+          <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Nombre</label>
           <input
             value={form.orgName}
             onChange={(e) => setForm((f) => f && { ...f, orgName: e.target.value })}
-            className="field-input w-full max-w-sm rounded-xl border border-slate-300 px-3 py-2 text-sm"
+            className="field-input w-full max-w-sm rounded-xl border border-slate-300 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
           />
         </Panel>
 
@@ -129,9 +135,9 @@ export function SettingsPage() {
               return (
                 <div
                   key={key}
-                  className="rounded-xl bg-slate-50 px-3 py-2.5 sm:flex sm:items-center sm:gap-3 sm:py-2"
+                  className="rounded-xl bg-slate-50 px-3 py-2.5 sm:flex sm:items-center sm:gap-3 sm:py-2 dark:bg-white/5"
                 >
-                  <label className="mb-2 flex items-center gap-2 text-sm font-medium text-slate-700 sm:mb-0 sm:w-28 sm:shrink-0">
+                  <label className="mb-2 flex items-center gap-2 text-sm font-medium text-slate-700 sm:mb-0 sm:w-28 sm:shrink-0 dark:text-slate-300">
                     <input
                       type="checkbox"
                       checked={day.enabled}
@@ -146,15 +152,15 @@ export function SettingsPage() {
                       value={day.start}
                       disabled={!day.enabled}
                       onChange={(e) => updateDay(key, { start: e.target.value })}
-                      className="field-input min-w-0 flex-1 rounded-lg border border-slate-300 px-2 py-1.5 text-sm disabled:opacity-40 sm:flex-none"
+                      className="field-input min-w-0 flex-1 rounded-lg border border-slate-300 px-2 py-1.5 text-sm disabled:opacity-40 sm:flex-none dark:border-white/10 dark:bg-white/5 dark:text-white"
                     />
-                    <span className="shrink-0 text-sm text-slate-400">a</span>
+                    <span className="shrink-0 text-sm text-slate-400 dark:text-slate-500">a</span>
                     <input
                       type="time"
                       value={day.end}
                       disabled={!day.enabled}
                       onChange={(e) => updateDay(key, { end: e.target.value })}
-                      className="field-input min-w-0 flex-1 rounded-lg border border-slate-300 px-2 py-1.5 text-sm disabled:opacity-40 sm:flex-none"
+                      className="field-input min-w-0 flex-1 rounded-lg border border-slate-300 px-2 py-1.5 text-sm disabled:opacity-40 sm:flex-none dark:border-white/10 dark:bg-white/5 dark:text-white"
                     />
                   </div>
                 </div>
@@ -164,7 +170,7 @@ export function SettingsPage() {
         </Panel>
 
         <Panel title="Preferencias de alertas">
-          <div className="divide-y divide-slate-100">
+          <div className="divide-y divide-slate-100 dark:divide-white/10">
             <AlertRow
               label="Uso fuera de horario laboral"
               enabled={form.alerts.afterHoursEnabled}

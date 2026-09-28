@@ -68,13 +68,15 @@ export function HistoryPage() {
   }
 
   if (fleetLoading) {
-    return <div className="flex h-full items-center justify-center text-slate-500">Cargando...</div>;
+    return (
+      <div className="flex h-full items-center justify-center text-slate-500 dark:text-slate-400">Cargando...</div>
+    );
   }
 
   return (
-    <div className="h-full overflow-y-auto bg-[#f5f6fb] p-4 sm:p-6 lg:p-8">
-      <h1 className="text-xl font-semibold text-slate-900">Historial de recorrido</h1>
-      <p className="mb-6 text-sm text-slate-500">
+    <div className="h-full overflow-y-auto bg-[#f5f6fb] p-4 sm:p-6 lg:p-8 dark:bg-[#0a0e1a]">
+      <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Historial de recorrido</h1>
+      <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">
         Reproducí el trayecto y mirá exactamente dónde se superaron los límites de velocidad.
       </p>
 
@@ -84,21 +86,25 @@ export function HistoryPage() {
             key={v.id}
             onClick={() => setSelectedVehicleId(v.id)}
             className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
-              v.id === selectedVehicleId ? "brand-button" : "bg-white text-slate-500 hover:bg-violet-50"
+              v.id === selectedVehicleId
+                ? "brand-button"
+                : "bg-white text-slate-500 hover:bg-violet-50 dark:bg-[#111729] dark:text-slate-400 dark:hover:bg-white/10"
             }`}
           >
             {v.name}
           </button>
         ))}
 
-        {vehicles.length > 0 && <span className="mx-1 h-5 w-px bg-slate-200" />}
+        {vehicles.length > 0 && <span className="mx-1 h-5 w-px bg-slate-200 dark:bg-white/10" />}
 
         {RANGES.map((r) => (
           <button
             key={r.label}
             onClick={() => setRangeHours(r.hours)}
             className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${
-              r.hours === rangeHours ? "bg-slate-900 text-white" : "bg-white text-slate-500 hover:bg-slate-100"
+              r.hours === rangeHours
+                ? "bg-slate-900 text-white dark:bg-blue-600"
+                : "bg-white text-slate-500 hover:bg-slate-100 dark:bg-[#111729] dark:text-slate-400 dark:hover:bg-white/10"
             }`}
           >
             {r.label}
@@ -106,12 +112,16 @@ export function HistoryPage() {
         ))}
       </div>
 
-      {!vehicle && <p className="text-sm text-slate-500">Todavía no hay vehículos cargados.</p>}
+      {!vehicle && <p className="text-sm text-slate-500 dark:text-slate-400">Todavía no hay vehículos cargados.</p>}
 
-      {vehicle && historyLoading && <p className="text-sm text-slate-500">Cargando recorrido...</p>}
+      {vehicle && historyLoading && (
+        <p className="text-sm text-slate-500 dark:text-slate-400">Cargando recorrido...</p>
+      )}
 
       {vehicle && !historyLoading && history.length < 2 && (
-        <p className="text-sm text-slate-500">No hay suficientes datos en este rango para reproducir el recorrido.</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          No hay suficientes datos en este rango para reproducir el recorrido.
+        </p>
       )}
 
       {vehicle && !historyLoading && history.length >= 2 && (
@@ -133,7 +143,7 @@ export function HistoryPage() {
               currentIndex={currentIndex}
               onSeek={handleSeek}
             />
-            <div className="mt-4 border-t border-slate-100 pt-4">
+            <div className="mt-4 border-t border-slate-100 pt-4 dark:border-white/10">
               <PlaybackBar
                 playing={playing}
                 onTogglePlay={() => setPlaying((p) => !p)}

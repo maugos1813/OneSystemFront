@@ -1,5 +1,6 @@
 import { APIProvider, Map, Marker } from "@vis.gl/react-google-maps";
-import { MUTED_MAP_STYLE } from "../../lib/mapStyle";
+import { useTheme } from "../../context/ThemeContext";
+import { DARK_MAP_STYLE, MUTED_MAP_STYLE } from "../../lib/mapStyle";
 import { getVehicleIcon } from "../../lib/markerIcon";
 import type { Position, Vehicle } from "../../lib/types";
 
@@ -13,12 +14,13 @@ export function FleetMap({
   positions: Record<string, Position>;
 }) {
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+  const { theme } = useTheme();
   const known = vehicles.map((v) => positions[v.id]).filter((p): p is Position => p !== undefined);
   const center = known[0] ?? null;
 
   if (!apiKey) {
     return (
-      <div className="flex h-80 items-center justify-center text-sm text-slate-400">
+      <div className="flex h-80 items-center justify-center text-sm text-slate-400 dark:text-slate-500">
         Falta configurar VITE_GOOGLE_MAPS_API_KEY.
       </div>
     );
@@ -33,7 +35,7 @@ export function FleetMap({
           defaultZoom={center ? 12 : 4}
           gestureHandling="greedy"
           disableDefaultUI
-          styles={MUTED_MAP_STYLE}
+          styles={theme === "dark" ? DARK_MAP_STYLE : MUTED_MAP_STYLE}
         >
           {vehicles.map((vehicle) => {
             const position = positions[vehicle.id];

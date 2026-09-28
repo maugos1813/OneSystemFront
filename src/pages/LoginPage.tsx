@@ -22,12 +22,12 @@ export function LoginPage() {
       <form
         onSubmit={handleSubmit}
         onMouseMove={trackGlow}
-        className="glow w-full max-w-sm rounded-3xl bg-white p-6 shadow-xl shadow-slate-200/60 sm:p-8"
+        className="glow w-full max-w-sm rounded-3xl bg-white p-6 shadow-xl shadow-slate-200/60 sm:p-8 dark:border dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40"
       >
-        <h1 className="mb-1 text-xl font-semibold text-slate-900">Iniciar sesión</h1>
-        <p className="mb-6 text-sm text-slate-500">Ingresá con tu cuenta de empresa</p>
+        <h1 className="mb-1 text-xl font-semibold text-slate-900 dark:text-white">Iniciar sesión</h1>
+        <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">Ingresá con tu cuenta de empresa</p>
 
-        <label className="mb-1 block text-sm font-medium text-slate-700" htmlFor="email">
+        <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300" htmlFor="email">
           Email
         </label>
         <input
@@ -36,10 +36,10 @@ export function LoginPage() {
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="field-input mb-4 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+          className="field-input mb-4 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
         />
 
-        <label className="mb-1 block text-sm font-medium text-slate-700" htmlFor="password">
+        <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300" htmlFor="password">
           Contraseña
         </label>
         <input
@@ -48,10 +48,10 @@ export function LoginPage() {
           required
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="field-input mb-4 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+          className="field-input mb-4 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
         />
 
-        {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
+        {error && <p className="mb-4 text-sm text-red-600 dark:text-red-400">{error}</p>}
 
         <button
           type="submit"
@@ -61,9 +61,9 @@ export function LoginPage() {
           {loading ? "Ingresando..." : "Ingresar"}
         </button>
 
-        <p className="mt-4 text-center text-sm text-slate-500">
+        <p className="mt-4 text-center text-sm text-slate-500 dark:text-slate-400">
           ¿Sos una empresa nueva?{" "}
-          <Link to="/register" className="font-medium text-blue-600 hover:underline">
+          <Link to="/register" className="font-medium text-blue-600 hover:underline dark:text-blue-400">
             Creá tu cuenta
           </Link>
         </p>

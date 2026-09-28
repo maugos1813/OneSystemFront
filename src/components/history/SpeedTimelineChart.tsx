@@ -33,7 +33,7 @@ export function SpeedTimelineChart({ positions, speedLimit, currentIndex, onSeek
   const svgRef = useRef<SVGSVGElement>(null);
 
   if (positions.length < 2) {
-    return <p className="text-sm text-slate-400">No hay datos suficientes para graficar.</p>;
+    return <p className="text-sm text-slate-400 dark:text-slate-500">No hay datos suficientes para graficar.</p>;
   }
 
   const times = positions.map((p) => new Date(p.ts).getTime());
@@ -106,7 +106,11 @@ export function SpeedTimelineChart({ positions, speedLimit, currentIndex, onSeek
         fillOpacity={0.06}
       />
       <line x1={PAD_X} y1={limitY} x2={WIDTH - PAD_X} y2={limitY} stroke="#ef4444" strokeWidth={1.5} strokeDasharray="5 4" />
-      <text x={PAD_X} y={Math.max(limitY - 6, PAD_TOP - 4)} className="fill-red-500 text-[10px] font-semibold">
+      <text
+        x={PAD_X}
+        y={Math.max(limitY - 6, PAD_TOP - 4)}
+        className="fill-red-500 text-[10px] font-semibold dark:fill-red-400"
+      >
         Límite {speedLimit} km/h
       </text>
 
@@ -129,7 +133,7 @@ export function SpeedTimelineChart({ positions, speedLimit, currentIndex, onSeek
         y1={PAD_TOP}
         x2={playhead.x}
         y2={HEIGHT - PAD_BOTTOM}
-        stroke="#0f172a"
+        className="stroke-slate-900 dark:stroke-white"
         strokeWidth={1.5}
         strokeOpacity={0.3}
       />
@@ -143,7 +147,13 @@ export function SpeedTimelineChart({ positions, speedLimit, currentIndex, onSeek
       />
 
       {labelIndices.map((i) => (
-        <text key={i} x={coords[i]!.x} y={HEIGHT - 8} textAnchor="middle" className="fill-slate-400 text-[9px]">
+        <text
+          key={i}
+          x={coords[i]!.x}
+          y={HEIGHT - 8}
+          textAnchor="middle"
+          className="fill-slate-400 text-[9px] dark:fill-slate-500"
+        >
           {new Date(positions[i]!.ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
         </text>
       ))}

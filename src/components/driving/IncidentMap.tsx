@@ -1,6 +1,7 @@
 import { APIProvider, Map, Marker } from "@vis.gl/react-google-maps";
+import { useTheme } from "../../context/ThemeContext";
 import { INCIDENT_COLORS, type Incident } from "../../lib/drivingBehavior";
-import { MUTED_MAP_STYLE } from "../../lib/mapStyle";
+import { DARK_MAP_STYLE, MUTED_MAP_STYLE } from "../../lib/mapStyle";
 
 function incidentIcon(color: string): google.maps.Symbol | undefined {
   if (typeof google === "undefined" || !google.maps?.SymbolPath) return undefined;
@@ -23,10 +24,11 @@ interface IncidentMapProps {
  * clutter, no full route redrawn here (that's what the Historial page is for). */
 export function IncidentMap({ incidents, activeIndex }: IncidentMapProps) {
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+  const { theme } = useTheme();
 
   if (!apiKey) {
     return (
-      <div className="flex h-full items-center justify-center text-sm text-slate-400">
+      <div className="flex h-full items-center justify-center text-sm text-slate-400 dark:text-slate-500">
         Falta configurar VITE_GOOGLE_MAPS_API_KEY.
       </div>
     );
@@ -34,7 +36,7 @@ export function IncidentMap({ incidents, activeIndex }: IncidentMapProps) {
 
   if (incidents.length === 0) {
     return (
-      <div className="flex h-full items-center justify-center text-sm text-slate-400">
+      <div className="flex h-full items-center justify-center text-sm text-slate-400 dark:text-slate-500">
         Sin incidentes en este rango.
       </div>
     );
@@ -50,7 +52,7 @@ export function IncidentMap({ incidents, activeIndex }: IncidentMapProps) {
         defaultZoom={13}
         gestureHandling="greedy"
         disableDefaultUI
-        styles={MUTED_MAP_STYLE}
+        styles={theme === "dark" ? DARK_MAP_STYLE : MUTED_MAP_STYLE}
       >
         {incidents.map((incident, i) => (
           <Marker

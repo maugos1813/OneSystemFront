@@ -20,7 +20,7 @@ function smoothPath(coords: Array<{ x: number; y: number }>): string {
 
 export function SpeedTrendChart({ points }: { points: HourlySpeedPoint[] }) {
   if (points.length < 2) {
-    return <p className="text-sm text-slate-400">Sin datos suficientes todavía hoy.</p>;
+    return <p className="text-sm text-slate-400 dark:text-slate-500">Sin datos suficientes todavía hoy.</p>;
   }
 
   const maxSpeed = Math.max(...points.map((p) => p.avgSpeed), 1);
@@ -56,7 +56,7 @@ export function SpeedTrendChart({ points }: { points: HourlySpeedPoint[] }) {
           x={coords[i]!.x}
           y={HEIGHT}
           textAnchor="middle"
-          className="fill-slate-400 text-[9px]"
+          className="fill-slate-400 text-[9px] dark:fill-slate-500"
         >
           {i % 3 === 0 ? `${p.hour}h` : ""}
         </text>

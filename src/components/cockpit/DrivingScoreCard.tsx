@@ -14,12 +14,12 @@ export function DrivingScoreCard({ score, events }: { score: DrivingScore; event
         {score.grade}
       </div>
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold text-slate-900">Estilo de manejo — hoy</p>
-        <p className="text-xs text-slate-400">
+        <p className="text-sm font-semibold text-slate-900 dark:text-white">Estilo de manejo — hoy</p>
+        <p className="text-xs text-slate-400 dark:text-slate-500">
           {braking} frenadas · {acceleration} aceleraciones · {cornering} curvas bruscas
         </p>
       </div>
-      <span className="shrink-0 text-2xl font-semibold text-slate-900">{score.score}</span>
+      <span className="shrink-0 text-2xl font-semibold text-slate-900 dark:text-white">{score.score}</span>
     </div>
   );
 }

@@ -10,7 +10,7 @@ interface IncidentListProps {
 export function IncidentList({ incidents, activeIndex, onSelect }: IncidentListProps) {
   if (incidents.length === 0) {
     return (
-      <div className="flex items-center gap-2 text-sm text-emerald-600">
+      <div className="flex items-center gap-2 text-sm text-emerald-600 dark:text-emerald-400">
         <CheckCircle2 className="h-4 w-4" />
         Sin incidentes en este rango.
       </div>
@@ -27,7 +27,7 @@ export function IncidentList({ incidents, activeIndex, onSelect }: IncidentListP
           <button
             onClick={() => onSelect(index)}
             className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition ${
-              activeIndex === index ? "bg-slate-100" : "hover:bg-slate-50"
+              activeIndex === index ? "bg-slate-100 dark:bg-white/10" : "hover:bg-slate-50 dark:hover:bg-white/5"
             }`}
           >
             <span
@@ -35,12 +35,12 @@ export function IncidentList({ incidents, activeIndex, onSelect }: IncidentListP
               style={{ background: INCIDENT_COLORS[incident.type] }}
             />
             <span className="min-w-0 flex-1">
-              <span className="block truncate text-sm font-medium text-slate-900">
+              <span className="block truncate text-sm font-medium text-slate-900 dark:text-white">
                 {INCIDENT_LABELS[incident.type]}
               </span>
-              <span className="block truncate text-xs text-slate-400">{incident.detail}</span>
+              <span className="block truncate text-xs text-slate-400 dark:text-slate-500">{incident.detail}</span>
             </span>
-            <span className="shrink-0 text-xs text-slate-400 tabular-nums">
+            <span className="shrink-0 text-xs text-slate-400 tabular-nums dark:text-slate-500">
               {new Date(incident.ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
             </span>
           </button>

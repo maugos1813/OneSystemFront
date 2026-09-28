@@ -1,9 +1,10 @@
 import { trackGlow } from "../../lib/glow";
 
 const VARIANT_CLASSES = {
-  plain: "bg-white text-slate-900",
-  mint: "bg-gradient-to-br from-emerald-100 via-white to-white text-slate-900",
-  violet: "bg-gradient-to-br from-sky-100 via-indigo-100 to-violet-100 text-slate-900",
+  plain: "bg-white text-slate-900 dark:border-white/10 dark:bg-[#111729] dark:text-white",
+  mint: "bg-gradient-to-br from-emerald-100 via-white to-white text-slate-900 dark:border-emerald-500/20 dark:from-emerald-500/10 dark:via-[#111729] dark:to-[#111729] dark:text-white",
+  violet:
+    "bg-gradient-to-br from-sky-100 via-indigo-100 to-violet-100 text-slate-900 dark:border-blue-500/20 dark:from-blue-500/10 dark:via-[#111729] dark:to-[#111729] dark:text-white",
 } as const;
 
 export function StatCard({
@@ -24,9 +25,11 @@ export function StatCard({
     >
       <p className="text-2xl font-semibold tracking-tight break-words sm:text-3xl lg:text-4xl">
         {value}
-        {suffix && <span className="ml-1 text-base font-medium text-slate-400 sm:text-lg">{suffix}</span>}
+        {suffix && (
+          <span className="ml-1 text-base font-medium text-slate-400 sm:text-lg dark:text-slate-500">{suffix}</span>
+        )}
       </p>
-      <p className="mt-1 text-xs font-medium text-slate-500">{label}</p>
+      <p className="mt-1 text-xs font-medium text-slate-500 dark:text-slate-400">{label}</p>
     </div>
   );
 }

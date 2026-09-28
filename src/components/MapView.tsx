@@ -1,5 +1,7 @@
 import { APIProvider, Map, Marker, Polyline } from "@vis.gl/react-google-maps";
+import { useTheme } from "../context/ThemeContext";
 import { useSmoothedPosition } from "../hooks/useSmoothedPosition";
+import { DARK_MAP_STYLE } from "../lib/mapStyle";
 import { getVehicleIcon } from "../lib/markerIcon";
 import type { Position, Vehicle } from "../lib/types";
 
@@ -45,6 +47,7 @@ export function MapView({
   historyPath,
 }: MapViewProps) {
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+  const { theme } = useTheme();
 
   const knownPositions = vehicles
     .map((v) => positions[v.id])
@@ -54,7 +57,7 @@ export function MapView({
 
   if (!apiKey) {
     return (
-      <div className="flex h-full flex-1 items-center justify-center bg-slate-100 text-sm text-slate-500">
+      <div className="flex h-full flex-1 items-center justify-center bg-slate-100 text-sm text-slate-500 dark:bg-[#0d1220] dark:text-slate-400">
         Falta configurar VITE_GOOGLE_MAPS_API_KEY para mostrar el mapa.
       </div>
     );
@@ -69,6 +72,7 @@ export function MapView({
           defaultZoom={center ? 14 : 4}
           gestureHandling="greedy"
           disableDefaultUI={false}
+          styles={theme === "dark" ? DARK_MAP_STYLE : undefined}
         >
           {historyPath && historyPath.length > 1 && (
             <Polyline
@@ -103,7 +107,7 @@ export function MapView({
 
 function MapLegend() {
   return (
-    <div className="absolute bottom-4 left-4 z-0 flex flex-col gap-1.5 rounded-2xl border border-white bg-white px-2.5 py-2 text-[11px] text-slate-600 shadow-lg shadow-slate-300/40 sm:px-3 sm:text-xs">
+    <div className="absolute bottom-4 left-4 z-0 flex flex-col gap-1.5 rounded-2xl border border-white bg-white px-2.5 py-2 text-[11px] text-slate-600 shadow-lg shadow-slate-300/40 sm:px-3 sm:text-xs dark:border-white/10 dark:bg-[#111729] dark:text-slate-300 dark:shadow-black/40">
       <div className="flex items-center gap-2">
         <span className="h-2.5 w-2.5 rounded-full bg-red-600" />
         Apagado

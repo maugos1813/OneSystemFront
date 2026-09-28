@@ -5,6 +5,12 @@
     <link rel="icon" type="image/jpeg" href="/logo.jpg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>OneSystec</title>
+    <script>
+      // Applied before paint so a saved dark preference doesn't flash light first.
+      if (localStorage.getItem("onesystem.theme") === "dark") {
+        document.documentElement.classList.add("dark");
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

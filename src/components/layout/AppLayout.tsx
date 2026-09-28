@@ -8,16 +8,19 @@ import {
   LogOut,
   Map,
   MapPin,
+  Moon,
   PanelLeftClose,
   PanelLeftOpen,
   Settings,
   ShieldCheck,
   Smartphone,
+  Sun,
   Truck,
 } from "lucide-react";
 import { useState } from "react";
 import { Link, NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { useTheme } from "../../context/ThemeContext";
 import { trackGlow } from "../../lib/glow";
 import { AlertsPanel } from "../AlertsPanel";
 
@@ -43,10 +46,11 @@ function prefersOpenByDefault(): boolean {
 
 export function AppLayout() {
   const { currentUser, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const [navOpen, setNavOpen] = useState(prefersOpenByDefault);
 
   return (
-    <div className="flex h-screen bg-[#f5f6fb]">
+    <div className="flex h-screen bg-[#f5f6fb] dark:bg-[#0a0e1a]">
       {navOpen && (
         <div
           className="fixed inset-0 z-30 bg-slate-900/30 lg:hidden"
@@ -55,27 +59,27 @@ export function AppLayout() {
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-40 max-w-[85vw] overflow-hidden border-r border-violet-100 bg-white transition-all duration-200 lg:static lg:z-auto ${
+        className={`fixed inset-y-0 left-0 z-40 max-w-[85vw] overflow-hidden border-r border-violet-100 bg-white transition-all duration-200 lg:static lg:z-auto dark:border-white/5 dark:bg-[#0d1220] ${
           navOpen
             ? "w-64 translate-x-0"
             : "w-64 -translate-x-full lg:w-0 lg:translate-x-0 lg:border-transparent"
         }`}
       >
         <div className="flex h-full w-64 flex-col">
-          <div className="flex items-center justify-between gap-2 border-b border-violet-100 px-5 py-4">
+          <div className="flex items-center justify-between gap-2 border-b border-violet-100 px-5 py-4 dark:border-white/5">
             <Link to="/" className="flex min-w-0 items-center gap-2" title="Volver al portal OneSystec">
               <img
                 src="/logo.jpg"
                 alt="OneSystec"
                 className="h-9 w-9 shrink-0 rounded-2xl object-cover shadow-md shadow-blue-200/60"
               />
-              <span className="truncate text-lg font-semibold text-slate-900">
+              <span className="truncate text-lg font-semibold text-slate-900 dark:text-white">
                 One<span className="brand-text-gradient">Systec</span>
               </span>
             </Link>
             <button
               onClick={() => setNavOpen(false)}
-              className="shrink-0 rounded-lg p-1.5 text-slate-400 hover:bg-violet-50 hover:text-slate-700"
+              className="shrink-0 rounded-lg p-1.5 text-slate-400 hover:bg-violet-50 hover:text-slate-700 dark:hover:bg-white/5 dark:hover:text-white"
               aria-label="Ocultar menú"
             >
               <PanelLeftClose className="h-5 w-5" />
@@ -94,7 +98,7 @@ export function AppLayout() {
                   `glow flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition ${
                     isActive
                       ? "brand-button"
-                      : "text-slate-600 hover:bg-violet-50 hover:text-slate-900"
+                      : "text-slate-600 hover:bg-violet-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/5 dark:hover:text-white"
                   }`
                 }
               >
@@ -107,30 +111,39 @@ export function AppLayout() {
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex items-center justify-between gap-3 border-b border-violet-100 bg-white px-4 py-3 sm:px-6">
+        <header className="flex items-center justify-between gap-3 border-b border-violet-100 bg-white px-4 py-3 sm:px-6 dark:border-white/5 dark:bg-[#0d1220]">
           <div className="flex min-w-0 items-center gap-3">
             {!navOpen && (
               <button
                 onClick={() => setNavOpen(true)}
-                className="shrink-0 rounded-lg p-1.5 text-slate-500 hover:bg-violet-50 hover:text-slate-900"
+                className="shrink-0 rounded-lg p-1.5 text-slate-500 hover:bg-violet-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/5 dark:hover:text-white"
                 aria-label="Mostrar menú"
               >
                 <PanelLeftOpen className="h-5 w-5" />
               </button>
             )}
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-slate-900">
+              <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">
                 {currentUser?.orgName ?? "..."}
               </p>
-              <p className="hidden truncate text-xs text-slate-500 sm:block">{currentUser?.email}</p>
+              <p className="hidden truncate text-xs text-slate-500 sm:block dark:text-slate-400">
+                {currentUser?.email}
+              </p>
             </div>
           </div>
 
           <div className="flex shrink-0 items-center gap-2 sm:gap-4">
+            <button
+              onClick={toggleTheme}
+              aria-label={theme === "dark" ? "Activar tema claro" : "Activar tema oscuro"}
+              className="flex items-center rounded-xl p-2 text-slate-500 transition hover:bg-violet-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/5 dark:hover:text-white"
+            >
+              {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </button>
             <AlertsPanel />
             <button
               onClick={logout}
-              className="flex items-center gap-1.5 rounded-xl px-2 py-1.5 text-sm text-slate-500 transition hover:bg-violet-50 hover:text-slate-900 sm:px-3"
+              className="flex items-center gap-1.5 rounded-xl px-2 py-1.5 text-sm text-slate-500 transition hover:bg-violet-50 hover:text-slate-900 sm:px-3 dark:text-slate-400 dark:hover:bg-red-500/10 dark:hover:text-red-400"
             >
               <LogOut className="h-4 w-4" />
               <span className="hidden sm:inline">Salir</span>
@@ -138,7 +151,7 @@ export function AppLayout() {
           </div>
         </header>
 
-        <main className="min-h-0 flex-1">
+        <main className="min-h-0 flex-1 dark:bg-[#0a0e1a]">
           <Outlet />
         </main>
       </div>

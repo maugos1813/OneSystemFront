@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
-/* Class-based dark mode (a per-page toggle, not the OS preference) — see PortalPage.tsx. */
+/* Class-based dark mode (a saved preference, not the OS setting) — see ThemeContext.tsx,
+   which toggles the "dark" class on <html>. */
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
@@ -22,6 +23,10 @@ body,
 
 body {
   background: #f5f6fb;
+}
+
+.dark body {
+  background: #0a0e1a;
 }
 
 /*
@@ -50,6 +55,14 @@ body {
     border: 1px solid transparent;
     background:
       linear-gradient(white, white) padding-box,
+      var(--brand-gradient) border-box;
+  }
+  /* The gradient-border trick above paints its own background-image layer, which sits
+     on top of (and hides) any background-color utility — a plain dark:bg-* class can't
+     reach through it, so the dark fill has to be swapped in here instead. */
+  .dark .brand-border-glow {
+    background:
+      linear-gradient(#111729, #111729) padding-box,
       var(--brand-gradient) border-box;
   }
 

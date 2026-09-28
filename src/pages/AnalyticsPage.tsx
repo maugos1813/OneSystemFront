@@ -19,13 +19,15 @@ export function AnalyticsPage() {
   const odometerRanking = computeOdometerRanking(vehicles, positions);
 
   if (loading) {
-    return <div className="flex h-full items-center justify-center text-slate-500">Cargando...</div>;
+    return (
+      <div className="flex h-full items-center justify-center text-slate-500 dark:text-slate-400">Cargando...</div>
+    );
   }
 
   return (
-    <div className="h-full overflow-y-auto bg-slate-50 p-4 sm:p-6 lg:p-8">
-      <h1 className="text-xl font-semibold text-slate-900">Analíticas de flota</h1>
-      <p className="mb-6 text-sm text-slate-500">Resumen general de tus vehículos, hoy.</p>
+    <div className="h-full overflow-y-auto bg-slate-50 p-4 sm:p-6 lg:p-8 dark:bg-[#0a0e1a]">
+      <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Analíticas de flota</h1>
+      <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">Resumen general de tus vehículos, hoy.</p>
 
       <div className="mb-4 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
         <StatCard label="Vehículos" value={String(summary.total)} />

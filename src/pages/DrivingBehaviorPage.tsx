@@ -100,9 +100,9 @@ export function DrivingBehaviorPage() {
   const categoryLabel = selection === "overall" ? "General" : INCIDENT_LABELS[selection];
 
   return (
-    <div className="h-full overflow-y-auto bg-[#f5f6fb] p-4 sm:p-6 lg:p-8">
-      <h1 className="text-xl font-semibold text-slate-900">Conducción</h1>
-      <p className="mb-6 text-sm text-slate-500">
+    <div className="h-full overflow-y-auto bg-[#f5f6fb] p-4 sm:p-6 lg:p-8 dark:bg-[#0a0e1a]">
+      <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Conducción</h1>
+      <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">
         Puntaje de manejo por vehículo — hacé click en cualquier puntaje para ver dónde y cuándo pasó cada
         incidente, y comparar toda la flota en esa métrica.
       </p>
@@ -113,7 +113,9 @@ export function DrivingBehaviorPage() {
             key={v.id}
             onClick={() => setSelectedVehicleId(v.id)}
             className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
-              v.id === selectedVehicleId ? "brand-button" : "bg-white text-slate-500 hover:bg-violet-50"
+              v.id === selectedVehicleId
+                ? "brand-button"
+                : "bg-white text-slate-500 hover:bg-violet-50 dark:bg-[#111729] dark:text-slate-400 dark:hover:bg-white/10"
             }`}
           >
             {v.name}
@@ -127,16 +129,18 @@ export function DrivingBehaviorPage() {
             key={r.label}
             onClick={() => setRangeHours(r.hours)}
             className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${
-              r.hours === rangeHours ? "bg-slate-900 text-white" : "bg-white text-slate-500 hover:bg-slate-100"
+              r.hours === rangeHours
+                ? "bg-slate-900 text-white dark:bg-blue-600"
+                : "bg-white text-slate-500 hover:bg-slate-100 dark:bg-[#111729] dark:text-slate-400 dark:hover:bg-white/10"
             }`}
           >
             {r.label}
           </button>
         ))}
 
-        <span className="mx-1 h-5 w-px bg-slate-200" />
+        <span className="mx-1 h-5 w-px bg-slate-200 dark:bg-white/10" />
 
-        <label className="flex items-center gap-2 text-sm text-slate-500">
+        <label className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
           Límite de velocidad
           <input
             type="number"
@@ -144,17 +148,19 @@ export function DrivingBehaviorPage() {
             max={300}
             value={speedLimit}
             onChange={(e) => setSpeedLimit(Number(e.target.value) || 0)}
-            className="field-input w-16 rounded-lg border border-slate-300 px-2 py-1 text-sm"
+            className="field-input w-16 rounded-lg border border-slate-300 px-2 py-1 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
           />
           km/h
         </label>
       </div>
 
       {!fleetLoading && vehicles.length === 0 && (
-        <p className="text-sm text-slate-500">Todavía no hay vehículos cargados.</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400">Todavía no hay vehículos cargados.</p>
       )}
 
-      {vehicle && loading && <p className="text-sm text-slate-500">Calculando puntajes...</p>}
+      {vehicle && loading && (
+        <p className="text-sm text-slate-500 dark:text-slate-400">Calculando puntajes...</p>
+      )}
 
       {vehicle && !loading && (
         <>

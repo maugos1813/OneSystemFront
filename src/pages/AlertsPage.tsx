@@ -35,7 +35,10 @@ function AlertCard({ alert }: { alert: Alert }) {
   const meta = ALERT_META[alert.type];
   const Icon = meta.icon;
   return (
-    <div onMouseMove={trackGlow} className="glow float-card flex items-center gap-3 rounded-2xl border border-white bg-white p-4 shadow-lg shadow-slate-200/50">
+    <div
+      onMouseMove={trackGlow}
+      className="glow float-card flex items-center gap-3 rounded-2xl border border-white bg-white p-4 shadow-lg shadow-slate-200/50 dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40"
+    >
       <div
         className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
         style={{ backgroundColor: `${meta.color}1a`, color: meta.color }}
@@ -43,10 +46,12 @@ function AlertCard({ alert }: { alert: Alert }) {
         <Icon className="h-5 w-5" />
       </div>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-semibold text-slate-900">{alert.vehicleName}</p>
-        <p className="truncate text-xs text-slate-500">{alert.message}</p>
+        <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">{alert.vehicleName}</p>
+        <p className="truncate text-xs text-slate-500 dark:text-slate-400">{alert.message}</p>
       </div>
-      {alert.since && <span className="shrink-0 text-xs text-slate-400">{relativeTime(alert.since)}</span>}
+      {alert.since && (
+        <span className="shrink-0 text-xs text-slate-400 dark:text-slate-500">{relativeTime(alert.since)}</span>
+      )}
     </div>
   );
 }
@@ -60,15 +65,17 @@ export function AlertsPage() {
   }, {});
 
   return (
-    <div className="h-full overflow-y-auto bg-[#f5f6fb] p-4 sm:p-6 lg:p-8">
+    <div className="h-full overflow-y-auto bg-[#f5f6fb] p-4 sm:p-6 lg:p-8 dark:bg-[#0a0e1a]">
       <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-slate-900">Alertas</h1>
-          <p className="text-sm text-slate-500">Todo lo que está activo ahora mismo en tu flota.</p>
+          <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Alertas</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Todo lo que está activo ahora mismo en tu flota.
+          </p>
         </div>
         <Link
           to="/ajustes"
-          className="flex shrink-0 items-center gap-1.5 rounded-xl bg-white px-3 py-2 text-sm font-medium text-slate-600 shadow-sm transition hover:bg-slate-50"
+          className="flex shrink-0 items-center gap-1.5 rounded-xl bg-white px-3 py-2 text-sm font-medium text-slate-600 shadow-sm transition hover:bg-slate-50 dark:bg-[#111729] dark:text-slate-300 dark:hover:bg-white/10"
         >
           <SettingsIcon className="h-4 w-4" />
           Configurar alertas
@@ -95,10 +102,10 @@ export function AlertsPage() {
       )}
 
       {alerts.length === 0 && (
-        <div className="glow float-card flex flex-col items-center gap-2 rounded-3xl border border-white bg-white p-10 text-center shadow-lg shadow-slate-200/50">
+        <div className="glow float-card flex flex-col items-center gap-2 rounded-3xl border border-white bg-white p-10 text-center shadow-lg shadow-slate-200/50 dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40">
           <BellRing className="h-8 w-8 text-emerald-500" />
-          <p className="text-sm font-medium text-slate-700">Sin alertas activas.</p>
-          <p className="text-xs text-slate-400">Toda la flota está dentro de lo esperado.</p>
+          <p className="text-sm font-medium text-slate-700 dark:text-slate-300">Sin alertas activas.</p>
+          <p className="text-xs text-slate-400 dark:text-slate-500">Toda la flota está dentro de lo esperado.</p>
         </div>
       )}
 

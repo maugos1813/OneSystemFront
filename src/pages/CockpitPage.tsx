@@ -27,12 +27,14 @@ export function CockpitPage() {
   const { score, harshEvents, tripKm } = useTodayTripStats(vehicle?.id ?? null);
 
   if (loading) {
-    return <div className="flex h-full items-center justify-center text-slate-500">Cargando...</div>;
+    return (
+      <div className="flex h-full items-center justify-center text-slate-500 dark:text-slate-400">Cargando...</div>
+    );
   }
 
   if (!vehicle) {
     return (
-      <div className="flex h-full items-center justify-center text-slate-500">
+      <div className="flex h-full items-center justify-center text-slate-500 dark:text-slate-400">
         No hay vehículos cargados todavía.
       </div>
     );
@@ -42,7 +44,7 @@ export function CockpitPage() {
   const totalKm = Math.round(Number(position?.ioData[AVL_ID.TOTAL_ODOMETER] ?? 0) / 100) / 10;
 
   return (
-    <div className="h-full overflow-y-auto bg-violet-50 p-4 sm:p-6 lg:p-8">
+    <div className="h-full overflow-y-auto bg-violet-50 p-4 sm:p-6 lg:p-8 dark:bg-[#0a0e1a]">
       <div className="mx-auto max-w-5xl">
         {vehicles.length > 1 && (
           <div className="mb-6 flex flex-wrap gap-2">
@@ -53,7 +55,7 @@ export function CockpitPage() {
                 className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
                   v.id === selectedId
                     ? "brand-button"
-                    : "bg-white text-slate-500 hover:bg-violet-100"
+                    : "bg-white text-slate-500 hover:bg-violet-100 dark:bg-[#111729] dark:text-slate-400 dark:hover:bg-white/10"
                 }`}
               >
                 {v.name}
@@ -64,19 +66,19 @@ export function CockpitPage() {
 
         <div className="mb-4 flex items-center justify-between gap-2">
           <div className="min-w-0">
-            <h1 className="truncate text-lg font-bold tracking-wide text-slate-900 sm:text-xl">
+            <h1 className="truncate text-lg font-bold tracking-wide text-slate-900 sm:text-xl dark:text-white">
               {vehicle.name.toUpperCase()}
             </h1>
-            {vehicle.plate && <p className="text-sm text-slate-400">{vehicle.plate}</p>}
+            {vehicle.plate && <p className="text-sm text-slate-400 dark:text-slate-500">{vehicle.plate}</p>}
           </div>
-          <p className="shrink-0 text-sm text-slate-400">
+          <p className="shrink-0 text-sm text-slate-400 dark:text-slate-500">
             {new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
           </p>
         </div>
 
-        <div className="brand-border-glow grid grid-cols-1 gap-4 rounded-3xl p-4 shadow-lg shadow-blue-100/40 sm:p-6 lg:grid-cols-[260px_1fr_260px]">
-          <div onMouseMove={trackGlow} className="glow float-card rounded-2xl bg-violet-50/60 p-3">
-            <p className="mb-2 px-1 text-xs font-semibold tracking-wide text-slate-400 uppercase">
+        <div className="brand-border-glow grid grid-cols-1 gap-4 rounded-3xl p-4 shadow-lg shadow-blue-100/40 sm:p-6 lg:grid-cols-[260px_1fr_260px] dark:bg-[#111729] dark:shadow-black/40">
+          <div onMouseMove={trackGlow} className="glow float-card rounded-2xl bg-violet-50/60 p-3 dark:bg-white/5">
+            <p className="mb-2 px-1 text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-500">
               Ubicación
             </p>
             <MiniMapCard position={position} />
@@ -86,8 +88,8 @@ export function CockpitPage() {
             <SpeedGauge speed={smoothed?.speed ?? 0} state={state} />
           </div>
 
-          <div onMouseMove={trackGlow} className="glow float-card rounded-2xl bg-violet-50/60 p-4">
-            <p className="mb-4 px-1 text-xs font-semibold tracking-wide text-slate-400 uppercase">
+          <div onMouseMove={trackGlow} className="glow float-card rounded-2xl bg-violet-50/60 p-4 dark:bg-white/5">
+            <p className="mb-4 px-1 text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-500">
               Estado del vehículo
             </p>
             <StatusList position={position} />
@@ -97,7 +99,7 @@ export function CockpitPage() {
         <div className="mt-4 grid grid-cols-2 gap-4 lg:grid-cols-12">
           <div
             onMouseMove={trackGlow}
-            className="glow float-card col-span-1 flex items-center justify-center rounded-3xl border border-white bg-white p-4 shadow-lg shadow-slate-200/50 lg:col-span-2"
+            className="glow float-card col-span-1 flex items-center justify-center rounded-3xl border border-white bg-white p-4 shadow-lg shadow-slate-200/50 lg:col-span-2 dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40"
           >
             <GForceGauge eventCount={harshEvents.length} />
           </div>
@@ -106,7 +108,7 @@ export function CockpitPage() {
           </div>
           <div
             onMouseMove={trackGlow}
-            className="glow float-card col-span-2 rounded-3xl border border-white bg-white p-4 shadow-lg shadow-slate-200/50 lg:col-span-4"
+            className="glow float-card col-span-2 rounded-3xl border border-white bg-white p-4 shadow-lg shadow-slate-200/50 lg:col-span-4 dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40"
           >
             <DrivingScoreCard score={score} events={harshEvents} />
           </div>
@@ -115,7 +117,7 @@ export function CockpitPage() {
           </div>
           <div
             onMouseMove={trackGlow}
-            className="glow float-card col-span-1 flex items-center justify-center rounded-3xl border border-white bg-white p-4 shadow-lg shadow-slate-200/50 lg:col-span-2"
+            className="glow float-card col-span-1 flex items-center justify-center rounded-3xl border border-white bg-white p-4 shadow-lg shadow-slate-200/50 lg:col-span-2 dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40"
           >
             <StatePills current={state} />
           </div>

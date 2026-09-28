@@ -15,15 +15,17 @@ function Row({
 }) {
   return (
     <div className="flex items-center gap-3">
-      <div className="brand-gradient-soft flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-blue-600">
+      <div className="brand-gradient-soft flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-blue-600 dark:bg-blue-500/15 dark:text-blue-400">
         {icon}
       </div>
       <div className="min-w-0 flex-1">
         <div className="mb-1 flex items-center justify-between">
-          <span className="text-xs font-medium tracking-wide text-slate-400 uppercase">{label}</span>
-          <span className="text-sm font-semibold text-slate-900">{value}</span>
+          <span className="text-xs font-medium tracking-wide text-slate-400 uppercase dark:text-slate-500">
+            {label}
+          </span>
+          <span className="text-sm font-semibold text-slate-900 dark:text-white">{value}</span>
         </div>
-        <div className="h-1.5 rounded-full bg-violet-100">
+        <div className="h-1.5 rounded-full bg-violet-100 dark:bg-white/10">
           <div
             className="brand-gradient h-1.5 rounded-full transition-[width] duration-700 ease-out"
             style={{ width: `${Math.max(0, Math.min(100, pct))}%` }}
@@ -36,7 +38,7 @@ function Row({
 
 export function StatusList({ position }: { position: Position | null }) {
   if (!position) {
-    return <p className="text-sm text-slate-400">Sin datos todavía.</p>;
+    return <p className="text-sm text-slate-400 dark:text-slate-500">Sin datos todavía.</p>;
   }
 
   const externalVoltage = Number(position.ioData[AVL_ID.EXTERNAL_VOLTAGE] ?? 0) / 1000;

@@ -11,7 +11,7 @@ export function AlertsPanel() {
     <div className="relative">
       <button
         onClick={() => setOpen((o) => !o)}
-        className="relative rounded-xl p-2 text-slate-500 transition hover:bg-violet-50 hover:text-slate-900"
+        className="relative rounded-xl p-2 text-slate-500 transition hover:bg-violet-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/5 dark:hover:text-white"
         aria-label="Alertas"
       >
         <Bell className="h-5 w-5" />
@@ -25,13 +25,17 @@ export function AlertsPanel() {
       {open && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 z-20 mt-2 w-[85vw] max-w-80 rounded-2xl border border-violet-100 bg-white p-2 shadow-lg shadow-violet-100">
-            <p className="px-2 py-1 text-xs font-semibold tracking-wide text-slate-400 uppercase">Alertas</p>
-            {alerts.length === 0 && <p className="px-2 py-3 text-sm text-slate-500">Sin alertas activas.</p>}
+          <div className="absolute right-0 z-20 mt-2 w-[85vw] max-w-80 rounded-2xl border border-violet-100 bg-white p-2 shadow-lg shadow-violet-100 dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40">
+            <p className="px-2 py-1 text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-500">
+              Alertas
+            </p>
+            {alerts.length === 0 && (
+              <p className="px-2 py-3 text-sm text-slate-500 dark:text-slate-400">Sin alertas activas.</p>
+            )}
             {alerts.slice(0, 6).map((alert, i) => (
               <div
                 key={`${alert.vehicleId}-${alert.type}-${i}`}
-                className="rounded-lg px-2 py-2 text-sm text-slate-700 hover:bg-violet-50"
+                className="rounded-lg px-2 py-2 text-sm text-slate-700 hover:bg-violet-50 dark:text-slate-300 dark:hover:bg-white/5"
               >
                 {alert.message}
               </div>
@@ -40,7 +44,7 @@ export function AlertsPanel() {
               <Link
                 to="/alertas"
                 onClick={() => setOpen(false)}
-                className="mt-1 block rounded-lg px-2 py-2 text-center text-xs font-semibold text-violet-600 hover:bg-violet-50"
+                className="mt-1 block rounded-lg px-2 py-2 text-center text-xs font-semibold text-violet-600 hover:bg-violet-50 dark:text-violet-400 dark:hover:bg-white/5"
               >
                 Ver todas ({alerts.length})
               </Link>

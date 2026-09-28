@@ -58,34 +58,36 @@ export function DeviceHealthPage() {
   const warningCount = rows.filter((r) => r.severity === "warning").length;
 
   return (
-    <div className="h-full overflow-y-auto bg-[#f5f6fb] p-4 sm:p-6 lg:p-8">
-      <h1 className="text-xl font-semibold text-slate-900">Salud del dispositivo</h1>
-      <p className="mb-6 text-sm text-slate-500">
+    <div className="h-full overflow-y-auto bg-[#f5f6fb] p-4 sm:p-6 lg:p-8 dark:bg-[#0a0e1a]">
+      <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Salud del dispositivo</h1>
+      <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">
         Estado de conectividad y hardware de todos los dispositivos de tu flota.
       </p>
 
       {!loading && (
         <div className="mb-6 flex flex-wrap gap-2">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-red-50 px-3 py-1 text-xs font-medium text-red-600">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-red-50 px-3 py-1 text-xs font-medium text-red-600 dark:bg-red-500/15 dark:text-red-400">
             {criticalCount} con problema crítico
           </span>
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-600">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-600 dark:bg-amber-500/15 dark:text-amber-400">
             {warningCount} para revisar
           </span>
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-600">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400">
             {rows.length - criticalCount - warningCount} saludables
           </span>
         </div>
       )}
 
-      {loading && <p className="text-sm text-slate-500">Cargando...</p>}
+      {loading && <p className="text-sm text-slate-500 dark:text-slate-400">Cargando...</p>}
 
-      {!loading && rows.length === 0 && <p className="text-sm text-slate-500">Todavía no hay dispositivos.</p>}
+      {!loading && rows.length === 0 && (
+        <p className="text-sm text-slate-500 dark:text-slate-400">Todavía no hay dispositivos.</p>
+      )}
 
       {!loading && rows.length > 0 && (
-        <div className="float-card overflow-x-auto rounded-2xl border border-white bg-white shadow-lg shadow-slate-200/50">
+        <div className="float-card overflow-x-auto rounded-2xl border border-white bg-white shadow-lg shadow-slate-200/50 dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40">
           <table className="w-full min-w-[760px] text-left text-sm">
-            <thead className="border-b border-violet-100 bg-violet-50/60 text-xs text-slate-500 uppercase">
+            <thead className="border-b border-violet-100 bg-violet-50/60 text-xs text-slate-500 uppercase dark:border-white/10 dark:bg-white/5 dark:text-slate-400">
               <tr>
                 <th className="px-4 py-2 font-medium">Estado</th>
                 <th className="px-4 py-2 font-medium">Vehículo</th>
@@ -97,7 +99,7 @@ export function DeviceHealthPage() {
                 <th className="px-4 py-2 text-right font-medium">Señal GSM</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 dark:divide-white/10">
               {rows.map((row) => (
                 <tr
                   key={row.device.id}
@@ -114,17 +116,21 @@ export function DeviceHealthPage() {
                       {row.offline ? "Desconectado" : row.severity === "ok" ? "Saludable" : "Revisar"}
                     </span>
                   </td>
-                  <td className="px-4 py-3 font-medium text-slate-900">{row.vehicleName}</td>
-                  <td className="px-4 py-3 text-slate-600">{row.device.imei}</td>
-                  <td className="px-4 py-3 text-slate-500">{relativeTime(row.device.lastSeenAt)}</td>
-                  <td className="px-4 py-3 text-right tabular-nums text-slate-600">
+                  <td className="px-4 py-3 font-medium text-slate-900 dark:text-white">{row.vehicleName}</td>
+                  <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{row.device.imei}</td>
+                  <td className="px-4 py-3 text-slate-500 dark:text-slate-400">
+                    {relativeTime(row.device.lastSeenAt)}
+                  </td>
+                  <td className="px-4 py-3 text-right tabular-nums text-slate-600 dark:text-slate-300">
                     {row.batteryVoltage !== null ? `${row.batteryVoltage.toFixed(1)} V` : "—"}
                   </td>
-                  <td className="px-4 py-3 text-right tabular-nums text-slate-600">
+                  <td className="px-4 py-3 text-right tabular-nums text-slate-600 dark:text-slate-300">
                     {row.externalVoltage !== null ? `${row.externalVoltage.toFixed(1)} V` : "—"}
                   </td>
-                  <td className="px-4 py-3 text-right tabular-nums text-slate-600">{row.satellites ?? "—"}</td>
-                  <td className="px-4 py-3 text-right tabular-nums text-slate-600">
+                  <td className="px-4 py-3 text-right tabular-nums text-slate-600 dark:text-slate-300">
+                    {row.satellites ?? "—"}
+                  </td>
+                  <td className="px-4 py-3 text-right tabular-nums text-slate-600 dark:text-slate-300">
                     {row.gsmSignal !== null ? `${row.gsmSignal}/5` : "—"}
                   </td>
                 </tr>

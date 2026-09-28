@@ -1,5 +1,6 @@
 import { APIProvider, Map, Marker, Polyline } from "@vis.gl/react-google-maps";
-import { MUTED_MAP_STYLE } from "../../lib/mapStyle";
+import { useTheme } from "../../context/ThemeContext";
+import { DARK_MAP_STYLE, MUTED_MAP_STYLE } from "../../lib/mapStyle";
 import { buildRouteSegments } from "../../lib/speedTimeline";
 import type { Position } from "../../lib/types";
 
@@ -25,10 +26,11 @@ function currentPositionIcon(overLimit: boolean): google.maps.Symbol | undefined
  * marker for the current playback position — no swarm of per-point pins. */
 export function HistoryMapView({ positions, currentPosition, speedLimit }: HistoryMapViewProps) {
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+  const { theme } = useTheme();
 
   if (!apiKey) {
     return (
-      <div className="flex h-full items-center justify-center text-sm text-slate-400">
+      <div className="flex h-full items-center justify-center text-sm text-slate-400 dark:text-slate-500">
         Falta configurar VITE_GOOGLE_MAPS_API_KEY.
       </div>
     );
@@ -45,7 +47,7 @@ export function HistoryMapView({ positions, currentPosition, speedLimit }: Histo
         defaultZoom={14}
         gestureHandling="greedy"
         disableDefaultUI
-        styles={MUTED_MAP_STYLE}
+        styles={theme === "dark" ? DARK_MAP_STYLE : MUTED_MAP_STYLE}
       >
         {segments.map((segment, i) => (
           <Polyline

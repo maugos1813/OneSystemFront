@@ -29,7 +29,14 @@ export function StateDonut({ entries }: { entries: StateDistributionEntry[] }) {
           </linearGradient>
         </defs>
         <g transform={`rotate(-90 ${SIZE / 2} ${SIZE / 2})`}>
-          <circle cx={SIZE / 2} cy={SIZE / 2} r={RADIUS} fill="none" stroke="#f1f5f9" strokeWidth={STROKE} />
+          <circle
+            cx={SIZE / 2}
+            cy={SIZE / 2}
+            r={RADIUS}
+            fill="none"
+            className="stroke-slate-100 dark:stroke-white/10"
+            strokeWidth={STROKE}
+          />
           {total > 0 &&
             active.map((entry) => {
               const dash = (entry.count / total) * CIRCUMFERENCE - GAP;
@@ -56,7 +63,7 @@ export function StateDonut({ entries }: { entries: StateDistributionEntry[] }) {
           y={SIZE / 2}
           textAnchor="middle"
           dominantBaseline="central"
-          className="fill-slate-900 text-3xl font-semibold"
+          className="fill-slate-900 text-3xl font-semibold dark:fill-white"
         >
           {total}
         </text>
@@ -64,7 +71,7 @@ export function StateDonut({ entries }: { entries: StateDistributionEntry[] }) {
 
       <ul className="space-y-2">
         {entries.map((entry) => (
-          <li key={entry.state} className="flex items-center gap-2 text-sm text-slate-600">
+          <li key={entry.state} className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
             <span
               className="h-2.5 w-2.5 rounded-full"
               style={{
@@ -75,7 +82,7 @@ export function StateDonut({ entries }: { entries: StateDistributionEntry[] }) {
               }}
             />
             {STATE_META[entry.state].label}
-            <span className="text-slate-400">{entry.count}</span>
+            <span className="text-slate-400 dark:text-slate-500">{entry.count}</span>
           </li>
         ))}
       </ul>

@@ -40,7 +40,7 @@ function ProductCheckboxes({
       {products.map((product) => (
         <label
           key={product.key}
-          className="flex items-center gap-1.5 text-sm text-slate-700"
+          className="flex items-center gap-1.5 text-sm text-slate-700 dark:text-slate-300"
         >
           <input
             type="checkbox"
@@ -107,13 +107,13 @@ function MemberRow({
     JSON.stringify([...member.productKeys].sort());
 
   return (
-    <div className="rounded-xl bg-slate-50 px-3 py-3">
+    <div className="rounded-xl bg-slate-50 px-3 py-3 dark:bg-white/5">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="min-w-0">
-          <p className="truncate text-sm font-medium text-slate-900">
+          <p className="truncate text-sm font-medium text-slate-900 dark:text-white">
             {member.email}
           </p>
-          {isSelf && <p className="text-xs text-slate-400">Vos</p>}
+          {isSelf && <p className="text-xs text-slate-400 dark:text-slate-500">Vos</p>}
         </div>
 
         {canChangeRole ? (
@@ -121,21 +121,21 @@ function MemberRow({
             value={member.role}
             disabled={savingRole}
             onChange={(e) => handleRoleChange(e.target.value as TeamRole)}
-            className="field-input rounded-lg border border-slate-300 px-2 py-1 text-sm disabled:opacity-50"
+            className="field-input rounded-lg border border-slate-300 px-2 py-1 text-sm disabled:opacity-50 dark:border-white/10 dark:bg-white/5 dark:text-white"
           >
             <option value="admin">Admin</option>
             <option value="viewer">Usuario</option>
           </select>
         ) : (
-          <span className="rounded-full bg-violet-100 px-2.5 py-1 text-xs font-medium text-violet-700">
+          <span className="rounded-full bg-violet-100 px-2.5 py-1 text-xs font-medium text-violet-700 dark:bg-violet-500/15 dark:text-violet-300">
             {ROLE_LABEL[member.role]}
           </span>
         )}
       </div>
 
       {member.role === "viewer" && (
-        <div className="mt-3 border-t border-slate-200 pt-3">
-          <p className="mb-2 text-xs font-medium tracking-wide text-slate-400 uppercase">
+        <div className="mt-3 border-t border-slate-200 pt-3 dark:border-white/10">
+          <p className="mb-2 text-xs font-medium tracking-wide text-slate-400 uppercase dark:text-slate-500">
             Acceso a cards
           </p>
           <ProductCheckboxes
@@ -153,7 +153,7 @@ function MemberRow({
             </button>
           )}
           {savedProducts && (
-            <span className="ml-2 text-xs font-medium text-emerald-600">
+            <span className="ml-2 text-xs font-medium text-emerald-600 dark:text-emerald-400">
               Guardado ✓
             </span>
           )}
@@ -217,18 +217,18 @@ export function TeamPage() {
 
   if (loading) {
     return (
-      <div className="flex h-full items-center justify-center text-slate-500">
+      <div className="flex h-full items-center justify-center text-slate-500 dark:text-slate-400">
         Cargando...
       </div>
     );
   }
 
   return (
-    <div className="h-full overflow-y-auto bg-[#f5f6fb]">
-      <header className="border-b border-violet-100 bg-white px-4 py-4 sm:px-8">
+    <div className="h-full overflow-y-auto bg-[#f5f6fb] dark:bg-[#0a0e1a]">
+      <header className="border-b border-violet-100 bg-white px-4 py-4 sm:px-8 dark:border-white/5 dark:bg-[#0d1220]">
         <Link
           to="/"
-          className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-900"
+          className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
         >
           <ArrowLeft className="h-4 w-4" />
           Volver al portal
@@ -236,8 +236,8 @@ export function TeamPage() {
       </header>
 
       <div className="p-4 sm:p-6 lg:p-8">
-        <h1 className="text-xl font-semibold text-slate-900">Equipo</h1>
-        <p className="mb-6 text-sm text-slate-500">
+        <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Equipo</h1>
+        <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">
           Quién puede entrar a tu cuenta de OneSystec, y a qué cards tiene
           acceso cada uno.
         </p>
@@ -252,7 +252,7 @@ export function TeamPage() {
                   placeholder="Email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="field-input min-w-0 flex-1 rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                  className="field-input min-w-0 flex-1 rounded-xl border border-slate-300 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
                 />
                 <input
                   type="password"
@@ -261,14 +261,14 @@ export function TeamPage() {
                   placeholder="Contraseña (mínimo 8 caracteres)"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="field-input min-w-0 flex-1 rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                  className="field-input min-w-0 flex-1 rounded-xl border border-slate-300 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
                 />
                 <select
                   value={role}
                   onChange={(e) =>
                     setRole(e.target.value as "admin" | "viewer")
                   }
-                  className="field-input rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                  className="field-input rounded-xl border border-slate-300 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
                 >
                   <option value="viewer">Usuario</option>
                   <option value="admin">Admin</option>
@@ -277,7 +277,7 @@ export function TeamPage() {
 
               {role === "viewer" && (
                 <div>
-                  <p className="mb-2 text-xs font-medium tracking-wide text-slate-400 uppercase">
+                  <p className="mb-2 text-xs font-medium tracking-wide text-slate-400 uppercase dark:text-slate-500">
                     Acceso a cards
                   </p>
                   <ProductCheckboxes

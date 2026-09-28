@@ -32,18 +32,18 @@ export function VehicleList({
       {open && <div className="fixed inset-0 z-20 bg-slate-900/30 lg:hidden" onClick={onClose} />}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-30 max-w-[85vw] overflow-hidden border-r border-violet-100 bg-white transition-all duration-200 lg:static lg:z-auto ${
+        className={`fixed inset-y-0 left-0 z-30 max-w-[85vw] overflow-hidden border-r border-violet-100 bg-white transition-all duration-200 lg:static lg:z-auto dark:border-white/5 dark:bg-[#0d1220] ${
           open
             ? "w-80 translate-x-0 lg:w-72"
             : "w-80 -translate-x-full lg:w-0 lg:translate-x-0 lg:border-transparent"
         }`}
       >
         <div className="flex h-full w-80 flex-col overflow-y-auto lg:w-72">
-          <div className="flex items-center justify-between border-b border-violet-100 px-4 py-3">
-            <h2 className="text-sm font-semibold text-slate-900">Vehículos</h2>
+          <div className="flex items-center justify-between border-b border-violet-100 px-4 py-3 dark:border-white/5">
+            <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Vehículos</h2>
             <button
               onClick={onClose}
-              className="rounded-lg p-1.5 text-slate-400 hover:bg-violet-50 hover:text-slate-700"
+              className="rounded-lg p-1.5 text-slate-400 hover:bg-violet-50 hover:text-slate-700 dark:hover:bg-white/5 dark:hover:text-white"
               aria-label="Ocultar lista"
             >
               <PanelLeftClose className="h-4 w-4" />
@@ -51,7 +51,7 @@ export function VehicleList({
           </div>
 
           {vehicles.length === 0 && (
-            <p className="p-4 text-sm text-slate-500">No hay vehículos cargados todavía.</p>
+            <p className="p-4 text-sm text-slate-500 dark:text-slate-400">No hay vehículos cargados todavía.</p>
           )}
 
           {vehicles.map((vehicle) => {
@@ -66,12 +66,12 @@ export function VehicleList({
                   if (isOffCanvasSize()) onClose();
                 }}
                 onMouseMove={trackGlow}
-                className={`glow flex w-full flex-col gap-1 border-b border-slate-100 px-4 py-3 text-left transition ${
-                  selected ? "brand-gradient-soft" : "hover:bg-slate-50"
+                className={`glow flex w-full flex-col gap-1 border-b border-slate-100 px-4 py-3 text-left transition dark:border-white/5 ${
+                  selected ? "brand-gradient-soft dark:bg-blue-500/15" : "hover:bg-slate-50 dark:hover:bg-white/5"
                 }`}
               >
-                <span className="font-medium text-slate-900">{vehicle.name}</span>
-                {vehicle.plate && <span className="text-xs text-slate-500">{vehicle.plate}</span>}
+                <span className="font-medium text-slate-900 dark:text-white">{vehicle.name}</span>
+                {vehicle.plate && <span className="text-xs text-slate-500 dark:text-slate-400">{vehicle.plate}</span>}
                 <StatusBadge lastSeenAt={device?.lastSeenAt ?? null} />
               </button>
             );

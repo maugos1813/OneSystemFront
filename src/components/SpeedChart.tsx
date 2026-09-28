@@ -25,7 +25,9 @@ function buildPath(positions: Position[]): { line: string; area: string; maxSpee
 
 export function SpeedChart({ positions }: { positions: Position[] }) {
   if (positions.length < 2) {
-    return <p className="text-sm text-slate-400">No hay suficientes datos en este rango.</p>;
+    return (
+      <p className="text-sm text-slate-400 dark:text-slate-500">No hay suficientes datos en este rango.</p>
+    );
   }
 
   const { line, area, maxSpeed } = buildPath(positions);
@@ -35,10 +37,16 @@ export function SpeedChart({ positions }: { positions: Position[] }) {
   return (
     <div>
       <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} className="w-full" preserveAspectRatio="none">
-        <path d={area} fill="#ede9fe" />
-        <path d={line} fill="none" stroke="#7c3aed" strokeWidth={2} strokeLinejoin="round" />
+        <path d={area} className="fill-violet-100 dark:fill-blue-500/15" />
+        <path
+          d={line}
+          fill="none"
+          className="stroke-violet-600 dark:stroke-blue-400"
+          strokeWidth={2}
+          strokeLinejoin="round"
+        />
       </svg>
-      <div className="mt-1 flex justify-between text-xs text-slate-500">
+      <div className="mt-1 flex justify-between text-xs text-slate-500 dark:text-slate-400">
         <span>Máx {maxSpeed} km/h</span>
         <span>Prom {avg} km/h</span>
       </div>

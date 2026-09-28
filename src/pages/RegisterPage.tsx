@@ -23,12 +23,12 @@ export function RegisterPage() {
       <form
         onSubmit={handleSubmit}
         onMouseMove={trackGlow}
-        className="glow w-full max-w-sm rounded-3xl bg-white p-6 shadow-xl shadow-slate-200/60 sm:p-8"
+        className="glow w-full max-w-sm rounded-3xl bg-white p-6 shadow-xl shadow-slate-200/60 sm:p-8 dark:border dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40"
       >
-        <h1 className="mb-1 text-xl font-semibold text-slate-900">Creá tu cuenta</h1>
-        <p className="mb-6 text-sm text-slate-500">Empezá a monitorear tu flota en minutos</p>
+        <h1 className="mb-1 text-xl font-semibold text-slate-900 dark:text-white">Creá tu cuenta</h1>
+        <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">Empezá a monitorear tu flota en minutos</p>
 
-        <label className="mb-1 block text-sm font-medium text-slate-700" htmlFor="orgName">
+        <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300" htmlFor="orgName">
           Nombre de la empresa
         </label>
         <input
@@ -38,10 +38,10 @@ export function RegisterPage() {
           minLength={2}
           value={orgName}
           onChange={(e) => setOrgName(e.target.value)}
-          className="field-input mb-4 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+          className="field-input mb-4 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
         />
 
-        <label className="mb-1 block text-sm font-medium text-slate-700" htmlFor="email">
+        <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300" htmlFor="email">
           Email
         </label>
         <input
@@ -50,10 +50,10 @@ export function RegisterPage() {
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="field-input mb-4 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+          className="field-input mb-4 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
         />
 
-        <label className="mb-1 block text-sm font-medium text-slate-700" htmlFor="password">
+        <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300" htmlFor="password">
           Contraseña
         </label>
         <input
@@ -63,11 +63,11 @@ export function RegisterPage() {
           minLength={8}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="field-input mb-4 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+          className="field-input mb-4 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
         />
-        <p className="-mt-3 mb-4 text-xs text-slate-400">Mínimo 8 caracteres</p>
+        <p className="-mt-3 mb-4 text-xs text-slate-400 dark:text-slate-500">Mínimo 8 caracteres</p>
 
-        {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
+        {error && <p className="mb-4 text-sm text-red-600 dark:text-red-400">{error}</p>}
 
         <button
           type="submit"
@@ -77,9 +77,9 @@ export function RegisterPage() {
           {loading ? "Creando cuenta..." : "Crear cuenta"}
         </button>
 
-        <p className="mt-4 text-center text-sm text-slate-500">
+        <p className="mt-4 text-center text-sm text-slate-500 dark:text-slate-400">
           ¿Ya tenés cuenta?{" "}
-          <Link to="/login" className="font-medium text-blue-600 hover:underline">
+          <Link to="/login" className="font-medium text-blue-600 hover:underline dark:text-blue-400">
             Iniciá sesión
           </Link>
         </p>

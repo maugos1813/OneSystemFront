@@ -29,8 +29,8 @@ function formatRelativeTime(iso: string): string {
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between py-1.5">
-      <span className="text-sm text-slate-500">{label}</span>
-      <span className="text-sm font-medium text-slate-900">{value}</span>
+      <span className="text-sm text-slate-500 dark:text-slate-400">{label}</span>
+      <span className="text-sm font-medium text-slate-900 dark:text-white">{value}</span>
     </div>
   );
 }
@@ -54,21 +54,27 @@ export function VehicleDetailPanel({
   onClose,
 }: VehicleDetailPanelProps) {
   return (
-    <div className="fixed inset-x-0 bottom-0 z-10 max-h-[75vh] overflow-y-auto rounded-t-3xl border border-white bg-white p-4 shadow-xl shadow-slate-300/30 sm:absolute sm:inset-x-auto sm:top-4 sm:right-4 sm:bottom-auto sm:max-h-[calc(100%-2rem)] sm:w-80 sm:rounded-3xl">
+    <div className="fixed inset-x-0 bottom-0 z-10 max-h-[75vh] overflow-y-auto rounded-t-3xl border border-white bg-white p-4 shadow-xl shadow-slate-300/30 sm:absolute sm:inset-x-auto sm:top-4 sm:right-4 sm:bottom-auto sm:max-h-[calc(100%-2rem)] sm:w-80 sm:rounded-3xl dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40">
       <div className="mb-3 flex items-start justify-between">
         <div>
-          <h2 className="font-semibold text-slate-900">{vehicle.name}</h2>
-          {vehicle.plate && <p className="text-xs text-slate-500">{vehicle.plate}</p>}
+          <h2 className="font-semibold text-slate-900 dark:text-white">{vehicle.name}</h2>
+          {vehicle.plate && <p className="text-xs text-slate-500 dark:text-slate-400">{vehicle.plate}</p>}
         </div>
-        <button onClick={onClose} className="text-slate-400 hover:text-slate-700" aria-label="Cerrar">
+        <button
+          onClick={onClose}
+          className="text-slate-400 hover:text-slate-700 dark:text-slate-500 dark:hover:text-white"
+          aria-label="Cerrar"
+        >
           <X className="h-4 w-4" />
         </button>
       </div>
 
-      {!position && <p className="text-sm text-slate-500">Todavía no hay posiciones registradas.</p>}
+      {!position && (
+        <p className="text-sm text-slate-500 dark:text-slate-400">Todavía no hay posiciones registradas.</p>
+      )}
 
       {position && (
-        <div className="divide-y divide-slate-100">
+        <div className="divide-y divide-slate-100 dark:divide-white/10">
           <Row label="Velocidad" value={`${position.speed} km/h`} />
           <Row
             label="Ignición"
@@ -88,7 +94,9 @@ export function VehicleDetailPanel({
       )}
 
       <div className="mt-4">
-        <p className="mb-2 text-xs font-semibold tracking-wide text-slate-400 uppercase">Recorrido</p>
+        <p className="mb-2 text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-500">
+          Recorrido
+        </p>
         <div className="flex gap-1.5">
           {HISTORY_RANGES.map((range) => (
             <button
@@ -97,7 +105,7 @@ export function VehicleDetailPanel({
               className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${
                 historyRangeHours === range.hours
                   ? "brand-button"
-                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10"
               }`}
             >
               {range.label}
@@ -107,7 +115,7 @@ export function VehicleDetailPanel({
 
         {historyRangeHours !== null && (
           <div className="mt-3">
-            <p className="mb-1 text-xs font-semibold tracking-wide text-slate-400 uppercase">
+            <p className="mb-1 text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-500">
               Velocidad
             </p>
             <SpeedChart positions={history} />
@@ -116,15 +124,17 @@ export function VehicleDetailPanel({
       </div>
 
       <div className="mt-4">
-        <p className="mb-2 text-xs font-semibold tracking-wide text-slate-400 uppercase">
+        <p className="mb-2 text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-500">
           Actividad reciente
         </p>
-        {events.length === 0 && <p className="text-sm text-slate-400">Sin eventos registrados.</p>}
+        {events.length === 0 && (
+          <p className="text-sm text-slate-400 dark:text-slate-500">Sin eventos registrados.</p>
+        )}
         <ul className="space-y-2">
           {events.slice(0, 8).map((event) => (
             <li key={event.id} className="flex items-center justify-between text-sm">
-              <span className="text-slate-700">{eventLabel(event)}</span>
-              <span className="text-xs text-slate-400">{formatRelativeTime(event.ts)}</span>
+              <span className="text-slate-700 dark:text-slate-300">{eventLabel(event)}</span>
+              <span className="text-xs text-slate-400 dark:text-slate-500">{formatRelativeTime(event.ts)}</span>
             </li>
           ))}
         </ul>
