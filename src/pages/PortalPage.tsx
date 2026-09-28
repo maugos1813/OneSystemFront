@@ -1,8 +1,8 @@
-import { LogOut } from "lucide-react";
+import { LogOut, Users } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { listProducts } from "../lib/api";
+import { getProductSsoUrl, listProducts } from "../lib/api";
 import { trackGlow } from "../lib/glow";
 import type { Product } from "../lib/types";
 
@@ -18,6 +18,7 @@ export function PortalPage() {
   const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [ssoPending, setSsoPending] = useState<string | null>(null);
 
   useEffect(() => {
     listProducts()
@@ -25,11 +26,31 @@ export function PortalPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  function openProduct(product: Product) {
+  async function openProduct(product: Product) {
     if (product.type === "internal" && product.path) {
       navigate(product.path);
-    } else if (product.url) {
+      return;
+    }
+    if (!product.url) return;
+
+    if (!product.ssoEnabled) {
       window.open(product.url, "_blank", "noopener,noreferrer");
+      return;
+    }
+
+    // Open the tab synchronously (still inside the click gesture, so popup blockers
+    // allow it) and point it wherever the SSO exchange resolves to once it's ready —
+    // this needs a real window handle, so it can't carry noopener/noreferrer.
+    const tab = window.open("", "_blank");
+    setSsoPending(product.key);
+    try {
+      const { url } = await getProductSsoUrl(product.key);
+      if (tab) tab.location.href = url;
+    } catch {
+      // SSO not configured yet on one side or the other — fall back to its own login.
+      if (tab) tab.location.href = product.url;
+    } finally {
+      setSsoPending(null);
     }
   }
 
@@ -52,6 +73,15 @@ export function PortalPage() {
             <p className="truncate text-sm font-semibold text-slate-900">{currentUser?.orgName ?? "..."}</p>
             <p className="truncate text-xs text-slate-500">{currentUser?.email}</p>
           </div>
+          {currentUser?.role !== "viewer" && (
+            <Link
+              to="/equipo"
+              className="flex items-center gap-1.5 rounded-xl px-2 py-1.5 text-sm text-slate-500 transition hover:bg-violet-50 hover:text-slate-900 sm:px-3"
+            >
+              <Users className="h-4 w-4" />
+              <span className="hidden sm:inline">Equipo</span>
+            </Link>
+          )}
           <button
             onClick={logout}
             className="flex items-center gap-1.5 rounded-xl px-2 py-1.5 text-sm text-slate-500 transition hover:bg-violet-50 hover:text-slate-900 sm:px-3"
@@ -72,12 +102,14 @@ export function PortalPage() {
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {products.map((product) => {
               const logo = PRODUCT_LOGOS[product.key];
+              const isPending = ssoPending === product.key;
               return (
                 <button
                   key={product.key}
                   onClick={() => openProduct(product)}
                   onMouseMove={trackGlow}
-                  className="glow float-card group flex flex-col items-center gap-4 rounded-3xl border border-white bg-white p-8 text-center shadow-lg shadow-slate-200/50 transition hover:shadow-xl"
+                  disabled={isPending}
+                  className="glow float-card group flex flex-col items-center gap-4 rounded-3xl border border-white bg-white p-8 text-center shadow-lg shadow-slate-200/50 transition hover:shadow-xl disabled:cursor-wait disabled:opacity-60"
                 >
                   {logo ? (
                     <img

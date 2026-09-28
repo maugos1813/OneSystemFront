@@ -10,6 +10,7 @@ import type {
   OrgSettings,
   Position,
   Product,
+  TeamMember,
   Vehicle,
   WorkingHours,
 } from "./types";
@@ -197,4 +198,33 @@ export function deleteGeofence(id: string): Promise<void> {
 
 export function listProducts(): Promise<Product[]> {
   return request("/products");
+}
+
+export function getProductSsoUrl(key: string): Promise<{ url: string }> {
+  return request(`/products/${key}/sso-url`);
+}
+
+// --- Team ---
+
+export function listTeamMembers(): Promise<TeamMember[]> {
+  return request("/users");
+}
+
+export interface CreateTeamMemberInput {
+  email: string;
+  password: string;
+  role: "admin" | "viewer";
+  productKeys?: string[];
+}
+
+export function createTeamMember(input: CreateTeamMemberInput): Promise<TeamMember> {
+  return request("/users", { method: "POST", body: JSON.stringify(input) });
+}
+
+export function updateTeamMemberRole(id: string, role: "admin" | "viewer"): Promise<TeamMember> {
+  return request(`/users/${id}/role`, { method: "PATCH", body: JSON.stringify({ role }) });
+}
+
+export function updateTeamMemberProducts(id: string, productKeys: string[]): Promise<void> {
+  return request(`/users/${id}/products`, { method: "PATCH", body: JSON.stringify({ productKeys }) });
 }

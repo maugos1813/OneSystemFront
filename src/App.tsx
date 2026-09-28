@@ -16,6 +16,7 @@ import { LoginPage } from "./pages/LoginPage";
 import { PortalPage } from "./pages/PortalPage";
 import { RegisterPage } from "./pages/RegisterPage";
 import { SettingsPage } from "./pages/SettingsPage";
+import { TeamPage } from "./pages/TeamPage";
 import { VehiclesPage } from "./pages/VehiclesPage";
 
 export default function App() {
@@ -28,6 +29,7 @@ export default function App() {
 
           <Route element={<RequireAuth />}>
             <Route path="/" element={<PortalPage />} />
+            <Route path="/equipo" element={<TeamPage />} />
           </Route>
 
           <Route element={<ProtectedRoute />}>

@@ -124,4 +124,16 @@ export interface Product {
   type: ProductType;
   path?: string;
   url?: string;
+  ssoEnabled?: boolean;
+}
+
+export type TeamRole = "owner" | "admin" | "viewer";
+
+export interface TeamMember {
+  id: string;
+  email: string;
+  role: TeamRole;
+  createdAt: string;
+  /** Only meaningful for role "viewer" — owner/admin always see every product the org has. */
+  productKeys: string[];
 }
