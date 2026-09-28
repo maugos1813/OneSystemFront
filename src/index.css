@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Class-based dark mode (a per-page toggle, not the OS preference) — see PortalPage.tsx. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --brand-cyan: #38bdf8;
   --brand-blue: #3b82f6;
