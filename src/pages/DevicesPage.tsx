@@ -2,6 +2,7 @@ import { Plus } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { DeviceSourceBadge } from "../components/DeviceSourceBadge";
 import { StatusBadge } from "../components/StatusBadge";
+import { useAuth } from "../context/AuthContext";
 import { useFleet } from "../context/FleetContext";
 import { ApiError, claimDevice } from "../lib/api";
 import { trackGlow } from "../lib/glow";
@@ -12,7 +13,9 @@ function formatDate(iso: string | null): string {
 }
 
 export function DevicesPage() {
+  const { currentUser } = useAuth();
   const { devices, loading, refetch } = useFleet();
+  const canManage = currentUser?.role === "owner" || currentUser?.role === "admin";
   const [imei, setImei] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -41,36 +44,40 @@ export function DevicesPage() {
       <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Dispositivos</h1>
       <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">Los trackers GPS vinculados a tu empresa.</p>
 
-      <form
-        onSubmit={handleClaim}
-        onMouseMove={trackGlow}
-        className="glow float-card mb-6 flex flex-col gap-3 rounded-2xl border border-white bg-white p-4 shadow-lg shadow-slate-200/50 sm:flex-row sm:items-end dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40"
-      >
-        <div className="flex-1">
-          <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300" htmlFor="imei">
-            IMEI del dispositivo
-          </label>
-          <input
-            id="imei"
-            type="text"
-            required
-            minLength={10}
-            value={imei}
-            onChange={(e) => setImei(e.target.value)}
-            placeholder="356307042441013"
-            className="field-input w-full rounded-xl border border-slate-300 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
-          />
-        </div>
-        <button
-          type="submit"
-          disabled={submitting}
-          className="brand-button flex items-center justify-center gap-1.5 rounded-xl px-4 py-2 text-sm font-medium disabled:opacity-50"
-        >
-          <Plus className="h-4 w-4" />
-          Reclamar
-        </button>
-      </form>
-      {error && <p className="mb-6 -mt-4 text-sm text-red-600 dark:text-red-400">{error}</p>}
+      {canManage && (
+        <>
+          <form
+            onSubmit={handleClaim}
+            onMouseMove={trackGlow}
+            className="glow float-card mb-6 flex flex-col gap-3 rounded-2xl border border-white bg-white p-4 shadow-lg shadow-slate-200/50 sm:flex-row sm:items-end dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40"
+          >
+            <div className="flex-1">
+              <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300" htmlFor="imei">
+                IMEI del dispositivo
+              </label>
+              <input
+                id="imei"
+                type="text"
+                required
+                minLength={10}
+                value={imei}
+                onChange={(e) => setImei(e.target.value)}
+                placeholder="356307042441013"
+                className="field-input w-full rounded-xl border border-slate-300 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="brand-button flex items-center justify-center gap-1.5 rounded-xl px-4 py-2 text-sm font-medium disabled:opacity-50"
+            >
+              <Plus className="h-4 w-4" />
+              Reclamar
+            </button>
+          </form>
+          {error && <p className="mb-6 -mt-4 text-sm text-red-600 dark:text-red-400">{error}</p>}
+        </>
+      )}
 
       {loading && <p className="text-sm text-slate-500 dark:text-slate-400">Cargando...</p>}
 

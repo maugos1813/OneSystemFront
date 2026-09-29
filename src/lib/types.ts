@@ -54,8 +54,11 @@ export const AVL_ID = {
 
 export interface CurrentUser {
   userId: string;
+  name: string;
   email: string;
-  role: "owner" | "admin" | "viewer";
+  role: "owner" | "admin" | "manager" | "viewer";
+  /** Hard restriction to one área (e.g. "DHL"/"UNIVEX") — null means unrestricted. */
+  allowedArea: string | null;
   orgId: string;
   orgName: string;
 }
@@ -135,13 +138,18 @@ export interface Product {
   ssoEnabled?: boolean;
 }
 
-export type TeamRole = "owner" | "admin" | "viewer";
+export type TeamRole = "owner" | "admin" | "manager" | "viewer";
 
 export interface TeamMember {
   id: string;
+  name: string;
   email: string;
   role: TeamRole;
+  /** Set only for a sub-user created by a "manager" — points at that manager's id. */
+  parentUserId: string | null;
+  /** Hard access restriction to one área (e.g. "DHL"/"UNIVEX") — null means unrestricted. */
+  allowedArea: string | null;
   createdAt: string;
-  /** Only meaningful for role "viewer" — owner/admin always see every product the org has. */
+  /** Only meaningful for role "viewer"/"manager" — owner/admin always see every product the org has. */
   productKeys: string[];
 }

@@ -1,10 +1,15 @@
+import { useAuth } from "../context/AuthContext";
 import { useFleet } from "../context/FleetContext";
 import { AREA_OPTIONS, type AreaFilter } from "../lib/areaFilter";
 
 /** Compact dropdown variant of the área filter, for table/toolbar pages where a pill
- * row would be too heavy. Shares the same selection as AreaFilterPills via FleetContext. */
+ * row would be too heavy. Shares the same selection as AreaFilterPills via FleetContext.
+ * Renders nothing for a hard-restricted user (nothing to pick). */
 export function AreaFilterSelect() {
+  const { currentUser } = useAuth();
   const { selectedArea, setSelectedArea } = useFleet();
+
+  if (currentUser?.allowedArea) return null;
 
   return (
     <select

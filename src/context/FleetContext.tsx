@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useAuth } from "./AuthContext";
 import { useAllPositions } from "../hooks/useAllPositions";
 import { useLiveAlerts } from "../hooks/useLiveAlerts";
 import { getSettings, listDevices, listGeofences, listVehicles } from "../lib/api";
@@ -33,6 +34,7 @@ const FleetContext = createContext<FleetContextValue | null>(null);
  * latest position — shared by the whole app (sidebar, map, alerts bell) so they don't
  * each fetch independently. Also computes the live alert list from all of the above. */
 export function FleetProvider({ children }: { children: ReactNode }) {
+  const { currentUser } = useAuth();
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [devices, setDevices] = useState<Device[]>([]);
   const [settings, setSettings] = useState<OrgSettings | null>(null);
@@ -104,9 +106,13 @@ export function FleetProvider({ children }: { children: ReactNode }) {
     setStoredAreaFilter(area);
     setSelectedAreaState(area);
   }, []);
+  // A hard-restricted user's `vehicles` already only contains their allowed área
+  // (server-enforced) — their personal filter preference is forced to match so it can
+  // never accidentally double-filter that down to nothing.
+  const effectiveArea = (currentUser?.allowedArea as AreaFilter | undefined) ?? selectedArea;
   const filteredVehicles = useMemo(
-    () => (selectedArea ? vehicles.filter((v) => v.fleetGroup === selectedArea) : vehicles),
-    [vehicles, selectedArea],
+    () => (effectiveArea ? vehicles.filter((v) => v.fleetGroup === effectiveArea) : vehicles),
+    [vehicles, effectiveArea],
   );
 
   return (
@@ -114,7 +120,7 @@ export function FleetProvider({ children }: { children: ReactNode }) {
       value={{
         vehicles,
         filteredVehicles,
-        selectedArea,
+        selectedArea: effectiveArea,
         setSelectedArea,
         devices,
         positions,

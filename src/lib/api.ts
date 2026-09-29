@@ -222,9 +222,11 @@ export function listTeamMembers(): Promise<TeamMember[]> {
 }
 
 export interface CreateTeamMemberInput {
+  name: string;
   email: string;
   password: string;
-  role: "admin" | "viewer";
+  role: "admin" | "manager" | "viewer";
+  allowedArea?: string | null;
   productKeys?: string[];
 }
 
@@ -232,12 +234,20 @@ export function createTeamMember(input: CreateTeamMemberInput): Promise<TeamMemb
   return request("/users", { method: "POST", body: JSON.stringify(input) });
 }
 
-export function updateTeamMemberRole(id: string, role: "admin" | "viewer"): Promise<TeamMember> {
+export function updateTeamMemberRole(id: string, role: "admin" | "manager" | "viewer"): Promise<TeamMember> {
   return request(`/users/${id}/role`, { method: "PATCH", body: JSON.stringify({ role }) });
 }
 
 export function updateTeamMemberProducts(id: string, productKeys: string[]): Promise<void> {
   return request(`/users/${id}/products`, { method: "PATCH", body: JSON.stringify({ productKeys }) });
+}
+
+export function updateTeamMemberArea(id: string, allowedArea: string | null): Promise<{ allowedArea: string | null }> {
+  return request(`/users/${id}/area`, { method: "PATCH", body: JSON.stringify({ allowedArea }) });
+}
+
+export function updateTeamMemberName(id: string, name: string): Promise<TeamMember> {
+  return request(`/users/${id}/name`, { method: "PATCH", body: JSON.stringify({ name }) });
 }
 
 export function updateTeamMemberEmail(id: string, email: string): Promise<TeamMember> {

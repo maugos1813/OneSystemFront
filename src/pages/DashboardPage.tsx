@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { MapView } from "../components/MapView";
 import { VehicleDetailPanel } from "../components/VehicleDetailPanel";
 import { VehicleList } from "../components/VehicleList";
+import { useAuth } from "../context/AuthContext";
 import { useFleet } from "../context/FleetContext";
 import { useDeviceEvents } from "../hooks/useDeviceEvents";
 import { usePositionHistory } from "../hooks/usePositionHistory";
@@ -20,6 +21,7 @@ const VIEWS: { key: AreaFilter; label: string }[] = [
 ];
 
 export function DashboardPage() {
+  const { currentUser } = useAuth();
   const { filteredVehicles: vehicles, devices, positions, loading, error, selectedArea, setSelectedArea } =
     useFleet();
   const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
@@ -76,21 +78,23 @@ export function DashboardPage() {
           historyPath={history}
         />
 
-        <div className="float-card absolute top-4 left-4 z-10 flex gap-0.5 rounded-full bg-white p-0.5 shadow-lg shadow-slate-300/40 dark:bg-[#111729] dark:shadow-black/40">
-          {VIEWS.map((v) => (
-            <button
-              key={v.label}
-              onClick={() => changeView(v.key)}
-              className={`rounded-full px-2.5 py-1 text-xs font-medium whitespace-nowrap transition ${
-                selectedArea === v.key
-                  ? "brand-gradient text-white"
-                  : "text-slate-500 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-white/5"
-              }`}
-            >
-              {v.label}
-            </button>
-          ))}
-        </div>
+        {!currentUser?.allowedArea && (
+          <div className="float-card absolute top-4 left-4 z-10 flex gap-0.5 rounded-full bg-white p-0.5 shadow-lg shadow-slate-300/40 dark:bg-[#111729] dark:shadow-black/40">
+            {VIEWS.map((v) => (
+              <button
+                key={v.label}
+                onClick={() => changeView(v.key)}
+                className={`rounded-full px-2.5 py-1 text-xs font-medium whitespace-nowrap transition ${
+                  selectedArea === v.key
+                    ? "brand-gradient text-white"
+                    : "text-slate-500 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-white/5"
+                }`}
+              >
+                {v.label}
+              </button>
+            ))}
+          </div>
+        )}
 
         {!listOpen && (
           <button

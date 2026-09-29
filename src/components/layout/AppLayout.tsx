@@ -35,8 +35,11 @@ const NAV_ITEMS = [
   { to: "/salud-dispositivos", label: "Salud del dispositivo", icon: HeartPulse, end: false },
   { to: "/vehiculos", label: "Vehículos", icon: Truck, end: false },
   { to: "/dispositivos", label: "Dispositivos", icon: Smartphone, end: false },
-  { to: "/api-keys", label: "API Keys", icon: Key, end: false },
-  { to: "/ajustes", label: "Ajustes", icon: Settings, end: false },
+  // The backend now restricts both reading and managing these to owner/admin (API keys
+  // authenticate as full access, and org settings affect everyone) — hidden below for
+  // anyone else so they never land on a page that just 403s.
+  { to: "/api-keys", label: "API Keys", icon: Key, end: false, ownerAdminOnly: true },
+  { to: "/ajustes", label: "Ajustes", icon: Settings, end: false, ownerAdminOnly: true },
 ];
 
 /** Below `lg` there isn't room for the nav rail *and* the vehicle list *and* the map, so it starts collapsed there. */
@@ -87,7 +90,9 @@ export function AppLayout() {
           </div>
 
           <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
-            {NAV_ITEMS.map(({ to, label, icon: Icon, end }) => (
+            {NAV_ITEMS.filter(
+              (item) => !item.ownerAdminOnly || currentUser?.role === "owner" || currentUser?.role === "admin",
+            ).map(({ to, label, icon: Icon, end }) => (
               <NavLink
                 key={to}
                 to={to}
