@@ -1,4 +1,8 @@
 export type DeviceStatus = "unclaimed" | "active" | "disabled";
+/** "teltonika": pushes AVL data over our TCP ingestion (rich telemetry: voltage,
+ * satellites, odometer, GSM signal). "radius_velocity": pulled from a third-party API
+ * that only reports position, speed, direction and ignition — everything else is "—". */
+export type DeviceSource = "teltonika" | "radius_velocity";
 
 export interface Device {
   id: string;
@@ -6,6 +10,7 @@ export interface Device {
   imei: string;
   model: string;
   status: DeviceStatus;
+  source: DeviceSource;
   lastSeenAt: string | null;
   createdAt: string;
 }

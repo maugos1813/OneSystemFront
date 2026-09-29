@@ -1,3 +1,4 @@
+import { DeviceSourceBadge } from "../components/DeviceSourceBadge";
 import { useFleet } from "../context/FleetContext";
 import { isLowVoltage, isOffline } from "../lib/alerts";
 import { trackGlow } from "../lib/glow";
@@ -67,7 +68,9 @@ export function DeviceHealthPage() {
     <div className="h-full overflow-y-auto bg-[#f5f6fb] p-4 sm:p-6 lg:p-8 dark:bg-[#0a0e1a]">
       <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Salud del dispositivo</h1>
       <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">
-        Estado de conectividad y hardware de todos los dispositivos de tu flota.
+        Estado de conectividad y hardware de todos los dispositivos de tu flota. Los dispositivos Radius Velocity
+        solo reportan posición, velocidad e ignición — batería, voltaje y satélites siempre se muestran como "—"
+        porque esa fuente no los provee, no por una falla.
       </p>
 
       {!loading && (
@@ -98,6 +101,7 @@ export function DeviceHealthPage() {
                 <th className="px-4 py-2 font-medium">Estado</th>
                 <th className="px-4 py-2 font-medium">Vehículo</th>
                 <th className="px-4 py-2 font-medium">IMEI</th>
+                <th className="px-4 py-2 font-medium">Fuente</th>
                 <th className="px-4 py-2 font-medium">Última conexión</th>
                 <th className="px-4 py-2 text-right font-medium">Batería</th>
                 <th className="px-4 py-2 text-right font-medium">Voltaje externo</th>
@@ -124,6 +128,9 @@ export function DeviceHealthPage() {
                   </td>
                   <td className="px-4 py-3 font-medium text-slate-900 dark:text-white">{row.vehicleName}</td>
                   <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{row.device.imei}</td>
+                  <td className="px-4 py-3">
+                    <DeviceSourceBadge source={row.device.source} />
+                  </td>
                   <td className="px-4 py-3 text-slate-500 dark:text-slate-400">
                     {relativeTime(row.device.lastSeenAt)}
                   </td>
