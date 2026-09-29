@@ -15,7 +15,7 @@ function prefersOpenByDefault(): boolean {
 }
 
 const VIEWS: { key: AreaFilter; label: string }[] = [
-  { key: null, label: "Vista General" },
+  { key: null, label: "Todas" },
   ...AREA_OPTIONS.map((area) => ({ key: area, label: area })),
 ];
 
@@ -76,12 +76,12 @@ export function DashboardPage() {
           historyPath={history}
         />
 
-        <div className="float-card absolute top-4 left-1/2 flex -translate-x-1/2 gap-1 rounded-full bg-white p-1 shadow-lg shadow-slate-300/40 dark:bg-[#111729] dark:shadow-black/40">
+        <div className="float-card absolute top-4 left-4 z-10 flex gap-0.5 rounded-full bg-white p-0.5 shadow-lg shadow-slate-300/40 dark:bg-[#111729] dark:shadow-black/40">
           {VIEWS.map((v) => (
             <button
               key={v.label}
               onClick={() => changeView(v.key)}
-              className={`rounded-full px-3 py-1.5 text-sm font-medium transition ${
+              className={`rounded-full px-2.5 py-1 text-xs font-medium whitespace-nowrap transition ${
                 selectedArea === v.key
                   ? "brand-gradient text-white"
                   : "text-slate-500 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-white/5"

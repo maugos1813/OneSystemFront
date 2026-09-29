@@ -1,4 +1,4 @@
-import { APIProvider, Map, Marker, Polyline, useMap } from "@vis.gl/react-google-maps";
+import { APIProvider, ControlPosition, Map, Marker, Polyline, useMap } from "@vis.gl/react-google-maps";
 import { useEffect } from "react";
 import { useTheme } from "../context/ThemeContext";
 import { useSmoothedPosition } from "../hooks/useSmoothedPosition";
@@ -100,6 +100,10 @@ export function MapView({
           defaultZoom={center ? 14 : 4}
           gestureHandling="greedy"
           disableDefaultUI={false}
+          // Its default (top-left) sits right under our own área-filter pill on the
+          // Mapa page, which is especially cramped on phone widths — move it down the
+          // left edge instead of fighting over the same corner.
+          mapTypeControlOptions={{ position: ControlPosition.LEFT_CENTER }}
           styles={theme === "dark" ? DARK_MAP_STYLE : undefined}
         >
           <MapCenterOnSelect selectedVehicleId={selectedVehicleId} positions={positions} />
