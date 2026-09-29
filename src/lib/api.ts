@@ -17,6 +17,16 @@ import type {
 
 const API_URL = import.meta.env.VITE_API_URL;
 
+/** wss://.../realtime/positions?token=... — the JWT travels as a query param because a
+ * browser WebSocket can't set an Authorization header on the handshake. */
+export function realtimePositionsUrl(token: string): string {
+  const url = new URL(API_URL);
+  url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
+  url.pathname = "/realtime/positions";
+  url.searchParams.set("token", token);
+  return url.toString();
+}
+
 export class ApiError extends Error {
   status: number;
 
