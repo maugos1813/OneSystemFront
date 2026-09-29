@@ -239,3 +239,15 @@ export function updateTeamMemberRole(id: string, role: "admin" | "viewer"): Prom
 export function updateTeamMemberProducts(id: string, productKeys: string[]): Promise<void> {
   return request(`/users/${id}/products`, { method: "PATCH", body: JSON.stringify({ productKeys }) });
 }
+
+export function updateTeamMemberEmail(id: string, email: string): Promise<TeamMember> {
+  return request(`/users/${id}/email`, { method: "PATCH", body: JSON.stringify({ email }) });
+}
+
+export function updateTeamMemberPassword(id: string, password: string): Promise<void> {
+  return request(`/users/${id}/password`, { method: "PATCH", body: JSON.stringify({ password }) });
+}
+
+export function deleteTeamMember(id: string): Promise<void> {
+  return request(`/users/${id}`, { method: "DELETE" });
+}
