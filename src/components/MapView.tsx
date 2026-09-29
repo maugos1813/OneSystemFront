@@ -1,9 +1,37 @@
-import { APIProvider, Map, Marker, Polyline } from "@vis.gl/react-google-maps";
+import { APIProvider, Map, Marker, Polyline, useMap } from "@vis.gl/react-google-maps";
+import { useEffect } from "react";
 import { useTheme } from "../context/ThemeContext";
 import { useSmoothedPosition } from "../hooks/useSmoothedPosition";
 import { DARK_MAP_STYLE } from "../lib/mapStyle";
 import { getVehicleIcon } from "../lib/markerIcon";
 import type { Position, Vehicle } from "../lib/types";
+
+const FOCUS_ZOOM = 15;
+
+/** Pans (and zooms in on) the selected vehicle's position whenever the selection
+ * changes, so picking one out of a cluster of markers doesn't require manually hunting
+ * for it on the map. Only reacts to the selection changing, not to every position
+ * update, so it doesn't fight the user's own panning while a vehicle keeps moving. */
+function MapCenterOnSelect({
+  selectedVehicleId,
+  positions,
+}: {
+  selectedVehicleId: string | null;
+  positions: Record<string, Position>;
+}) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!map || !selectedVehicleId) return;
+    const position = positions[selectedVehicleId];
+    if (!position) return;
+    map.panTo({ lat: position.lat, lng: position.lng });
+    if ((map.getZoom() ?? 0) < FOCUS_ZOOM) map.setZoom(FOCUS_ZOOM);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- re-run only when the selection changes
+  }, [map, selectedVehicleId]);
+
+  return null;
+}
 
 interface MapViewProps {
   vehicles: Vehicle[];
@@ -74,6 +102,8 @@ export function MapView({
           disableDefaultUI={false}
           styles={theme === "dark" ? DARK_MAP_STYLE : undefined}
         >
+          <MapCenterOnSelect selectedVehicleId={selectedVehicleId} positions={positions} />
+
           {historyPath && historyPath.length > 1 && (
             <Polyline
               path={historyPath.map((p) => ({ lat: p.lat, lng: p.lng }))}

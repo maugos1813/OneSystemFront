@@ -66,20 +66,26 @@ export function VehicleList({
                   if (isOffCanvasSize()) onClose();
                 }}
                 onMouseMove={trackGlow}
-                className={`glow flex w-full flex-col gap-1 border-b border-slate-100 px-4 py-3 text-left transition dark:border-white/5 ${
+                className={`glow flex w-full items-center justify-between gap-2 border-b border-slate-100 px-4 py-3 text-left transition dark:border-white/5 ${
                   selected ? "brand-gradient-soft dark:bg-blue-500/15" : "hover:bg-slate-50 dark:hover:bg-white/5"
                 }`}
               >
-                <div className="flex items-center gap-1.5">
-                  <span className="font-medium text-slate-900 dark:text-white">{vehicle.name}</span>
-                  {vehicle.fleetGroup && (
-                    <span className="inline-flex items-center rounded-full bg-blue-100 px-1.5 py-0.5 text-[10px] font-semibold text-blue-700 dark:bg-blue-500/15 dark:text-blue-400">
-                      {vehicle.fleetGroup}
-                    </span>
+                <div className="flex min-w-0 flex-col gap-1">
+                  <div className="flex min-w-0 items-center gap-1.5">
+                    <span className="truncate font-medium text-slate-900 dark:text-white">{vehicle.name}</span>
+                    {vehicle.fleetGroup && (
+                      <span className="inline-flex shrink-0 items-center rounded-full bg-blue-100 px-1.5 py-0.5 text-[10px] font-semibold text-blue-700 dark:bg-blue-500/15 dark:text-blue-400">
+                        {vehicle.fleetGroup}
+                      </span>
+                    )}
+                  </div>
+                  {vehicle.plate && (
+                    <span className="truncate text-xs text-slate-500 dark:text-slate-400">{vehicle.plate}</span>
                   )}
                 </div>
-                {vehicle.plate && <span className="text-xs text-slate-500 dark:text-slate-400">{vehicle.plate}</span>}
-                <StatusBadge lastSeenAt={device?.lastSeenAt ?? null} />
+                <div className="shrink-0">
+                  <StatusBadge lastSeenAt={device?.lastSeenAt ?? null} />
+                </div>
               </button>
             );
           })}
