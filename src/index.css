@@ -177,7 +177,7 @@ body {
   /* Vehicle plate, floated above its map marker instead of Google's default
      centered-on-icon label — see google.maps.MarkerLabel.className in MapView.tsx. */
   .vehicle-plate-label {
-    transform: translateY(-26px);
+    transform: translateY(-15px);
     background: white;
     color: #0f172a;
     padding: 1px 6px;
@@ -189,8 +189,9 @@ body {
     box-shadow: 0 1px 4px rgba(15, 23, 42, 0.25);
   }
   .dark .vehicle-plate-label {
+    /* color is set inline per-marker in MapView.tsx (inline style always beats a class),
+       so only the chip's own background/shadow need a dark override here. */
     background: #111729;
-    color: #e2e8f0;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
   }
 }

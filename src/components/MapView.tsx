@@ -48,11 +48,12 @@ interface AnimatedVehicleMarkerProps {
   position: Position;
   selected: boolean;
   onSelect: (vehicleId: string) => void;
+  theme: "light" | "dark";
 }
 
 /** Glides between real reports instead of snapping — see useSmoothedPosition. Split out
  * so each vehicle's animation is its own hook instance, independent of the others. */
-function AnimatedVehicleMarker({ vehicle, position, selected, onSelect }: AnimatedVehicleMarkerProps) {
+function AnimatedVehicleMarker({ vehicle, position, selected, onSelect, theme }: AnimatedVehicleMarkerProps) {
   const smoothed = useSmoothedPosition(position);
   if (!smoothed) return null;
 
@@ -63,7 +64,14 @@ function AnimatedVehicleMarker({ vehicle, position, selected, onSelect }: Animat
       onClick={() => onSelect(vehicle.id)}
       opacity={selected ? 1 : 0.75}
       icon={getVehicleIcon({ ...position, angle: smoothed.angle })}
-      label={{ text: vehicle.plate ?? vehicle.name, className: "vehicle-plate-label" }}
+      label={{
+        text: vehicle.plate ?? vehicle.name,
+        className: "vehicle-plate-label",
+        // Google always renders a label color inline (defaulting to black), which beats
+        // any CSS class on specificity — has to be set here per-theme, not in index.css,
+        // or the plate text goes invisible against the dark chip in dark mode.
+        color: theme === "dark" ? "#e2e8f0" : "#0f172a",
+      }}
     />
   );
 }
@@ -128,6 +136,7 @@ export function MapView({
                 position={position}
                 selected={vehicle.id === selectedVehicleId}
                 onSelect={onSelectVehicle}
+                theme={theme}
               />
             );
           })}
