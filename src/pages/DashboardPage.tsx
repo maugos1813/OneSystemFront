@@ -6,6 +6,7 @@ import { VehicleList } from "../components/VehicleList";
 import { useFleet } from "../context/FleetContext";
 import { useDeviceEvents } from "../hooks/useDeviceEvents";
 import { usePositionHistory } from "../hooks/usePositionHistory";
+import { AREA_OPTIONS, type AreaFilter } from "../lib/areaFilter";
 import { trackGlow } from "../lib/glow";
 
 /** Below `lg` there isn't room for the vehicle list next to the map, so it starts collapsed there. */
@@ -13,24 +14,17 @@ function prefersOpenByDefault(): boolean {
   return typeof window !== "undefined" && window.matchMedia("(min-width: 1024px)").matches;
 }
 
-type MapView2 = "all" | "DHL" | "UNIVEX";
-const VIEWS: { key: MapView2; label: string }[] = [
-  { key: "all", label: "Vista General" },
-  { key: "DHL", label: "DHL" },
-  { key: "UNIVEX", label: "UNIVEX" },
+const VIEWS: { key: AreaFilter; label: string }[] = [
+  { key: null, label: "Vista General" },
+  ...AREA_OPTIONS.map((area) => ({ key: area, label: area })),
 ];
 
 export function DashboardPage() {
-  const { vehicles: allVehicles, devices, positions, loading, error } = useFleet();
+  const { filteredVehicles: vehicles, devices, positions, loading, error, selectedArea, setSelectedArea } =
+    useFleet();
   const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
   const [historyRangeHours, setHistoryRangeHours] = useState<number | null>(null);
   const [listOpen, setListOpen] = useState(prefersOpenByDefault);
-  const [view, setView] = useState<MapView2>("all");
-
-  const vehicles = useMemo(
-    () => (view === "all" ? allVehicles : allVehicles.filter((v) => v.fleetGroup === view)),
-    [allVehicles, view],
-  );
 
   const historyFrom = useMemo(() => {
     if (historyRangeHours === null) return null;
@@ -42,8 +36,8 @@ export function DashboardPage() {
 
   const selectedVehicle = vehicles.find((v) => v.id === selectedVehicleId) ?? null;
 
-  function changeView(next: MapView2) {
-    setView(next);
+  function changeView(next: AreaFilter) {
+    setSelectedArea(next);
     setSelectedVehicleId(null);
     setHistoryRangeHours(null);
   }
@@ -85,10 +79,10 @@ export function DashboardPage() {
         <div className="float-card absolute top-4 left-1/2 flex -translate-x-1/2 gap-1 rounded-full bg-white p-1 shadow-lg shadow-slate-300/40 dark:bg-[#111729] dark:shadow-black/40">
           {VIEWS.map((v) => (
             <button
-              key={v.key}
+              key={v.label}
               onClick={() => changeView(v.key)}
               className={`rounded-full px-3 py-1.5 text-sm font-medium transition ${
-                view === v.key
+                selectedArea === v.key
                   ? "brand-gradient text-white"
                   : "text-slate-500 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-white/5"
               }`}

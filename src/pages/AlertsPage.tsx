@@ -9,7 +9,9 @@ import {
   Timer,
   WifiOff,
 } from "lucide-react";
+import { useMemo } from "react";
 import { Link } from "react-router-dom";
+import { AreaFilterPills } from "../components/AreaFilterPills";
 import { useFleet } from "../context/FleetContext";
 import type { Alert, AlertType } from "../lib/alerts";
 import { trackGlow } from "../lib/glow";
@@ -57,7 +59,12 @@ function AlertCard({ alert }: { alert: Alert }) {
 }
 
 export function AlertsPage() {
-  const { alerts, settings } = useFleet();
+  const { alerts: allAlerts, filteredVehicles, settings } = useFleet();
+
+  const alerts = useMemo(() => {
+    const visibleIds = new Set(filteredVehicles.map((v) => v.id));
+    return allAlerts.filter((a) => visibleIds.has(a.vehicleId));
+  }, [allAlerts, filteredVehicles]);
 
   const counts = alerts.reduce<Partial<Record<AlertType, number>>>((acc, a) => {
     acc[a.type] = (acc[a.type] ?? 0) + 1;
@@ -80,6 +87,10 @@ export function AlertsPage() {
           <SettingsIcon className="h-4 w-4" />
           Configurar alertas
         </Link>
+      </div>
+
+      <div className="mb-6">
+        <AreaFilterPills />
       </div>
 
       {settings && (

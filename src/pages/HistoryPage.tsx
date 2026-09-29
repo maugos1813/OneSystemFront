@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { AreaFilterPills } from "../components/AreaFilterPills";
 import { Panel } from "../components/analytics/Panel";
 import { HistoryMapView } from "../components/history/HistoryMapView";
 import { PlaybackBar } from "../components/history/PlaybackBar";
@@ -19,7 +20,7 @@ const PLAYBACK_TICK_MS = 80;
 const PLAYBACK_STEPS = 300; // any route plays back fully in ~300 ticks, short or long
 
 export function HistoryPage() {
-  const { vehicles, loading: fleetLoading } = useFleet();
+  const { filteredVehicles: vehicles, loading: fleetLoading } = useFleet();
   const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
   const [rangeHours, setRangeHours] = useState(24);
   const [speedLimit, setSpeedLimit] = useState(DEFAULT_SPEED_LIMIT_KMH);
@@ -27,7 +28,10 @@ export function HistoryPage() {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
-    if (!selectedVehicleId && vehicles.length > 0) setSelectedVehicleId(vehicles[0]!.id);
+    if (vehicles.length === 0) return;
+    if (!selectedVehicleId || !vehicles.some((v) => v.id === selectedVehicleId)) {
+      setSelectedVehicleId(vehicles[0]!.id);
+    }
   }, [selectedVehicleId, vehicles]);
 
   const from = useMemo(() => new Date(Date.now() - rangeHours * 60 * 60 * 1000), [rangeHours]);
@@ -79,6 +83,10 @@ export function HistoryPage() {
       <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">
         Reproducí el trayecto y mirá exactamente dónde se superaron los límites de velocidad.
       </p>
+
+      <div className="mb-4">
+        <AreaFilterPills />
+      </div>
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
         {vehicles.map((v) => (

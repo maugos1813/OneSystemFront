@@ -1,3 +1,4 @@
+import { AreaFilterPills } from "../components/AreaFilterPills";
 import { DeviceSourceBadge } from "../components/DeviceSourceBadge";
 import { useFleet } from "../context/FleetContext";
 import { isLowVoltage, isOffline } from "../lib/alerts";
@@ -22,11 +23,14 @@ const SEVERITY_COLOR: Record<Severity, string> = {
 };
 
 export function DeviceHealthPage() {
-  const { devices, vehicles, positions, loading, settings } = useFleet();
+  const { devices: allDevices, vehicles, positions, loading, settings, selectedArea } = useFleet();
   const deviceOfflineMs = (settings?.alerts.deviceOfflineHours ?? 2) * 3_600_000;
   const lowBatteryMv = (settings?.alerts.lowBatteryVoltage ?? 11.5) * 1000;
 
   const vehicleByDeviceId = new Map(vehicles.filter((v) => v.deviceId).map((v) => [v.deviceId, v]));
+  const devices = selectedArea
+    ? allDevices.filter((d) => vehicleByDeviceId.get(d.id)?.fleetGroup === selectedArea)
+    : allDevices;
 
   const rows = devices.map((device) => {
     const vehicle = vehicleByDeviceId.get(device.id);
@@ -72,6 +76,10 @@ export function DeviceHealthPage() {
         solo reportan posición, velocidad e ignición — batería, voltaje y satélites siempre se muestran como "—"
         porque esa fuente no los provee, no por una falla.
       </p>
+
+      <div className="mb-6">
+        <AreaFilterPills />
+      </div>
 
       {!loading && (
         <div className="mb-6 flex flex-wrap gap-2">

@@ -1,12 +1,20 @@
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useAllPositions } from "../hooks/useAllPositions";
 import { useLiveAlerts } from "../hooks/useLiveAlerts";
 import { getSettings, listDevices, listGeofences, listVehicles } from "../lib/api";
 import type { Alert } from "../lib/alerts";
+import { getStoredAreaFilter, setStoredAreaFilter, type AreaFilter } from "../lib/areaFilter";
 import type { Device, Geofence, OrgSettings, Position, Vehicle } from "../lib/types";
 
 interface FleetContextValue {
+  /** The complete fleet, regardless of the área filter — positions/alerts always poll
+   * every vehicle in the background, whether or not it's currently being displayed. */
   vehicles: Vehicle[];
+  /** `vehicles` narrowed to the selected área (DHL/UNIVEX), or the same array when the
+   * filter is "all" — what every page should actually render. */
+  filteredVehicles: Vehicle[];
+  selectedArea: AreaFilter;
+  setSelectedArea: (area: AreaFilter) => void;
   devices: Device[];
   positions: Record<string, Position>;
   settings: OrgSettings | null;
@@ -34,6 +42,7 @@ export function FleetProvider({ children }: { children: ReactNode }) {
   const [refetchToken, setRefetchToken] = useState(0);
   const [settingsToken, setSettingsToken] = useState(0);
   const [geofencesToken, setGeofencesToken] = useState(0);
+  const [selectedArea, setSelectedAreaState] = useState<AreaFilter>(getStoredAreaFilter);
 
   useEffect(() => {
     let cancelled = false;
@@ -91,11 +100,22 @@ export function FleetProvider({ children }: { children: ReactNode }) {
   const refetch = useCallback(() => setRefetchToken((t) => t + 1), []);
   const refetchSettings = useCallback(() => setSettingsToken((t) => t + 1), []);
   const refetchGeofences = useCallback(() => setGeofencesToken((t) => t + 1), []);
+  const setSelectedArea = useCallback((area: AreaFilter) => {
+    setStoredAreaFilter(area);
+    setSelectedAreaState(area);
+  }, []);
+  const filteredVehicles = useMemo(
+    () => (selectedArea ? vehicles.filter((v) => v.fleetGroup === selectedArea) : vehicles),
+    [vehicles, selectedArea],
+  );
 
   return (
     <FleetContext.Provider
       value={{
         vehicles,
+        filteredVehicles,
+        selectedArea,
+        setSelectedArea,
         devices,
         positions,
         settings,

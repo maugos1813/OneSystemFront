@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { AreaFilterPills } from "../components/AreaFilterPills";
 import { Panel } from "../components/analytics/Panel";
 import { FleetScoreTable, type FleetRow } from "../components/driving/FleetScoreTable";
 import { IncidentList } from "../components/driving/IncidentList";
@@ -38,7 +39,7 @@ type Selection = "overall" | IncidentType;
 const EMPTY_HISTORY: Position[] = [];
 
 export function DrivingBehaviorPage() {
-  const { vehicles, loading: fleetLoading } = useFleet();
+  const { filteredVehicles: vehicles, loading: fleetLoading } = useFleet();
   const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
   const [rangeHours, setRangeHours] = useState(24 * 7);
   const [speedLimit, setSpeedLimit] = useState(DEFAULT_SPEED_LIMIT_KMH);
@@ -46,7 +47,10 @@ export function DrivingBehaviorPage() {
   const [activeIncidentIndex, setActiveIncidentIndex] = useState<number | null>(null);
 
   useEffect(() => {
-    if (!selectedVehicleId && vehicles.length > 0) setSelectedVehicleId(vehicles[0]!.id);
+    if (vehicles.length === 0) return;
+    if (!selectedVehicleId || !vehicles.some((v) => v.id === selectedVehicleId)) {
+      setSelectedVehicleId(vehicles[0]!.id);
+    }
   }, [selectedVehicleId, vehicles]);
 
   const from = useMemo(() => new Date(Date.now() - rangeHours * 60 * 60 * 1000), [rangeHours]);
@@ -106,6 +110,10 @@ export function DrivingBehaviorPage() {
         Puntaje de manejo por vehículo — hacé click en cualquier puntaje para ver dónde y cuándo pasó cada
         incidente, y comparar toda la flota en esa métrica.
       </p>
+
+      <div className="mb-4">
+        <AreaFilterPills />
+      </div>
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
         {vehicles.map((v) => (

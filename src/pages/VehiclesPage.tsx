@@ -1,7 +1,9 @@
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { useState, type FormEvent } from "react";
+import { AreaFilterSelect } from "../components/AreaFilterSelect";
 import { useFleet } from "../context/FleetContext";
 import { createVehicle, deleteVehicle, updateVehicle } from "../lib/api";
+import { AREA_OPTIONS } from "../lib/areaFilter";
 import { trackGlow } from "../lib/glow";
 import type { Vehicle } from "../lib/types";
 
@@ -29,11 +31,6 @@ function DeviceSelect({
     </select>
   );
 }
-
-// The 3 map views (Vista General / DHL / UNIVEX) only make sense against these two
-// values — an org can still clear the area entirely ("Sin área"), which just leaves the
-// vehicle out of both filtered views (still shown in "Vista General").
-const AREA_OPTIONS = ["DHL", "UNIVEX"];
 
 function AreaSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   return (
@@ -169,7 +166,7 @@ function VehicleRow({
 }
 
 export function VehiclesPage() {
-  const { vehicles, devices, loading, refetch } = useFleet();
+  const { vehicles, filteredVehicles, devices, loading, refetch } = useFleet();
   const [name, setName] = useState("");
   const [plate, setPlate] = useState("");
   const [deviceId, setDeviceId] = useState("");
@@ -236,13 +233,22 @@ export function VehiclesPage() {
         </button>
       </form>
 
+      <div className="mb-4 flex items-center justify-between gap-2">
+        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Área</span>
+        <AreaFilterSelect />
+      </div>
+
       {loading && <p className="text-sm text-slate-500 dark:text-slate-400">Cargando...</p>}
 
       {!loading && vehicles.length === 0 && (
         <p className="text-sm text-slate-500 dark:text-slate-400">Todavía no creaste ningún vehículo.</p>
       )}
 
-      {!loading && vehicles.length > 0 && (
+      {!loading && vehicles.length > 0 && filteredVehicles.length === 0 && (
+        <p className="text-sm text-slate-500 dark:text-slate-400">Ningún vehículo coincide con esta área.</p>
+      )}
+
+      {!loading && filteredVehicles.length > 0 && (
         <div className="float-card overflow-x-auto rounded-2xl border border-white bg-white shadow-lg shadow-slate-200/50 dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40">
           <table className="w-full min-w-[680px] text-left text-sm">
             <thead className="border-b border-violet-100 bg-violet-50/60 text-xs text-slate-500 uppercase dark:border-white/10 dark:bg-white/5 dark:text-slate-400">
@@ -255,7 +261,7 @@ export function VehiclesPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-white/10">
-              {vehicles.map((vehicle) => (
+              {filteredVehicles.map((vehicle) => (
                 <VehicleRow
                   key={vehicle.id}
                   vehicle={vehicle}

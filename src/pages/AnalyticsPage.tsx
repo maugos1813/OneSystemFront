@@ -1,3 +1,4 @@
+import { AreaFilterPills } from "../components/AreaFilterPills";
 import { FleetMap } from "../components/analytics/FleetMap";
 import { OdometerRanking } from "../components/analytics/OdometerRanking";
 import { Panel } from "../components/analytics/Panel";
@@ -10,7 +11,7 @@ import { useTodayEventCounts } from "../hooks/useTodayEventCounts";
 import { computeFleetSummary, computeOdometerRanking, computeStateDistribution } from "../lib/fleetStats";
 
 export function AnalyticsPage() {
-  const { vehicles, devices, positions, loading } = useFleet();
+  const { filteredVehicles: vehicles, devices, positions, loading } = useFleet();
   const { points: speedTrend } = useFleetSpeedTrend(vehicles);
   const { counts: todayEvents } = useTodayEventCounts(vehicles);
 
@@ -27,7 +28,11 @@ export function AnalyticsPage() {
   return (
     <div className="h-full overflow-y-auto bg-slate-50 p-4 sm:p-6 lg:p-8 dark:bg-[#0a0e1a]">
       <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Analíticas de flota</h1>
-      <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">Resumen general de tus vehículos, hoy.</p>
+      <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">Resumen general de tus vehículos, hoy.</p>
+
+      <div className="mb-4">
+        <AreaFilterPills />
+      </div>
 
       <div className="mb-4 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
         <StatCard label="Vehículos" value={String(summary.total)} />

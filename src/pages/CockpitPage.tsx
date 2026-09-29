@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { AreaFilterPills } from "../components/AreaFilterPills";
 import { DrivingScoreCard } from "../components/cockpit/DrivingScoreCard";
 import { GForceGauge } from "../components/cockpit/GForceGauge";
 import { MileageCard } from "../components/cockpit/MileageCard";
@@ -14,11 +15,12 @@ import { trackGlow } from "../lib/glow";
 import { AVL_ID } from "../lib/types";
 
 export function CockpitPage() {
-  const { vehicles, positions, loading } = useFleet();
+  const { filteredVehicles: vehicles, positions, loading } = useFleet();
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!selectedId && vehicles.length > 0) setSelectedId(vehicles[0]!.id);
+    if (vehicles.length === 0) return;
+    if (!selectedId || !vehicles.some((v) => v.id === selectedId)) setSelectedId(vehicles[0]!.id);
   }, [selectedId, vehicles]);
 
   const vehicle = vehicles.find((v) => v.id === selectedId) ?? null;
@@ -32,14 +34,6 @@ export function CockpitPage() {
     );
   }
 
-  if (!vehicle) {
-    return (
-      <div className="flex h-full items-center justify-center text-slate-500 dark:text-slate-400">
-        No hay vehículos cargados todavía.
-      </div>
-    );
-  }
-
   const state = classifyVehicleState(position ?? undefined);
   const totalKm =
     position?.ioData[AVL_ID.TOTAL_ODOMETER] !== undefined
@@ -49,82 +43,102 @@ export function CockpitPage() {
   return (
     <div className="h-full overflow-y-auto bg-violet-50 p-4 sm:p-6 lg:p-8 dark:bg-[#0a0e1a]">
       <div className="mx-auto max-w-5xl">
-        {vehicles.length > 1 && (
-          <div className="mb-6 flex flex-wrap gap-2">
-            {vehicles.map((v) => (
-              <button
-                key={v.id}
-                onClick={() => setSelectedId(v.id)}
-                className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
-                  v.id === selectedId
-                    ? "brand-button"
-                    : "bg-white text-slate-500 hover:bg-violet-100 dark:bg-[#111729] dark:text-slate-400 dark:hover:bg-white/10"
-                }`}
-              >
-                {v.name}
-              </button>
-            ))}
-          </div>
+        <div className="mb-4">
+          <AreaFilterPills />
+        </div>
+
+        {!vehicle && (
+          <p className="flex h-40 items-center justify-center text-sm text-slate-500 dark:text-slate-400">
+            Ningún vehículo en esta área.
+          </p>
         )}
 
-        <div className="mb-4 flex items-center justify-between gap-2">
-          <div className="min-w-0">
-            <h1 className="truncate text-lg font-bold tracking-wide text-slate-900 sm:text-xl dark:text-white">
-              {vehicle.name.toUpperCase()}
-            </h1>
-            {vehicle.plate && <p className="text-sm text-slate-400 dark:text-slate-500">{vehicle.plate}</p>}
-          </div>
-          <p className="shrink-0 text-sm text-slate-400 dark:text-slate-500">
-            {new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-          </p>
-        </div>
+        {vehicle && (
+          <>
+            {vehicles.length > 1 && (
+              <div className="mb-6 flex flex-wrap gap-2">
+                {vehicles.map((v) => (
+                  <button
+                    key={v.id}
+                    onClick={() => setSelectedId(v.id)}
+                    className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
+                      v.id === selectedId
+                        ? "brand-button"
+                        : "bg-white text-slate-500 hover:bg-violet-100 dark:bg-[#111729] dark:text-slate-400 dark:hover:bg-white/10"
+                    }`}
+                  >
+                    {v.name}
+                  </button>
+                ))}
+              </div>
+            )}
 
-        <div className="brand-border-glow grid grid-cols-1 gap-4 rounded-3xl p-4 shadow-lg shadow-blue-100/40 sm:p-6 lg:grid-cols-[260px_1fr_260px] dark:bg-[#111729] dark:shadow-black/40">
-          <div onMouseMove={trackGlow} className="glow float-card rounded-2xl bg-violet-50/60 p-3 dark:bg-white/5">
-            <p className="mb-2 px-1 text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-500">
-              Ubicación
-            </p>
-            <MiniMapCard position={position} />
-          </div>
+            <div className="mb-4 flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <h1 className="truncate text-lg font-bold tracking-wide text-slate-900 sm:text-xl dark:text-white">
+                  {vehicle.name.toUpperCase()}
+                </h1>
+                {vehicle.plate && <p className="text-sm text-slate-400 dark:text-slate-500">{vehicle.plate}</p>}
+              </div>
+              <p className="shrink-0 text-sm text-slate-400 dark:text-slate-500">
+                {new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+              </p>
+            </div>
 
-          <div className="flex items-center justify-center py-6">
-            <SpeedGauge speed={smoothed?.speed ?? 0} state={state} />
-          </div>
+            <div className="brand-border-glow grid grid-cols-1 gap-4 rounded-3xl p-4 shadow-lg shadow-blue-100/40 sm:p-6 lg:grid-cols-[260px_1fr_260px] dark:bg-[#111729] dark:shadow-black/40">
+              <div
+                onMouseMove={trackGlow}
+                className="glow float-card rounded-2xl bg-violet-50/60 p-3 dark:bg-white/5"
+              >
+                <p className="mb-2 px-1 text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-500">
+                  Ubicación
+                </p>
+                <MiniMapCard position={position} />
+              </div>
 
-          <div onMouseMove={trackGlow} className="glow float-card rounded-2xl bg-violet-50/60 p-4 dark:bg-white/5">
-            <p className="mb-4 px-1 text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-500">
-              Estado del vehículo
-            </p>
-            <StatusList position={position} />
-          </div>
-        </div>
+              <div className="flex items-center justify-center py-6">
+                <SpeedGauge speed={smoothed?.speed ?? 0} state={state} />
+              </div>
 
-        <div className="mt-4 grid grid-cols-2 gap-4 lg:grid-cols-12">
-          <div
-            onMouseMove={trackGlow}
-            className="glow float-card col-span-1 flex items-center justify-center rounded-3xl border border-white bg-white p-4 shadow-lg shadow-slate-200/50 lg:col-span-2 dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40"
-          >
-            <GForceGauge eventCount={harshEvents.length} />
-          </div>
-          <div className="col-span-1 lg:col-span-2">
-            <MileageCard label="Total recorrido" km={totalKm} />
-          </div>
-          <div
-            onMouseMove={trackGlow}
-            className="glow float-card col-span-2 rounded-3xl border border-white bg-white p-4 shadow-lg shadow-slate-200/50 lg:col-span-4 dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40"
-          >
-            <DrivingScoreCard score={score} events={harshEvents} />
-          </div>
-          <div className="col-span-1 lg:col-span-2">
-            <MileageCard label="Recorrido hoy" km={tripKm} />
-          </div>
-          <div
-            onMouseMove={trackGlow}
-            className="glow float-card col-span-1 flex items-center justify-center rounded-3xl border border-white bg-white p-4 shadow-lg shadow-slate-200/50 lg:col-span-2 dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40"
-          >
-            <StatePills current={state} />
-          </div>
-        </div>
+              <div
+                onMouseMove={trackGlow}
+                className="glow float-card rounded-2xl bg-violet-50/60 p-4 dark:bg-white/5"
+              >
+                <p className="mb-4 px-1 text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-500">
+                  Estado del vehículo
+                </p>
+                <StatusList position={position} />
+              </div>
+            </div>
+
+            <div className="mt-4 grid grid-cols-2 gap-4 lg:grid-cols-12">
+              <div
+                onMouseMove={trackGlow}
+                className="glow float-card col-span-1 flex items-center justify-center rounded-3xl border border-white bg-white p-4 shadow-lg shadow-slate-200/50 lg:col-span-2 dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40"
+              >
+                <GForceGauge eventCount={harshEvents.length} />
+              </div>
+              <div className="col-span-1 lg:col-span-2">
+                <MileageCard label="Total recorrido" km={totalKm} />
+              </div>
+              <div
+                onMouseMove={trackGlow}
+                className="glow float-card col-span-2 rounded-3xl border border-white bg-white p-4 shadow-lg shadow-slate-200/50 lg:col-span-4 dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40"
+              >
+                <DrivingScoreCard score={score} events={harshEvents} />
+              </div>
+              <div className="col-span-1 lg:col-span-2">
+                <MileageCard label="Recorrido hoy" km={tripKm} />
+              </div>
+              <div
+                onMouseMove={trackGlow}
+                className="glow float-card col-span-1 flex items-center justify-center rounded-3xl border border-white bg-white p-4 shadow-lg shadow-slate-200/50 lg:col-span-2 dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40"
+              >
+                <StatePills current={state} />
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
