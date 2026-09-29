@@ -173,4 +173,24 @@ body {
   .dark .styled-scrollbar::-webkit-scrollbar-thumb:hover {
     background-color: rgba(148, 163, 184, 0.5);
   }
+
+  /* Vehicle plate, floated above its map marker instead of Google's default
+     centered-on-icon label — see google.maps.MarkerLabel.className in MapView.tsx. */
+  .vehicle-plate-label {
+    transform: translateY(-26px);
+    background: white;
+    color: #0f172a;
+    padding: 1px 6px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 600;
+    white-space: nowrap;
+    pointer-events: none;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.25);
+  }
+  .dark .vehicle-plate-label {
+    background: #111729;
+    color: #e2e8f0;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+  }
 }

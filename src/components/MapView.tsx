@@ -1,5 +1,5 @@
-import { APIProvider, ControlPosition, Map, Marker, Polyline, useMap } from "@vis.gl/react-google-maps";
-import { useEffect } from "react";
+import { APIProvider, Map, Marker, Polyline, useMap } from "@vis.gl/react-google-maps";
+import { useEffect, useState } from "react";
 import { useTheme } from "../context/ThemeContext";
 import { useSmoothedPosition } from "../hooks/useSmoothedPosition";
 import { DARK_MAP_STYLE } from "../lib/mapStyle";
@@ -63,6 +63,7 @@ function AnimatedVehicleMarker({ vehicle, position, selected, onSelect }: Animat
       onClick={() => onSelect(vehicle.id)}
       opacity={selected ? 1 : 0.75}
       icon={getVehicleIcon({ ...position, angle: smoothed.angle })}
+      label={{ text: vehicle.plate ?? vehicle.name, className: "vehicle-plate-label" }}
     />
   );
 }
@@ -100,10 +101,9 @@ export function MapView({
           defaultZoom={center ? 14 : 4}
           gestureHandling="greedy"
           disableDefaultUI={false}
-          // Its default (top-left) sits right under our own área-filter pill on the
-          // Mapa page, which is especially cramped on phone widths — move it down the
-          // left edge instead of fighting over the same corner.
-          mapTypeControlOptions={{ position: ControlPosition.LEFT_CENTER }}
+          // Replaced by our own MapTypeToggle, docked next to the legend at the bottom
+          // instead of Google's default (which used to float mid-left, on top of markers).
+          mapTypeControl={false}
           styles={theme === "dark" ? DARK_MAP_STYLE : undefined}
         >
           <MapCenterOnSelect selectedVehicleId={selectedVehicleId} positions={positions} />
@@ -132,16 +132,19 @@ export function MapView({
             );
           })}
         </Map>
-      </APIProvider>
 
-      <MapLegend />
+        <div className="absolute bottom-4 left-4 z-0 flex flex-wrap items-end gap-2">
+          <MapLegend />
+          <MapTypeToggle />
+        </div>
+      </APIProvider>
     </div>
   );
 }
 
 function MapLegend() {
   return (
-    <div className="absolute bottom-4 left-4 z-0 flex flex-col gap-1.5 rounded-2xl border border-white bg-white px-2.5 py-2 text-[11px] text-slate-600 shadow-lg shadow-slate-300/40 sm:px-3 sm:text-xs dark:border-white/10 dark:bg-[#111729] dark:text-slate-300 dark:shadow-black/40">
+    <div className="flex flex-col gap-1.5 rounded-2xl border border-white bg-white px-2.5 py-2 text-[11px] text-slate-600 shadow-lg shadow-slate-300/40 sm:px-3 sm:text-xs dark:border-white/10 dark:bg-[#111729] dark:text-slate-300 dark:shadow-black/40">
       <div className="flex items-center gap-2">
         <span className="h-2.5 w-2.5 rounded-full bg-red-600" />
         Apagado
@@ -154,6 +157,45 @@ function MapLegend() {
         <span className="text-green-600">▲</span>
         En movimiento
       </div>
+    </div>
+  );
+}
+
+/** Replaces Google's default map-type control so it can be docked next to our legend
+ * instead of floating mid-left on top of the vehicle markers. */
+function MapTypeToggle() {
+  const map = useMap();
+  const [mapTypeId, setMapTypeIdState] = useState<"roadmap" | "satellite">("roadmap");
+
+  function select(type: "roadmap" | "satellite") {
+    map?.setMapTypeId(type);
+    setMapTypeIdState(type);
+  }
+
+  return (
+    <div className="flex overflow-hidden rounded-2xl border border-white bg-white text-[11px] font-medium shadow-lg shadow-slate-300/40 sm:text-xs dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40">
+      <button
+        type="button"
+        onClick={() => select("roadmap")}
+        className={`px-3 py-2 transition ${
+          mapTypeId === "roadmap"
+            ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900"
+            : "text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-white/5"
+        }`}
+      >
+        Mapa
+      </button>
+      <button
+        type="button"
+        onClick={() => select("satellite")}
+        className={`px-3 py-2 transition ${
+          mapTypeId === "satellite"
+            ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900"
+            : "text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-white/5"
+        }`}
+      >
+        Satélite
+      </button>
     </div>
   );
 }
