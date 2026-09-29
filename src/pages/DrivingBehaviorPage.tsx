@@ -3,7 +3,6 @@ import { AreaFilterPills } from "../components/AreaFilterPills";
 import { Panel } from "../components/analytics/Panel";
 import { FleetScoreTable, type FleetRow } from "../components/driving/FleetScoreTable";
 import { IncidentList } from "../components/driving/IncidentList";
-import { IncidentMap } from "../components/driving/IncidentMap";
 import { ScoreRing } from "../components/driving/ScoreRing";
 import { useFleet } from "../context/FleetContext";
 import { useFleetPositionHistory } from "../hooks/useFleetPositionHistory";
@@ -195,16 +194,11 @@ export function DrivingBehaviorPage() {
           </div>
 
           <Panel title={selection === "overall" ? "Todos los incidentes" : INCIDENT_LABELS[selection]} className="mb-6">
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_320px]">
-              <div className="h-72 overflow-hidden rounded-2xl sm:h-80">
-                <IncidentMap incidents={visibleIncidents} activeIndex={activeIncidentIndex} />
-              </div>
-              <IncidentList
-                incidents={visibleIncidents}
-                activeIndex={activeIncidentIndex}
-                onSelect={setActiveIncidentIndex}
-              />
-            </div>
+            <IncidentList
+              incidents={visibleIncidents}
+              activeIndex={activeIncidentIndex}
+              onSelect={setActiveIncidentIndex}
+            />
           </Panel>
 
           <Panel title={`Flota — ${categoryLabel}`}>

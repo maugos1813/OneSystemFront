@@ -21,7 +21,7 @@ export function IncidentList({ incidents, activeIndex, onSelect }: IncidentListP
   const ordered = incidents.map((incident, index) => ({ incident, index })).reverse();
 
   return (
-    <ul className="max-h-80 space-y-1 overflow-y-auto pr-1 lg:max-h-none">
+    <ul className="max-h-96 space-y-1 overflow-y-auto pr-1">
       {ordered.map(({ incident, index }) => (
         <li key={index}>
           <button
