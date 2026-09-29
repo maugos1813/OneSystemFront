@@ -91,6 +91,7 @@ export interface VehicleInput {
   name: string;
   plate?: string;
   deviceId?: string;
+  fleetGroup?: string | null;
 }
 
 export function createVehicle(input: VehicleInput): Promise<Vehicle> {

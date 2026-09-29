@@ -13,11 +13,24 @@ function prefersOpenByDefault(): boolean {
   return typeof window !== "undefined" && window.matchMedia("(min-width: 1024px)").matches;
 }
 
+type MapView2 = "all" | "DHL" | "UNIVEX";
+const VIEWS: { key: MapView2; label: string }[] = [
+  { key: "all", label: "Vista General" },
+  { key: "DHL", label: "DHL" },
+  { key: "UNIVEX", label: "UNIVEX" },
+];
+
 export function DashboardPage() {
-  const { vehicles, devices, positions, loading, error } = useFleet();
+  const { vehicles: allVehicles, devices, positions, loading, error } = useFleet();
   const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
   const [historyRangeHours, setHistoryRangeHours] = useState<number | null>(null);
   const [listOpen, setListOpen] = useState(prefersOpenByDefault);
+  const [view, setView] = useState<MapView2>("all");
+
+  const vehicles = useMemo(
+    () => (view === "all" ? allVehicles : allVehicles.filter((v) => v.fleetGroup === view)),
+    [allVehicles, view],
+  );
 
   const historyFrom = useMemo(() => {
     if (historyRangeHours === null) return null;
@@ -28,6 +41,12 @@ export function DashboardPage() {
   const { events } = useDeviceEvents(selectedVehicleId);
 
   const selectedVehicle = vehicles.find((v) => v.id === selectedVehicleId) ?? null;
+
+  function changeView(next: MapView2) {
+    setView(next);
+    setSelectedVehicleId(null);
+    setHistoryRangeHours(null);
+  }
 
   function selectVehicle(vehicleId: string) {
     setSelectedVehicleId(vehicleId);
@@ -62,6 +81,22 @@ export function DashboardPage() {
           onSelectVehicle={selectVehicle}
           historyPath={history}
         />
+
+        <div className="float-card absolute top-4 left-1/2 flex -translate-x-1/2 gap-1 rounded-full bg-white p-1 shadow-lg shadow-slate-300/40 dark:bg-[#111729] dark:shadow-black/40">
+          {VIEWS.map((v) => (
+            <button
+              key={v.key}
+              onClick={() => changeView(v.key)}
+              className={`rounded-full px-3 py-1.5 text-sm font-medium transition ${
+                view === v.key
+                  ? "brand-gradient text-white"
+                  : "text-slate-500 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-white/5"
+              }`}
+            >
+              {v.label}
+            </button>
+          ))}
+        </div>
 
         {!listOpen && (
           <button

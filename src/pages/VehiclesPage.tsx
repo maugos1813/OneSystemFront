@@ -30,6 +30,28 @@ function DeviceSelect({
   );
 }
 
+// The 3 map views (Vista General / DHL / UNIVEX) only make sense against these two
+// values — an org can still clear the area entirely ("Sin área"), which just leaves the
+// vehicle out of both filtered views (still shown in "Vista General").
+const AREA_OPTIONS = ["DHL", "UNIVEX"];
+
+function AreaSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  return (
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="field-input w-full rounded-xl border border-slate-300 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
+    >
+      <option value="">Sin área</option>
+      {AREA_OPTIONS.map((area) => (
+        <option key={area} value={area}>
+          {area}
+        </option>
+      ))}
+    </select>
+  );
+}
+
 function VehicleRow({
   vehicle,
   deviceImei,
@@ -45,12 +67,18 @@ function VehicleRow({
   const [name, setName] = useState(vehicle.name);
   const [plate, setPlate] = useState(vehicle.plate ?? "");
   const [deviceId, setDeviceId] = useState(vehicle.deviceId ?? "");
+  const [fleetGroup, setFleetGroup] = useState(vehicle.fleetGroup ?? "");
   const [saving, setSaving] = useState(false);
 
   async function save() {
     setSaving(true);
     try {
-      await updateVehicle(vehicle.id, { name, plate: plate || undefined, deviceId: deviceId || undefined });
+      await updateVehicle(vehicle.id, {
+        name,
+        plate: plate || undefined,
+        deviceId: deviceId || undefined,
+        fleetGroup: fleetGroup || null,
+      });
       setEditing(false);
       onChanged();
     } finally {
@@ -84,6 +112,9 @@ function VehicleRow({
         <td className="px-4 py-2">
           <DeviceSelect value={deviceId} onChange={setDeviceId} devices={devices} />
         </td>
+        <td className="px-4 py-2">
+          <AreaSelect value={fleetGroup} onChange={setFleetGroup} />
+        </td>
         <td className="px-4 py-2 text-right">
           <button
             onClick={save}
@@ -108,6 +139,15 @@ function VehicleRow({
       <td className="px-4 py-3 font-medium text-slate-900 dark:text-white">{vehicle.name}</td>
       <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{vehicle.plate ?? "—"}</td>
       <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{deviceImei ?? "Sin asignar"}</td>
+      <td className="px-4 py-3">
+        {vehicle.fleetGroup ? (
+          <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700 dark:bg-blue-500/15 dark:text-blue-400">
+            {vehicle.fleetGroup}
+          </span>
+        ) : (
+          <span className="text-slate-400 dark:text-slate-500">—</span>
+        )}
+      </td>
       <td className="px-4 py-3 text-right">
         <button
           onClick={() => setEditing(true)}
@@ -204,12 +244,13 @@ export function VehiclesPage() {
 
       {!loading && vehicles.length > 0 && (
         <div className="float-card overflow-x-auto rounded-2xl border border-white bg-white shadow-lg shadow-slate-200/50 dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40">
-          <table className="w-full min-w-[560px] text-left text-sm">
+          <table className="w-full min-w-[680px] text-left text-sm">
             <thead className="border-b border-violet-100 bg-violet-50/60 text-xs text-slate-500 uppercase dark:border-white/10 dark:bg-white/5 dark:text-slate-400">
               <tr>
                 <th className="px-4 py-2 font-medium">Nombre</th>
                 <th className="px-4 py-2 font-medium">Patente</th>
                 <th className="px-4 py-2 font-medium">Dispositivo</th>
+                <th className="px-4 py-2 font-medium">Área</th>
                 <th className="px-4 py-2 font-medium text-right">Acciones</th>
               </tr>
             </thead>
