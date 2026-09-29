@@ -15,6 +15,8 @@ export interface Vehicle {
   orgId: string;
   name: string;
   plate: string | null;
+  /** Client-contract tag (e.g. "DHL", "UNIVEX") — only set for vehicles synced from Radius Velocity. */
+  fleetGroup: string | null;
   deviceId: string | null;
   createdAt: string;
 }
@@ -30,7 +32,8 @@ export interface Position {
   lng: number;
   altitude: number;
   angle: number;
-  satellites: number;
+  /** Null when the source doesn't report it (e.g. Radius Velocity), not "zero satellites". */
+  satellites: number | null;
   speed: number;
   priority: number;
   ioData: IoData;

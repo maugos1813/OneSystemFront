@@ -70,7 +70,14 @@ export function VehicleList({
                   selected ? "brand-gradient-soft dark:bg-blue-500/15" : "hover:bg-slate-50 dark:hover:bg-white/5"
                 }`}
               >
-                <span className="font-medium text-slate-900 dark:text-white">{vehicle.name}</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="font-medium text-slate-900 dark:text-white">{vehicle.name}</span>
+                  {vehicle.fleetGroup && (
+                    <span className="inline-flex items-center rounded-full bg-blue-100 px-1.5 py-0.5 text-[10px] font-semibold text-blue-700 dark:bg-blue-500/15 dark:text-blue-400">
+                      {vehicle.fleetGroup}
+                    </span>
+                  )}
+                </div>
                 {vehicle.plate && <span className="text-xs text-slate-500 dark:text-slate-400">{vehicle.plate}</span>}
                 <StatusBadge lastSeenAt={device?.lastSeenAt ?? null} />
               </button>

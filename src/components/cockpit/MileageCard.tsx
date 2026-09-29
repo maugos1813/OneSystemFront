@@ -1,7 +1,7 @@
 import { Route } from "lucide-react";
 import { trackGlow } from "../../lib/glow";
 
-export function MileageCard({ label, km }: { label: string; km: number }) {
+export function MileageCard({ label, km }: { label: string; km: number | null }) {
   return (
     <div
       onMouseMove={trackGlow}
@@ -11,7 +11,9 @@ export function MileageCard({ label, km }: { label: string; km: number }) {
         <Route className="h-5 w-5" />
       </div>
       <div className="min-w-0">
-        <p className="truncate text-lg font-semibold text-slate-900 dark:text-white">{km.toLocaleString()} km</p>
+        <p className="truncate text-lg font-semibold text-slate-900 dark:text-white">
+          {km !== null ? `${km.toLocaleString()} km` : "—"}
+        </p>
         <p className="text-xs font-medium tracking-wide text-slate-400 uppercase dark:text-slate-500">{label}</p>
       </div>
     </div>

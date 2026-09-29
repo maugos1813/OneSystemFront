@@ -86,9 +86,13 @@ export function VehicleDetailPanel({
           />
           <Row
             label="Voltaje externo"
-            value={`${(Number(position.ioData[AVL_ID.EXTERNAL_VOLTAGE] ?? 0) / 1000).toFixed(1)} V`}
+            value={
+              position.ioData[AVL_ID.EXTERNAL_VOLTAGE] !== undefined
+                ? `${(Number(position.ioData[AVL_ID.EXTERNAL_VOLTAGE]) / 1000).toFixed(1)} V`
+                : "—"
+            }
           />
-          <Row label="Satélites" value={String(position.satellites)} />
+          <Row label="Satélites" value={position.satellites !== null ? String(position.satellites) : "—"} />
           <Row label="Última posición" value={formatRelativeTime(position.ts)} />
         </div>
       )}

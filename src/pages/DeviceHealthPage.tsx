@@ -33,9 +33,15 @@ export function DeviceHealthPage() {
     const offline = isOffline(device.lastSeenAt, deviceOfflineMs);
     const lowBattery = isLowVoltage(position, lowBatteryMv);
     const satellites = position?.satellites ?? null;
-    const gsmSignal = position ? Number(position.ioData["21"] ?? 0) : null;
-    const batteryVoltage = position ? Number(position.ioData[AVL_ID.BATTERY_VOLTAGE] ?? 0) / 1000 : null;
-    const externalVoltage = position ? Number(position.ioData[AVL_ID.EXTERNAL_VOLTAGE] ?? 0) / 1000 : null;
+    const gsmSignal = position && position.ioData["21"] !== undefined ? Number(position.ioData["21"]) : null;
+    const batteryVoltage =
+      position && position.ioData[AVL_ID.BATTERY_VOLTAGE] !== undefined
+        ? Number(position.ioData[AVL_ID.BATTERY_VOLTAGE]) / 1000
+        : null;
+    const externalVoltage =
+      position && position.ioData[AVL_ID.EXTERNAL_VOLTAGE] !== undefined
+        ? Number(position.ioData[AVL_ID.EXTERNAL_VOLTAGE]) / 1000
+        : null;
     const weakSignal = gsmSignal !== null && gsmSignal <= 1;
 
     let severity: Severity = "ok";

@@ -41,7 +41,10 @@ export function CockpitPage() {
   }
 
   const state = classifyVehicleState(position ?? undefined);
-  const totalKm = Math.round(Number(position?.ioData[AVL_ID.TOTAL_ODOMETER] ?? 0) / 100) / 10;
+  const totalKm =
+    position?.ioData[AVL_ID.TOTAL_ODOMETER] !== undefined
+      ? Math.round(Number(position.ioData[AVL_ID.TOTAL_ODOMETER]) / 100) / 10
+      : null;
 
   return (
     <div className="h-full overflow-y-auto bg-violet-50 p-4 sm:p-6 lg:p-8 dark:bg-[#0a0e1a]">

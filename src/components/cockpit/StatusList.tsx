@@ -41,6 +41,9 @@ export function StatusList({ position }: { position: Position | null }) {
     return <p className="text-sm text-slate-400 dark:text-slate-500">Sin datos todavía.</p>;
   }
 
+  const hasExternalVoltage = position.ioData[AVL_ID.EXTERNAL_VOLTAGE] !== undefined;
+  const hasBatteryVoltage = position.ioData[AVL_ID.BATTERY_VOLTAGE] !== undefined;
+  const hasGsmSignal = position.ioData["21"] !== undefined;
   const externalVoltage = Number(position.ioData[AVL_ID.EXTERNAL_VOLTAGE] ?? 0) / 1000;
   const batteryVoltage = Number(position.ioData[AVL_ID.BATTERY_VOLTAGE] ?? 0) / 1000;
   const gsmSignal = Number(position.ioData["21"] ?? 0); // 0-5 scale
@@ -50,26 +53,26 @@ export function StatusList({ position }: { position: Position | null }) {
       <Row
         icon={<Zap className="h-4 w-4" />}
         label="Voltaje externo"
-        value={`${externalVoltage.toFixed(1)} V`}
-        pct={((externalVoltage - 9) / (15 - 9)) * 100}
+        value={hasExternalVoltage ? `${externalVoltage.toFixed(1)} V` : "—"}
+        pct={hasExternalVoltage ? ((externalVoltage - 9) / (15 - 9)) * 100 : 0}
       />
       <Row
         icon={<Battery className="h-4 w-4" />}
         label="Batería dispositivo"
-        value={`${batteryVoltage.toFixed(1)} V`}
-        pct={((batteryVoltage - 3.3) / (4.2 - 3.3)) * 100}
+        value={hasBatteryVoltage ? `${batteryVoltage.toFixed(1)} V` : "—"}
+        pct={hasBatteryVoltage ? ((batteryVoltage - 3.3) / (4.2 - 3.3)) * 100 : 0}
       />
       <Row
         icon={<Satellite className="h-4 w-4" />}
         label="Satélites GPS"
-        value={String(position.satellites)}
-        pct={(position.satellites / 16) * 100}
+        value={position.satellites !== null ? String(position.satellites) : "—"}
+        pct={position.satellites !== null ? (position.satellites / 16) * 100 : 0}
       />
       <Row
         icon={<SignalHigh className="h-4 w-4" />}
         label="Señal GSM"
-        value={`${gsmSignal}/5`}
-        pct={(gsmSignal / 5) * 100}
+        value={hasGsmSignal ? `${gsmSignal}/5` : "—"}
+        pct={hasGsmSignal ? (gsmSignal / 5) * 100 : 0}
       />
     </div>
   );
