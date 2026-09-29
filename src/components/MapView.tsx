@@ -1,10 +1,12 @@
-import { APIProvider, Map, Marker, Polyline, useMap } from "@vis.gl/react-google-maps";
+import { APIProvider, Map, Marker, Polygon, Polyline, useMap } from "@vis.gl/react-google-maps";
 import { useEffect, useState } from "react";
+import { useFleet } from "../context/FleetContext";
 import { useTheme } from "../context/ThemeContext";
 import { useSmoothedPosition } from "../hooks/useSmoothedPosition";
+import { geofenceZoneColor } from "../lib/geo";
 import { DARK_MAP_STYLE } from "../lib/mapStyle";
 import { getVehicleIcon } from "../lib/markerIcon";
-import type { Position, Vehicle } from "../lib/types";
+import type { Geofence, Position, Vehicle } from "../lib/types";
 
 const FOCUS_ZOOM = 15;
 
@@ -85,6 +87,8 @@ export function MapView({
 }: MapViewProps) {
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
   const { theme } = useTheme();
+  const { geofences } = useFleet();
+  const zonePolygons = geofences.filter((g) => g.type === "polygon" && g.path);
 
   const knownPositions = vehicles
     .map((v) => positions[v.id])
@@ -116,6 +120,22 @@ export function MapView({
         >
           <MapCenterOnSelect selectedVehicleId={selectedVehicleId} positions={positions} />
 
+          {zonePolygons.map((g) => {
+            const color = geofenceZoneColor(g.name);
+            return (
+              <Polygon
+                key={g.id}
+                paths={g.path!}
+                strokeColor={color.stroke}
+                strokeOpacity={0.7}
+                strokeWeight={2}
+                fillColor={color.fill}
+                fillOpacity={0.12}
+                clickable={false}
+              />
+            );
+          })}
+
           {historyPath && historyPath.length > 1 && (
             <Polyline
               path={historyPath.map((p) => ({ lat: p.lat, lng: p.lng }))}
@@ -143,7 +163,7 @@ export function MapView({
         </Map>
 
         <div className="absolute bottom-4 left-4 z-0 flex flex-wrap items-end gap-2">
-          <MapLegend />
+          <MapLegend zonePolygons={zonePolygons} />
           <MapTypeToggle />
         </div>
       </APIProvider>
@@ -151,7 +171,9 @@ export function MapView({
   );
 }
 
-function MapLegend() {
+function MapLegend({ zonePolygons }: { zonePolygons: Geofence[] }) {
+  const zoneNames = [...new Set(zonePolygons.map((g) => g.name))];
+
   return (
     <div className="flex flex-col gap-1.5 rounded-2xl border border-white bg-white px-2.5 py-2 text-[11px] text-slate-600 shadow-lg shadow-slate-300/40 sm:px-3 sm:text-xs dark:border-white/10 dark:bg-[#111729] dark:text-slate-300 dark:shadow-black/40">
       <div className="flex items-center gap-2">
@@ -166,6 +188,19 @@ function MapLegend() {
         <span className="text-green-600">▲</span>
         En movimiento
       </div>
+      {zoneNames.length > 0 && (
+        <div className="mt-1 flex flex-col gap-1.5 border-t border-slate-100 pt-1.5 dark:border-white/10">
+          {zoneNames.map((name) => (
+            <div key={name} className="flex items-center gap-2">
+              <span
+                className="h-2.5 w-2.5 rounded-sm"
+                style={{ backgroundColor: geofenceZoneColor(name).fill }}
+              />
+              {name}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

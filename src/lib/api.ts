@@ -184,7 +184,8 @@ export function listGeofences(): Promise<Geofence[]> {
   return request("/geofences");
 }
 
-export interface GeofenceInput {
+export interface CreateCircleGeofenceInput {
+  type: "circle";
   name: string;
   lat: number;
   lng: number;
@@ -193,11 +194,22 @@ export interface GeofenceInput {
   alertOnExit?: boolean;
 }
 
-export function createGeofence(input: GeofenceInput): Promise<Geofence> {
+export interface UpdateGeofenceInput {
+  name?: string;
+  lat?: number;
+  lng?: number;
+  radiusMeters?: number;
+  alertOnEnter?: boolean;
+  alertOnExit?: boolean;
+}
+
+/** Only circles are created through the app — a polygon (e.g. an official zone boundary)
+ * needs real coordinate data and is seeded directly, not hand-drawn. */
+export function createGeofence(input: CreateCircleGeofenceInput): Promise<Geofence> {
   return request("/geofences", { method: "POST", body: JSON.stringify(input) });
 }
 
-export function updateGeofence(id: string, input: Partial<GeofenceInput>): Promise<Geofence> {
+export function updateGeofence(id: string, input: UpdateGeofenceInput): Promise<Geofence> {
   return request(`/geofences/${id}`, { method: "PATCH", body: JSON.stringify(input) });
 }
 

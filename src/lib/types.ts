@@ -115,13 +115,25 @@ export interface OrgSettings {
   alerts: AlertPreferences;
 }
 
+export type GeofenceType = "circle" | "polygon";
+
+export interface GeofencePoint {
+  lat: number;
+  lng: number;
+}
+
 export interface Geofence {
   id: string;
   orgId: string;
   name: string;
-  lat: number;
-  lng: number;
-  radiusMeters: number;
+  type: GeofenceType;
+  /** Circle-only (null on a polygon geofence). */
+  lat: number | null;
+  lng: number | null;
+  radiusMeters: number | null;
+  /** Polygon-only (null on a circle geofence) — a list of rings, so one geofence can
+   * cover several disjoint areas (e.g. Milan's Area B, which has a few exclaves). */
+  path: GeofencePoint[][] | null;
   alertOnEnter: boolean;
   alertOnExit: boolean;
   createdAt: string;

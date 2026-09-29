@@ -1,20 +1,22 @@
-import { APIProvider, Circle, Map, type MapMouseEvent } from "@vis.gl/react-google-maps";
+import { APIProvider, Circle, Map, type MapMouseEvent, Polygon } from "@vis.gl/react-google-maps";
 import { MapPin, Plus, Trash2, X } from "lucide-react";
 import { useState } from "react";
 import { Panel } from "../components/analytics/Panel";
 import { useAuth } from "../context/AuthContext";
 import { useFleet } from "../context/FleetContext";
 import { useTheme } from "../context/ThemeContext";
-import { createGeofence, deleteGeofence, updateGeofence } from "../lib/api";
+import { createGeofence, deleteGeofence, updateGeofence, type UpdateGeofenceInput } from "../lib/api";
+import { geofenceZoneColor } from "../lib/geo";
 import { trackGlow } from "../lib/glow";
 import { DARK_MAP_STYLE, MUTED_MAP_STYLE } from "../lib/mapStyle";
-import type { Geofence } from "../lib/types";
+import type { Geofence, GeofenceType } from "../lib/types";
 
 const DEFAULT_CENTER = { lat: 41.9028, lng: 12.4964 };
 const DEFAULT_RADIUS_M = 200;
 
 interface Draft {
   id: string | null;
+  type: GeofenceType;
   name: string;
   lat: number;
   lng: number;
@@ -23,13 +25,17 @@ interface Draft {
   alertOnExit: boolean;
 }
 
+// A polygon's geometry (e.g. Area B/Area C's official boundaries) is seeded directly, not
+// hand-drawn — lat/lng/radiusMeters are unused placeholders when editing one, since only
+// its name and alert toggles are editable (see handleSave).
 function draftFromGeofence(g: Geofence): Draft {
   return {
     id: g.id,
+    type: g.type,
     name: g.name,
-    lat: g.lat,
-    lng: g.lng,
-    radiusMeters: g.radiusMeters,
+    lat: g.lat ?? 0,
+    lng: g.lng ?? 0,
+    radiusMeters: g.radiusMeters ?? 0,
     alertOnEnter: g.alertOnEnter,
     alertOnExit: g.alertOnExit,
   };
@@ -46,7 +52,11 @@ export function GeofencesPage() {
 
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
   const { theme } = useTheme();
-  const center = draft ?? geofences[0] ?? DEFAULT_CENTER;
+  const firstCircle = geofences.find(
+    (g): g is Geofence & { lat: number; lng: number } => g.type === "circle" && g.lat != null && g.lng != null,
+  );
+  const center =
+    draft && draft.type === "circle" ? { lat: draft.lat, lng: draft.lng } : (firstCircle ?? DEFAULT_CENTER);
 
   function startNew() {
     setDraft(null);
@@ -62,6 +72,7 @@ export function GeofencesPage() {
     if (!placing || !e.detail.latLng) return;
     setDraft({
       id: null,
+      type: "circle",
       name: "",
       lat: e.detail.latLng.lat,
       lng: e.detail.latLng.lng,
@@ -76,18 +87,30 @@ export function GeofencesPage() {
     if (!draft || !draft.name.trim()) return;
     setSaving(true);
     try {
-      const input = {
-        name: draft.name.trim(),
-        lat: draft.lat,
-        lng: draft.lng,
-        radiusMeters: Math.round(draft.radiusMeters),
-        alertOnEnter: draft.alertOnEnter,
-        alertOnExit: draft.alertOnExit,
-      };
       if (draft.id) {
+        // Geometry (circle position/radius, or a polygon's path) is set once at creation —
+        // only rename/toggle alerts here, and for a circle also its position/radius.
+        const input: UpdateGeofenceInput = {
+          name: draft.name.trim(),
+          alertOnEnter: draft.alertOnEnter,
+          alertOnExit: draft.alertOnExit,
+        };
+        if (draft.type === "circle") {
+          input.lat = draft.lat;
+          input.lng = draft.lng;
+          input.radiusMeters = Math.round(draft.radiusMeters);
+        }
         await updateGeofence(draft.id, input);
       } else {
-        await createGeofence(input);
+        await createGeofence({
+          type: "circle",
+          name: draft.name.trim(),
+          lat: draft.lat,
+          lng: draft.lng,
+          radiusMeters: Math.round(draft.radiusMeters),
+          alertOnEnter: draft.alertOnEnter,
+          alertOnExit: draft.alertOnExit,
+        });
       }
       refetchGeofences();
       setDraft(null);
@@ -111,7 +134,9 @@ export function GeofencesPage() {
     );
   }
 
-  const visibleExisting = geofences.filter((g) => g.id !== draft?.id);
+  // A circle being edited gets replaced by its own draggable draft shape below; a polygon's
+  // geometry never changes, so it stays rendered normally even while its name is being edited.
+  const visibleExisting = geofences.filter((g) => !(g.id === draft?.id && draft?.type === "circle"));
 
   return (
     <div className="h-full overflow-y-auto bg-[#f5f6fb] p-4 sm:p-6 lg:p-8 dark:bg-[#0a0e1a]">
@@ -119,7 +144,7 @@ export function GeofencesPage() {
         <div>
           <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Geocercas</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            Zonas circulares — te avisamos cuando un vehículo entra o sale.
+            Zonas circulares o con límites oficiales — te avisamos cuando un vehículo entra o sale.
           </p>
         </div>
         {canManage && !draft && !placing && (
@@ -143,27 +168,45 @@ export function GeofencesPage() {
           <APIProvider apiKey={apiKey}>
             <Map
               defaultCenter={center}
-              center={draft ? { lat: draft.lat, lng: draft.lng } : undefined}
+              center={draft && draft.type === "circle" ? { lat: draft.lat, lng: draft.lng } : undefined}
               defaultZoom={13}
               gestureHandling="greedy"
               disableDefaultUI
               styles={theme === "dark" ? DARK_MAP_STYLE : MUTED_MAP_STYLE}
               onClick={handleMapClick}
             >
-              {visibleExisting.map((g) => (
-                <Circle
-                  key={g.id}
-                  center={{ lat: g.lat, lng: g.lng }}
-                  radius={g.radiusMeters}
-                  strokeColor="#7c3aed"
-                  strokeOpacity={0.6}
-                  strokeWeight={2}
-                  fillColor="#7c3aed"
-                  fillOpacity={0.12}
-                />
-              ))}
+              {visibleExisting.map((g) => {
+                if (g.type === "polygon") {
+                  if (!g.path) return null;
+                  const color = geofenceZoneColor(g.name);
+                  return (
+                    <Polygon
+                      key={g.id}
+                      paths={g.path}
+                      strokeColor={color.stroke}
+                      strokeOpacity={0.7}
+                      strokeWeight={2}
+                      fillColor={color.fill}
+                      fillOpacity={0.15}
+                    />
+                  );
+                }
+                if (g.lat == null || g.lng == null || g.radiusMeters == null) return null;
+                return (
+                  <Circle
+                    key={g.id}
+                    center={{ lat: g.lat, lng: g.lng }}
+                    radius={g.radiusMeters}
+                    strokeColor="#7c3aed"
+                    strokeOpacity={0.6}
+                    strokeWeight={2}
+                    fillColor="#7c3aed"
+                    fillOpacity={0.12}
+                  />
+                );
+              })}
 
-              {draft && (
+              {draft && draft.type === "circle" && (
                 <Circle
                   center={{ lat: draft.lat, lng: draft.lng }}
                   radius={draft.radiusMeters}
@@ -194,18 +237,27 @@ export function GeofencesPage() {
                 className="field-input w-full rounded-xl border border-slate-300 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
               />
             </div>
-            <div className="w-full sm:w-36">
-              <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Radio (m)</label>
-              <input
-                type="number"
-                min={10}
-                max={50000}
-                value={Math.round(draft.radiusMeters)}
-                onChange={(e) => setDraft((d) => d && { ...d, radiusMeters: Number(e.target.value) || 0 })}
-                className="field-input w-full rounded-xl border border-slate-300 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
-              />
-            </div>
+            {draft.type === "circle" && (
+              <div className="w-full sm:w-36">
+                <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
+                  Radio (m)
+                </label>
+                <input
+                  type="number"
+                  min={10}
+                  max={50000}
+                  value={Math.round(draft.radiusMeters)}
+                  onChange={(e) => setDraft((d) => d && { ...d, radiusMeters: Number(e.target.value) || 0 })}
+                  className="field-input w-full rounded-xl border border-slate-300 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
+                />
+              </div>
+            )}
           </div>
+          {draft.type === "polygon" && (
+            <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">
+              Esta zona tiene límites oficiales — solo se puede renombrar y ajustar sus alertas.
+            </p>
+          )}
 
           <div className="mt-3 flex flex-wrap gap-4">
             <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
@@ -259,13 +311,19 @@ export function GeofencesPage() {
               onMouseMove={trackGlow}
               className="glow float-card flex items-center gap-3 rounded-2xl border border-white bg-white p-3 shadow-sm shadow-slate-200/50 dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40"
             >
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-600 dark:bg-violet-500/15 dark:text-violet-400">
+              <div
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
+                style={{
+                  backgroundColor: `${geofenceZoneColor(g.name).fill}1a`,
+                  color: geofenceZoneColor(g.name).stroke,
+                }}
+              >
                 <MapPin className="h-4 w-4" />
               </div>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium text-slate-900 dark:text-white">{g.name}</p>
                 <p className="text-xs text-slate-400 dark:text-slate-500">
-                  {g.radiusMeters} m de radio ·{" "}
+                  {g.type === "polygon" ? "Zona con límites oficiales" : `${g.radiusMeters} m de radio`} ·{" "}
                   {g.alertOnEnter && g.alertOnExit
                     ? "entrada y salida"
                     : g.alertOnEnter
