@@ -146,4 +146,31 @@ body {
   .brand-range {
     accent-color: var(--brand-blue);
   }
+
+  /* A visible (not OS-default-hidden) scrollbar for scrollable panels like the vehicle
+   * list — macOS/trackpad Chrome hides overlay scrollbars until actively scrolling,
+   * which makes an off-screen-but-scrollable list easy to miss entirely. */
+  .styled-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(100, 116, 139, 0.4) transparent;
+  }
+  .styled-scrollbar::-webkit-scrollbar {
+    width: 8px;
+  }
+  .styled-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .styled-scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgba(100, 116, 139, 0.35);
+    border-radius: 9999px;
+  }
+  .styled-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(100, 116, 139, 0.55);
+  }
+  .dark .styled-scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgba(148, 163, 184, 0.3);
+  }
+  .dark .styled-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(148, 163, 184, 0.5);
+  }
 }
