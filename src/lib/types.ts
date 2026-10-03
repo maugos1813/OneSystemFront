@@ -181,3 +181,11 @@ export interface TollPassage {
   lat: number;
   lng: number;
 }
+
+export interface TollMonthSummary {
+  /** "YYYY-MM" */
+  month: string;
+  total: number;
+  flagged: number;
+  vehicles: number;
+}
