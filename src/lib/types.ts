@@ -165,3 +165,19 @@ export interface TeamMember {
   /** Only meaningful for role "viewer"/"manager" — owner/admin always see every product the org has. */
   productKeys: string[];
 }
+
+export interface TollPassage {
+  id: string;
+  ts: string;
+  /** Marked by the org as an unauthorized use of the toll. */
+  flagged: boolean;
+  vehicleId: string;
+  vehicleName: string;
+  plate: string | null;
+  fleetGroup: string | null;
+  plazaId: string;
+  plazaName: string;
+  operator: string | null;
+  lat: number;
+  lng: number;
+}

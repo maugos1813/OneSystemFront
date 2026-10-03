@@ -18,6 +18,7 @@ import { PortalPage } from "./pages/PortalPage";
 import { RegisterPage } from "./pages/RegisterPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { TeamPage } from "./pages/TeamPage";
+import { TollsPage } from "./pages/TollsPage";
 import { VehiclesPage } from "./pages/VehiclesPage";
 
 export default function App() {
@@ -42,6 +43,7 @@ export default function App() {
               <Route path="/conduccion" element={<DrivingBehaviorPage />} />
               <Route path="/alertas" element={<AlertsPage />} />
               <Route path="/geocercas" element={<GeofencesPage />} />
+              <Route path="/peajes" element={<TollsPage />} />
               <Route
                 path="/salud-dispositivos"
                 element={<DeviceHealthPage />}

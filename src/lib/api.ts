@@ -11,6 +11,7 @@ import type {
   Position,
   Product,
   TeamMember,
+  TollPassage,
   Vehicle,
   WorkingHours,
 } from "./types";
@@ -215,6 +216,30 @@ export function updateGeofence(id: string, input: UpdateGeofenceInput): Promise<
 
 export function deleteGeofence(id: string): Promise<void> {
   return request(`/geofences/${id}`, { method: "DELETE" });
+}
+
+// --- Tolls ---
+
+export interface TollPassagesQuery {
+  from?: Date;
+  vehicleId?: string;
+  flaggedOnly?: boolean;
+  limit?: number;
+  offset?: number;
+}
+
+export function listTollPassages(query: TollPassagesQuery = {}): Promise<TollPassage[]> {
+  const params = new URLSearchParams();
+  if (query.from) params.set("from", query.from.toISOString());
+  if (query.vehicleId) params.set("vehicleId", query.vehicleId);
+  if (query.flaggedOnly) params.set("flaggedOnly", "true");
+  if (query.limit) params.set("limit", String(query.limit));
+  if (query.offset) params.set("offset", String(query.offset));
+  return request(`/tolls/passages?${params}`);
+}
+
+export function flagTollPassage(id: string, flagged: boolean): Promise<{ id: string; flagged: boolean }> {
+  return request(`/tolls/passages/${id}`, { method: "PATCH", body: JSON.stringify({ flagged }) });
 }
 
 // --- Products ---
