@@ -1,4 +1,4 @@
-import { LogOut, MapPin, Moon, Sun, Users } from "lucide-react";
+import { LogOut, Moon, Sun, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -12,12 +12,7 @@ const PRODUCT_LOGOS: Record<string, string> = {
   driver: "/logos/gamonal-driver.png",
   farmacy: "/logos/gamonal-farmacy.png",
   nakamacar: "/logos/nakamacar.png",
-};
-
-/** Products whose logo already carries their name: it fills the whole card instead of
- * sitting in a small badge above a text label. */
-const PRODUCT_CARD_IMAGES: Record<string, string> = {
-  gps: "/logos/onetrack.png",
+  gps: "/logos/onetrack-symbol.png",
 };
 
 export function PortalPage() {
@@ -137,30 +132,7 @@ export function PortalPage() {
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {products.map((product) => {
               const logo = PRODUCT_LOGOS[product.key];
-              const cardImage = PRODUCT_CARD_IMAGES[product.key];
               const isPending = ssoPending === product.key;
-
-              if (cardImage) {
-                return (
-                  <button
-                    key={product.key}
-                    onClick={() => openProduct(product)}
-                    onMouseMove={trackGlow}
-                    disabled={isPending}
-                    aria-label={`Abrir ${product.name}`}
-                    className="glow float-card group flex flex-col items-center overflow-hidden rounded-3xl border border-white bg-white pb-5 text-center shadow-lg shadow-slate-200/50 transition hover:shadow-xl disabled:cursor-wait disabled:opacity-60 dark:border-white/10 dark:shadow-black/40"
-                  >
-                    <img
-                      src={cardImage}
-                      alt={product.name}
-                      className="w-full transition duration-300 group-hover:scale-[1.02]"
-                    />
-                    <span className="brand-button -mt-1 rounded-xl px-4 py-2 text-xs font-medium">
-                      Acceder Consola →
-                    </span>
-                  </button>
-                );
-              }
 
               return (
                 <button
@@ -171,16 +143,8 @@ export function PortalPage() {
                   className="glow float-card group flex flex-col items-center gap-4 rounded-3xl border border-white bg-white p-8 text-center shadow-lg shadow-slate-200/50 transition hover:shadow-xl disabled:cursor-wait disabled:opacity-60 dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40"
                 >
                   {logo ? (
-                    <div className="rounded-2xl p-2 transition group-hover:scale-105 dark:bg-white">
-                      <img
-                        src={logo}
-                        alt={product.name}
-                        className="h-16 w-auto max-w-[160px] object-contain"
-                      />
-                    </div>
-                  ) : product.key === "gps" ? (
-                    <div className="brand-gradient-soft flex h-20 w-20 items-center justify-center rounded-2xl transition group-hover:scale-105 dark:bg-blue-500/15">
-                      <MapPin className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+                    <div className="flex h-20 w-44 items-center justify-center rounded-2xl p-2 transition group-hover:scale-105 dark:bg-white">
+                      <img src={logo} alt={product.name} className="max-h-full max-w-full object-contain" />
                     </div>
                   ) : (
                     <div className="brand-gradient-soft flex h-20 w-20 items-center justify-center rounded-2xl text-2xl font-bold text-blue-600 transition group-hover:scale-105 dark:bg-blue-500/15 dark:text-blue-400">
