@@ -1,7 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { ProtectedRoute } from "./components/layout/ProtectedRoute";
 import { RequireAuth } from "./components/layout/RequireAuth";
-import { AuthProvider } from "./context/AuthContext";
+import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { AlertsPage } from "./pages/AlertsPage";
 import { AnalyticsPage } from "./pages/AnalyticsPage";
@@ -13,6 +13,7 @@ import { DevicesPage } from "./pages/DevicesPage";
 import { DrivingBehaviorPage } from "./pages/DrivingBehaviorPage";
 import { GeofencesPage } from "./pages/GeofencesPage";
 import { HistoryPage } from "./pages/HistoryPage";
+import { LandingPage } from "./pages/LandingPage";
 import { LoginPage } from "./pages/LoginPage";
 import { PortalPage } from "./pages/PortalPage";
 import { RegisterPage } from "./pages/RegisterPage";
@@ -20,6 +21,12 @@ import { SettingsPage } from "./pages/SettingsPage";
 import { TeamPage } from "./pages/TeamPage";
 import { TollsPage } from "./pages/TollsPage";
 import { VehiclesPage } from "./pages/VehiclesPage";
+
+/** "/" is the public OneSystec site for visitors and the app portal once signed in. */
+function HomeRoute() {
+  const { isAuthenticated } = useAuth();
+  return isAuthenticated ? <PortalPage /> : <LandingPage />;
+}
 
 export default function App() {
   return (
@@ -30,8 +37,9 @@ export default function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
 
+            <Route path="/" element={<HomeRoute />} />
+
             <Route element={<RequireAuth />}>
-              <Route path="/" element={<PortalPage />} />
               <Route path="/equipo" element={<TeamPage />} />
             </Route>
 
