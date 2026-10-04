@@ -18,7 +18,7 @@ import {
   Sun,
   Truck,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
@@ -49,10 +49,32 @@ function prefersOpenByDefault(): boolean {
   return typeof window !== "undefined" && window.matchMedia("(min-width: 1024px)").matches;
 }
 
+/** This layout *is* the OneTrack app (the portal and login stay OneSystec), so the browser
+ * tab takes its name and icon while it's mounted and puts the portal's back on leave. */
+function useOneTrackTabIdentity() {
+  useEffect(() => {
+    const link = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
+    const previous = { title: document.title, href: link?.href, type: link?.type };
+    document.title = "OneTrack";
+    if (link) {
+      link.type = "image/png";
+      link.href = "/logos/onetrack-icon.png";
+    }
+    return () => {
+      document.title = previous.title;
+      if (link && previous.href) {
+        link.href = previous.href;
+        link.type = previous.type ?? "";
+      }
+    };
+  }, []);
+}
+
 export function AppLayout() {
   const { currentUser, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [navOpen, setNavOpen] = useState(prefersOpenByDefault);
+  useOneTrackTabIdentity();
 
   return (
     <div className="flex h-screen bg-[#f5f6fb] dark:bg-[#0a0e1a]">
@@ -74,12 +96,12 @@ export function AppLayout() {
           <div className="flex items-center justify-between gap-2 border-b border-violet-100 px-5 py-4 dark:border-white/5">
             <Link to="/" className="flex min-w-0 items-center gap-2" title="Volver al portal OneSystec">
               <img
-                src="/logo.jpg"
-                alt="OneSystec"
+                src="/logos/onetrack-icon.png"
+                alt="OneTrack"
                 className="h-9 w-9 shrink-0 rounded-2xl object-cover shadow-md shadow-blue-200/60"
               />
               <span className="truncate text-lg font-semibold text-slate-900 dark:text-white">
-                One<span className="brand-text-gradient">Systec</span>
+                One<span className="brand-text-gradient">Track</span>
               </span>
             </Link>
             <button
@@ -121,13 +143,16 @@ export function AppLayout() {
         <header className="flex items-center justify-between gap-3 border-b border-violet-100 bg-white px-4 py-3 sm:px-6 dark:border-white/5 dark:bg-[#0d1220]">
           <div className="flex min-w-0 items-center gap-3">
             {!navOpen && (
-              <button
-                onClick={() => setNavOpen(true)}
-                className="shrink-0 rounded-lg p-1.5 text-slate-500 hover:bg-violet-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/5 dark:hover:text-white"
-                aria-label="Mostrar menú"
-              >
-                <PanelLeftOpen className="h-5 w-5" />
-              </button>
+              <>
+                <button
+                  onClick={() => setNavOpen(true)}
+                  className="shrink-0 rounded-lg p-1.5 text-slate-500 hover:bg-violet-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/5 dark:hover:text-white"
+                  aria-label="Mostrar menú"
+                >
+                  <PanelLeftOpen className="h-5 w-5" />
+                </button>
+                <img src="/logos/onetrack-icon.png" alt="OneTrack" className="h-8 w-8 shrink-0 rounded-xl object-cover" />
+              </>
             )}
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">
