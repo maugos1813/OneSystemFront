@@ -67,6 +67,14 @@ function PassageTable({
               </td>
               <td className="px-3 py-2.5">
                 <span className="text-slate-900 dark:text-white">{p.plazaName}</span>
+                {!p.confirmed && (
+                  <span
+                    title="No había posiciones cerca de las barreras para comprobar que el vehículo frenó en el peaje"
+                    className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-500/15 dark:text-amber-300"
+                  >
+                    Sin confirmar
+                  </span>
+                )}
                 {p.operator && <span className="block text-xs text-slate-400 dark:text-slate-500">{p.operator}</span>}
               </td>
               <td className="px-3 py-2.5">
@@ -232,7 +240,8 @@ export function TollsPage() {
       <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Peajes</h1>
       <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">
         Pasos por peaje detectados a partir del recorrido GPS de cada vehículo, agrupados por mes. Indica por dónde
-        pasó, no si se pagó o si llegó un "mancato pagamento".
+        pasó, no si se pagó o si llegó un "mancato pagamento". Un paso "sin confirmar" es probable, pero faltaban
+        posiciones cerca del peaje para comprobar que el vehículo frenó en él.
       </p>
 
       <div className="mb-4">

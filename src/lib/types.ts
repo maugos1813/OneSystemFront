@@ -171,6 +171,8 @@ export interface TollPassage {
   ts: string;
   /** Marked by the org as an unauthorized use of the toll. */
   flagged: boolean;
+  /** A GPS report near the gates showed the vehicle slowing through them. */
+  confirmed: boolean;
   vehicleId: string;
   vehicleName: string;
   plate: string | null;
