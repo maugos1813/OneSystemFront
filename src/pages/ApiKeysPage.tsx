@@ -86,9 +86,10 @@ export function ApiKeysPage() {
     <div className="mx-auto max-w-4xl p-4 sm:p-6 lg:p-8">
       <h1 className="text-xl font-semibold text-slate-900 dark:text-white">API Keys</h1>
       <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">
-        Credenciales para que integres los datos de tu flota en otras apps.{" "}
+        Credenciales de <strong>solo lectura</strong> para que otras apps consulten los datos de tus vehículos
+        (ubicación, recorridos y estilo de conducción). Con una API key no se puede crear, modificar ni borrar nada.{" "}
         <a
-          href={`${API_URL}/docs`}
+          href={`${API_URL}/v1/docs`}
           target="_blank"
           rel="noreferrer"
           className="inline-flex items-center gap-1 font-medium text-blue-600 hover:underline dark:text-blue-400"
