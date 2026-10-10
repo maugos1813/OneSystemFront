@@ -1,14 +1,15 @@
 import { ArrowDown, ArrowUp, ArrowUpDown, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { formatDuration } from "../../lib/geo";
-import { scoreColor } from "../../lib/drivingBehavior";
+import { NO_SCORE_COLOR, scoreColor } from "../../lib/drivingBehavior";
 
 export interface FleetRow {
   vehicleId: string;
   name: string;
   plate: string | null;
-  score: number;
-  events: number;
+  /** null = no data / not measurable: shown as "—", excluded from the tiers. */
+  score: number | null;
+  events: number | null;
   distanceKm: number;
   trips: number;
   durationMs: number;
@@ -86,13 +87,13 @@ export function FleetScoreTable({ rows, categoryLabel, selectedVehicleId, onSele
 
   const tierCounts = useMemo(() => {
     const counts: Record<Tier, number> = { alto: 0, medio: 0, bajo: 0 };
-    for (const row of rows) counts[tierOf(row.score)]++;
+    for (const row of rows) if (row.score !== null) counts[tierOf(row.score)]++;
     return counts;
   }, [rows]);
 
   const totals = useMemo(
     () => ({
-      events: rows.reduce((sum, r) => sum + r.events, 0),
+      events: rows.reduce((sum, r) => sum + (r.events ?? 0), 0),
       distanceKm: Math.round(rows.reduce((sum, r) => sum + r.distanceKm, 0)),
       trips: rows.reduce((sum, r) => sum + r.trips, 0),
     }),
@@ -102,14 +103,17 @@ export function FleetScoreTable({ rows, categoryLabel, selectedVehicleId, onSele
   const visibleRows = useMemo(() => {
     const q = query.trim().toLowerCase();
     const filtered = rows.filter((r) => {
-      if (tierFilter !== "all" && tierOf(r.score) !== tierFilter) return false;
+      if (tierFilter !== "all" && (r.score === null || tierOf(r.score) !== tierFilter)) return false;
       if (!q) return true;
       return r.name.toLowerCase().includes(q) || (r.plate ?? "").toLowerCase().includes(q);
     });
     const dir = sortDir === "asc" ? 1 : -1;
     return filtered.sort((a, b) => {
       if (sortKey === "name") return a.name.localeCompare(b.name) * dir;
-      return (a[sortKey] - b[sortKey]) * dir;
+      const x = a[sortKey];
+      const y = b[sortKey];
+      if (x === null || y === null) return x === y ? 0 : x === null ? 1 : -1; // no data always last
+      return (x - y) * dir;
     });
   }, [rows, query, tierFilter, sortKey, sortDir]);
 
@@ -208,13 +212,13 @@ export function FleetScoreTable({ rows, categoryLabel, selectedVehicleId, onSele
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-white/10">
             {visibleRows.map((row) => (
-              <tr key={row.vehicleId} style={{ boxShadow: `inset 4px 0 0 0 ${scoreColor(row.score)}` }}>
+              <tr key={row.vehicleId} style={{ boxShadow: `inset 4px 0 0 0 ${row.score === null ? NO_SCORE_COLOR : scoreColor(row.score)}` }}>
                 <td className="px-4 py-3">
                   <span
                     className="inline-flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold text-white tabular-nums"
-                    style={{ backgroundColor: scoreColor(row.score) }}
+                    style={{ backgroundColor: row.score === null ? NO_SCORE_COLOR : scoreColor(row.score) }}
                   >
-                    {row.score}
+                    {row.score ?? "—"}
                   </span>
                 </td>
                 <td className="px-4 py-3">
@@ -231,7 +235,7 @@ export function FleetScoreTable({ rows, categoryLabel, selectedVehicleId, onSele
                   {formatDuration(row.durationMs)}
                 </td>
                 <td className="px-4 py-3 text-right text-slate-600 tabular-nums dark:text-slate-300">
-                  {row.events}
+                  {row.events ?? "—"}
                 </td>
                 <td className="px-4 py-3 text-right">
                   <button

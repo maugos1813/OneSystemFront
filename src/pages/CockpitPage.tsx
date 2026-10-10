@@ -9,7 +9,7 @@ import { StatePills } from "../components/cockpit/StatePills";
 import { StatusList } from "../components/cockpit/StatusList";
 import { useFleet } from "../context/FleetContext";
 import { useSmoothedPosition } from "../hooks/useSmoothedPosition";
-import { useTodayTripStats } from "../hooks/useTodayTripStats";
+import { useTodayDrivingStyle } from "../hooks/useTodayDrivingStyle";
 import { classifyVehicleState } from "../lib/fleetStats";
 import { trackGlow } from "../lib/glow";
 import { AVL_ID } from "../lib/types";
@@ -26,7 +26,9 @@ export function CockpitPage() {
   const vehicle = vehicles.find((v) => v.id === selectedId) ?? null;
   const position = vehicle ? (positions[vehicle.id] ?? null) : null;
   const smoothed = useSmoothedPosition(position);
-  const { score, harshEvents, tripKm } = useTodayTripStats(vehicle?.id ?? null);
+  const { style: todayStyle, loading: styleLoading } = useTodayDrivingStyle(vehicle?.id ?? null);
+  const { harshBraking, harshAcceleration, harshCornering } = todayStyle?.incidents ?? {};
+  const harshEventCount = (harshBraking ?? 0) + (harshAcceleration ?? 0) + (harshCornering ?? 0);
 
   if (loading) {
     return (
@@ -116,7 +118,7 @@ export function CockpitPage() {
                 onMouseMove={trackGlow}
                 className="glow float-card col-span-1 flex items-center justify-center rounded-3xl border border-white bg-white p-4 shadow-lg shadow-slate-200/50 lg:col-span-2 dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40"
               >
-                <GForceGauge eventCount={harshEvents.length} />
+                <GForceGauge eventCount={harshEventCount} />
               </div>
               <div className="col-span-1 lg:col-span-2">
                 <MileageCard label="Total recorrido" km={totalKm} />
@@ -125,10 +127,10 @@ export function CockpitPage() {
                 onMouseMove={trackGlow}
                 className="glow float-card col-span-2 rounded-3xl border border-white bg-white p-4 shadow-lg shadow-slate-200/50 lg:col-span-4 dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40"
               >
-                <DrivingScoreCard score={score} events={harshEvents} />
+                <DrivingScoreCard style={todayStyle} loading={styleLoading} />
               </div>
               <div className="col-span-1 lg:col-span-2">
-                <MileageCard label="Recorrido hoy" km={tripKm} />
+                <MileageCard label="Recorrido hoy" km={todayStyle?.distanceKm ?? null} />
               </div>
               <div
                 onMouseMove={trackGlow}

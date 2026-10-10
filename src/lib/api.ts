@@ -5,6 +5,7 @@ import type {
   CreatedApiKey,
   CurrentUser,
   Device,
+  DrivingStyleResponse,
   DeviceEvent,
   Geofence,
   OrgSettings,
@@ -156,8 +157,9 @@ export function listApiKeys(): Promise<ApiKey[]> {
   return request("/api-keys");
 }
 
-export function createApiKey(name: string): Promise<CreatedApiKey> {
-  return request("/api-keys", { method: "POST", body: JSON.stringify({ name }) });
+/** `allowedArea` limits the key to one área; omit it for a key with access to the whole fleet. */
+export function createApiKey(name: string, allowedArea?: string | null): Promise<CreatedApiKey> {
+  return request("/api-keys", { method: "POST", body: JSON.stringify({ name, allowedArea: allowedArea ?? null }) });
 }
 
 export function revokeApiKey(id: string): Promise<void> {
@@ -257,6 +259,39 @@ export function listTollPassages(query: TollPassagesQuery): Promise<TollPassage[
 
 export function flagTollPassage(id: string, flagged: boolean): Promise<{ id: string; flagged: boolean }> {
   return request(`/tolls/passages/${id}`, { method: "PATCH", body: JSON.stringify({ flagged }) });
+}
+
+// --- Driving style (calculated on the server) ---
+
+export interface DrivingStyleQuery {
+  days?: number;
+  /** Start of the window; overrides `days` (e.g. since midnight). */
+  from?: Date;
+  speedLimit?: number;
+}
+
+function drivingStyleParams(query: DrivingStyleQuery): URLSearchParams {
+  const params = new URLSearchParams();
+  if (query.days) params.set("days", String(query.days));
+  if (query.from) params.set("from", query.from.toISOString());
+  if (query.speedLimit) params.set("speedLimit", String(query.speedLimit));
+  return params;
+}
+
+export function getDrivingStyle(query: DrivingStyleQuery = {}): Promise<DrivingStyleResponse> {
+  return request(`/driving-style?${drivingStyleParams(query)}`);
+}
+
+export interface DrivingIncidentDto {
+  type: "harshBraking" | "harshAcceleration" | "harshCornering" | "speeding";
+  ts: string;
+  lat: number;
+  lng: number;
+  detail: string;
+}
+
+export function getVehicleIncidents(vehicleId: string, query: DrivingStyleQuery = {}): Promise<{ incidents: DrivingIncidentDto[] }> {
+  return request(`/vehicles/${vehicleId}/driving-style/incidents?${drivingStyleParams(query)}`);
 }
 
 // --- Products ---

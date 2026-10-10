@@ -75,6 +75,8 @@ export interface ApiKey {
   id: string;
   orgId: string;
   name: string;
+  /** null = full access to the whole fleet; otherwise the key only sees that área. */
+  allowedArea: string | null;
   keyPrefix: string;
   lastUsedAt: string | null;
   revokedAt: string | null;
@@ -190,4 +192,47 @@ export interface TollMonthSummary {
   total: number;
   flagged: number;
   vehicles: number;
+}
+
+export type DrivingQuality = "full" | "speeding_only" | "insufficient_data" | "no_data";
+
+export interface DrivingScores {
+  overall: number;
+  /** null when the device reports too sparsely to detect harsh events. */
+  harshBraking: number | null;
+  harshAcceleration: number | null;
+  harshCornering: number | null;
+  speeding: number;
+  grade: string;
+}
+
+export interface DrivingIncidentCounts {
+  harshBraking: number | null;
+  harshAcceleration: number | null;
+  harshCornering: number | null;
+  speeding: number;
+}
+
+/** One vehicle's driving style over a period, as calculated by the server. */
+export interface VehicleDrivingStyle {
+  vehicleId: string;
+  name: string;
+  plate: string | null;
+  fleetGroup: string | null;
+  samples: number;
+  distanceKm: number;
+  drivingHours: number;
+  trips: number;
+  quality: DrivingQuality;
+  scores: DrivingScores | null;
+  incidents: DrivingIncidentCounts;
+  incidentsPer100Km: DrivingIncidentCounts | null;
+}
+
+export interface DrivingStyleResponse {
+  speedLimitKmh: number;
+  from: string;
+  to: string;
+  vehicles: VehicleDrivingStyle[];
+  rules: { pointsPerIncidentPer100Km: number; minDistanceKm: number };
 }

@@ -1,4 +1,4 @@
-import { scoreColor } from "../../lib/drivingBehavior";
+import { NO_SCORE_COLOR, scoreColor } from "../../lib/drivingBehavior";
 import { trackGlow } from "../../lib/glow";
 
 const SIZE = 60;
@@ -8,8 +8,9 @@ const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
 interface ScoreRingProps {
   label: string;
-  score: number;
-  count: number;
+  /** null = can't be measured for this vehicle/period (shown as "—", never as 100). */
+  score: number | null;
+  count: number | null;
   countLabel: string;
   active: boolean;
   onClick: () => void;
@@ -18,9 +19,9 @@ interface ScoreRingProps {
 /** A single ring lives in its own floating card so a full row of them spreads edge to
  * edge — the active one "pops" forward with a bigger shadow and a slight lift. */
 export function ScoreRing({ label, score, count, countLabel, active, onClick }: ScoreRingProps) {
-  const clamped = Math.max(0, Math.min(100, score));
+  const clamped = score === null ? 0 : Math.max(0, Math.min(100, score));
   const dash = (clamped / 100) * CIRCUMFERENCE;
-  const color = scoreColor(score);
+  const color = score === null ? NO_SCORE_COLOR : scoreColor(score);
 
   return (
     <button
@@ -56,13 +57,13 @@ export function ScoreRing({ label, score, count, countLabel, active, onClick }: 
           </g>
         </svg>
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-sm font-bold tabular-nums text-slate-900 dark:text-white">{score}%</span>
+          <span className="text-sm font-bold tabular-nums text-slate-900 dark:text-white">{score === null ? "—" : `${score}%`}</span>
         </div>
       </div>
       <div className="min-w-0">
         <p className="text-sm leading-tight font-semibold text-slate-900 dark:text-white">{label}</p>
         <p className="mt-0.5 text-xs leading-tight text-slate-400 dark:text-slate-500">
-          {count} {countLabel}
+          {count === null ? "no medible" : `${count} ${countLabel}`}
         </p>
       </div>
     </button>

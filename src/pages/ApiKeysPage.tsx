@@ -1,6 +1,8 @@
 import { Check, Copy, ExternalLink, Plus, Trash2 } from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
+import { useAuth } from "../context/AuthContext";
 import { createApiKey, listApiKeys, revokeApiKey } from "../lib/api";
+import { AREA_OPTIONS } from "../lib/areaFilter";
 import { trackGlow } from "../lib/glow";
 import type { ApiKey, CreatedApiKey } from "../lib/types";
 
@@ -9,6 +11,19 @@ const API_URL = import.meta.env.VITE_API_URL;
 function formatDate(iso: string | null): string {
   if (!iso) return "Nunca";
   return new Date(iso).toLocaleString();
+}
+
+/** Whether a key sees the whole fleet or only one área — the first thing to check before handing a key out. */
+function AccessBadge({ area }: { area: string | null }) {
+  return area ? (
+    <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-500/15 dark:text-blue-300">
+      Solo {area}
+    </span>
+  ) : (
+    <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-500/15 dark:text-amber-300">
+      Acceso total
+    </span>
+  );
 }
 
 function RevealedKeyCard({ apiKey, onDismiss }: { apiKey: CreatedApiKey; onDismiss: () => void }) {
@@ -24,6 +39,9 @@ function RevealedKeyCard({ apiKey, onDismiss }: { apiKey: CreatedApiKey; onDismi
     <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-500/20 dark:bg-amber-500/10">
       <p className="mb-2 text-sm font-semibold text-amber-800 dark:text-amber-300">
         Guardá esta clave ahora — no la vamos a mostrar de nuevo.
+      </p>
+      <p className="mb-2 flex items-center gap-2 text-xs text-amber-800 dark:text-amber-300">
+        Alcance de esta key: <AccessBadge area={apiKey.allowedArea} />
       </p>
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <code className="flex-1 overflow-x-auto rounded-lg border border-amber-200 bg-white px-3 py-2 text-sm text-slate-800 dark:border-amber-500/20 dark:bg-[#0d1220] dark:text-slate-200">
@@ -50,7 +68,10 @@ function RevealedKeyCard({ apiKey, onDismiss }: { apiKey: CreatedApiKey; onDismi
 export function ApiKeysPage() {
   const [keys, setKeys] = useState<ApiKey[]>([]);
   const [loading, setLoading] = useState(true);
+  const { currentUser } = useAuth();
   const [name, setName] = useState("");
+  // "" = access to the whole fleet. A user who is themselves limited to an área can only mint keys for it.
+  const [area, setArea] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [revealed, setRevealed] = useState<CreatedApiKey | null>(null);
 
@@ -67,7 +88,7 @@ export function ApiKeysPage() {
     e.preventDefault();
     setSubmitting(true);
     try {
-      const created = await createApiKey(name);
+      const created = await createApiKey(name, currentUser?.allowedArea ?? (area || null));
       setRevealed(created);
       setName("");
       refetch();
@@ -87,7 +108,8 @@ export function ApiKeysPage() {
       <h1 className="text-xl font-semibold text-slate-900 dark:text-white">API Keys</h1>
       <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">
         Credenciales de <strong>solo lectura</strong> para que otras apps consulten los datos de tus vehículos
-        (ubicación, recorridos y estilo de conducción). Con una API key no se puede crear, modificar ni borrar nada.{" "}
+        (ubicación, recorridos y estilo de conducción). Con una API key no se puede crear, modificar ni borrar nada. Una key con <strong>acceso total</strong> ve toda la flota;
+        una limitada a un área solo ve los vehículos de esa área.{" "}
         <a
           href={`${API_URL}/v1/docs`}
           target="_blank"
@@ -116,6 +138,22 @@ export function ApiKeysPage() {
             className="field-input w-full rounded-xl border border-slate-300 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
           />
         </div>
+        <div className="sm:w-56">
+          <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Acceso</label>
+          <select
+            value={currentUser?.allowedArea ?? area}
+            onChange={(e) => setArea(e.target.value)}
+            disabled={!!currentUser?.allowedArea}
+            className="field-input w-full rounded-xl border border-slate-300 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
+          >
+            <option value="">Toda la flota (acceso total)</option>
+            {AREA_OPTIONS.map((a) => (
+              <option key={a} value={a}>
+                Solo {a}
+              </option>
+            ))}
+          </select>
+        </div>
         <button
           type="submit"
           disabled={submitting}
@@ -138,6 +176,7 @@ export function ApiKeysPage() {
             <thead className="border-b border-violet-100 bg-violet-50/60 text-xs text-slate-500 uppercase dark:border-white/10 dark:bg-white/5 dark:text-slate-400">
               <tr>
                 <th className="px-4 py-2 font-medium">Nombre</th>
+                <th className="px-4 py-2 font-medium">Acceso</th>
                 <th className="px-4 py-2 font-medium">Clave</th>
                 <th className="px-4 py-2 font-medium">Última vez usada</th>
                 <th className="px-4 py-2 font-medium">Estado</th>
@@ -148,6 +187,9 @@ export function ApiKeysPage() {
               {keys.map((key) => (
                 <tr key={key.id}>
                   <td className="px-4 py-3 font-medium text-slate-900 dark:text-white">{key.name}</td>
+                  <td className="px-4 py-3">
+                    <AccessBadge area={key.allowedArea} />
+                  </td>
                   <td className="px-4 py-3 font-mono text-xs text-slate-500 dark:text-slate-400">
                     {key.keyPrefix}…
                   </td>
