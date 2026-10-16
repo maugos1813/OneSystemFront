@@ -1,6 +1,7 @@
 import {
   BarChart3,
   BellRing,
+  Cpu,
   Gauge,
   HeartPulse,
   History,
@@ -40,6 +41,7 @@ const NAV_ITEMS = [
   // The backend now restricts both reading and managing these to owner/admin (API keys
   // authenticate as full access, and org settings affect everyone) — hidden below for
   // anyone else so they never land on a page that just 403s.
+  { to: "/sims", label: "SIMs", icon: Cpu, end: false, ownerAdminOnly: true },
   { to: "/api-keys", label: "API Keys", icon: Key, end: false, ownerAdminOnly: true },
   { to: "/ajustes", label: "Ajustes", icon: Settings, end: false, ownerAdminOnly: true },
 ];

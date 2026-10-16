@@ -10,6 +10,8 @@ import type {
   Geofence,
   OrgSettings,
   Position,
+  SimCard,
+  SimSecrets,
   Product,
   TeamMember,
   TollMonthSummary,
@@ -92,6 +94,40 @@ export function listDevices(): Promise<Device[]> {
 
 export function claimDevice(imei: string): Promise<Device> {
   return request("/devices/claim", { method: "POST", body: JSON.stringify({ imei }) });
+}
+
+// --- SIM cards (owner/admin) ---
+
+export interface SimInput {
+  deviceId?: string | null;
+  operator?: string;
+  iccid?: string;
+  phoneNumber?: string | null;
+  nmu?: string | null;
+  pin?: string | null;
+  puk?: string | null;
+  notes?: string | null;
+}
+
+export function listSims(): Promise<SimCard[]> {
+  return request("/sims");
+}
+
+export function createSim(input: SimInput & { iccid: string }): Promise<SimCard> {
+  return request("/sims", { method: "POST", body: JSON.stringify(input) });
+}
+
+/** Only the fields sent change; an empty string clears an optional one. */
+export function updateSim(id: string, input: SimInput): Promise<SimCard> {
+  return request(`/sims/${id}`, { method: "PATCH", body: JSON.stringify(input) });
+}
+
+export function deleteSim(id: string): Promise<void> {
+  return request(`/sims/${id}`, { method: "DELETE" });
+}
+
+export function getSimSecrets(id: string): Promise<SimSecrets> {
+  return request(`/sims/${id}/secrets`);
 }
 
 // --- Vehicles ---

@@ -236,3 +236,25 @@ export interface DrivingStyleResponse {
   vehicles: VehicleDrivingStyle[];
   rules: { pointsPerIncidentPer100Km: number; minDistanceKm: number };
 }
+
+/** A SIM card, as listed. PIN/PUK are never part of it — only whether they are stored. */
+export interface SimCard {
+  id: string;
+  deviceId: string | null;
+  device: { imei: string; model: string } | null;
+  vehicle: { id: string; name: string; plate: string | null } | null;
+  operator: string;
+  iccid: string;
+  phoneNumber: string | null;
+  nmu: string | null;
+  hasPin: boolean;
+  hasPuk: boolean;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SimSecrets {
+  pin: string | null;
+  puk: string | null;
+}
