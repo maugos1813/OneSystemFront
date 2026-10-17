@@ -231,7 +231,11 @@ export function DeviceDetailPage() {
             <Fact label="Estado del GPS">{ioNumber(69)}</Fact>
             <Fact label="Satélites">{lastPosition?.satellites ?? "—"}</Fact>
             <Fact label="Ubicación">
-              {lastPosition ? `${lastPosition.lat.toFixed(5)}, ${lastPosition.lng.toFixed(5)}` : "—"}
+              {!lastPosition
+                ? "—"
+                : lastPosition.lat === 0 && lastPosition.lng === 0
+                  ? "Sin ubicación (el GPS aún no tiene fix)"
+                  : `${lastPosition.lat.toFixed(5)}, ${lastPosition.lng.toFixed(5)}`}
             </Fact>
           </dl>
         </Section>

@@ -64,7 +64,7 @@ export function buildChecklist(detail: DeviceDetail, nowMs: number, canSeeSim: b
             label: "Tiene señal de GPS",
             state: "warn",
             detail:
-              gnssStatus !== undefined && Number(gnssStatus) !== 2
+              gnssStatus !== undefined && Number(gnssStatus) !== 1
                 ? "El GPS no tiene fix. En un equipo OBD, sácalo del tablero o ubícalo con vista al cielo."
                 : `Solo ${satellites ?? 0} satélites; se necesitan al menos ${MIN_SATELLITES}.`,
           },

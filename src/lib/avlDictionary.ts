@@ -16,7 +16,8 @@ const onOff = (on: string, off: string) => (value: number | string) => (num(valu
 const mvToVolts = (value: number | string) => `${fmt(num(value) / 1000, 2)} V`;
 const withUnit = (unit: string, digits = 0) => (value: number | string) => `${fmt(num(value), digits)} ${unit}`;
 
-const GNSS_STATUS: Record<number, string> = { 0: "GNSS apagado", 1: "Sin fix (buscando)", 2: "Con fix", 3: "En reposo (sleep)" };
+const GNSS_STATUS: Record<number, string> = { 0: "GNSS apagado", 1: "Con fix", 2: "Sin fix (buscando satélites)", 3: "En reposo (sleep)" };
+const SLEEP_MODE: Record<number, string> = { 0: "Sin sueño", 1: "Sueño de GPS", 2: "Sueño profundo", 3: "Sueño en línea", 4: "Sueño ultra" };
 
 const DEFINITIONS: Record<number, IoDef> = {
   1: { name: "Entrada digital 1", format: onOff("Activa", "Inactiva") },
@@ -43,13 +44,13 @@ const DEFINITIONS: Record<number, IoDef> = {
   181: { name: "PDOP", format: (v) => fmt(num(v) / 10, 1) },
   182: { name: "HDOP", format: (v) => fmt(num(v) / 10, 1) },
   199: { name: "Odómetro del viaje", format: (v) => `${fmt(num(v) / 1000, 1)} km` },
-  200: { name: "Modo de sueño" },
+  200: { name: "Modo de sueño", format: (v) => SLEEP_MODE[num(v)] ?? String(v) },
   205: { name: "Cell ID (GSM)" },
   206: { name: "Código de área (GSM)" },
   237: { name: "Tipo de red" },
   239: { name: "Ignición", format: onOff("Encendida", "Apagada") },
   240: { name: "Movimiento", format: onOff("En movimiento", "Detenido") },
-  241: { name: "Operador GSM activo" },
+  241: { name: "Operador GSM activo", format: (v) => { const code = String(v); return code.length > 3 ? `${code.slice(0, 3)}-${code.slice(3)}` : code; } },
   246: { name: "Remolque", format: onOff("Remolcando", "Normal") },
   247: { name: "Detección de choque" },
   249: { name: "Jamming (interferencia)", format: onOff("Detectado", "Normal") },
