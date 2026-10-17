@@ -9,6 +9,7 @@ import { ApiKeysPage } from "./pages/ApiKeysPage";
 import { CockpitPage } from "./pages/CockpitPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { DeviceHealthPage } from "./pages/DeviceHealthPage";
+import { DeviceDetailPage } from "./pages/DeviceDetailPage";
 import { DevicesPage } from "./pages/DevicesPage";
 import { DrivingBehaviorPage } from "./pages/DrivingBehaviorPage";
 import { GeofencesPage } from "./pages/GeofencesPage";
@@ -59,6 +60,7 @@ export default function App() {
               />
               <Route path="/vehiculos" element={<VehiclesPage />} />
               <Route path="/dispositivos" element={<DevicesPage />} />
+              <Route path="/dispositivos/:id" element={<DeviceDetailPage />} />
               <Route path="/sims" element={<SimsPage />} />
               <Route path="/api-keys" element={<ApiKeysPage />} />
               <Route path="/ajustes" element={<SettingsPage />} />

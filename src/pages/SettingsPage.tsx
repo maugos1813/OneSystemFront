@@ -239,6 +239,13 @@ export function SettingsPage() {
             >
               Configurá las zonas en la página Geocercas.
             </AlertRow>
+            <AlertRow
+              label="Alarmas del dispositivo"
+              enabled={form.alerts.deviceAlarmsEnabled}
+              onToggle={(v) => updateAlert("deviceAlarmsEnabled", v)}
+            >
+              Desconexión del equipo, interferencia de señal, remolque y choque. Solo llegan si el tracker las tiene activadas.
+            </AlertRow>
           </div>
         </Panel>
 

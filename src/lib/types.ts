@@ -9,10 +9,39 @@ export interface Device {
   orgId: string | null;
   imei: string;
   model: string;
+  /** The S/N printed on the label (not the IMEI). */
+  serialNumber: string | null;
+  firmware: string | null;
   status: DeviceStatus;
   source: DeviceSource;
   lastSeenAt: string | null;
   createdAt: string;
+}
+
+/** Latest value of one IO element a device reported, with when it last carried it. */
+export interface IoReading {
+  id: number;
+  value: number | string;
+  ts: string;
+}
+
+export interface DeviceDetail {
+  device: Device;
+  vehicle: { id: string; name: string; plate: string | null; fleetGroup: string | null } | null;
+  /** Null for accounts that can't see the SIMs section, as well as for a device with no SIM. */
+  sim: { id: string; operator: string; iccid: string; phoneNumber: string | null } | null;
+  lastPosition: {
+    ts: string;
+    lat: number;
+    lng: number;
+    speed: number;
+    angle: number;
+    altitude: number;
+    satellites: number | null;
+  } | null;
+  io: IoReading[];
+  /** Newest first. */
+  events: DeviceEvent[];
 }
 
 export interface Vehicle {
@@ -109,6 +138,7 @@ export interface AlertPreferences {
   excessiveIdlingEnabled: boolean;
   excessiveIdlingMinutes: number;
   geofenceEnabled: boolean;
+  deviceAlarmsEnabled: boolean;
 }
 
 export interface OrgSettings {

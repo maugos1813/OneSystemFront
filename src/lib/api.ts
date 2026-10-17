@@ -5,6 +5,7 @@ import type {
   CreatedApiKey,
   CurrentUser,
   Device,
+  DeviceDetail,
   DrivingStyleResponse,
   DeviceEvent,
   Geofence,
@@ -92,8 +93,22 @@ export function listDevices(): Promise<Device[]> {
   return request("/devices");
 }
 
-export function claimDevice(imei: string): Promise<Device> {
-  return request("/devices/claim", { method: "POST", body: JSON.stringify({ imei }) });
+export function claimDevice(imei: string, model?: string): Promise<Device> {
+  return request("/devices/claim", { method: "POST", body: JSON.stringify({ imei, ...(model ? { model } : {}) }) });
+}
+
+export function getDevice(id: string): Promise<DeviceDetail> {
+  return request(`/devices/${id}`);
+}
+
+export interface DevicePatch {
+  model?: string;
+  serialNumber?: string | null;
+  firmware?: string | null;
+}
+
+export function updateDevice(id: string, patch: DevicePatch): Promise<Device> {
+  return request(`/devices/${id}`, { method: "PATCH", body: JSON.stringify(patch) });
 }
 
 // --- SIM cards (owner/admin) ---

@@ -1,4 +1,5 @@
 import { X } from "lucide-react";
+import { describeEvent } from "../lib/deviceEvents";
 import { AVL_ID, type DeviceEvent, type Position, type Vehicle } from "../lib/types";
 import { SpeedChart } from "./SpeedChart";
 
@@ -33,15 +34,6 @@ function Row({ label, value }: { label: string; value: string }) {
       <span className="text-sm font-medium text-slate-900 dark:text-white">{value}</span>
     </div>
   );
-}
-
-function eventLabel(event: DeviceEvent): string {
-  if (event.type === "ignition_change") {
-    const on = event.payload[AVL_ID.IGNITION] === 1 || event.payload[AVL_ID.IGNITION] === "1";
-    return on ? "Ignición encendida" : "Ignición apagada";
-  }
-  if (event.type === "movement_change") return "Cambio de movimiento";
-  return event.type;
 }
 
 export function VehicleDetailPanel({
@@ -137,7 +129,7 @@ export function VehicleDetailPanel({
         <ul className="space-y-2">
           {events.slice(0, 8).map((event) => (
             <li key={event.id} className="flex items-center justify-between text-sm">
-              <span className="text-slate-700 dark:text-slate-300">{eventLabel(event)}</span>
+              <span className="text-slate-700 dark:text-slate-300">{describeEvent(event).label}</span>
               <span className="text-xs text-slate-400 dark:text-slate-500">{formatRelativeTime(event.ts)}</span>
             </li>
           ))}
