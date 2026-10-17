@@ -35,9 +35,11 @@ export function DevicesPage() {
       refetch();
     } catch (err) {
       setError(
-        err instanceof ApiError
-          ? "No se encontró un dispositivo libre con ese IMEI"
-          : "No se pudo reclamar el dispositivo",
+        err instanceof ApiError && err.status === 400
+          ? err.message
+          : err instanceof ApiError && err.status === 404
+            ? "Ese IMEI ya está vinculado a otra empresa."
+            : "No se pudo agregar el dispositivo",
       );
     } finally {
       setSubmitting(false);
@@ -47,7 +49,10 @@ export function DevicesPage() {
   return (
     <div className="mx-auto max-w-5xl p-4 sm:p-6 lg:p-8">
       <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Dispositivos</h1>
-      <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">Los trackers GPS vinculados a tu empresa.</p>
+      <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">
+        Los trackers GPS vinculados a tu empresa.
+        {canManage && " Para agregar uno nuevo escribe su IMEI: puedes hacerlo antes de que se conecte, no necesita SIM todavía."}
+      </p>
 
       {canManage && (
         <>
@@ -94,7 +99,7 @@ export function DevicesPage() {
               className="brand-button flex items-center justify-center gap-1.5 rounded-xl px-4 py-2 text-sm font-medium disabled:opacity-50"
             >
               <Plus className="h-4 w-4" />
-              Reclamar
+              Agregar
             </button>
           </form>
           {error && <p className="mb-6 -mt-4 text-sm text-red-600 dark:text-red-400">{error}</p>}
