@@ -18,6 +18,7 @@ import {
   Smartphone,
   Sun,
   Truck,
+  Wrench,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, NavLink, Outlet } from "react-router-dom";
@@ -37,6 +38,7 @@ const NAV_ITEMS = [
   { to: "/peajes", label: "Peajes", icon: Receipt, end: false },
   { to: "/salud-dispositivos", label: "Salud del dispositivo", icon: HeartPulse, end: false },
   { to: "/vehiculos", label: "Vehículos", icon: Truck, end: false },
+  { to: "/mantenimiento", label: "Mantenimiento", icon: Wrench, end: false },
   { to: "/dispositivos", label: "Dispositivos", icon: Smartphone, end: false },
   // The backend now restricts both reading and managing these to owner/admin (API keys
   // authenticate as full access, and org settings affect everyone) — hidden below for

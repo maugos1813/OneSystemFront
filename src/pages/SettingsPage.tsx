@@ -246,6 +246,13 @@ export function SettingsPage() {
             >
               Desconexión del equipo, interferencia de señal, remolque y choque. Solo llegan si el tracker las tiene activadas.
             </AlertRow>
+            <AlertRow
+              label="Mantenimiento próximo o vencido"
+              enabled={form.alerts.maintenanceEnabled}
+              onToggle={(v) => updateAlert("maintenanceEnabled", v)}
+            >
+              Avisa cuando un plan de la página Mantenimiento está por cumplirse o ya se pasó.
+            </AlertRow>
           </div>
         </Panel>
 

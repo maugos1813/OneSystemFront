@@ -6,6 +6,9 @@ import type {
   CurrentUser,
   Device,
   DeviceDetail,
+  MaintenancePlan,
+  MaintenanceRecord,
+  VehicleMaintenance,
   DrivingStyleResponse,
   DeviceEvent,
   Geofence,
@@ -400,4 +403,46 @@ export function updateTeamMemberPassword(id: string, password: string): Promise<
 
 export function deleteTeamMember(id: string): Promise<void> {
   return request(`/users/${id}`, { method: "DELETE" });
+}
+
+// --- Maintenance ---
+
+export interface MaintenancePlanInput {
+  name?: string;
+  intervalKm?: number | null;
+  intervalMonths?: number | null;
+  lastDoneAt?: string | null;
+  lastDoneKm?: number | null;
+  notes?: string | null;
+}
+
+export function listMaintenance(): Promise<VehicleMaintenance[]> {
+  return request("/maintenance");
+}
+
+export function createMaintenancePlan(vehicleId: string, input: MaintenancePlanInput): Promise<MaintenancePlan> {
+  return request("/maintenance/plans", { method: "POST", body: JSON.stringify({ vehicleId, ...input }) });
+}
+
+export function updateMaintenancePlan(id: string, input: MaintenancePlanInput): Promise<MaintenancePlan> {
+  return request(`/maintenance/plans/${id}`, { method: "PATCH", body: JSON.stringify(input) });
+}
+
+export function deleteMaintenancePlan(id: string): Promise<void> {
+  return request(`/maintenance/plans/${id}`, { method: "DELETE" });
+}
+
+export function listMaintenanceRecords(planId: string): Promise<MaintenanceRecord[]> {
+  return request(`/maintenance/plans/${planId}/records`);
+}
+
+export function registerMaintenanceService(
+  planId: string,
+  input: { doneAt?: string; odometerKm?: number | null; notes?: string | null },
+): Promise<MaintenancePlan> {
+  return request(`/maintenance/plans/${planId}/records`, { method: "POST", body: JSON.stringify(input) });
+}
+
+export function calibrateOdometer(vehicleId: string, dashboardKm: number): Promise<{ trackerKm: number; offsetKm: number; odometerKm: number }> {
+  return request(`/maintenance/vehicles/${vehicleId}/odometer`, { method: "PUT", body: JSON.stringify({ dashboardKm }) });
 }

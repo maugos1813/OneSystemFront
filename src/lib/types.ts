@@ -139,6 +139,7 @@ export interface AlertPreferences {
   excessiveIdlingMinutes: number;
   geofenceEnabled: boolean;
   deviceAlarmsEnabled: boolean;
+  maintenanceEnabled: boolean;
 }
 
 export interface OrgSettings {
@@ -287,4 +288,52 @@ export interface SimCard {
 export interface SimSecrets {
   pin: string | null;
   puk: string | null;
+}
+
+// --- Maintenance ---
+
+export type MaintenanceState = "ok" | "soon" | "overdue" | "unknown";
+
+export interface PlanStatus {
+  state: MaintenanceState;
+  dueKm: number | null;
+  /** Negative once past the due point. */
+  kmRemaining: number | null;
+  dueDate: string | null;
+  daysRemaining: number | null;
+  /** 0 = just done, 1 = due, above 1 = overdue. */
+  usedFraction: number | null;
+}
+
+export interface MaintenancePlan {
+  id: string;
+  vehicleId: string;
+  name: string;
+  intervalKm: number | null;
+  intervalMonths: number | null;
+  lastDoneAt: string | null;
+  lastDoneKm: number | null;
+  notes: string | null;
+  status: PlanStatus;
+}
+
+export interface VehicleMaintenance {
+  vehicleId: string;
+  name: string;
+  plate: string | null;
+  /** What the tracker reports; null if the device doesn't report a kilometrage. */
+  trackerKm: number | null;
+  offsetKm: number;
+  /** Dashboard-scale odometer (tracker + offset). */
+  odometerKm: number | null;
+  plans: MaintenancePlan[];
+}
+
+export interface MaintenanceRecord {
+  id: string;
+  planId: string;
+  doneAt: string;
+  odometerKm: number | null;
+  notes: string | null;
+  createdAt: string;
 }

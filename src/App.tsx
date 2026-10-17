@@ -14,6 +14,7 @@ import { DevicesPage } from "./pages/DevicesPage";
 import { DrivingBehaviorPage } from "./pages/DrivingBehaviorPage";
 import { GeofencesPage } from "./pages/GeofencesPage";
 import { HistoryPage } from "./pages/HistoryPage";
+import { MaintenancePage } from "./pages/MaintenancePage";
 import { LandingPage } from "./pages/LandingPage";
 import { LoginPage } from "./pages/LoginPage";
 import { PortalPage } from "./pages/PortalPage";
@@ -59,6 +60,7 @@ export default function App() {
                 element={<DeviceHealthPage />}
               />
               <Route path="/vehiculos" element={<VehiclesPage />} />
+              <Route path="/mantenimiento" element={<MaintenancePage />} />
               <Route path="/dispositivos" element={<DevicesPage />} />
               <Route path="/dispositivos/:id" element={<DeviceDetailPage />} />
               <Route path="/sims" element={<SimsPage />} />
