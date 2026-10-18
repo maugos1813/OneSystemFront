@@ -16,6 +16,14 @@ const onOff = (on: string, off: string) => (value: number | string) => (num(valu
 const mvToVolts = (value: number | string) => `${fmt(num(value) / 1000, 2)} V`;
 const withUnit = (unit: string, digits = 0) => (value: number | string) => `${fmt(num(value), digits)} ${unit}`;
 
+/** Variable-length elements (VIN, fault codes) arrive as hex text; show the ASCII they carry. */
+function hexToText(value: number | string): string {
+  const hex = String(value);
+  if (!/^([0-9a-fA-F]{2})+$/.test(hex)) return hex;
+  const text = hex.match(/../g)!.map((pair) => String.fromCharCode(parseInt(pair, 16))).join("");
+  return /^[\x20-\x7e]+$/.test(text) ? text : hex;
+}
+
 const GNSS_STATUS: Record<number, string> = { 0: "GNSS apagado", 1: "Con fix", 2: "Sin fix (buscando satélites)", 3: "En reposo (sleep)" };
 const SLEEP_MODE: Record<number, string> = { 0: "Sin sueño", 1: "Sueño de GPS", 2: "Sueño profundo", 3: "Sueño en línea", 4: "Sueño ultra" };
 
@@ -60,8 +68,8 @@ const DEFINITIONS: Record<number, IoDef> = {
   253: { name: "Tipo de conducción agresiva" },
   254: { name: "Intensidad de conducción agresiva" },
   255: { name: "Exceso de velocidad", format: withUnit("km/h") },
-  256: { name: "VIN del vehículo" },
-  281: { name: "Códigos de falla (DTC)" },
+  256: { name: "VIN del vehículo", format: hexToText },
+  281: { name: "Códigos de falla (DTC)", format: hexToText },
   303: { name: "Movimiento instantáneo", format: onOff("En movimiento", "Detenido") },
   389: { name: "Kilometraje OEM (OBD)", format: withUnit("km") },
   390: { name: "Nivel de combustible OEM", format: (v) => `${fmt(num(v) / 10, 1)} L` },
