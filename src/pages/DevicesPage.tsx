@@ -6,12 +6,28 @@ import { StatusBadge } from "../components/StatusBadge";
 import { useAuth } from "../context/AuthContext";
 import { useFleet } from "../context/FleetContext";
 import { ApiError, claimDevice } from "../lib/api";
-import { DEVICE_MODELS } from "../lib/deviceModels";
+import { DEVICE_MODELS, hasProfile, modelProfile } from "../lib/deviceModels";
 import { trackGlow } from "../lib/glow";
 
 function formatDate(iso: string | null): string {
   if (!iso) return "Nunca";
   return new Date(iso).toLocaleString();
+}
+
+function ModelTags({ model }: { model: string }) {
+  if (!hasProfile(model)) return null;
+  const profile = modelProfile(model);
+  const tags = [profile.obd ? "OBD" : null, profile.output ? "Salida" : null].filter(Boolean);
+  if (tags.length === 0) return null;
+  return (
+    <span className="ml-2 inline-flex gap-1 align-middle">
+      {tags.map((tag) => (
+        <span key={tag} className="rounded-md bg-violet-50 px-1.5 py-0.5 text-[10px] font-medium text-violet-700 dark:bg-white/10 dark:text-violet-300">
+          {tag}
+        </span>
+      ))}
+    </span>
+  );
 }
 
 export function DevicesPage() {
@@ -102,6 +118,7 @@ export function DevicesPage() {
               Agregar
             </button>
           </form>
+          <p className="mb-6 -mt-4 text-xs text-slate-500 dark:text-slate-400">{modelProfile(model).summary}</p>
           {error && <p className="mb-6 -mt-4 text-sm text-red-600 dark:text-red-400">{error}</p>}
         </>
       )}
@@ -137,7 +154,10 @@ export function DevicesPage() {
                       {device.imei}
                     </Link>
                   </td>
-                  <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{device.model}</td>
+                  <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
+                    {device.model}
+                    <ModelTags model={device.model} />
+                  </td>
                   <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
                     {vehicleByDeviceId.get(device.id)?.name ?? <span className="text-slate-400">Sin asignar</span>}
                   </td>

@@ -1,4 +1,5 @@
 import { OBD_IO_IDS } from "./avlDictionary";
+import { modelProfile } from "./deviceModels";
 import type { DeviceDetail } from "./types";
 
 export type CheckState = "ok" | "warn" | "pending";
@@ -24,6 +25,7 @@ function ioValue(detail: DeviceDetail, id: number): number | string | undefined 
  * really useful. `canSeeSim` is false for accounts that don't get the SIMs section. */
 export function buildChecklist(detail: DeviceDetail, nowMs: number, canSeeSim: boolean): CheckItem[] {
   const { device, vehicle, sim, lastPosition } = detail;
+  const profile = modelProfile(device.model);
   const items: CheckItem[] = [];
 
   const seenMs = device.lastSeenAt ? nowMs - new Date(device.lastSeenAt).getTime() : null;
@@ -87,17 +89,33 @@ export function buildChecklist(detail: DeviceDetail, nowMs: number, canSeeSim: b
         },
   );
 
-  const obd = detail.io.filter((reading) => OBD_IO_IDS.has(reading.id));
-  items.push(
-    obd.length > 0
-      ? { key: "obd", label: "Envía datos del motor (OBD)", state: "ok", detail: obd.length === 1 ? "1 elemento de OBD llegando." : `${obd.length} elementos de OBD llegando.` }
-      : {
-          key: "obd",
-          label: "Envía datos del motor (OBD)",
-          state: "pending",
-          detail: "Aún no llegan. Se activan en el Configurator (pestaña OBD) y el equipo debe estar en el puerto del vehículo.",
-        },
-  );
+  if (profile.obd) {
+    const obd = detail.io.filter((reading) => OBD_IO_IDS.has(reading.id));
+    items.push(
+      obd.length > 0
+        ? { key: "obd", label: "Envía datos del motor (OBD)", state: "ok", detail: obd.length === 1 ? "1 elemento de OBD llegando." : `${obd.length} elementos de OBD llegando.` }
+        : {
+            key: "obd",
+            label: "Envía datos del motor (OBD)",
+            state: "pending",
+            detail: "Aún no llegan. Se activan en el Configurator (pestaña OBD) y el equipo debe estar en el puerto del vehículo.",
+          },
+    );
+  }
+
+  if (profile.ignitionWire) {
+    const ignition = ioValue(detail, 239);
+    items.push(
+      ignition === undefined
+        ? {
+            key: "ignition",
+            label: "Lee la ignición",
+            state: "pending",
+            detail: "No llega la ignición (ID 239). Revisa el cable amarillo (DIN1) y que Ignition Source sea DIN1.",
+          }
+        : { key: "ignition", label: "Lee la ignición", state: "ok", detail: Number(ignition) === 1 ? "Encendida." : "Apagada." },
+    );
+  }
 
   items.push(
     vehicle

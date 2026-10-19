@@ -8,7 +8,7 @@ import { ApiError, getDevice, updateDevice } from "../lib/api";
 import { describeIo } from "../lib/avlDictionary";
 import { describeEvent } from "../lib/deviceEvents";
 import { buildChecklist, type CheckState } from "../lib/deviceChecklist";
-import { modelOptions } from "../lib/deviceModels";
+import { hasSetupGuide, modelOptions, modelProfile } from "../lib/deviceModels";
 import { trackGlow } from "../lib/glow";
 import type { DeviceDetail } from "../lib/types";
 
@@ -126,6 +126,8 @@ export function DeviceDetailPage() {
     const reading = detail.io.find((r) => r.id === code);
     return reading ? describeIo(code, reading.value).display : "—";
   };
+  const profile = modelProfile(device.model);
+  const wiredIo = [...profile.io, ...(profile.output ? [profile.output] : [])];
   const doneCount = checklist.filter((item) => item.state === "ok").length;
 
   return (
@@ -144,6 +146,7 @@ export function DeviceDetailPage() {
             <StatusBadge lastSeenAt={device.lastSeenAt} />
             <DeviceSourceBadge source={device.source} />
           </p>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{profile.summary}</p>
         </div>
         <button
           type="button"
@@ -240,6 +243,23 @@ export function DeviceDetailPage() {
           </dl>
         </Section>
 
+        {wiredIo.length > 0 && (
+          <Section title="Entradas y salidas">
+            <dl className="divide-y divide-slate-100 dark:divide-white/10">
+              {wiredIo.map((item) => (
+                <Fact key={item.id} label={item.label}>
+                  {ioNumber(item.id)}
+                </Fact>
+              ))}
+            </dl>
+            {profile.output && (
+              <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                La salida solo la ves aquí; todavía no se puede activar desde el sistema (pendiente el bloqueo remoto).
+              </p>
+            )}
+          </Section>
+        )}
+
         <Section title="Alimentación y estado">
           <dl className="divide-y divide-slate-100 dark:divide-white/10">
             <Fact label="Voltaje del vehículo">{ioNumber(66)}</Fact>
@@ -251,6 +271,26 @@ export function DeviceDetailPage() {
           </dl>
         </Section>
       </div>
+
+      {hasSetupGuide(device.model) && (
+        <details onMouseMove={trackGlow} className={`${CARD} group mt-4`}>
+          <summary className="cursor-pointer text-sm font-semibold text-slate-900 dark:text-white">
+            Guía de configuración del {device.model}
+          </summary>
+          <div className="mt-3 space-y-4">
+            {profile.setup.map((step) => (
+              <div key={step.title}>
+                <h3 className="text-sm font-medium text-slate-900 dark:text-white">{step.title}</h3>
+                <ul className="mt-1 list-disc space-y-1 pl-5 text-xs text-slate-600 dark:text-slate-400">
+                  {step.lines.map((line) => (
+                    <li key={line}>{line}</li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </details>
+      )}
 
       <section onMouseMove={trackGlow} className={`${CARD} mt-4`}>
         <h2 className="mb-2 text-sm font-semibold text-slate-900 dark:text-white">Eventos y alarmas</h2>

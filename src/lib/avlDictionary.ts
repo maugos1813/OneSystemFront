@@ -29,6 +29,8 @@ const SLEEP_MODE: Record<number, string> = { 0: "Sin sueño", 1: "Sueño de GPS"
 
 const DEFINITIONS: Record<number, IoDef> = {
   1: { name: "Entrada digital 1", format: onOff("Activa", "Inactiva") },
+  2: { name: "Entrada digital 2", format: onOff("Activa", "Inactiva") },
+  9: { name: "Entrada analógica 1", format: mvToVolts },
   11: { name: "ICCID de la SIM" },
   12: { name: "Combustible usado (GPS)" },
   13: { name: "Consumo de combustible (GPS)" },
@@ -49,6 +51,7 @@ const DEFINITIONS: Record<number, IoDef> = {
   68: { name: "Corriente de la batería", format: withUnit("mA") },
   69: { name: "Estado del GNSS", format: (v) => GNSS_STATUS[num(v)] ?? String(v) },
   113: { name: "Nivel de batería interna", format: withUnit("%") },
+  179: { name: "Salida digital 1 (DOUT1)", format: onOff("Activada", "Desactivada") },
   181: { name: "PDOP", format: (v) => fmt(num(v) / 10, 1) },
   182: { name: "HDOP", format: (v) => fmt(num(v) / 10, 1) },
   199: { name: "Odómetro del viaje", format: (v) => `${fmt(num(v) / 1000, 1)} km` },
