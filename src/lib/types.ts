@@ -337,3 +337,17 @@ export interface MaintenanceRecord {
   notes: string | null;
   createdAt: string;
 }
+
+export type DeviceCommandStatus = "pending" | "sent" | "confirmed" | "failed" | "expired" | "cancelled";
+
+/** An order given to a tracker's output (lock/unlock of the vehicle), with how far it got. */
+export interface DeviceCommand {
+  id: string;
+  kind: "immobilize" | "release";
+  status: DeviceCommandStatus;
+  response: string | null;
+  createdAt: string;
+  expiresAt: string;
+  sentAt: string | null;
+  answeredAt: string | null;
+}

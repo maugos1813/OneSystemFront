@@ -2,6 +2,7 @@ import { AlertTriangle, ArrowLeft, CheckCircle2, Circle, Pencil, RefreshCw, X } 
 import { useCallback, useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
 import { Link, useParams } from "react-router-dom";
 import { DeviceSourceBadge } from "../components/DeviceSourceBadge";
+import { ImmobilizerPanel } from "../components/ImmobilizerPanel";
 import { StatusBadge } from "../components/StatusBadge";
 import { useAuth } from "../context/AuthContext";
 import { ApiError, getDevice, updateDevice } from "../lib/api";
@@ -252,10 +253,8 @@ export function DeviceDetailPage() {
                 </Fact>
               ))}
             </dl>
-            {profile.output && (
-              <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-                La salida solo la ves aquí; todavía no se puede activar desde el sistema (pendiente el bloqueo remoto).
-              </p>
+            {profile.output && canEdit && (
+              <ImmobilizerPanel deviceId={device.id} outputValue={detail.io.find((r) => r.id === profile.output!.id)?.value} />
             )}
           </Section>
         )}

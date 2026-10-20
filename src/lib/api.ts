@@ -5,6 +5,7 @@ import type {
   CreatedApiKey,
   CurrentUser,
   Device,
+  DeviceCommand,
   DeviceDetail,
   MaintenancePlan,
   MaintenanceRecord,
@@ -112,6 +113,15 @@ export interface DevicePatch {
 
 export function updateDevice(id: string, patch: DevicePatch): Promise<Device> {
   return request(`/devices/${id}`, { method: "PATCH", body: JSON.stringify(patch) });
+}
+
+export function getDeviceCommands(id: string): Promise<DeviceCommand[]> {
+  return request(`/devices/${id}/commands`);
+}
+
+/** Locks (`lock`) or releases (`unlock`) the vehicle through the tracker's output. */
+export function requestImmobilizer(id: string, action: "lock" | "unlock"): Promise<DeviceCommand> {
+  return request(`/devices/${id}/immobilizer`, { method: "POST", body: JSON.stringify({ action }) });
 }
 
 // --- SIM cards (owner/admin) ---
