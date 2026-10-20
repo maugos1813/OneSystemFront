@@ -1,7 +1,8 @@
-import { ArrowLeft, KeyRound, Pencil, Trash2, X } from "lucide-react";
+import { ArrowLeft, ImagePlus, KeyRound, Pencil, Trash2, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Panel } from "../components/analytics/Panel";
+import { LogoUpload } from "../components/LogoUpload";
 import { useAuth } from "../context/AuthContext";
 import {
   ApiError,
@@ -11,12 +12,14 @@ import {
   listTeamMembers,
   updateTeamMemberArea,
   updateTeamMemberEmail,
+  updateTeamMemberLogo,
   updateTeamMemberName,
   updateTeamMemberPassword,
   updateTeamMemberProducts,
   updateTeamMemberRole,
 } from "../lib/api";
 import { AREA_OPTIONS } from "../lib/areaFilter";
+import { fileToLogoDataUrl, LOGO_ACCEPT } from "../lib/logoImage";
 import type { CurrentUser, Product, TeamMember, TeamRole } from "../lib/types";
 
 const ROLE_LABEL: Record<TeamRole, string> = {
@@ -24,6 +27,16 @@ const ROLE_LABEL: Record<TeamRole, string> = {
   admin: "Admin",
   manager: "Manager",
   viewer: "Usuario",
+};
+
+/** What each role can do, as the backend enforces it (owner/admin/manager gates on each route). */
+const ROLE_HELP: Record<"admin" | "manager" | "viewer", string> = {
+  viewer:
+    "Solo mira. Ve las cards y el área que le des, pero no puede crear ni editar vehículos, dispositivos, geocercas, SIMs, ajustes ni bloquear un vehículo.",
+  manager:
+    "Igual que Usuario, y además crea y administra sus propios sub-usuarios (siempre como Usuario, nunca con más acceso del que él tiene) y registra mantenimientos.",
+  admin:
+    "Controla todo: vehículos, dispositivos (incluido el bloqueo remoto), SIMs, API Keys, ajustes, geocercas y equipo. Ve todas las cards. No puede modificar al Owner.",
 };
 
 /** Mirrors the backend's canManageOther() — deliberately excludes self-service, since
@@ -119,6 +132,8 @@ function MemberRow({
   const [passwordSaved, setPasswordSaved] = useState(false);
 
   const [deleting, setDeleting] = useState(false);
+  const [savingLogo, setSavingLogo] = useState(false);
+  const [logoError, setLogoError] = useState<string | null>(null);
 
   // `member` is a fresh object after each refetch (e.g. right after a save), but this
   // row never unmounts (same `key`) — resync local edits with the server's version.
@@ -228,6 +243,20 @@ function MemberRow({
     }
   }
 
+  async function handleLogo(file: File | null | undefined, remove = false) {
+    if (!remove && !file) return;
+    setSavingLogo(true);
+    setLogoError(null);
+    try {
+      await updateTeamMemberLogo(member.id, remove ? null : await fileToLogoDataUrl(file as File));
+      onChanged();
+    } catch (err) {
+      setLogoError(err instanceof Error ? err.message : "No se pudo guardar el logo");
+    } finally {
+      setSavingLogo(false);
+    }
+  }
+
   async function handleDelete() {
     if (!confirm(`¿Eliminar a "${member.name || member.email}" del equipo? No va a poder volver a entrar.`)) return;
     setDeleting(true);
@@ -245,6 +274,47 @@ function MemberRow({
   return (
     <div className="rounded-xl bg-slate-50 px-3 py-3 dark:bg-white/5">
       <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex shrink-0 flex-col items-center gap-1">
+          <span className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl bg-white p-0.5 ring-1 ring-slate-200 dark:ring-white/10">
+            {member.logo ? (
+              <img src={member.logo} alt={member.name || member.email} className="max-h-full max-w-full object-contain" />
+            ) : (
+              <span className="brand-gradient flex h-full w-full items-center justify-center rounded-lg text-sm font-bold text-white">
+                {(member.name || member.email).trim().charAt(0).toUpperCase()}
+              </span>
+            )}
+          </span>
+          {canManageOtherOnly && (
+            <span className="flex gap-0.5">
+              <label
+                className={`cursor-pointer rounded-md p-0.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-500 dark:hover:bg-white/10 ${savingLogo ? "pointer-events-none opacity-50" : ""}`}
+                title={member.logo ? "Cambiar logo" : "Subir logo"}
+              >
+                <ImagePlus className="h-3.5 w-3.5" />
+                <input
+                  type="file"
+                  accept={LOGO_ACCEPT}
+                  className="hidden"
+                  onChange={(e) => {
+                    void handleLogo(e.target.files?.[0]);
+                    e.target.value = "";
+                  }}
+                />
+              </label>
+              {member.logo && (
+                <button
+                  onClick={() => void handleLogo(null, true)}
+                  disabled={savingLogo}
+                  className="rounded-md p-0.5 text-slate-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-50 dark:text-slate-500 dark:hover:bg-red-500/10"
+                  title="Quitar logo"
+                  aria-label="Quitar logo"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </span>
+          )}
+        </div>
         <div className="min-w-0 flex-1">
           {editingName ? (
             <div className="flex items-center gap-1.5">
@@ -334,6 +404,7 @@ function MemberRow({
             </div>
           )}
           {emailError && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{emailError}</p>}
+          {logoError && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{logoError}</p>}
           {isSelf && <p className="text-xs text-slate-400 dark:text-slate-500">Vos</p>}
         </div>
 
@@ -520,6 +591,7 @@ export function TeamPage() {
   const [password, setPassword] = useState("");
   const [role, setRole] = useState<"admin" | "manager" | "viewer">("viewer");
   const [area, setArea] = useState("");
+  const [logo, setLogo] = useState<string | null>(null);
   const [newMemberProducts, setNewMemberProducts] = useState<string[]>([]);
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
@@ -555,12 +627,14 @@ export function TeamPage() {
         password,
         role: effectiveRole,
         allowedArea: area || null,
+        ...(logo ? { logo } : {}),
         productKeys: showProductsSection ? newMemberProducts : undefined,
       });
       setName("");
       setEmail("");
       setPassword("");
       setRole("viewer");
+      setLogo(null);
       if (!areaLocked) setArea("");
       await refetch();
     } catch (err) {
@@ -648,6 +722,21 @@ export function TeamPage() {
                 ) : (
                   <AreaSelect value={area} onChange={setArea} />
                 )}
+              </div>
+
+              <p className="rounded-xl bg-slate-50 px-3 py-2 text-xs text-slate-600 dark:bg-white/5 dark:text-slate-400">
+                <strong className="font-semibold text-slate-700 dark:text-slate-300">{ROLE_LABEL[effectiveRole]}:</strong>{" "}
+                {ROLE_HELP[effectiveRole]}
+                {" "}
+                <strong className="font-semibold text-slate-700 dark:text-slate-300">Área:</strong> si eliges DHL o UNIVEX solo ve los
+                vehículos de esa área (lo hace cumplir el servidor).
+              </p>
+
+              <div>
+                <p className="mb-2 text-xs font-medium tracking-wide text-slate-400 uppercase dark:text-slate-500">
+                  Logo del cliente <span className="font-normal normal-case">(opcional, reemplaza al de la empresa en su pantalla)</span>
+                </p>
+                <LogoUpload value={logo} onChange={setLogo} name={name} />
               </div>
 
               {showProductsSection && (

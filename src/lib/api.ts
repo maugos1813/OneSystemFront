@@ -384,11 +384,17 @@ export interface CreateTeamMemberInput {
   password: string;
   role: "admin" | "manager" | "viewer";
   allowedArea?: string | null;
+  /** The member's own logo as a data URL (see logoImage.ts). */
+  logo?: string | null;
   productKeys?: string[];
 }
 
 export function createTeamMember(input: CreateTeamMemberInput): Promise<TeamMember> {
   return request("/users", { method: "POST", body: JSON.stringify(input) });
+}
+
+export function updateTeamMemberLogo(id: string, logo: string | null): Promise<{ id: string; logo: string | null }> {
+  return request(`/users/${id}/logo`, { method: "PATCH", body: JSON.stringify({ logo }) });
 }
 
 export function updateTeamMemberRole(id: string, role: "admin" | "manager" | "viewer"): Promise<TeamMember> {

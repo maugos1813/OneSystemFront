@@ -92,6 +92,8 @@ export interface CurrentUser {
   orgName: string;
   /** The client's logo as a data URL, or null until they upload one. */
   orgLogo: string | null;
+  /** This user's own logo (a client such as DHL); when set it replaces the organization's in their top bar. */
+  userLogo: string | null;
 }
 
 export interface DeviceEvent {
@@ -196,6 +198,8 @@ export interface TeamMember {
   parentUserId: string | null;
   /** Hard access restriction to one área (e.g. "DHL"/"UNIVEX") — null means unrestricted. */
   allowedArea: string | null;
+  /** The member's own logo as a data URL, or null. */
+  logo: string | null;
   createdAt: string;
   /** Only meaningful for role "viewer"/"manager" — owner/admin always see every product the org has. */
   productKeys: string[];

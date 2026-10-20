@@ -210,14 +210,16 @@ function TopBar({ bell }: { bell: ReactNode }) {
   const { currentUser, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [open, setOpen] = useState(false);
+  // A client user (e.g. DHL) shows their own logo; everyone else the organization's.
+  const logo = currentUser?.userLogo ?? currentUser?.orgLogo ?? null;
 
   return (
     <header className={`${PANEL} flex items-center justify-between gap-3 px-4 py-3 sm:px-5`}>
       {/* The client using the app: their logo (or an initial until they upload one) and name. */}
       <div className="flex min-w-0 items-center gap-3">
         <span className="flex h-11 max-w-40 min-w-11 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white p-0.5 shadow-md shadow-blue-200/60 ring-1 ring-slate-200 dark:ring-white/10">
-          {currentUser?.orgLogo ? (
-            <img src={currentUser.orgLogo} alt={currentUser.orgName} className="h-full w-auto max-w-full object-contain" />
+          {logo ? (
+            <img src={logo} alt={currentUser?.orgName ?? ""} className="h-full w-auto max-w-full object-contain" />
           ) : (
             <span className="brand-gradient flex aspect-square h-full items-center justify-center rounded-[0.85rem] text-lg font-bold text-white">
               {(currentUser?.orgName.trim().charAt(0) || "·").toUpperCase()}
