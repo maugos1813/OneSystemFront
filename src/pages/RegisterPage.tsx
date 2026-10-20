@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { AuthLayout } from "../components/layout/AuthLayout";
+import { LogoUpload } from "../components/LogoUpload";
 import { useAuth } from "../context/AuthContext";
 import { trackGlow } from "../lib/glow";
 
@@ -10,12 +11,13 @@ export function RegisterPage() {
   const [orgName, setOrgName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [logo, setLogo] = useState<string | null>(null);
 
   if (isAuthenticated) return <Navigate to="/" replace />;
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    if (await register({ orgName, email, password })) navigate("/");
+    if (await register({ orgName, email, password, ...(logo ? { logo } : {}) })) navigate("/");
   }
 
   return (
@@ -40,6 +42,13 @@ export function RegisterPage() {
           onChange={(e) => setOrgName(e.target.value)}
           className="field-input mb-4 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
         />
+
+        <p className="mb-1 text-sm font-medium text-slate-700 dark:text-slate-300">
+          Logo de la empresa <span className="font-normal text-slate-400 dark:text-slate-500">(opcional)</span>
+        </p>
+        <div className="mb-4">
+          <LogoUpload value={logo} onChange={setLogo} name={orgName} />
+        </div>
 
         <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300" htmlFor="email">
           Email

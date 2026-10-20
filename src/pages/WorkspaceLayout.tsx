@@ -213,17 +213,25 @@ function TopBar({ bell }: { bell: ReactNode }) {
 
   return (
     <header className={`${PANEL} flex items-center justify-between gap-3 px-4 py-3 sm:px-5`}>
+      {/* The client using the app: their logo (or an initial until they upload one) and name. */}
       <div className="flex min-w-0 items-center gap-3">
-        <img src="/logo.jpg" alt="OneSystec" className="h-11 w-11 shrink-0 rounded-2xl object-cover shadow-md shadow-blue-200/60" />
+        <span className="flex h-11 max-w-40 min-w-11 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white p-0.5 shadow-md shadow-blue-200/60 ring-1 ring-slate-200 dark:ring-white/10">
+          {currentUser?.orgLogo ? (
+            <img src={currentUser.orgLogo} alt={currentUser.orgName} className="h-full w-auto max-w-full object-contain" />
+          ) : (
+            <span className="brand-gradient flex aspect-square h-full items-center justify-center rounded-[0.85rem] text-lg font-bold text-white">
+              {(currentUser?.orgName.trim().charAt(0) || "·").toUpperCase()}
+            </span>
+          )}
+        </span>
         <div className="min-w-0">
-          <p className="truncate text-xl font-semibold text-slate-900 dark:text-white">
-            One<span className="brand-text-gradient">Systec</span>
-          </p>
+          <p className="truncate text-xl font-semibold text-slate-900 dark:text-white">{currentUser?.orgName ?? "..."}</p>
           <p className="truncate text-sm text-slate-500 dark:text-slate-400">Business Workspace</p>
         </div>
       </div>
 
       <div className="relative flex shrink-0 items-center gap-1">
+        <img src="/logo.jpg" alt="OneSystec" title="OneSystec" className="mr-1 h-9 w-9 shrink-0 rounded-xl object-cover shadow-md shadow-blue-200/60" />
         {bell}
         <button
           onClick={toggleTheme}

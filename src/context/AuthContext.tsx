@@ -12,6 +12,8 @@ interface AuthContextValue {
   login: (email: string, password: string) => Promise<boolean>;
   register: (input: RegisterInput) => Promise<boolean>;
   logout: () => void;
+  /** Reads the user and organization again (after changing the company name or logo). */
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -75,7 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ isAuthenticated, currentUser, loading, error, login, register, logout }}
+      value={{ isAuthenticated, currentUser, loading, error, login, register, logout, refreshUser: loadCurrentUser }}
     >
       {children}
     </AuthContext.Provider>

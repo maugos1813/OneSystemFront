@@ -81,6 +81,8 @@ export interface RegisterInput {
   orgName: string;
   email: string;
   password: string;
+  /** Optional logo as a data URL (see logoImage.ts). */
+  logo?: string;
 }
 
 export function register(input: RegisterInput): Promise<{ token: string }> {
@@ -238,6 +240,8 @@ export function getSettings(): Promise<OrgSettings> {
 
 export interface UpdateSettingsInput {
   orgName?: string;
+  /** A data URL sets the logo, null removes it. */
+  orgLogo?: string | null;
   workingHours?: Partial<WorkingHours>;
   alerts?: Partial<AlertPreferences>;
 }

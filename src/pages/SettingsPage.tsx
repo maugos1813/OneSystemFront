@@ -1,5 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Panel } from "../components/analytics/Panel";
+import { LogoUpload } from "../components/LogoUpload";
+import { useAuth } from "../context/AuthContext";
 import { useFleet } from "../context/FleetContext";
 import { updateSettings } from "../lib/api";
 import type { AlertPreferences, OrgSettings, WeekdayKey, WorkingHoursDay } from "../lib/types";
@@ -76,7 +78,11 @@ function NumberField({
 
 export function SettingsPage() {
   const { settings, refetchSettings } = useFleet();
+  const { currentUser, refreshUser } = useAuth();
   const [form, setForm] = useState<OrgSettings | null>(null);
+  // undefined: the logo wasn't touched, so the saved one stays.
+  const [logoDraft, setLogoDraft] = useState<string | null | undefined>(undefined);
+  const logo = logoDraft === undefined ? (currentUser?.orgLogo ?? null) : logoDraft;
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -102,8 +108,15 @@ export function SettingsPage() {
     if (!form) return;
     setSaving(true);
     try {
-      await updateSettings({ orgName: form.orgName, workingHours: form.workingHours, alerts: form.alerts });
+      await updateSettings({
+        orgName: form.orgName,
+        ...(logoDraft !== undefined ? { orgLogo: logoDraft } : {}),
+        workingHours: form.workingHours,
+        alerts: form.alerts,
+      });
       refetchSettings();
+      await refreshUser();
+      setLogoDraft(undefined);
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } finally {
@@ -126,6 +139,11 @@ export function SettingsPage() {
             onChange={(e) => setForm((f) => f && { ...f, orgName: e.target.value })}
             className="field-input w-full max-w-sm rounded-xl border border-slate-300 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
           />
+          <label className="mt-4 mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">Logo</label>
+          <LogoUpload value={logo} onChange={setLogoDraft} name={form.orgName} />
+          <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+            Aparece arriba a la izquierda en el inicio de OneSystec. Se guarda con el botón Guardar.
+          </p>
         </Panel>
 
         <Panel title="Horario laboral">

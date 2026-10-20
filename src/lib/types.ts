@@ -90,6 +90,8 @@ export interface CurrentUser {
   allowedArea: string | null;
   orgId: string;
   orgName: string;
+  /** The client's logo as a data URL, or null until they upload one. */
+  orgLogo: string | null;
 }
 
 export interface DeviceEvent {
