@@ -138,7 +138,12 @@ function Workspace({ products }: { products: Product[] }) {
         expanded ? "p-0" : "p-3 sm:p-4"
       }`}
     >
-      <div className={`shrink-0 overflow-hidden transition-all duration-300 ${expanded ? "mb-0 max-h-0 opacity-0" : "mb-3 max-h-28 sm:mb-4"}`}>
+      {/* Clipped only while folded away: open, the bell's list and the account menu hang below the bar and sit above the panels. */}
+      <div
+        className={`relative z-30 shrink-0 transition-all duration-300 ${
+          expanded ? "mb-0 max-h-0 overflow-hidden opacity-0" : "mb-3 max-h-28 sm:mb-4"
+        }`}
+      >
         <TopBar bell={hasOneTrack ? <AlertsPanel /> : null} />
       </div>
 
