@@ -1,7 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
-import { ProtectedRoute } from "./components/layout/ProtectedRoute";
+import { AppLayout } from "./components/layout/AppLayout";
 import { RequireAuth } from "./components/layout/RequireAuth";
-import { AuthProvider, useAuth } from "./context/AuthContext";
+import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { AlertsPage } from "./pages/AlertsPage";
 import { AnalyticsPage } from "./pages/AnalyticsPage";
@@ -15,21 +15,14 @@ import { DrivingBehaviorPage } from "./pages/DrivingBehaviorPage";
 import { GeofencesPage } from "./pages/GeofencesPage";
 import { HistoryPage } from "./pages/HistoryPage";
 import { MaintenancePage } from "./pages/MaintenancePage";
-import { LandingPage } from "./pages/LandingPage";
 import { LoginPage } from "./pages/LoginPage";
-import { PortalPage } from "./pages/PortalPage";
 import { RegisterPage } from "./pages/RegisterPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { SimsPage } from "./pages/SimsPage";
 import { TeamPage } from "./pages/TeamPage";
 import { TollsPage } from "./pages/TollsPage";
 import { VehiclesPage } from "./pages/VehiclesPage";
-
-/** "/" is the public OneSystec site for visitors and the app portal once signed in. */
-function HomeRoute() {
-  const { isAuthenticated } = useAuth();
-  return isAuthenticated ? <PortalPage /> : <LandingPage />;
-}
+import { WorkspaceLayout } from "./pages/WorkspaceLayout";
 
 export default function App() {
   return (
@@ -40,32 +33,38 @@ export default function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
 
-            <Route path="/" element={<HomeRoute />} />
-
             <Route element={<RequireAuth />}>
               <Route path="/equipo" element={<TeamPage />} />
             </Route>
 
-            <Route element={<ProtectedRoute />}>
-              <Route path="/gps" element={<DashboardPage />} />
-              <Route path="/cockpit" element={<CockpitPage />} />
-              <Route path="/analiticas" element={<AnalyticsPage />} />
-              <Route path="/historial" element={<HistoryPage />} />
-              <Route path="/conduccion" element={<DrivingBehaviorPage />} />
-              <Route path="/alertas" element={<AlertsPage />} />
-              <Route path="/geocercas" element={<GeofencesPage />} />
-              <Route path="/peajes" element={<TollsPage />} />
-              <Route
-                path="/salud-dispositivos"
-                element={<DeviceHealthPage />}
-              />
-              <Route path="/vehiculos" element={<VehiclesPage />} />
-              <Route path="/mantenimiento" element={<MaintenancePage />} />
-              <Route path="/dispositivos" element={<DevicesPage />} />
-              <Route path="/dispositivos/:id" element={<DeviceDetailPage />} />
-              <Route path="/sims" element={<SimsPage />} />
-              <Route path="/api-keys" element={<ApiKeysPage />} />
-              <Route path="/ajustes" element={<SettingsPage />} />
+            {/* "/" is the public site for visitors and the workspace once signed in; OneTrack's pages
+                live inside that same shell, so opening OneTrack just folds its bars away. */}
+            <Route element={<WorkspaceLayout />}>
+              <Route index element={null} />
+              <Route element={<AppLayout />}>
+                <Route path="/gps" element={<DashboardPage />} />
+                <Route path="/cockpit" element={<CockpitPage />} />
+                <Route path="/analiticas" element={<AnalyticsPage />} />
+                <Route path="/historial" element={<HistoryPage />} />
+                <Route path="/conduccion" element={<DrivingBehaviorPage />} />
+                <Route path="/alertas" element={<AlertsPage />} />
+                <Route path="/geocercas" element={<GeofencesPage />} />
+                <Route path="/peajes" element={<TollsPage />} />
+                <Route
+                  path="/salud-dispositivos"
+                  element={<DeviceHealthPage />}
+                />
+                <Route path="/vehiculos" element={<VehiclesPage />} />
+                <Route path="/mantenimiento" element={<MaintenancePage />} />
+                <Route path="/dispositivos" element={<DevicesPage />} />
+                <Route
+                  path="/dispositivos/:id"
+                  element={<DeviceDetailPage />}
+                />
+                <Route path="/sims" element={<SimsPage />} />
+                <Route path="/api-keys" element={<ApiKeysPage />} />
+                <Route path="/ajustes" element={<SettingsPage />} />
+              </Route>
             </Route>
 
             <Route path="*" element={<Navigate to="/" replace />} />

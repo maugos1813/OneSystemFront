@@ -1,5 +1,4 @@
 import {
-  BarChart3,
   Car,
   CircleUser,
   Cross,
@@ -7,8 +6,9 @@ import {
   Key,
   LogOut,
   Map as MapIcon,
+  Maximize2,
+  Minimize2,
   Moon,
-  Route as RouteIcon,
   Settings,
   Sun,
   Truck,
@@ -16,7 +16,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, Navigate, Outlet, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { AlertsPanel } from "../components/AlertsPanel";
 import { useAuth } from "../context/AuthContext";
 import { FleetProvider } from "../context/FleetContext";
@@ -25,10 +25,19 @@ import { getProductSsoUrl, listProducts } from "../lib/api";
 import { trackGlow } from "../lib/glow";
 import type { Product } from "../lib/types";
 import { DashboardPage } from "./DashboardPage";
+import { LandingPage } from "./LandingPage";
 
 const CONFIG_KEY = "config";
 
-/** Sidebar icon and colour of each product; anything new falls back to its initial. */
+/** The brand logo of each product, shown as its icon; a product without one falls back to a drawn icon. */
+const PRODUCT_LOGOS: Record<string, string> = {
+  gps: "/logos/onetrack-icon.png",
+  driver: "/logos/gamonal-driver.png",
+  farmacy: "/logos/gamonal-farmacy.png",
+  nakamacar: "/logos/nakamacar.png",
+};
+
+/** Fallback icon and colour for a product that has no logo. */
 const PRODUCT_ICONS: Record<string, { icon: LucideIcon; color: string }> = {
   gps: { icon: MapIcon, color: "text-blue-600 dark:text-blue-400" },
   driver: { icon: Truck, color: "text-slate-700 dark:text-slate-300" },
@@ -39,14 +48,6 @@ const PRODUCT_ICONS: Record<string, { icon: LucideIcon; color: string }> = {
 const SUBTITLES: Record<string, string> = {
   gps: "Seguimiento y control de rutas",
 };
-
-/** What OneTrack opens from its home: the same pages as its own menu, one click away. */
-const ONETRACK_SHORTCUTS: Array<{ to: string; label: string; icon: LucideIcon; color: string }> = [
-  { to: "/gps", label: "Seguimiento", icon: MapIcon, color: "text-blue-600 dark:text-blue-400" },
-  { to: "/historial", label: "Rutas", icon: RouteIcon, color: "text-violet-600 dark:text-violet-400" },
-  { to: "/vehiculos", label: "Vehículos", icon: Truck, color: "text-teal-600 dark:text-teal-400" },
-  { to: "/analiticas", label: "Informes", icon: BarChart3, color: "text-orange-600 dark:text-orange-400" },
-];
 
 const PANEL =
   "rounded-3xl border border-white bg-white shadow-lg shadow-slate-200/50 dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40";
@@ -69,7 +70,19 @@ async function openInNewTab(product: Product): Promise<void> {
   }
 }
 
-export function PortalPage() {
+/**
+ * The OneSystec shell: top bar, apps menu and the app in front. It is the parent of every OneTrack
+ * route, so opening ("desplegar") OneTrack keeps this same page mounted and only folds the bars away.
+ */
+export function WorkspaceLayout() {
+  const { isAuthenticated } = useAuth();
+  const { pathname } = useLocation();
+
+  if (!isAuthenticated) return pathname === "/" ? <LandingPage /> : <Navigate to="/login" replace />;
+  return <SignedInWorkspace />;
+}
+
+function SignedInWorkspace() {
   const [products, setProducts] = useState<Product[] | null>(null);
 
   useEffect(() => {
@@ -80,25 +93,31 @@ export function PortalPage() {
 
   if (!products) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#f5f6fb] text-sm text-slate-400 dark:bg-[#0a0e1a] dark:text-slate-500">
+      <div className="flex h-screen items-center justify-center bg-[#f5f6fb] text-sm text-slate-400 dark:bg-[#0a0e1a] dark:text-slate-500">
         Cargando...
       </div>
     );
   }
 
   const shell = <Workspace products={products} />;
-  // The bell and the OneTrack dashboard read the fleet, so only accounts with OneTrack load it.
+  // The bell and OneTrack read the fleet, so only accounts with OneTrack load it.
   return products.some((p) => p.key === "gps") ? <FleetProvider>{shell}</FleetProvider> : shell;
 }
 
 function Workspace({ products }: { products: Product[] }) {
   const { currentUser } = useAuth();
+  const { pathname } = useLocation();
+  const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const hasOneTrack = products.some((p) => p.key === "gps");
+  const atHome = pathname === "/";
   const selectedKey = params.get("app") ?? products[0]?.key ?? CONFIG_KEY;
   const selected = products.find((p) => p.key === selectedKey) ?? null;
   const showingConfig = selectedKey === CONFIG_KEY;
   const [visited, setVisited] = useState<string[]>([]);
+
+  // Away from "/" OneTrack's own pages are showing; for an external app the flag is in the address.
+  const expanded = !atHome || (params.get("full") === "1" && selected?.type === "external");
 
   // External apps stay mounted once opened, so switching tabs doesn't throw away where you were.
   const select = (key: string) => {
@@ -107,14 +126,31 @@ function Workspace({ products }: { products: Product[] }) {
     }
     setParams({ app: key }, { replace: true });
   };
+  const expand = () => (selected?.type === "external" ? setParams({ app: selectedKey, full: "1" }) : navigate("/gps"));
+  const collapse = () => (atHome ? setParams({ app: selectedKey }) : navigate("/?app=gps"));
+
+  // OneTrack's pages need its fleet; an account without it has nothing to show there.
+  if (!atHome && !hasOneTrack) return <Navigate to="/" replace />;
 
   return (
-    <div className="flex min-h-screen flex-col gap-3 bg-[#f5f6fb] p-3 transition-colors sm:gap-4 sm:p-4 dark:bg-[#0a0e1a]">
-      <TopBar bell={hasOneTrack ? <AlertsPanel /> : null} />
+    <div
+      className={`flex h-screen flex-col overflow-hidden bg-[#f5f6fb] transition-all duration-300 dark:bg-[#0a0e1a] ${
+        expanded ? "p-0" : "p-3 sm:p-4"
+      }`}
+    >
+      <div className={`shrink-0 overflow-hidden transition-all duration-300 ${expanded ? "mb-0 max-h-0 opacity-0" : "mb-3 max-h-28 sm:mb-4"}`}>
+        <TopBar bell={hasOneTrack ? <AlertsPanel /> : null} />
+      </div>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-3 sm:gap-4 lg:flex-row">
-        <aside className={`${PANEL} shrink-0 p-3 lg:w-72`}>
-          <p className="px-2 pt-1 pb-2 text-xs font-semibold tracking-wide text-slate-500 uppercase dark:text-slate-400">
+      <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
+        <aside
+          className={`${PANEL} shrink-0 overflow-hidden transition-all duration-300 lg:w-72 ${
+            expanded
+              ? "mb-0 max-h-0 max-w-0 border-0 p-0 opacity-0 lg:mr-0"
+              : "mb-3 max-h-96 p-3 sm:mb-4 lg:mr-4 lg:mb-0 lg:max-h-none lg:max-w-72"
+          }`}
+        >
+          <p className="px-2 pt-1 pb-2 text-xs font-semibold tracking-wide whitespace-nowrap text-slate-500 uppercase dark:text-slate-400">
             Aplicaciones
           </p>
           <nav className="flex gap-1 overflow-x-auto lg:flex-col lg:overflow-visible">
@@ -132,19 +168,32 @@ function Workspace({ products }: { products: Product[] }) {
           </SidebarItem>
         </aside>
 
-        <main className={`${PANEL} min-w-0 flex-1 p-4 sm:p-5`}>
-          {showingConfig ? (
-            <ConfigPanel role={currentUser?.role} />
-          ) : selected?.type === "internal" ? (
-            <OneTrackPanel product={selected} />
-          ) : selected ? null : (
+        <main
+          className={`${PANEL} flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden transition-all duration-300 ${
+            expanded ? "rounded-none border-0 shadow-none" : "p-4 sm:p-5"
+          }`}
+        >
+          {/* OneTrack's own pages (map, history, vehicles...) — their layout fills this panel. */}
+          <div className={atHome ? "hidden" : "min-h-0 flex-1"}>
+            <Outlet context={{ collapse }} />
+          </div>
+
+          {atHome && showingConfig && <ConfigPanel role={currentUser?.role} />}
+          {atHome && !showingConfig && selected?.type === "internal" && <OneTrackHome product={selected} onExpand={expand} />}
+          {atHome && !showingConfig && !selected && (
             <p className="text-sm text-slate-500 dark:text-slate-400">No tienes aplicaciones habilitadas todavía.</p>
           )}
 
           {products
-            .filter((p) => p.type === "external" && (visited.includes(p.key) || p.key === selectedKey))
+            .filter((p) => p.type === "external" && (visited.includes(p.key) || (atHome && p.key === selectedKey)))
             .map((product) => (
-              <ExternalPanel key={product.key} product={product} visible={product.key === selectedKey && !showingConfig} />
+              <ExternalPanel
+                key={product.key}
+                product={product}
+                visible={atHome && product.key === selectedKey && !showingConfig}
+                expanded={expanded}
+                onToggle={expanded ? collapse : expand}
+              />
             ))}
         </main>
       </div>
@@ -224,7 +273,21 @@ function SidebarItem({ active, onClick, children }: { active: boolean; onClick: 
   );
 }
 
+/** A logo on a white tile, so logos with a transparent background read in dark mode too. */
+function ProductLogo({ product, size }: { product: Product; size: "sm" | "lg" }) {
+  return (
+    <span
+      className={`flex shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-200 dark:ring-white/10 ${
+        size === "sm" ? "h-8 w-8 p-0.5" : "h-14 w-14 p-1"
+      }`}
+    >
+      <img src={PRODUCT_LOGOS[product.key]} alt="" className="max-h-full max-w-full object-contain" />
+    </span>
+  );
+}
+
 function ProductIcon({ product }: { product: Product }) {
+  if (PRODUCT_LOGOS[product.key]) return <ProductLogo product={product} size="sm" />;
   const entry = PRODUCT_ICONS[product.key];
   if (!entry) {
     return (
@@ -237,14 +300,42 @@ function ProductIcon({ product }: { product: Product }) {
   return <Icon className={`h-5 w-5 shrink-0 ${entry.color}`} />;
 }
 
-function PanelHeader({ product, action }: { product: Product; action?: ReactNode }) {
+function ExpandButton({ expanded, onClick }: { expanded: boolean; onClick: () => void }) {
+  const Icon = expanded ? Minimize2 : Maximize2;
   return (
-    <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-      <div>
-        <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">{product.name}</h1>
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          {SUBTITLES[product.key] ?? "Se abre aquí con tu sesión de OneSystec"}
-        </p>
+    <button
+      onClick={onClick}
+      className="flex items-center gap-1.5 rounded-xl border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5"
+    >
+      <Icon className="h-4 w-4" /> {expanded ? "Contraer" : "Desplegar"}
+    </button>
+  );
+}
+
+function PanelHeader({
+  product,
+  expanded = false,
+  onToggle,
+  action,
+}: {
+  product: Product;
+  expanded?: boolean;
+  onToggle: () => void;
+  action?: ReactNode;
+}) {
+  return (
+    <div className={`flex flex-wrap items-start justify-between gap-3 ${expanded ? "px-4 py-2" : "mb-4"}`}>
+      <div className="flex flex-wrap items-center gap-3">
+        {PRODUCT_LOGOS[product.key] && <ProductLogo product={product} size={expanded ? "sm" : "lg"} />}
+        <div>
+          <h1 className={`font-semibold text-slate-900 dark:text-white ${expanded ? "text-lg" : "text-2xl"}`}>{product.name}</h1>
+          {!expanded && (
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+              {SUBTITLES[product.key] ?? "Se abre aquí con tu sesión de OneSystec"}
+            </p>
+          )}
+        </div>
+        <ExpandButton expanded={expanded} onClick={onToggle} />
       </div>
       <div className="flex items-center gap-2">
         {action}
@@ -256,27 +347,14 @@ function PanelHeader({ product, action }: { product: Product; action?: ReactNode
   );
 }
 
-function OneTrackPanel({ product }: { product: Product }) {
+function OneTrackHome({ product, onExpand }: { product: Product; onExpand: () => void }) {
   return (
-    <>
-      <PanelHeader product={product} />
-      <div className="grid grid-cols-2 gap-3 sm:gap-4">
-        {ONETRACK_SHORTCUTS.map(({ to, label, icon: Icon, color }) => (
-          <Link
-            key={to}
-            to={to}
-            onMouseMove={trackGlow}
-            className="glow flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 text-slate-600 transition hover:border-blue-300 hover:shadow-md dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:border-blue-400/50"
-          >
-            <Icon className={`h-6 w-6 ${color}`} />
-            <span className="text-[15px]">{label}</span>
-          </Link>
-        ))}
-      </div>
-      <div className="mt-4 h-[28rem] overflow-hidden rounded-2xl border border-slate-200 sm:h-[34rem] dark:border-white/10">
+    <div className="flex min-h-0 flex-1 flex-col">
+      <PanelHeader product={product} onToggle={onExpand} />
+      <div className="min-h-[24rem] flex-1 overflow-hidden rounded-2xl border border-slate-200 dark:border-white/10">
         <DashboardPage />
       </div>
-    </>
+    </div>
   );
 }
 
@@ -284,7 +362,17 @@ function OneTrackPanel({ product }: { product: Product }) {
  * An external app, shown inside the workspace with the session already open (the same ticket
  * exchange as "open in a new tab"). Kept mounted but hidden while another app is in front.
  */
-function ExternalPanel({ product, visible }: { product: Product; visible: boolean }) {
+function ExternalPanel({
+  product,
+  visible,
+  expanded,
+  onToggle,
+}: {
+  product: Product;
+  visible: boolean;
+  expanded: boolean;
+  onToggle: () => void;
+}) {
   const [ssoSrc, setSsoSrc] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
   const fallback = product.url ?? null;
@@ -304,19 +392,25 @@ function ExternalPanel({ product, visible }: { product: Product; visible: boolea
   const src = product.ssoEnabled ? ssoSrc : fallback;
 
   return (
-    <div className={visible ? "" : "hidden"}>
+    <div className={visible ? "flex min-h-0 flex-1 flex-col" : "hidden"}>
       <PanelHeader
         product={product}
+        expanded={expanded}
+        onToggle={onToggle}
         action={
           <button
             onClick={() => void openInNewTab(product)}
             className="flex items-center gap-1.5 rounded-xl border border-slate-300 px-3 py-1.5 text-sm text-slate-700 transition hover:bg-slate-50 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5"
           >
-            <ExternalLink className="h-4 w-4" /> Abrir en pestaña nueva
+            <ExternalLink className="h-4 w-4" /> <span className="hidden sm:inline">Abrir en pestaña nueva</span>
           </button>
         }
       />
-      <div className="relative h-[calc(100vh-17rem)] min-h-[28rem] overflow-hidden rounded-2xl border border-slate-200 dark:border-white/10">
+      <div
+        className={`relative min-h-[20rem] flex-1 overflow-hidden border-slate-200 dark:border-white/10 ${
+          expanded ? "border-t" : "rounded-2xl border"
+        }`}
+      >
         {!loaded && (
           <div className="absolute inset-0 flex items-center justify-center text-sm text-slate-400 dark:text-slate-500">
             Entrando a {product.name}...
@@ -332,7 +426,9 @@ function ExternalPanel({ product, visible }: { product: Product; visible: boolea
           />
         )}
       </div>
-      <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">¿No carga o pide iniciar sesión? Ábrelo en una pestaña nueva.</p>
+      {!expanded && (
+        <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">¿No carga o pide iniciar sesión? Ábrelo en una pestaña nueva.</p>
+      )}
     </div>
   );
 }
@@ -351,7 +447,7 @@ function ConfigPanel({ role }: { role: string | undefined }) {
   );
 
   return (
-    <>
+    <div className="min-h-0 flex-1 overflow-auto">
       <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">Configuración</h1>
       <p className="mt-1 mb-4 text-sm text-slate-500 dark:text-slate-400">Administración de tu espacio de trabajo</p>
       {items.length === 0 ? (
@@ -374,6 +470,6 @@ function ConfigPanel({ role }: { role: string | undefined }) {
           ))}
         </div>
       )}
-    </>
+    </div>
   );
 }

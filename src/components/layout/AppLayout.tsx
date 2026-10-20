@@ -9,6 +9,7 @@ import {
   LogOut,
   Map,
   MapPin,
+  Minimize2,
   Moon,
   PanelLeftClose,
   PanelLeftOpen,
@@ -21,7 +22,7 @@ import {
   Wrench,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Link, NavLink, Outlet } from "react-router-dom";
+import { Link, NavLink, Outlet, useOutletContext } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
 import { trackGlow } from "../../lib/glow";
@@ -75,13 +76,14 @@ function useOneTrackTabIdentity() {
 }
 
 export function AppLayout() {
+  const { collapse } = useOutletContext<{ collapse: () => void }>();
   const { currentUser, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [navOpen, setNavOpen] = useState(prefersOpenByDefault);
   useOneTrackTabIdentity();
 
   return (
-    <div className="flex h-screen bg-[#f5f6fb] dark:bg-[#0a0e1a]">
+    <div className="flex h-full bg-[#f5f6fb] dark:bg-[#0a0e1a]">
       {navOpen && (
         <div
           className="fixed inset-0 z-30 bg-slate-900/30 lg:hidden"
@@ -177,6 +179,13 @@ export function AppLayout() {
               {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </button>
             <AlertsPanel />
+            <button
+              onClick={collapse}
+              className="flex items-center gap-1.5 rounded-xl border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5"
+            >
+              <Minimize2 className="h-4 w-4" />
+              <span className="hidden sm:inline">Contraer</span>
+            </button>
             <button
               onClick={logout}
               className="flex items-center gap-1.5 rounded-xl px-2 py-1.5 text-sm text-slate-500 transition hover:bg-violet-50 hover:text-slate-900 sm:px-3 dark:text-slate-400 dark:hover:bg-red-500/10 dark:hover:text-red-400"
