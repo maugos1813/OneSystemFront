@@ -1,4 +1,5 @@
 import { clearToken, getToken } from "./auth";
+import { MODULE_KEYS, MODULE_TEMPLATES, type ModuleKey } from "./modules";
 import type {
   AlertPreferences,
   ApiKey,
@@ -89,8 +90,14 @@ export function register(input: RegisterInput): Promise<{ token: string }> {
   return request("/auth/register", { method: "POST", body: JSON.stringify(input) });
 }
 
-export function getCurrentUser(): Promise<CurrentUser> {
-  return request("/me");
+/** What a role may use when the server doesn't say (an older server that predates the sections). */
+function fallbackModules(role: CurrentUser["role"]): ModuleKey[] {
+  return role === "owner" || role === "admin" ? [...MODULE_KEYS] : [...MODULE_TEMPLATES.estandar];
+}
+
+export async function getCurrentUser(): Promise<CurrentUser> {
+  const me = await request<CurrentUser>("/me");
+  return { ...me, modules: me.modules ?? fallbackModules(me.role) };
 }
 
 // --- Devices ---
@@ -374,8 +381,9 @@ export function getProductSsoUrl(key: string): Promise<{ url: string }> {
 
 // --- Team ---
 
-export function listTeamMembers(): Promise<TeamMember[]> {
-  return request("/users");
+export async function listTeamMembers(): Promise<TeamMember[]> {
+  const members = await request<TeamMember[]>("/users");
+  return members.map((member) => ({ ...member, modules: member.modules ?? fallbackModules(member.role) }));
 }
 
 export interface CreateTeamMemberInput {

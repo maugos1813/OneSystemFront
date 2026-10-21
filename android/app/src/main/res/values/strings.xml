@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">OneSystec</string>
+    <string name="title_activity_main">OneSystec</string>
+    <string name="package_name">com.onesystec.app</string>
+    <string name="custom_url_scheme">com.onesystec.app</string>
+</resources>

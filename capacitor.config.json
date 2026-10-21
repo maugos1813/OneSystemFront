@@ -1,0 +1,12 @@
+{
+  "appId": "com.onesystec.app",
+  "appName": "OneSystec",
+  "webDir": "dist",
+  "server": {
+    "url": "https://one-system-front-two.vercel.app",
+    "cleartext": false
+  },
+  "android": {
+    "allowMixedContent": false
+  }
+}
