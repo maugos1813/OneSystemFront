@@ -210,9 +210,9 @@ function TopBar({ bell }: { bell: ReactNode }) {
   const { currentUser, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [open, setOpen] = useState(false);
-  // Logo and name go together: a client user (e.g. DHL, who has a logo of their own) is shown as themselves,
-  // everyone else as the organization.
-  const isClient = !!currentUser?.userLogo;
+  // Owner and admin are the company itself, so they see the organization. A client user (viewer or manager)
+  // is shown as themselves, e.g. "Piazza Spedizioni", whether or not they have a logo of their own yet.
+  const isClient = currentUser?.role === "viewer" || currentUser?.role === "manager";
   const logo = currentUser?.userLogo ?? currentUser?.orgLogo ?? null;
   const title = (isClient ? currentUser?.name.trim() : "") || currentUser?.orgName || "...";
 
