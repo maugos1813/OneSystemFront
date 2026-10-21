@@ -1,3 +1,4 @@
+import type { ModuleKey } from "./modules";
 export type DeviceStatus = "unclaimed" | "active" | "disabled";
 /** "teltonika": pushes AVL data over our TCP ingestion (rich telemetry: voltage,
  * satellites, odometer, GSM signal). "radius_velocity": pulled from a third-party API
@@ -94,6 +95,8 @@ export interface CurrentUser {
   orgLogo: string | null;
   /** This user's own logo (a client such as DHL); when set it replaces the organization's in their top bar. */
   userLogo: string | null;
+  /** The OneTrack sections this user may use (everything for owner/admin). */
+  modules: ModuleKey[];
 }
 
 export interface DeviceEvent {
@@ -200,6 +203,8 @@ export interface TeamMember {
   allowedArea: string | null;
   /** The member's own logo as a data URL, or null. */
   logo: string | null;
+  /** The OneTrack sections the member may use (everything for owner/admin). */
+  modules: ModuleKey[];
   createdAt: string;
   /** Only meaningful for role "viewer"/"manager" — owner/admin always see every product the org has. */
   productKeys: string[];

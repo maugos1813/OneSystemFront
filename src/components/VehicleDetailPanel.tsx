@@ -1,3 +1,4 @@
+import { useAuth } from "../context/AuthContext";
 import { X } from "lucide-react";
 import { describeEvent } from "../lib/deviceEvents";
 import { AVL_ID, type DeviceEvent, type Position, type Vehicle } from "../lib/types";
@@ -45,6 +46,12 @@ export function VehicleDetailPanel({
   onHistoryRangeChange,
   onClose,
 }: VehicleDetailPanelProps) {
+  const { currentUser } = useAuth();
+  // The route is the history behind Historial and Analíticas; an account with neither doesn't get it.
+  const canSeeHistory =
+    currentUser?.role === "owner" ||
+    currentUser?.role === "admin" ||
+    !!currentUser?.modules.some((m) => m === "historial" || m === "analiticas");
   return (
     <div className="fixed inset-x-0 bottom-0 z-10 max-h-[75vh] overflow-y-auto rounded-t-3xl border border-white bg-white p-4 shadow-xl shadow-slate-300/30 sm:absolute sm:inset-x-auto sm:top-4 sm:right-4 sm:bottom-auto sm:max-h-[calc(100%-2rem)] sm:w-80 sm:rounded-3xl dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40">
       <div className="mb-3 flex items-start justify-between">
@@ -89,6 +96,7 @@ export function VehicleDetailPanel({
         </div>
       )}
 
+      {canSeeHistory && (
       <div className="mt-4">
         <p className="mb-2 text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-500">
           Recorrido
@@ -118,6 +126,7 @@ export function VehicleDetailPanel({
           </div>
         )}
       </div>
+      )}
 
       <div className="mt-4">
         <p className="mb-2 text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-500">

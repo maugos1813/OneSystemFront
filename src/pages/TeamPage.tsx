@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Panel } from "../components/analytics/Panel";
 import { LogoUpload } from "../components/LogoUpload";
+import { ModulesPicker } from "../components/ModulesPicker";
 import { useAuth } from "../context/AuthContext";
 import {
   ApiError,
@@ -13,6 +14,7 @@ import {
   updateTeamMemberArea,
   updateTeamMemberEmail,
   updateTeamMemberLogo,
+  updateTeamMemberModules,
   updateTeamMemberName,
   updateTeamMemberPassword,
   updateTeamMemberProducts,
@@ -20,6 +22,7 @@ import {
 } from "../lib/api";
 import { AREA_OPTIONS } from "../lib/areaFilter";
 import { fileToLogoDataUrl, LOGO_ACCEPT } from "../lib/logoImage";
+import { MODULE_INFO, MODULE_TEMPLATES, type ModuleKey } from "../lib/modules";
 import type { CurrentUser, Product, TeamMember, TeamRole } from "../lib/types";
 
 const ROLE_LABEL: Record<TeamRole, string> = {
@@ -132,6 +135,9 @@ function MemberRow({
   const [passwordSaved, setPasswordSaved] = useState(false);
 
   const [deleting, setDeleting] = useState(false);
+  const [modules, setModules] = useState<ModuleKey[]>(member.modules);
+  const [savingModules, setSavingModules] = useState(false);
+  const [savedModules, setSavedModules] = useState(false);
   const [savingLogo, setSavingLogo] = useState(false);
   const [logoError, setLogoError] = useState<string | null>(null);
 
@@ -140,6 +146,10 @@ function MemberRow({
   useEffect(() => {
     setProductKeys(member.productKeys);
   }, [member.productKeys]);
+
+  useEffect(() => {
+    setModules(member.modules);
+  }, [member.modules]);
 
   useEffect(() => {
     setName(member.name);
@@ -243,6 +253,18 @@ function MemberRow({
     }
   }
 
+  async function handleSaveModules() {
+    setSavingModules(true);
+    try {
+      await updateTeamMemberModules(member.id, modules);
+      setSavedModules(true);
+      setTimeout(() => setSavedModules(false), 2000);
+      onChanged();
+    } finally {
+      setSavingModules(false);
+    }
+  }
+
   async function handleLogo(file: File | null | undefined, remove = false) {
     if (!remove && !file) return;
     setSavingLogo(true);
@@ -268,6 +290,7 @@ function MemberRow({
     }
   }
 
+  const modulesChanged = JSON.stringify([...modules].sort()) !== JSON.stringify([...member.modules].sort());
   const productsChanged =
     JSON.stringify([...productKeys].sort()) !== JSON.stringify([...member.productKeys].sort());
 
@@ -574,6 +597,42 @@ function MemberRow({
           )}
         </div>
       )}
+
+      {showProducts && (
+        <div className="mt-3 border-t border-slate-200 pt-3 dark:border-white/10">
+          <p className="mb-2 text-xs font-medium tracking-wide text-slate-400 uppercase dark:text-slate-500">
+            Secciones de OneTrack
+          </p>
+          {canManageOtherOnly ? (
+            <>
+              <ModulesPicker
+                selected={modules}
+                onChange={setModules}
+                available={currentUser?.role === "manager" ? currentUser.modules : undefined}
+              />
+              {modulesChanged && (
+                <button
+                  onClick={handleSaveModules}
+                  disabled={savingModules}
+                  className="brand-button mt-3 rounded-lg px-3 py-1.5 text-xs font-medium disabled:opacity-50"
+                >
+                  {savingModules ? "Guardando..." : "Guardar secciones"}
+                </button>
+              )}
+              {savedModules && <span className="ml-2 text-xs font-medium text-emerald-600 dark:text-emerald-400">Guardado ✓</span>}
+            </>
+          ) : (
+            <div className="flex flex-wrap gap-1.5">
+              {member.modules.length === 0 && <span className="text-xs text-slate-400 dark:text-slate-500">Ninguna</span>}
+              {member.modules.map((key) => (
+                <span key={key} className="rounded-full bg-slate-200 px-2 py-0.5 text-xs text-slate-600 dark:bg-white/10 dark:text-slate-300">
+                  {MODULE_INFO[key].label}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -592,6 +651,7 @@ export function TeamPage() {
   const [role, setRole] = useState<"admin" | "manager" | "viewer">("viewer");
   const [area, setArea] = useState("");
   const [logo, setLogo] = useState<string | null>(null);
+  const [newModules, setNewModules] = useState<ModuleKey[]>([...MODULE_TEMPLATES.estandar]);
   const [newMemberProducts, setNewMemberProducts] = useState<string[]>([]);
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
@@ -628,6 +688,7 @@ export function TeamPage() {
         role: effectiveRole,
         allowedArea: area || null,
         ...(logo ? { logo } : {}),
+        ...(showProductsSection ? { modules: newModules } : {}),
         productKeys: showProductsSection ? newMemberProducts : undefined,
       });
       setName("");
@@ -635,6 +696,7 @@ export function TeamPage() {
       setPassword("");
       setRole("viewer");
       setLogo(null);
+      setNewModules([...MODULE_TEMPLATES.estandar]);
       if (!areaLocked) setArea("");
       await refetch();
     } catch (err) {
@@ -738,6 +800,20 @@ export function TeamPage() {
                 </p>
                 <LogoUpload value={logo} onChange={setLogo} name={name} />
               </div>
+
+              {showProductsSection && (
+                <div>
+                  <p className="mb-2 text-xs font-medium tracking-wide text-slate-400 uppercase dark:text-slate-500">
+                    Secciones de OneTrack{" "}
+                    <span className="font-normal normal-case">(Conducción, Peajes y Cockpit vienen apagados)</span>
+                  </p>
+                  <ModulesPicker
+                    selected={newModules}
+                    onChange={setNewModules}
+                    available={isManager ? currentUser?.modules : undefined}
+                  />
+                </div>
+              )}
 
               {showProductsSection && (
                 <div>

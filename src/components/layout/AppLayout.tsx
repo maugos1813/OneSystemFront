@@ -1,53 +1,18 @@
 import {
-  BarChart3,
-  BellRing,
-  Cpu,
-  Gauge,
-  HeartPulse,
-  History,
-  Key,
   LogOut,
-  Map,
-  MapPin,
   Minimize2,
   Moon,
   PanelLeftClose,
   PanelLeftOpen,
-  Receipt,
-  Settings,
-  ShieldCheck,
-  Smartphone,
   Sun,
-  Truck,
-  Wrench,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Link, NavLink, Outlet, useOutletContext } from "react-router-dom";
+import { Link, Navigate, NavLink, Outlet, useLocation, useOutletContext } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
 import { trackGlow } from "../../lib/glow";
+import { allowedNav, canOpen, navItemForPath } from "../../lib/oneTrackNav";
 import { AlertsPanel } from "../AlertsPanel";
-
-const NAV_ITEMS = [
-  { to: "/gps", label: "Mapa", icon: Map, end: true },
-  { to: "/cockpit", label: "Cockpit", icon: Gauge, end: false },
-  { to: "/analiticas", label: "Analíticas", icon: BarChart3, end: false },
-  { to: "/historial", label: "Historial", icon: History, end: false },
-  { to: "/conduccion", label: "Conducción", icon: ShieldCheck, end: false },
-  { to: "/alertas", label: "Alertas", icon: BellRing, end: false },
-  { to: "/geocercas", label: "Geocercas", icon: MapPin, end: false },
-  { to: "/peajes", label: "Peajes", icon: Receipt, end: false },
-  { to: "/salud-dispositivos", label: "Salud del dispositivo", icon: HeartPulse, end: false },
-  { to: "/vehiculos", label: "Vehículos", icon: Truck, end: false },
-  { to: "/mantenimiento", label: "Mantenimiento", icon: Wrench, end: false },
-  { to: "/dispositivos", label: "Dispositivos", icon: Smartphone, end: false },
-  // The backend now restricts both reading and managing these to owner/admin (API keys
-  // authenticate as full access, and org settings affect everyone) — hidden below for
-  // anyone else so they never land on a page that just 403s.
-  { to: "/sims", label: "SIMs", icon: Cpu, end: false, ownerAdminOnly: true },
-  { to: "/api-keys", label: "API Keys", icon: Key, end: false, ownerAdminOnly: true },
-  { to: "/ajustes", label: "Ajustes", icon: Settings, end: false, ownerAdminOnly: true },
-];
 
 /** Below `lg` there isn't room for the nav rail *and* the vehicle list *and* the map, so it starts collapsed there. */
 function prefersOpenByDefault(): boolean {
@@ -79,8 +44,16 @@ export function AppLayout() {
   const { collapse } = useOutletContext<{ collapse: () => void }>();
   const { currentUser, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const { pathname } = useLocation();
   const [navOpen, setNavOpen] = useState(prefersOpenByDefault);
   useOneTrackTabIdentity();
+
+  // A section this account doesn't include isn't just hidden from the menu: typing its address leads back to
+  // the first one that is allowed (the server refuses the data anyway).
+  const section = navItemForPath(pathname);
+  if (currentUser && section && !canOpen(currentUser, section)) {
+    return <Navigate to={allowedNav(currentUser)[0]?.to ?? "/"} replace />;
+  }
 
   return (
     <div className="flex h-full bg-[#f5f6fb] dark:bg-[#0a0e1a]">
@@ -120,9 +93,7 @@ export function AppLayout() {
           </div>
 
           <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
-            {NAV_ITEMS.filter(
-              (item) => !item.ownerAdminOnly || currentUser?.role === "owner" || currentUser?.role === "admin",
-            ).map(({ to, label, icon: Icon, end }) => (
+            {allowedNav(currentUser).map(({ to, label, icon: Icon, end }) => (
               <NavLink
                 key={to}
                 to={to}

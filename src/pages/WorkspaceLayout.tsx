@@ -23,6 +23,7 @@ import { FleetProvider } from "../context/FleetContext";
 import { useTheme } from "../context/ThemeContext";
 import { getProductSsoUrl, listProducts } from "../lib/api";
 import { trackGlow } from "../lib/glow";
+import { firstAllowedPath } from "../lib/oneTrackNav";
 import type { Product } from "../lib/types";
 import { DashboardPage } from "./DashboardPage";
 import { LandingPage } from "./LandingPage";
@@ -126,7 +127,12 @@ function Workspace({ products }: { products: Product[] }) {
     }
     setParams({ app: key }, { replace: true });
   };
-  const expand = () => (selected?.type === "external" ? setParams({ app: selectedKey, full: "1" }) : navigate("/gps"));
+  const expand = () => {
+    if (selected?.type === "external") return setParams({ app: selectedKey, full: "1" });
+    // OneTrack opens on the first section this account may use (Mapa for most).
+    const first = firstAllowedPath(currentUser);
+    if (first) navigate(first);
+  };
   const collapse = () => (atHome ? setParams({ app: selectedKey }) : navigate("/?app=gps"));
 
   // OneTrack's pages need its fleet; an account without it has nothing to show there.
@@ -184,7 +190,9 @@ function Workspace({ products }: { products: Product[] }) {
           </div>
 
           {atHome && showingConfig && <ConfigPanel role={currentUser?.role} />}
-          {atHome && !showingConfig && selected?.type === "internal" && <OneTrackHome product={selected} onExpand={expand} />}
+          {atHome && !showingConfig && selected?.type === "internal" && (
+            <OneTrackHome product={selected} onExpand={expand} hasMap={!!currentUser?.modules.includes("mapa")} hasSections={!!firstAllowedPath(currentUser)} />
+          )}
           {atHome && !showingConfig && !selected && (
             <p className="text-sm text-slate-500 dark:text-slate-400">No tienes aplicaciones habilitadas todavía.</p>
           )}
@@ -210,11 +218,9 @@ function TopBar({ bell }: { bell: ReactNode }) {
   const { currentUser, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [open, setOpen] = useState(false);
-  // Owner and admin are the company itself, so they see the organization. A client user (viewer or manager)
-  // is shown as themselves, e.g. "Piazza Spedizioni", whether or not they have a logo of their own yet.
-  const isClient = currentUser?.role === "viewer" || currentUser?.role === "manager";
+  // Always the person (or client) who signed in, e.g. "Piazza Spedizioni"; the organization's name is only the fallback.
   const logo = currentUser?.userLogo ?? currentUser?.orgLogo ?? null;
-  const title = (isClient ? currentUser?.name.trim() : "") || currentUser?.orgName || "...";
+  const title = currentUser?.name.trim() || currentUser?.orgName || "...";
 
   return (
     <header className={`${PANEL} flex items-center justify-between gap-3 px-4 py-3 sm:px-5`}>
@@ -334,11 +340,13 @@ function PanelHeader({
   product,
   expanded = false,
   onToggle,
+  hideToggle = false,
   action,
 }: {
   product: Product;
   expanded?: boolean;
   onToggle: () => void;
+  hideToggle?: boolean;
   action?: ReactNode;
 }) {
   return (
@@ -353,7 +361,7 @@ function PanelHeader({
             </p>
           )}
         </div>
-        <ExpandButton expanded={expanded} onClick={onToggle} />
+        {!hideToggle && <ExpandButton expanded={expanded} onClick={onToggle} />}
       </div>
       <div className="flex items-center gap-2">
         {action}
@@ -365,13 +373,35 @@ function PanelHeader({
   );
 }
 
-function OneTrackHome({ product, onExpand }: { product: Product; onExpand: () => void }) {
+function OneTrackHome({
+  product,
+  onExpand,
+  hasMap,
+  hasSections,
+}: {
+  product: Product;
+  onExpand: () => void;
+  hasMap: boolean;
+  hasSections: boolean;
+}) {
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <PanelHeader product={product} onToggle={onExpand} />
-      <div className="min-h-[24rem] flex-1 overflow-hidden rounded-2xl border border-slate-200 dark:border-white/10">
-        <DashboardPage />
-      </div>
+      {hasSections ? (
+        <PanelHeader product={product} onToggle={onExpand} />
+      ) : (
+        <PanelHeader product={product} onToggle={() => undefined} hideToggle />
+      )}
+      {hasMap ? (
+        <div className="min-h-[24rem] flex-1 overflow-hidden rounded-2xl border border-slate-200 dark:border-white/10">
+          <DashboardPage />
+        </div>
+      ) : (
+        <p className="rounded-2xl bg-slate-50 px-4 py-6 text-sm text-slate-500 dark:bg-white/5 dark:text-slate-400">
+          {hasSections
+            ? "Pulsa Desplegar para ver las secciones que tienes habilitadas."
+            : "Tu cuenta todavía no tiene secciones de OneTrack habilitadas. Pídele a tu administrador que las active."}
+        </p>
+      )}
     </div>
   );
 }

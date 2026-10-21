@@ -386,11 +386,17 @@ export interface CreateTeamMemberInput {
   allowedArea?: string | null;
   /** The member's own logo as a data URL (see logoImage.ts). */
   logo?: string | null;
+  /** OneTrack sections to give (see modules.ts); omitted means the standard package. */
+  modules?: string[];
   productKeys?: string[];
 }
 
 export function createTeamMember(input: CreateTeamMemberInput): Promise<TeamMember> {
   return request("/users", { method: "POST", body: JSON.stringify(input) });
+}
+
+export function updateTeamMemberModules(id: string, modules: string[]): Promise<{ id: string; modules: string[] }> {
+  return request(`/users/${id}/modules`, { method: "PATCH", body: JSON.stringify({ modules }) });
 }
 
 export function updateTeamMemberLogo(id: string, logo: string | null): Promise<{ id: string; logo: string | null }> {
