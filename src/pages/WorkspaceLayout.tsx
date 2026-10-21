@@ -210,8 +210,11 @@ function TopBar({ bell }: { bell: ReactNode }) {
   const { currentUser, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [open, setOpen] = useState(false);
-  // A client user (e.g. DHL) shows their own logo; everyone else the organization's.
+  // Logo and name go together: a client user (e.g. DHL, who has a logo of their own) is shown as themselves,
+  // everyone else as the organization.
+  const isClient = !!currentUser?.userLogo;
   const logo = currentUser?.userLogo ?? currentUser?.orgLogo ?? null;
+  const title = (isClient ? currentUser?.name.trim() : "") || currentUser?.orgName || "...";
 
   return (
     <header className={`${PANEL} flex items-center justify-between gap-3 px-4 py-3 sm:px-5`}>
@@ -219,15 +222,15 @@ function TopBar({ bell }: { bell: ReactNode }) {
       <div className="flex min-w-0 items-center gap-3">
         <span className="flex h-11 max-w-40 min-w-11 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white p-0.5 shadow-md shadow-blue-200/60 ring-1 ring-slate-200 dark:ring-white/10">
           {logo ? (
-            <img src={logo} alt={currentUser?.orgName ?? ""} className="h-full w-auto max-w-full object-contain" />
+            <img src={logo} alt={title} className="h-full w-auto max-w-full object-contain" />
           ) : (
             <span className="brand-gradient flex aspect-square h-full items-center justify-center rounded-[0.85rem] text-lg font-bold text-white">
-              {(currentUser?.orgName.trim().charAt(0) || "·").toUpperCase()}
+              {(title.trim().charAt(0) || "·").toUpperCase()}
             </span>
           )}
         </span>
         <div className="min-w-0">
-          <p className="truncate text-xl font-semibold text-slate-900 dark:text-white">{currentUser?.orgName ?? "..."}</p>
+          <p className="truncate text-xl font-semibold text-slate-900 dark:text-white">{title}</p>
           <p className="truncate text-sm text-slate-500 dark:text-slate-400">Business Workspace</p>
         </div>
       </div>
