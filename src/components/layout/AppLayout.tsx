@@ -167,7 +167,9 @@ export function AppLayout() {
           </div>
         </header>
 
-        <main className="min-h-0 flex-1 dark:bg-[#0a0e1a]">
+        {/* The workspace around this clips whatever doesn't fit the screen, so each page scrolls here (pages that
+            manage their own scrolling, like the map or Ajustes, simply fill this box). */}
+        <main className="styled-scrollbar min-h-0 flex-1 overflow-y-auto dark:bg-[#0a0e1a]">
           <Outlet />
         </main>
       </div>
