@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { Capacitor } from "@capacitor/core";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { AuthLayout } from "../components/layout/AuthLayout";
 import { useAuth } from "../context/AuthContext";
@@ -63,12 +64,15 @@ export function LoginPage() {
           {loading ? t("login.submitting") : t("login.submit")}
         </button>
 
-        <p className="mt-4 text-center text-sm text-slate-500 dark:text-slate-400">
-          {t("login.newCompany")}{" "}
-          <Link to="/register" className="font-medium text-blue-600 hover:underline dark:text-blue-400">
-            {t("login.createAccount")}
-          </Link>
-        </p>
+        {/* Accounts are created by OneSystec, so the app only offers to sign in; the web keeps the sign-up link. */}
+        {!Capacitor.isNativePlatform() && (
+          <p className="mt-4 text-center text-sm text-slate-500 dark:text-slate-400">
+            {t("login.newCompany")}{" "}
+            <Link to="/register" className="font-medium text-blue-600 hover:underline dark:text-blue-400">
+              {t("login.createAccount")}
+            </Link>
+          </p>
+        )}
       </form>
     </AuthLayout>
   );

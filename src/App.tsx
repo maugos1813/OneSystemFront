@@ -1,3 +1,4 @@
+import { Capacitor } from "@capacitor/core";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { AppLayout } from "./components/layout/AppLayout";
 import { RequireAuth } from "./components/layout/RequireAuth";
@@ -45,7 +46,8 @@ export default function App() {
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
+            {/* Accounts are created by OneSystec: the Android app has no sign-up. */}
+            <Route path="/register" element={Capacitor.isNativePlatform() ? <Navigate to="/login" replace /> : <RegisterPage />} />
 
             <Route element={<RequireAuth />}>
               <Route path="/equipo" element={<TeamPage />} />

@@ -80,7 +80,8 @@ export function WorkspaceLayout() {
   const { isAuthenticated } = useAuth();
   const { pathname } = useLocation();
 
-  if (!isAuthenticated) return pathname === "/" ? <LandingPage /> : <Navigate to="/login" replace />;
+  // The public site is for visitors on the web; the Android app opens straight on the sign-in form, also after signing out.
+  if (!isAuthenticated) return pathname === "/" && !Capacitor.isNativePlatform() ? <LandingPage /> : <Navigate to="/login" replace />;
   return <SignedInWorkspace />;
 }
 
