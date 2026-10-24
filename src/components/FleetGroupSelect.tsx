@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useT } from "../i18n";
 
 const NEW = "__new__";
 
@@ -19,6 +20,7 @@ export function FleetGroupSelect({
   emptyLabel: string;
   className?: string;
 }) {
+  const t = useT();
   const known = value === "" || groups.includes(value);
   const [typing, setTyping] = useState(!known);
 
@@ -28,7 +30,7 @@ export function FleetGroupSelect({
         <input
           value={value}
           onChange={(e) => onChange(e.target.value.toUpperCase().slice(0, 50))}
-          placeholder="Nombre de la flota"
+          placeholder={t("fleet.name")}
           autoFocus
           className={className}
         />
@@ -40,7 +42,7 @@ export function FleetGroupSelect({
           }}
           className="shrink-0 rounded-lg px-2 py-1 text-xs text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-white/10"
         >
-          Cancelar
+          {t("common.cancel")}
         </button>
       </span>
     );
@@ -63,7 +65,7 @@ export function FleetGroupSelect({
           {group}
         </option>
       ))}
-      <option value={NEW}>+ Nueva flota…</option>
+      <option value={NEW}>{t("fleet.new")}</option>
     </select>
   );
 }

@@ -10,6 +10,7 @@ import { describeIo } from "../lib/avlDictionary";
 import { describeEvent } from "../lib/deviceEvents";
 import { buildChecklist, type CheckState } from "../lib/deviceChecklist";
 import { hasSetupGuide, modelOptions, modelProfile } from "../lib/deviceModels";
+import { useT } from "../i18n";
 import { trackGlow } from "../lib/glow";
 import type { DeviceDetail } from "../lib/types";
 import { ModalPortal } from "../components/ModalPortal";
@@ -63,6 +64,7 @@ function Section({ title, children, action }: { title: string; children: ReactNo
 }
 
 export function DeviceDetailPage() {
+  const t = useT();
   const { id } = useParams<{ id: string }>();
   const { currentUser } = useAuth();
   const canEdit = (currentUser?.role === "owner" || currentUser?.role === "admin") && !currentUser.allowedArea;
@@ -302,7 +304,7 @@ export function DeviceDetailPage() {
         ) : (
           <ul className="divide-y divide-slate-100 dark:divide-white/10">
             {detail.events.map((event) => {
-              const { label, tone } = describeEvent(event);
+              const { label, tone } = describeEvent(event, t);
               return (
                 <li key={`${event.id}-${event.ts}`} className="flex items-center justify-between gap-3 py-2 text-sm">
                   <span

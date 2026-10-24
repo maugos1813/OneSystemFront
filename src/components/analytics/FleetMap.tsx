@@ -1,4 +1,5 @@
-import { APIProvider, Map, Marker } from "@vis.gl/react-google-maps";
+import { Map, Marker } from "@vis.gl/react-google-maps";
+import { MapsProvider } from "../MapsProvider";
 import { useTheme } from "../../context/ThemeContext";
 import { DARK_MAP_STYLE, MUTED_MAP_STYLE } from "../../lib/mapStyle";
 import { getVehicleIcon } from "../../lib/markerIcon";
@@ -28,7 +29,7 @@ export function FleetMap({
 
   return (
     <div className="h-80 overflow-hidden rounded-lg">
-      <APIProvider apiKey={apiKey}>
+      <MapsProvider apiKey={apiKey}>
         <Map
           className="h-full"
           defaultCenter={center ? { lat: center.lat, lng: center.lng } : DEFAULT_CENTER}
@@ -50,7 +51,7 @@ export function FleetMap({
             );
           })}
         </Map>
-      </APIProvider>
+      </MapsProvider>
     </div>
   );
 }

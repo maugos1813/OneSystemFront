@@ -1,4 +1,5 @@
-import { APIProvider, Map, Marker, Polyline } from "@vis.gl/react-google-maps";
+import { Map, Marker, Polyline } from "@vis.gl/react-google-maps";
+import { MapsProvider } from "../MapsProvider";
 import { useTheme } from "../../context/ThemeContext";
 import { DARK_MAP_STYLE, MUTED_MAP_STYLE } from "../../lib/mapStyle";
 import { buildRouteSegments } from "../../lib/speedTimeline";
@@ -40,7 +41,7 @@ export function HistoryMapView({ positions, currentPosition, speedLimit }: Histo
   const center = currentPosition ?? positions[0]!;
 
   return (
-    <APIProvider apiKey={apiKey}>
+    <MapsProvider apiKey={apiKey}>
       <Map
         className="h-full"
         center={{ lat: center.lat, lng: center.lng }}
@@ -66,6 +67,6 @@ export function HistoryMapView({ positions, currentPosition, speedLimit }: Histo
           />
         )}
       </Map>
-    </APIProvider>
+    </MapsProvider>
   );
 }

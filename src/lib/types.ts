@@ -97,6 +97,8 @@ export interface CurrentUser {
   userLogo: string | null;
   /** The OneTrack sections this user may use (everything for owner/admin). */
   modules: ModuleKey[];
+  /** The language the app is shown in for this user; chosen by an admin. */
+  language: "es" | "it";
 }
 
 export interface DeviceEvent {
@@ -205,6 +207,8 @@ export interface TeamMember {
   logo: string | null;
   /** The OneTrack sections the member may use (everything for owner/admin). */
   modules: ModuleKey[];
+  /** The language the member sees the app, the alerts and the emails in. */
+  language: "es" | "it";
   createdAt: string;
   /** Only meaningful for role "viewer"/"manager" — owner/admin always see every product the org has. */
   productKeys: string[];

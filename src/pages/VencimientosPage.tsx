@@ -8,6 +8,7 @@ import {
   listVehicleDocuments,
   updateVehicleDocument,
 } from "../lib/api";
+import { useT, type MessageKey, type Translate } from "../i18n";
 import { trackGlow } from "../lib/glow";
 import type { DocumentKind, DocumentState, VehicleDocument, VehicleWithDocuments } from "../lib/types";
 import { ModalPortal } from "../components/ModalPortal";
@@ -18,13 +19,13 @@ const INPUT =
   "field-input w-full rounded-xl border border-slate-300 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white";
 const LABEL = "mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300";
 
-const KIND_OPTIONS: Array<{ value: DocumentKind; label: string }> = [
-  { value: "seguro", label: "Seguro" },
-  { value: "revision", label: "Revisión técnica" },
-  { value: "bollo", label: "Bollo" },
-  { value: "tacografo", label: "Tacógrafo" },
-  { value: "otro", label: "Otro documento…" },
-];
+const KIND_OPTIONS: DocumentKind[] = ["seguro", "revision", "bollo", "tacografo", "otro"];
+
+/** The document's own name: its kind in the reader's language, or what the person typed for "other". */
+function documentLabel(doc: Pick<VehicleDocument, "kind" | "label">, t: Translate): string {
+  if (doc.kind === "otro") return doc.label?.trim() || t("doc.otherName");
+  return t(`doc.kind.${doc.kind}` as MessageKey);
+}
 
 const STATE_BADGE: Record<DocumentState, string> = {
   ok: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400",
@@ -32,12 +33,12 @@ const STATE_BADGE: Record<DocumentState, string> = {
   overdue: "bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-400",
 };
 
-function describe(doc: VehicleDocument): string {
+function describe(doc: VehicleDocument, t: Translate): string {
   const { state, daysLeft } = doc.status;
-  if (state === "overdue") return `Vencido hace ${Math.abs(daysLeft)} ${Math.abs(daysLeft) === 1 ? "día" : "días"}`;
-  if (daysLeft === 0) return "Vence hoy";
-  if (daysLeft === 1) return "Vence mañana";
-  return `Vence en ${daysLeft} días`;
+  if (state === "overdue") return t("doc.overdue", { count: Math.abs(daysLeft) });
+  if (daysLeft === 0) return t("doc.today");
+  if (daysLeft === 1) return t("doc.tomorrow");
+  return t("doc.inDays", { count: daysLeft });
 }
 
 const formatDay = (day: string) => {
@@ -53,6 +54,7 @@ const urgency = (vehicle: VehicleWithDocuments) => Math.min(3, ...vehicle.docume
 type Dialog = { vehicle: VehicleWithDocuments; document?: VehicleDocument };
 
 export function VencimientosPage() {
+  const t = useT();
   const [vehicles, setVehicles] = useState<VehicleWithDocuments[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [dialog, setDialog] = useState<Dialog | null>(null);
@@ -63,13 +65,13 @@ export function VencimientosPage() {
         setVehicles(list);
         setError(null);
       })
-      .catch(() => setError("No se pudieron cargar los vencimientos."));
-  }, []);
+      .catch(() => setError(t("doc.loadFailed")));
+  }, [t]);
 
   useEffect(load, [load]);
 
   async function remove(doc: VehicleDocument) {
-    if (!confirm(`¿Eliminar "${doc.name}"?`)) return;
+    if (!confirm(t("doc.confirmDelete", { name: documentLabel(doc, t) }))) return;
     await deleteVehicleDocument(doc.id);
     load();
   }
@@ -79,25 +81,32 @@ export function VencimientosPage() {
 
   return (
     <div className="mx-auto max-w-4xl p-4 sm:p-6 lg:p-8">
-      <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Vencimientos</h1>
+      <h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t("nav.documents")}</h1>
       <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">
-        Seguro, revisión, bollo, tacógrafo y lo que necesites de cada vehículo, con aviso antes de que venza.
+        {t("doc.subtitle")}
       </p>
 
       {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
-      {!vehicles && !error && <p className="text-sm text-slate-500 dark:text-slate-400">Cargando...</p>}
+      {!vehicles && !error && <p className="text-sm text-slate-500 dark:text-slate-400">{t("common.loading")}</p>}
 
       {vehicles && vehicles.length === 0 && (
         <p className={`${CARD} p-5 text-sm text-slate-600 dark:text-slate-300`}>
-          Todavía no tienes vehículos. Regístralos primero en <Link to="/vehiculos" className="font-medium text-blue-600 hover:underline dark:text-blue-400">Vehículos</Link> y vuelve aquí para cargar sus documentos.
+          {t("doc.noVehicles", { link: "\u0000" })
+            .split("\u0000")
+            .flatMap((part, i) => [
+              part,
+              i === 0 ? (
+                <Link key="link" to="/vehiculos" className="font-medium text-blue-600 hover:underline dark:text-blue-400">
+                  {t("nav.vehicles")}
+                </Link>
+              ) : null,
+            ])}
         </p>
       )}
 
       {vehicles && vehicles.length > 0 && (
         <p className="mb-4 text-sm text-slate-600 dark:text-slate-300">
-          {needAttention === 0
-            ? "Todos tus documentos están al día."
-            : `${needAttention} ${needAttention === 1 ? "documento necesita" : "documentos necesitan"} atención.`}
+          {needAttention === 0 ? t("doc.allGood") : t("doc.needAttention", { count: needAttention })}
         </p>
       )}
 
@@ -113,37 +122,37 @@ export function VencimientosPage() {
                 onClick={() => setDialog({ vehicle })}
                 className="brand-button flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-medium"
               >
-                <Plus className="h-3.5 w-3.5" /> Agregar documento
+                <Plus className="h-3.5 w-3.5" /> {t("doc.add")}
               </button>
             </div>
 
             {vehicle.documents.length === 0 ? (
-              <p className="text-sm text-slate-500 dark:text-slate-400">Sin documentos cargados.</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">{t("doc.none")}</p>
             ) : (
               <ul className="divide-y divide-slate-100 dark:divide-white/10">
                 {vehicle.documents.map((doc) => (
                   <li key={doc.id} className="flex flex-wrap items-center justify-between gap-2 py-2.5">
                     <div className="min-w-0">
                       <p className="flex items-center gap-2 text-sm font-medium text-slate-900 dark:text-white">
-                        <FileCheck className="h-4 w-4 shrink-0 text-slate-400" /> {doc.name}
+                        <FileCheck className="h-4 w-4 shrink-0 text-slate-400" /> {documentLabel(doc, t)}
                       </p>
                       <p className="text-xs text-slate-500 dark:text-slate-400">
-                        Vence el {formatDay(doc.expiresOn)}
+                        {t("doc.expiresOn", { date: formatDay(doc.expiresOn) })}
                         {doc.notes ? ` · ${doc.notes}` : ""}
                       </p>
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${STATE_BADGE[doc.status.state]}`}>{describe(doc)}</span>
+                      <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${STATE_BADGE[doc.status.state]}`}>{describe(doc, t)}</span>
                       <button
                         onClick={() => setDialog({ vehicle, document: doc })}
-                        aria-label="Editar"
+                        aria-label={t("common.edit")}
                         className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-white/10"
                       >
                         <Pencil className="h-4 w-4" />
                       </button>
                       <button
                         onClick={() => void remove(doc)}
-                        aria-label="Eliminar"
+                        aria-label={t("common.delete")}
                         className="rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -172,6 +181,7 @@ export function VencimientosPage() {
 }
 
 function DocumentDialog({ dialog, onClose, onSaved }: { dialog: Dialog; onClose: () => void; onSaved: () => void }) {
+  const t = useT();
   const { vehicle, document } = dialog;
   const [kind, setKind] = useState<DocumentKind>(document?.kind ?? "seguro");
   const [label, setLabel] = useState(document?.label ?? "");
@@ -197,7 +207,7 @@ function DocumentDialog({ dialog, onClose, onSaved }: { dialog: Dialog; onClose:
       else await createVehicleDocument(vehicle.vehicleId, input);
       onSaved();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "No se pudo guardar");
+      setError(err instanceof ApiError ? err.message : t("doc.saveFailed"));
     } finally {
       setSaving(false);
     }
@@ -212,54 +222,54 @@ function DocumentDialog({ dialog, onClose, onSaved }: { dialog: Dialog; onClose:
       >
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-            {document ? "Editar documento" : "Nuevo documento"} · {vehicle.name}
+            {document ? t("doc.dialogEdit") : t("doc.dialogNew")} · {vehicle.name}
           </h2>
-          <button type="button" onClick={onClose} aria-label="Cerrar" className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10">
+          <button type="button" onClick={onClose} aria-label={t("common.close")} className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10">
             <X className="h-4 w-4" />
           </button>
         </div>
         <div className="space-y-3">
           <div>
-            <label className={LABEL} htmlFor="doc-kind">Documento</label>
+            <label className={LABEL} htmlFor="doc-kind">{t("doc.document")}</label>
             <select id="doc-kind" value={kind} onChange={(e) => setKind(e.target.value as DocumentKind)} className={INPUT}>
               {KIND_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
+                <option key={option} value={option}>
+                  {t(`doc.kind.${option}` as MessageKey)}
                 </option>
               ))}
             </select>
           </div>
           {kind === "otro" && (
             <div>
-              <label className={LABEL} htmlFor="doc-label">Nombre del documento</label>
-              <input id="doc-label" required maxLength={100} value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Ej. Licencia ZTL" className={INPUT} />
+              <label className={LABEL} htmlFor="doc-label">{t("doc.nameLabel")}</label>
+              <input id="doc-label" required maxLength={100} value={label} onChange={(e) => setLabel(e.target.value)} placeholder={t("doc.namePlaceholder")} className={INPUT} />
             </div>
           )}
           <div className="flex gap-3">
             <div className="flex-1">
-              <label className={LABEL} htmlFor="doc-date">Vence el</label>
+              <label className={LABEL} htmlFor="doc-date">{t("doc.expiresLabel")}</label>
               <input id="doc-date" type="date" required value={expiresOn} onChange={(e) => setExpiresOn(e.target.value)} className={INPUT} />
             </div>
             <div className="w-32">
-              <label className={LABEL} htmlFor="doc-remind">Avisar antes</label>
+              <label className={LABEL} htmlFor="doc-remind">{t("doc.remindLabel")}</label>
               <div className="flex items-center gap-1.5">
                 <input id="doc-remind" type="number" min={1} max={365} value={remindDays} onChange={(e) => setRemindDays(e.target.value)} className={INPUT} />
-                <span className="text-xs text-slate-500 dark:text-slate-400">días</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400">{t("doc.days")}</span>
               </div>
             </div>
           </div>
           <div>
-            <label className={LABEL} htmlFor="doc-notes">Notas (opcional)</label>
-            <input id="doc-notes" maxLength={1000} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Póliza, aseguradora…" className={INPUT} />
+            <label className={LABEL} htmlFor="doc-notes">{t("doc.notes")}</label>
+            <input id="doc-notes" maxLength={1000} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={t("doc.notesPlaceholder")} className={INPUT} />
           </div>
         </div>
         {error && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{error}</p>}
         <div className="mt-5 flex justify-end gap-2">
           <button type="button" onClick={onClose} className="rounded-xl px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-white/10">
-            Cancelar
+            {t("common.cancel")}
           </button>
           <button type="submit" disabled={saving} className="brand-button rounded-xl px-4 py-2 text-sm font-medium disabled:opacity-50">
-            Guardar
+            {t("common.save")}
           </button>
         </div>
       </form>

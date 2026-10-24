@@ -1,7 +1,9 @@
-import { APIProvider, Map, Marker, Polygon, Polyline, useMap } from "@vis.gl/react-google-maps";
+import { Map, Marker, Polygon, Polyline, useMap } from "@vis.gl/react-google-maps";
+import { MapsProvider } from "./MapsProvider";
 import { useEffect } from "react";
 import { useFleet } from "../context/FleetContext";
 import { useTheme } from "../context/ThemeContext";
+import { useT } from "../i18n";
 import { useSmoothedPosition } from "../hooks/useSmoothedPosition";
 import { geofenceZoneColor } from "../lib/geo";
 import { DARK_MAP_STYLE } from "../lib/mapStyle";
@@ -85,6 +87,7 @@ export function MapView({
   onSelectVehicle,
   historyPath,
 }: MapViewProps) {
+  const t = useT();
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
   const { theme } = useTheme();
   const { geofences } = useFleet();
@@ -99,14 +102,14 @@ export function MapView({
   if (!apiKey) {
     return (
       <div className="flex h-full flex-1 items-center justify-center bg-slate-100 text-sm text-slate-500 dark:bg-[#0d1220] dark:text-slate-400">
-        Falta configurar VITE_GOOGLE_MAPS_API_KEY para mostrar el mapa.
+        {t("map.missingKey")}
       </div>
     );
   }
 
   return (
     <div className="relative h-full flex-1">
-      <APIProvider apiKey={apiKey}>
+      <MapsProvider apiKey={apiKey}>
         <Map
           className="h-full"
           defaultCenter={center ? { lat: center.lat, lng: center.lng } : DEFAULT_CENTER}
@@ -166,27 +169,28 @@ export function MapView({
         <div className="absolute bottom-6 left-2 z-0">
           <MapLegend zonePolygons={zonePolygons} />
         </div>
-      </APIProvider>
+      </MapsProvider>
     </div>
   );
 }
 
 function MapLegend({ zonePolygons }: { zonePolygons: Geofence[] }) {
+  const t = useT();
   const zoneNames = [...new Set(zonePolygons.map((g) => g.name))];
 
   return (
     <div className="flex flex-col gap-1.5 rounded-2xl border border-white bg-white px-2.5 py-2 text-[11px] text-slate-600 shadow-lg shadow-slate-300/40 sm:px-3 sm:text-xs dark:border-white/10 dark:bg-[#111729] dark:text-slate-300 dark:shadow-black/40">
       <div className="flex items-center gap-2">
         <span className="h-2.5 w-2.5 rounded-full bg-red-600" />
-        Apagado
+        {t("map.legendOff")}
       </div>
       <div className="flex items-center gap-2">
         <span className="h-2.5 w-2.5 rounded-full bg-orange-500" />
-        Encendido, detenido
+        {t("map.legendIdle")}
       </div>
       <div className="flex items-center gap-2">
         <span className="text-green-600">▲</span>
-        En movimiento
+        {t("map.legendMoving")}
       </div>
       {zoneNames.length > 0 && (
         <div className="mt-1 flex flex-col gap-1.5 border-t border-slate-100 pt-1.5 dark:border-white/10">

@@ -1,5 +1,6 @@
 import { useAuth } from "../context/AuthContext";
 import { X } from "lucide-react";
+import { useT, type Translate } from "../i18n";
 import { describeEvent } from "../lib/deviceEvents";
 import { AVL_ID, type DeviceEvent, type Position, type Vehicle } from "../lib/types";
 import { SpeedChart } from "./SpeedChart";
@@ -14,18 +15,18 @@ interface VehicleDetailPanelProps {
   onClose: () => void;
 }
 
-const HISTORY_RANGES: Array<{ label: string; hours: number | null }> = [
-  { label: "Sin recorrido", hours: null },
+const HISTORY_RANGES = [
+  { label: "detail.noRoute", hours: null },
   { label: "24h", hours: 24 },
-  { label: "7 días", hours: 24 * 7 },
-];
+  { label: "detail.days7", hours: 24 * 7 },
+] as const;
 
-function formatRelativeTime(iso: string): string {
+function formatRelativeTime(iso: string, t: Translate): string {
   const seconds = Math.round((Date.now() - new Date(iso).getTime()) / 1000);
-  if (seconds < 60) return `hace ${seconds}s`;
-  if (seconds < 3600) return `hace ${Math.round(seconds / 60)}min`;
-  if (seconds < 86400) return `hace ${Math.round(seconds / 3600)}h`;
-  return `hace ${Math.round(seconds / 86400)}d`;
+  if (seconds < 60) return t("time.secondsAgo", { count: seconds });
+  if (seconds < 3600) return t("time.minutesAgo", { count: Math.round(seconds / 60) });
+  if (seconds < 86400) return t("time.hoursAgo", { count: Math.round(seconds / 3600) });
+  return t("time.daysAgo", { count: Math.round(seconds / 86400) });
 }
 
 function Row({ label, value }: { label: string; value: string }) {
@@ -46,6 +47,7 @@ export function VehicleDetailPanel({
   onHistoryRangeChange,
   onClose,
 }: VehicleDetailPanelProps) {
+  const t = useT();
   const { currentUser } = useAuth();
   // The route is the history behind Historial and Analíticas; an account with neither doesn't get it.
   const canSeeHistory =
@@ -62,44 +64,44 @@ export function VehicleDetailPanel({
         <button
           onClick={onClose}
           className="text-slate-400 hover:text-slate-700 dark:text-slate-500 dark:hover:text-white"
-          aria-label="Cerrar"
+          aria-label={t("detail.close")}
         >
           <X className="h-4 w-4" />
         </button>
       </div>
 
       {!position && (
-        <p className="text-sm text-slate-500 dark:text-slate-400">Todavía no hay posiciones registradas.</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400">{t("detail.noPositions")}</p>
       )}
 
       {position && (
         <div className="divide-y divide-slate-100 dark:divide-white/10">
-          <Row label="Velocidad" value={`${position.speed} km/h`} />
+          <Row label={t("detail.speed")} value={`${position.speed} km/h`} />
           <Row
-            label="Ignición"
+            label={t("detail.ignition")}
             value={
               position.ioData[AVL_ID.IGNITION] === 1 || position.ioData[AVL_ID.IGNITION] === "1"
-                ? "Encendida"
-                : "Apagada"
+                ? t("detail.ignitionOn")
+                : t("detail.ignitionOff")
             }
           />
           <Row
-            label="Voltaje externo"
+            label={t("detail.voltage")}
             value={
               position.ioData[AVL_ID.EXTERNAL_VOLTAGE] !== undefined
                 ? `${(Number(position.ioData[AVL_ID.EXTERNAL_VOLTAGE]) / 1000).toFixed(1)} V`
                 : "—"
             }
           />
-          <Row label="Satélites" value={position.satellites !== null ? String(position.satellites) : "—"} />
-          <Row label="Última posición" value={formatRelativeTime(position.ts)} />
+          <Row label={t("detail.satellites")} value={position.satellites !== null ? String(position.satellites) : "—"} />
+          <Row label={t("detail.lastPosition")} value={formatRelativeTime(position.ts, t)} />
         </div>
       )}
 
       {canSeeHistory && (
       <div className="mt-4">
         <p className="mb-2 text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-500">
-          Recorrido
+          {t("detail.route")}
         </p>
         <div className="flex gap-1.5">
           {HISTORY_RANGES.map((range) => (
@@ -112,7 +114,7 @@ export function VehicleDetailPanel({
                   : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10"
               }`}
             >
-              {range.label}
+              {range.label.startsWith("detail.") ? t(range.label as "detail.noRoute") : range.label}
             </button>
           ))}
         </div>
@@ -120,7 +122,7 @@ export function VehicleDetailPanel({
         {historyRangeHours !== null && (
           <div className="mt-3">
             <p className="mb-1 text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-500">
-              Velocidad
+              {t("detail.speed")}
             </p>
             <SpeedChart positions={history} />
           </div>
@@ -130,16 +132,16 @@ export function VehicleDetailPanel({
 
       <div className="mt-4">
         <p className="mb-2 text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-500">
-          Actividad reciente
+          {t("detail.recentActivity")}
         </p>
         {events.length === 0 && (
-          <p className="text-sm text-slate-400 dark:text-slate-500">Sin eventos registrados.</p>
+          <p className="text-sm text-slate-400 dark:text-slate-500">{t("detail.noEvents")}</p>
         )}
         <ul className="space-y-2">
           {events.slice(0, 8).map((event) => (
             <li key={event.id} className="flex items-center justify-between text-sm">
-              <span className="text-slate-700 dark:text-slate-300">{describeEvent(event).label}</span>
-              <span className="text-xs text-slate-400 dark:text-slate-500">{formatRelativeTime(event.ts)}</span>
+              <span className="text-slate-700 dark:text-slate-300">{describeEvent(event, t).label}</span>
+              <span className="text-xs text-slate-400 dark:text-slate-500">{formatRelativeTime(event.ts, t)}</span>
             </li>
           ))}
         </ul>

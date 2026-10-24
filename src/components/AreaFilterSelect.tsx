@@ -1,11 +1,13 @@
 import { useAuth } from "../context/AuthContext";
 import { useFleet } from "../context/FleetContext";
+import { useT } from "../i18n";
 import type { AreaFilter } from "../lib/areaFilter";
 
 /** Compact dropdown variant of the área filter, for table/toolbar pages where a pill
  * row would be too heavy. Shares the same selection as AreaFilterPills via FleetContext.
  * Renders nothing for a hard-restricted user (nothing to pick). */
 export function AreaFilterSelect() {
+  const t = useT();
   const { currentUser } = useAuth();
   const { selectedArea, setSelectedArea, fleetGroups } = useFleet();
 
@@ -17,7 +19,7 @@ export function AreaFilterSelect() {
       onChange={(e) => setSelectedArea((e.target.value || null) as AreaFilter)}
       className="field-input rounded-xl border border-slate-300 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
     >
-      <option value="">Todas las flotas</option>
+      <option value="">{t("fleet.all")}</option>
       {fleetGroups.map((area) => (
         <option key={area} value={area}>
           {area}

@@ -2,9 +2,11 @@ import { useState, type FormEvent } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { AuthLayout } from "../components/layout/AuthLayout";
 import { useAuth } from "../context/AuthContext";
+import { useT } from "../i18n";
 import { trackGlow } from "../lib/glow";
 
 export function LoginPage() {
+  const t = useT();
   const { isAuthenticated, login, loading, error } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
@@ -24,11 +26,11 @@ export function LoginPage() {
         onMouseMove={trackGlow}
         className="glow w-full max-w-sm rounded-3xl bg-white p-6 shadow-xl shadow-slate-200/60 sm:p-8 dark:border dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40"
       >
-        <h1 className="mb-1 text-xl font-semibold text-slate-900 dark:text-white">Iniciar sesión</h1>
-        <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">Ingresá con tu cuenta de empresa</p>
+        <h1 className="mb-1 text-xl font-semibold text-slate-900 dark:text-white">{t("login.title")}</h1>
+        <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">{t("login.subtitle")}</p>
 
         <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300" htmlFor="email">
-          Email
+          {t("login.email")}
         </label>
         <input
           id="email"
@@ -40,7 +42,7 @@ export function LoginPage() {
         />
 
         <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300" htmlFor="password">
-          Contraseña
+          {t("login.password")}
         </label>
         <input
           id="password"
@@ -58,13 +60,13 @@ export function LoginPage() {
           disabled={loading}
           className="brand-button w-full rounded-xl px-4 py-2 text-sm font-medium disabled:opacity-50"
         >
-          {loading ? "Ingresando..." : "Ingresar"}
+          {loading ? t("login.submitting") : t("login.submit")}
         </button>
 
         <p className="mt-4 text-center text-sm text-slate-500 dark:text-slate-400">
-          ¿Sos una empresa nueva?{" "}
+          {t("login.newCompany")}{" "}
           <Link to="/register" className="font-medium text-blue-600 hover:underline dark:text-blue-400">
-            Creá tu cuenta
+            {t("login.createAccount")}
           </Link>
         </p>
       </form>

@@ -1,4 +1,5 @@
-import { APIProvider, Map, Marker } from "@vis.gl/react-google-maps";
+import { Map, Marker } from "@vis.gl/react-google-maps";
+import { MapsProvider } from "../MapsProvider";
 import { useTheme } from "../../context/ThemeContext";
 import { useSmoothedPosition } from "../../hooks/useSmoothedPosition";
 import { DARK_MAP_STYLE, MUTED_MAP_STYLE } from "../../lib/mapStyle";
@@ -20,7 +21,7 @@ export function MiniMapCard({ position }: { position: Position | null }) {
 
   return (
     <div className="h-full min-h-[220px] overflow-hidden rounded-xl">
-      <APIProvider apiKey={apiKey}>
+      <MapsProvider apiKey={apiKey}>
         <Map
           className="h-full"
           center={{ lat: smoothed.lat, lng: smoothed.lng }}
@@ -34,7 +35,7 @@ export function MiniMapCard({ position }: { position: Position | null }) {
             icon={getVehicleIcon({ ...position, angle: smoothed.angle })}
           />
         </Map>
-      </APIProvider>
+      </MapsProvider>
     </div>
   );
 }

@@ -1,3 +1,4 @@
+import type { Translate } from "../i18n";
 import type { DeviceEvent } from "./types";
 
 export type EventTone = "info" | "alarm" | "clear";
@@ -13,27 +14,27 @@ function value(event: DeviceEvent, avlId: number): number {
 }
 
 /** How an alarm event reads: its label when raised and when it clears. */
-const ALARMS: Record<string, { avlId: number; raised: string; cleared: string }> = {
-  unplug_change: { avlId: 252, raised: "Dispositivo desconectado del vehículo", cleared: "Dispositivo reconectado" },
-  jamming_change: { avlId: 249, raised: "Interferencia de señal (jamming)", cleared: "Interferencia terminada" },
-  towing_change: { avlId: 246, raised: "Posible remolque", cleared: "Remolque terminado" },
-  crash_change: { avlId: 247, raised: "Posible choque o impacto", cleared: "Alarma de choque terminada" },
-};
+const ALARMS = {
+  unplug_change: { avlId: 252, raised: "event.unplugRaised", cleared: "event.unplugCleared" },
+  jamming_change: { avlId: 249, raised: "event.jammingRaised", cleared: "event.jammingCleared" },
+  towing_change: { avlId: 246, raised: "event.towingRaised", cleared: "event.towingCleared" },
+  crash_change: { avlId: 247, raised: "event.crashRaised", cleared: "event.crashCleared" },
+} as const;
 
-export function describeEvent(event: DeviceEvent): EventDescription {
+export function describeEvent(event: DeviceEvent, t: Translate): EventDescription {
   if (event.type === "ignition_change") {
     return value(event, 239) === 1
-      ? { label: "Ignición encendida", tone: "info" }
-      : { label: "Ignición apagada", tone: "info" };
+      ? { label: t("event.ignitionOn"), tone: "info" }
+      : { label: t("event.ignitionOff"), tone: "info" };
   }
   if (event.type === "movement_change") {
-    return { label: value(event, 240) === 1 ? "Empezó a moverse" : "Se detuvo", tone: "info" };
+    return { label: value(event, 240) === 1 ? t("event.started") : t("event.stopped"), tone: "info" };
   }
-  const alarm = ALARMS[event.type];
+  const alarm = ALARMS[event.type as keyof typeof ALARMS];
   if (alarm) {
     return value(event, alarm.avlId) !== 0
-      ? { label: alarm.raised, tone: "alarm" }
-      : { label: alarm.cleared, tone: "clear" };
+      ? { label: t(alarm.raised), tone: "alarm" }
+      : { label: t(alarm.cleared), tone: "clear" };
   }
   return { label: event.type, tone: "info" };
 }

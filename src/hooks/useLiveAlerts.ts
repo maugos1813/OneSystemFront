@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef } from "react";
 import { computeAlerts, isIgnitionOn, type Alert } from "../lib/alerts";
+import { useT } from "../i18n";
 import { isInsideGeofence } from "../lib/geo";
 import type { Device, Geofence, OrgSettings, Position, Vehicle } from "../lib/types";
 
@@ -27,6 +28,7 @@ export function useLiveAlerts(
   settings: OrgSettings | null,
   geofences: Geofence[],
 ): Alert[] {
+  const t = useT();
   const idlingStart = useRef<Map<string, number>>(new Map());
   const insideGeofence = useRef<Map<string, boolean>>(new Map());
   const geofenceEvents = useRef<GeofenceEvent[]>([]);
@@ -75,7 +77,7 @@ export function useLiveAlerts(
 
   return useMemo(() => {
     if (!settings) return [];
-    const alerts = computeAlerts(vehicles, devices, positions, settings);
+    const alerts = computeAlerts(vehicles, devices, positions, settings, t);
 
     if (settings.alerts.excessiveIdlingEnabled) {
       const thresholdMs = settings.alerts.excessiveIdlingMinutes * 60_000;
@@ -86,7 +88,7 @@ export function useLiveAlerts(
             vehicleId: vehicle.id,
             vehicleName: vehicle.name,
             type: "excessive_idling",
-            message: `${vehicle.name} lleva motor encendido y detenido más de ${settings.alerts.excessiveIdlingMinutes} min`,
+            message: t("alertMsg.idling", { name: vehicle.name, minutes: settings.alerts.excessiveIdlingMinutes }),
           });
         }
       }
@@ -99,13 +101,13 @@ export function useLiveAlerts(
         type: event.type,
         message:
           event.type === "geofence_enter"
-            ? `${event.vehicleName} entró a "${event.geofenceName}"`
-            : `${event.vehicleName} salió de "${event.geofenceName}"`,
+            ? t("alertMsg.geofenceEnter", { name: event.vehicleName, zone: event.geofenceName })
+            : t("alertMsg.geofenceExit", { name: event.vehicleName, zone: event.geofenceName }),
         since: new Date(event.ts).toISOString(),
       });
     }
 
     return alerts;
     // eslint-disable-next-line react-hooks/exhaustive-deps -- also reads idlingStart/geofenceEvents refs, kept current by the effect above
-  }, [vehicles, devices, positions, settings, geofences]);
+  }, [vehicles, devices, positions, settings, geofences, t]);
 }

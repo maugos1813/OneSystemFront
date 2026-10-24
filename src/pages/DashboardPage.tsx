@@ -6,6 +6,7 @@ import { VehicleList } from "../components/VehicleList";
 import { useFleet } from "../context/FleetContext";
 import { useDeviceEvents } from "../hooks/useDeviceEvents";
 import { usePositionHistory } from "../hooks/usePositionHistory";
+import { useT } from "../i18n";
 import { trackGlow } from "../lib/glow";
 
 /** Below `lg` there isn't room for the vehicle list next to the map, so it starts collapsed there. */
@@ -14,6 +15,7 @@ function prefersOpenByDefault(): boolean {
 }
 
 export function DashboardPage() {
+  const t = useT();
   const { filteredVehicles: vehicles, devices, positions, loading, error } = useFleet();
   const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
   const [historyRangeHours, setHistoryRangeHours] = useState<number | null>(null);
@@ -39,7 +41,7 @@ export function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="flex h-full items-center justify-center text-slate-500 dark:text-slate-400">Cargando...</div>
+      <div className="flex h-full items-center justify-center text-slate-500 dark:text-slate-400">{t("common.loading")}</div>
     );
   }
 
@@ -69,11 +71,11 @@ export function DashboardPage() {
         {!hasTrackedVehicle && (
           <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center p-4">
             <div className="float-card max-w-sm rounded-3xl bg-white p-6 text-center shadow-xl shadow-slate-300/40 dark:bg-[#111729] dark:shadow-black/40">
-              <p className="text-base font-semibold text-slate-900 dark:text-white">Todavía no hay dispositivos en tu flota</p>
+              <p className="text-base font-semibold text-slate-900 dark:text-white">{t("map.noDevicesTitle")}</p>
               <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
                 {vehicles.length === 0
-                  ? "Tus vehículos aparecerán en el mapa en cuanto tengas un dispositivo asignado."
-                  : "Tus vehículos ya están registrados. Aparecerán en el mapa cuando tu administrador les asigne un dispositivo."}
+                  ? t("map.noVehiclesYet")
+                  : t("map.noDevicesYet")}
               </p>
             </div>
           </div>
@@ -86,7 +88,7 @@ export function DashboardPage() {
             className="glow float-card absolute top-2 left-2 flex items-center gap-1.5 rounded-full bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-lg shadow-slate-300/40 dark:bg-[#111729] dark:text-slate-200 dark:shadow-black/40"
           >
             <List className="h-4 w-4" />
-            Vehículos ({vehicles.length})
+            {t("map.vehiclesCount", { count: vehicles.length })}
           </button>
         )}
 

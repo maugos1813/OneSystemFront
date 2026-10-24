@@ -4,6 +4,9 @@ import { RequireAuth } from "./components/layout/RequireAuth";
 import { AppUpdateProvider } from "./context/AppUpdateContext";
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
+import { LanguageProvider, rememberedLanguage } from "./i18n";
+import { useState, type ReactNode } from "react";
+import { useAuth } from "./context/AuthContext";
 import { AlertsPage } from "./pages/AlertsPage";
 import { AnalyticsPage } from "./pages/AnalyticsPage";
 import { ApiKeysPage } from "./pages/ApiKeysPage";
@@ -26,11 +29,19 @@ import { VehiclesPage } from "./pages/VehiclesPage";
 import { VencimientosPage } from "./pages/VencimientosPage";
 import { WorkspaceLayout } from "./pages/WorkspaceLayout";
 
+/** Everyone sees the app in their own language: the one an admin set on their account (the last one used here until it loads). */
+function AppLanguage({ children }: { children: ReactNode }) {
+  const { currentUser } = useAuth();
+  const [remembered] = useState(rememberedLanguage);
+  return <LanguageProvider language={currentUser?.language ?? remembered}>{children}</LanguageProvider>;
+}
+
 export default function App() {
   return (
     <ThemeProvider>
-      <AppUpdateProvider>
       <AuthProvider>
+      <AppLanguage>
+      <AppUpdateProvider>
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
@@ -74,8 +85,9 @@ export default function App() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </BrowserRouter>
-      </AuthProvider>
       </AppUpdateProvider>
+      </AppLanguage>
+      </AuthProvider>
     </ThemeProvider>
   );
 }

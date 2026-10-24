@@ -1,6 +1,7 @@
 import { App } from "@capacitor/app";
 import { Browser } from "@capacitor/browser";
 import { Capacitor } from "@capacitor/core";
+import { rememberedLanguage, translate } from "../i18n";
 
 /** What the server says is the newest Android app (public/android-latest.json, written by scripts/release-android.sh). */
 export interface AndroidRelease {
@@ -19,7 +20,7 @@ export interface InstalledApp {
 /** The newest release published on this site. */
 export async function fetchLatestRelease(): Promise<AndroidRelease> {
   const res = await fetch(`/android-latest.json?t=${Date.now()}`, { cache: "no-store" });
-  if (!res.ok) throw new Error("No se pudo consultar la última versión");
+  if (!res.ok) throw new Error(translate(rememberedLanguage(), "update.fetchFailed"));
   const data = (await res.json()) as { versionCode: number; versionName: string; url: string; notes?: string | null };
   return {
     versionCode: Number(data.versionCode),

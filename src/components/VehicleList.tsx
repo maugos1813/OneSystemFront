@@ -1,5 +1,6 @@
 import { PanelLeftClose, Search } from "lucide-react";
 import { useMemo, useState } from "react";
+import { useT } from "../i18n";
 import { trackGlow } from "../lib/glow";
 import type { Device, Vehicle } from "../lib/types";
 import { StatusBadge } from "./StatusBadge";
@@ -26,6 +27,7 @@ export function VehicleList({
   open,
   onClose,
 }: VehicleListProps) {
+  const t = useT();
   const deviceById = new Map(devices.map((d) => [d.id, d]));
   const [search, setSearch] = useState("");
 
@@ -50,11 +52,11 @@ export function VehicleList({
       >
         <div className="flex h-full w-80 flex-col lg:w-72">
           <div className="flex items-center justify-between border-b border-violet-100 px-4 py-3 dark:border-white/5">
-            <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Vehículos</h2>
+            <h2 className="text-sm font-semibold text-slate-900 dark:text-white">{t("vehicles.title")}</h2>
             <button
               onClick={onClose}
               className="rounded-lg p-1.5 text-slate-400 hover:bg-violet-50 hover:text-slate-700 dark:hover:bg-white/5 dark:hover:text-white"
-              aria-label="Ocultar lista"
+              aria-label={t("vehicles.hideList")}
             >
               <PanelLeftClose className="h-4 w-4" />
             </button>
@@ -67,7 +69,7 @@ export function VehicleList({
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Buscar por nombre o targa..."
+                placeholder={t("vehicles.search")}
                 className="field-input w-full rounded-lg border border-slate-200 py-1.5 pr-3 pl-8 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
               />
             </div>
@@ -76,7 +78,7 @@ export function VehicleList({
           <div className="styled-scrollbar flex-1 overflow-y-auto">
             {filteredVehicles.length === 0 && (
               <p className="p-4 text-sm text-slate-500 dark:text-slate-400">
-                {vehicles.length === 0 ? "No hay vehículos cargados todavía." : "Ningún vehículo coincide."}
+                {vehicles.length === 0 ? t("vehicles.noneYet") : t("vehicles.noMatch")}
               </p>
             )}
 

@@ -22,6 +22,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { Link, Navigate, Outlet, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { AlertsPanel } from "../components/AlertsPanel";
 import { useAuth } from "../context/AuthContext";
+import { useLanguage, useT } from "../i18n";
 import { FleetProvider } from "../context/FleetContext";
 import { useTheme } from "../context/ThemeContext";
 import { getProductSsoUrl, listProducts } from "../lib/api";
@@ -48,10 +49,6 @@ const PRODUCT_ICONS: Record<string, { icon: LucideIcon; color: string }> = {
   driver: { icon: Truck, color: "text-slate-700 dark:text-slate-300" },
   farmacy: { icon: Cross, color: "text-emerald-600 dark:text-emerald-400" },
   nakamacar: { icon: Car, color: "text-slate-700 dark:text-slate-300" },
-};
-
-const SUBTITLES: Record<string, string> = {
-  gps: "Seguimiento y control de rutas",
 };
 
 const PANEL =
@@ -88,6 +85,7 @@ export function WorkspaceLayout() {
 }
 
 function SignedInWorkspace() {
+  const t = useT();
   const [products, setProducts] = useState<Product[] | null>(null);
 
   useEffect(() => {
@@ -99,7 +97,7 @@ function SignedInWorkspace() {
   if (!products) {
     return (
       <div className="flex h-screen items-center justify-center bg-[#f5f6fb] text-sm text-slate-400 dark:bg-[#0a0e1a] dark:text-slate-500">
-        Cargando...
+        {t("common.loading")}
       </div>
     );
   }
@@ -110,6 +108,7 @@ function SignedInWorkspace() {
 }
 
 function Workspace({ products }: { products: Product[] }) {
+  const t = useT();
   const { currentUser } = useAuth();
   const { pathname } = useLocation();
   const navigate = useNavigate();
@@ -172,7 +171,7 @@ function Workspace({ products }: { products: Product[] }) {
           }`}
         >
           <p className="px-2 pt-1 pb-2 text-xs font-semibold tracking-wide whitespace-nowrap text-slate-500 uppercase dark:text-slate-400">
-            Aplicaciones
+            {t("workspace.apps")}
           </p>
           <nav className="flex gap-1 overflow-x-auto lg:flex-col lg:overflow-visible">
             {products.map((product) => (
@@ -185,7 +184,7 @@ function Workspace({ products }: { products: Product[] }) {
           <div className="my-3 hidden border-t border-slate-200 lg:block dark:border-white/10" />
           <SidebarItem active={showingConfig} onClick={() => select(CONFIG_KEY)}>
             <Settings className="h-5 w-5 shrink-0 text-slate-400" />
-            Configuración
+            {t("workspace.settings")}
           </SidebarItem>
         </aside>
 
@@ -204,7 +203,7 @@ function Workspace({ products }: { products: Product[] }) {
             <OneTrackHome product={selected} onExpand={expand} hasMap={!!currentUser?.modules.includes("mapa")} hasSections={!!firstAllowedPath(currentUser)} />
           )}
           {atHome && !showingConfig && !selected && (
-            <p className="text-sm text-slate-500 dark:text-slate-400">No tienes aplicaciones habilitadas todavía.</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">{t("workspace.noApps")}</p>
           )}
 
           {products
@@ -236,6 +235,7 @@ function Workspace({ products }: { products: Product[] }) {
 }
 
 function TopBar({ bell, onOpenMenu }: { bell: ReactNode; onOpenMenu: () => void }) {
+  const t = useT();
   const { currentUser, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [open, setOpen] = useState(false);
@@ -251,7 +251,7 @@ function TopBar({ bell, onOpenMenu }: { bell: ReactNode; onOpenMenu: () => void 
         <button
           type="button"
           onClick={onOpenMenu}
-          aria-label="Abrir el menú de aplicaciones"
+          aria-label={t("workspace.openMenu")}
           className="logo-nudge relative shrink-0 rounded-2xl lg:pointer-events-none lg:cursor-default"
         >
           <ClientLogo logo={logo} title={title} />
@@ -270,7 +270,7 @@ function TopBar({ bell, onOpenMenu }: { bell: ReactNode; onOpenMenu: () => void 
         {bell}
         <button
           onClick={toggleTheme}
-          aria-label={theme === "dark" ? "Activar tema claro" : "Activar tema oscuro"}
+          aria-label={theme === "dark" ? t("workspace.themeLight") : t("workspace.themeDark")}
           className="rounded-xl p-2 text-slate-500 transition hover:bg-violet-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/5 dark:hover:text-white"
         >
           {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
@@ -278,7 +278,7 @@ function TopBar({ bell, onOpenMenu }: { bell: ReactNode; onOpenMenu: () => void 
         {/* On a phone sign out lives in the apps menu and the profile in Configuración, so this menu is for larger screens. */}
         <button
           onClick={() => setOpen((o) => !o)}
-          aria-label="Mi cuenta"
+          aria-label={t("workspace.myAccount")}
           className="hidden rounded-xl p-2 lg:block text-slate-500 transition hover:bg-violet-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/5 dark:hover:text-white"
         >
           <CircleUser className="h-6 w-6" />
@@ -296,7 +296,7 @@ function TopBar({ bell, onOpenMenu }: { bell: ReactNode; onOpenMenu: () => void 
                 onClick={logout}
                 className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-slate-600 transition hover:bg-red-50 hover:text-red-600 dark:text-slate-300 dark:hover:bg-red-500/10 dark:hover:text-red-400"
               >
-                <LogOut className="h-4 w-4" /> Salir
+                <LogOut className="h-4 w-4" /> {t("workspace.signOutShort")}
               </button>
             </div>
           </>
@@ -337,6 +337,7 @@ function MobileMenu({
   showingConfig: boolean;
   onSelect: (key: string) => void;
 }) {
+  const t = useT();
   const { currentUser, logout } = useAuth();
   const logo = currentUser?.userLogo ?? currentUser?.orgLogo ?? null;
   const title = currentUser?.name.trim() || currentUser?.orgName || "...";
@@ -353,7 +354,7 @@ function MobileMenu({
       <div onClick={onClose} className={`absolute inset-0 bg-slate-900/40 transition-opacity duration-200 ${open ? "opacity-100" : "opacity-0"}`} />
       <aside
         role="dialog"
-        aria-label="Menú de aplicaciones"
+        aria-label={t("workspace.menuLabel")}
         className={`absolute inset-y-0 left-0 flex w-72 max-w-[85vw] flex-col bg-white p-3 shadow-2xl transition-transform duration-200 dark:bg-[#111729] ${
           open ? "translate-x-0" : "-translate-x-full"
         }`}
@@ -364,14 +365,14 @@ function MobileMenu({
           <button
             type="button"
             onClick={onClose}
-            aria-label="Cerrar el menú"
+            aria-label={t("workspace.closeMenu")}
             className="rounded-xl p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-white/10"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        <p className="px-2 pb-2 text-xs font-semibold tracking-wide text-slate-500 uppercase dark:text-slate-400">Aplicaciones</p>
+        <p className="px-2 pb-2 text-xs font-semibold tracking-wide text-slate-500 uppercase dark:text-slate-400">{t("workspace.apps")}</p>
         <nav className="flex flex-col gap-1">
           {products.map((product) => (
             <SidebarItem key={product.key} active={product.key === selectedKey && !showingConfig} onClick={() => onSelect(product.key)} full>
@@ -384,7 +385,7 @@ function MobileMenu({
         <div className="mt-auto flex flex-col gap-1 border-t border-slate-200 pt-3 dark:border-white/10">
           <SidebarItem active={showingConfig} onClick={() => onSelect(CONFIG_KEY)} full>
             <Settings className="h-5 w-5 shrink-0 text-slate-400" />
-            Configuración
+            {t("workspace.settings")}
           </SidebarItem>
           <button
             type="button"
@@ -392,7 +393,7 @@ function MobileMenu({
             className="flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left text-[15px] font-medium text-slate-600 transition hover:bg-red-50 hover:text-red-600 dark:text-slate-300 dark:hover:bg-red-500/10 dark:hover:text-red-400"
           >
             <LogOut className="h-5 w-5 shrink-0" />
-            Cerrar sesión
+            {t("workspace.signOut")}
           </button>
         </div>
       </aside>
@@ -444,13 +445,14 @@ function ProductIcon({ product }: { product: Product }) {
 }
 
 function ExpandButton({ expanded, onClick }: { expanded: boolean; onClick: () => void }) {
+  const t = useT();
   const Icon = expanded ? Minimize2 : Maximize2;
   return (
     <button
       onClick={onClick}
       className="flex items-center gap-1.5 rounded-xl border border-slate-300 px-3 py-1.5 text-sm font-medium whitespace-nowrap text-slate-700 transition hover:bg-slate-50 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5"
     >
-      <Icon className="h-4 w-4" /> {expanded ? "Contraer" : "Desplegar"}
+      <Icon className="h-4 w-4" /> {expanded ? t("workspace.collapse") : t("workspace.expand")}
     </button>
   );
 }
@@ -468,6 +470,7 @@ function PanelHeader({
   hideToggle?: boolean;
   action?: ReactNode;
 }) {
+  const t = useT();
   // Logo and name on the left, the buttons always on the right — also on a phone, where nothing wraps below.
   return (
     <div className={`flex items-start justify-between gap-3 ${expanded ? "px-4 py-2" : "mb-4"}`}>
@@ -477,7 +480,7 @@ function PanelHeader({
           <h1 className={`truncate font-semibold text-slate-900 dark:text-white ${expanded ? "text-lg" : "text-2xl"}`}>{product.name}</h1>
           {!expanded && (
             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-              {SUBTITLES[product.key] ?? "Se abre aquí con tu sesión de OneSystec"}
+              {product.key === "gps" ? t("workspace.subtitleGps") : t("workspace.subtitleExternal")}
             </p>
           )}
         </div>
@@ -501,6 +504,7 @@ function OneTrackHome({
   hasMap: boolean;
   hasSections: boolean;
 }) {
+  const t = useT();
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       {hasSections ? (
@@ -515,8 +519,8 @@ function OneTrackHome({
       ) : (
         <p className="rounded-2xl bg-slate-50 px-4 py-6 text-sm text-slate-500 dark:bg-white/5 dark:text-slate-400">
           {hasSections
-            ? "Pulsa Desplegar para ver las secciones que tienes habilitadas."
-            : "Tu cuenta todavía no tiene secciones de OneTrack habilitadas. Pídele a tu administrador que las active."}
+            ? t("workspace.expandHint")
+            : t("workspace.noSections")}
         </p>
       )}
     </div>
@@ -543,18 +547,23 @@ function ExternalPanel({
   onImmersive: (on: boolean) => void;
   onToggle: () => void;
 }) {
+  const t = useT();
+  const { language } = useLanguage();
   const [ssoSrc, setSsoSrc] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
   const native = Capacitor.isNativePlatform();
   const frame = useRef<HTMLIFrameElement>(null);
   const { theme } = useTheme();
 
-  // The app inside follows OneSystec's light/dark mode (it has no switch of its own here): sent when the app says it is
-  // listening, when its frame loads, and whenever the mode changes.
+  // The app inside follows OneSystec's light/dark mode and language (it has no switches of its own here): sent when
+  // the app says it is listening, when its frame loads, and whenever either changes.
   const sendTheme = useCallback(() => {
     if (!product.url) return;
-    frame.current?.contentWindow?.postMessage({ source: "onesystec", type: "theme", value: theme }, new URL(product.url).origin);
-  }, [product.url, theme]);
+    const target = frame.current?.contentWindow;
+    const origin = new URL(product.url).origin;
+    target?.postMessage({ source: "onesystec", type: "theme", value: theme }, origin);
+    target?.postMessage({ source: "onesystec", type: "language", value: language }, origin);
+  }, [product.url, theme, language]);
   useEffect(sendTheme, [sendTheme]);
 
   // Gamonal Driver tells us when one of its maps goes full screen, and when it is ready for the theme. Only its own frame and its own address are believed.
@@ -601,7 +610,7 @@ function ExternalPanel({
               onClick={() => void openInNewTab(product)}
               className="hidden items-center gap-1.5 rounded-xl border border-slate-300 px-3 py-1.5 text-sm text-slate-700 transition hover:bg-slate-50 sm:flex dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5"
             >
-              <ExternalLink className="h-4 w-4" /> Abrir en pestaña nueva
+              <ExternalLink className="h-4 w-4" /> {t("workspace.openNewTab")}
             </button>
           )
         }
@@ -614,7 +623,7 @@ function ExternalPanel({
       >
         {!loaded && (
           <div className="absolute inset-0 flex items-center justify-center text-sm text-slate-400 dark:text-slate-500">
-            Entrando a {product.name}...
+            {t("workspace.entering", { name: product.name })}
           </div>
         )}
         {src && (
@@ -632,7 +641,7 @@ function ExternalPanel({
         )}
       </div>
       {!expanded && !native && (
-        <p className="mt-2 hidden text-xs text-slate-400 sm:block dark:text-slate-500">¿No carga o pide iniciar sesión? Ábrelo en una pestaña nueva.</p>
+        <p className="mt-2 hidden text-xs text-slate-400 sm:block dark:text-slate-500">{t("workspace.notLoading")}</p>
       )}
     </div>
   );
@@ -640,18 +649,19 @@ function ExternalPanel({
 
 /** Who is signed in, kept short: these are companies, so just the name, the email and the fleet they see. */
 function ProfileCard() {
+  const t = useT();
   const { currentUser } = useAuth();
   if (!currentUser) return null;
   const rows: Array<[string, string | null]> = [
-    ["Nombre", currentUser.name.trim() || currentUser.orgName],
-    ["Correo", currentUser.email],
-    ["Flota", currentUser.allowedArea],
+    [t("profile.name"), currentUser.name.trim() || currentUser.orgName],
+    [t("profile.email"), currentUser.email],
+    [t("profile.fleet"), currentUser.allowedArea],
   ];
   return (
     <div className="flex items-start gap-3 rounded-2xl border border-slate-200 p-4 dark:border-white/10 sm:col-span-2">
       <CircleUser className="mt-0.5 h-5 w-5 shrink-0 text-blue-600 dark:text-blue-400" />
       <div className="min-w-0 flex-1">
-        <p className="text-[15px] font-medium text-slate-900 dark:text-white">Mi perfil</p>
+        <p className="text-[15px] font-medium text-slate-900 dark:text-white">{t("profile.title")}</p>
         <dl className="mt-1 space-y-0.5 text-sm">
           {rows.map(([label, value]) =>
             value ? (
@@ -668,22 +678,23 @@ function ProfileCard() {
 }
 
 function ConfigPanel({ role }: { role: string | undefined }) {
+  const t = useT();
   const manageTeam = role !== "viewer";
   const admin = role === "owner" || role === "admin";
   const items = useMemo(
     () =>
       [
-        manageTeam && { to: "/equipo", label: "Equipo", hint: "Usuarios, roles y qué aplicaciones ve cada uno", icon: Users },
-        admin && { to: "/ajustes", label: "Ajustes de OneTrack", hint: "Alertas, horarios y preferencias de la flota", icon: Settings },
-        admin && { to: "/api-keys", label: "API Keys", hint: "Claves para integrar OneTrack con otros sistemas", icon: Key },
+        manageTeam && { to: "/equipo", label: t("config.team"), hint: t("config.teamHint"), icon: Users },
+        admin && { to: "/ajustes", label: t("config.oneTrackSettings"), hint: t("config.oneTrackSettingsHint"), icon: Settings },
+        admin && { to: "/api-keys", label: t("config.apiKeys"), hint: t("config.apiKeysHint"), icon: Key },
       ].filter(Boolean) as Array<{ to: string; label: string; hint: string; icon: LucideIcon }>,
-    [manageTeam, admin],
+    [manageTeam, admin, t],
   );
 
   return (
     <div className="min-h-0 flex-1 overflow-auto">
-      <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">Configuración</h1>
-      <p className="mt-1 mb-4 text-sm text-slate-500 dark:text-slate-400">Administración de tu espacio de trabajo</p>
+      <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">{t("workspace.settings")}</h1>
+      <p className="mt-1 mb-4 text-sm text-slate-500 dark:text-slate-400">{t("config.subtitle")}</p>
       <div className="grid gap-3 sm:grid-cols-2">
         <ProfileCard />
         <AppUpdateCard />

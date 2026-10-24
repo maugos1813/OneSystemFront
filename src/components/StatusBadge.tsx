@@ -1,6 +1,8 @@
+import { useT } from "../i18n";
 import { isOffline } from "../lib/alerts";
 
 export function StatusBadge({ lastSeenAt }: { lastSeenAt: string | null }) {
+  const t = useT();
   const online = !isOffline(lastSeenAt);
   return (
     <span
@@ -11,7 +13,7 @@ export function StatusBadge({ lastSeenAt }: { lastSeenAt: string | null }) {
       }`}
     >
       <span className={`h-1.5 w-1.5 rounded-full ${online ? "bg-emerald-500" : "bg-slate-400"}`} />
-      {online ? "En línea" : "Desconectado"}
+      {online ? t("status.online") : t("status.offline")}
     </span>
   );
 }

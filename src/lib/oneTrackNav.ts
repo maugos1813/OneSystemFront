@@ -17,12 +17,13 @@ import {
   Wrench,
   type LucideIcon,
 } from "lucide-react";
+import type { MessageKey } from "../i18n";
 import type { ModuleKey } from "./modules";
 import type { CurrentUser } from "./types";
 
 export interface OneTrackNavItem {
   to: string;
-  label: string;
+  label: MessageKey;
   icon: LucideIcon;
   end: boolean;
   /** The section an admin can grant; owner/admin always have it. */
@@ -32,23 +33,23 @@ export interface OneTrackNavItem {
 }
 
 export const ONETRACK_NAV: OneTrackNavItem[] = [
-  { to: "/gps", label: "Mapa", icon: Map, end: true, module: "mapa" },
-  { to: "/cockpit", label: "Cockpit", icon: Gauge, end: false, module: "cockpit" },
-  { to: "/analiticas", label: "Analíticas", icon: BarChart3, end: false, module: "analiticas" },
-  { to: "/historial", label: "Historial", icon: History, end: false, module: "historial" },
-  { to: "/conduccion", label: "Conducción", icon: ShieldCheck, end: false, module: "conduccion" },
-  { to: "/alertas", label: "Alertas", icon: BellRing, end: false, module: "alertas" },
-  { to: "/geocercas", label: "Geocercas", icon: MapPin, end: false, module: "geocercas" },
-  { to: "/peajes", label: "Peajes", icon: Receipt, end: false, module: "peajes" },
-  { to: "/salud-dispositivos", label: "Salud del dispositivo", icon: HeartPulse, end: false, ownerAdminOnly: true },
-  { to: "/vehiculos", label: "Vehículos", icon: Truck, end: false, module: "vehiculos" },
-  { to: "/mantenimiento", label: "Mantenimiento", icon: Wrench, end: false, module: "mantenimiento" },
-  { to: "/vencimientos", label: "Vencimientos", icon: FileCheck, end: false, module: "vencimientos" },
-  { to: "/dispositivos", label: "Dispositivos", icon: Smartphone, end: false, ownerAdminOnly: true },
+  { to: "/gps", label: "nav.map", icon: Map, end: true, module: "mapa" },
+  { to: "/cockpit", label: "nav.cockpit", icon: Gauge, end: false, module: "cockpit" },
+  { to: "/analiticas", label: "nav.analytics", icon: BarChart3, end: false, module: "analiticas" },
+  { to: "/historial", label: "nav.history", icon: History, end: false, module: "historial" },
+  { to: "/conduccion", label: "nav.driving", icon: ShieldCheck, end: false, module: "conduccion" },
+  { to: "/alertas", label: "nav.alerts", icon: BellRing, end: false, module: "alertas" },
+  { to: "/geocercas", label: "nav.geofences", icon: MapPin, end: false, module: "geocercas" },
+  { to: "/peajes", label: "nav.tolls", icon: Receipt, end: false, module: "peajes" },
+  { to: "/salud-dispositivos", label: "nav.deviceHealth", icon: HeartPulse, end: false, ownerAdminOnly: true },
+  { to: "/vehiculos", label: "nav.vehicles", icon: Truck, end: false, module: "vehiculos" },
+  { to: "/mantenimiento", label: "nav.maintenance", icon: Wrench, end: false, module: "mantenimiento" },
+  { to: "/vencimientos", label: "nav.documents", icon: FileCheck, end: false, module: "vencimientos" },
+  { to: "/dispositivos", label: "nav.devices", icon: Smartphone, end: false, ownerAdminOnly: true },
   // API keys authenticate as full access and org settings affect everyone, so these stay with owner/admin.
-  { to: "/sims", label: "SIMs", icon: Cpu, end: false, ownerAdminOnly: true },
-  { to: "/api-keys", label: "API Keys", icon: Key, end: false, ownerAdminOnly: true },
-  { to: "/ajustes", label: "Ajustes", icon: Settings, end: false, ownerAdminOnly: true },
+  { to: "/sims", label: "nav.sims", icon: Cpu, end: false, ownerAdminOnly: true },
+  { to: "/api-keys", label: "nav.apiKeys", icon: Key, end: false, ownerAdminOnly: true },
+  { to: "/ajustes", label: "nav.settings", icon: Settings, end: false, ownerAdminOnly: true },
 ];
 
 /** Whether this user may open the section. Owner and admin may open all of them. */

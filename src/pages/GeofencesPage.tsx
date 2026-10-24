@@ -1,4 +1,5 @@
-import { APIProvider, Circle, Map, type MapMouseEvent, Polygon } from "@vis.gl/react-google-maps";
+import { Circle, Map, type MapMouseEvent, Polygon } from "@vis.gl/react-google-maps";
+import { MapsProvider } from "../components/MapsProvider";
 import { MapPin, Plus, Trash2, X } from "lucide-react";
 import { useState } from "react";
 import { Panel } from "../components/analytics/Panel";
@@ -165,7 +166,7 @@ export function GeofencesPage() {
           </p>
         )}
         <div className={`h-80 overflow-hidden rounded-2xl sm:h-96 ${placing ? "cursor-crosshair" : ""}`}>
-          <APIProvider apiKey={apiKey}>
+          <MapsProvider apiKey={apiKey}>
             <Map
               defaultCenter={center}
               center={draft && draft.type === "circle" ? { lat: draft.lat, lng: draft.lng } : undefined}
@@ -221,7 +222,7 @@ export function GeofencesPage() {
                 />
               )}
             </Map>
-          </APIProvider>
+          </MapsProvider>
         </div>
       </Panel>
 

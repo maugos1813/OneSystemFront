@@ -1,3 +1,4 @@
+import { rememberedLanguage, translate, type MessageKey } from "../i18n";
 import { clearToken, getToken } from "./auth";
 import { MODULE_KEYS, MODULE_TEMPLATES, type ModuleKey } from "./modules";
 import type {
@@ -40,6 +41,20 @@ export function realtimePositionsUrl(token: string): string {
   return url.toString();
 }
 
+/** The server words some messages in English or Spanish: the ones a person can run into are shown in their own language. */
+const SERVER_MESSAGES: Record<string, MessageKey> = {
+  "Esta sección no está habilitada para tu cuenta": "api.sectionDisabled",
+  Forbidden: "api.forbidden",
+  "Vehicle not found": "api.vehicleNotFound",
+  "Invalid credentials": "api.invalidCredentials",
+  "Este vehículo tiene un dispositivo asignado. Confirma que quieres eliminarlo.": "api.deviceAssigned",
+};
+
+function localizeServerMessage(message: string): string {
+  const key = SERVER_MESSAGES[message];
+  return key ? translate(rememberedLanguage(), key) : message;
+}
+
 export class ApiError extends Error {
   status: number;
 
@@ -63,12 +78,12 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 
   if (res.status === 401) {
     clearToken();
-    throw new ApiError(401, "Sesión expirada");
+    throw new ApiError(401, translate(rememberedLanguage(), "api.sessionExpired"));
   }
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    throw new ApiError(res.status, body.error?.toString() ?? `Error ${res.status}`);
+    throw new ApiError(res.status, body.error ? localizeServerMessage(body.error.toString()) : translate(rememberedLanguage(), "api.error", { status: res.status }));
   }
 
   if (res.status === 204) return undefined as T;
@@ -100,7 +115,7 @@ function fallbackModules(role: CurrentUser["role"]): ModuleKey[] {
 
 export async function getCurrentUser(): Promise<CurrentUser> {
   const me = await request<CurrentUser>("/me");
-  return { ...me, modules: me.modules ?? fallbackModules(me.role) };
+  return { ...me, modules: me.modules ?? fallbackModules(me.role), language: me.language ?? "es" };
 }
 
 // --- Devices ---
@@ -400,6 +415,8 @@ export interface CreateTeamMemberInput {
   logo?: string | null;
   /** OneTrack sections to give (see modules.ts); omitted means the standard package. */
   modules?: string[];
+  /** The member's language; Spanish when omitted. */
+  language?: "es" | "it";
   productKeys?: string[];
 }
 
@@ -409,6 +426,10 @@ export function createTeamMember(input: CreateTeamMemberInput): Promise<TeamMemb
 
 export function updateTeamMemberModules(id: string, modules: string[]): Promise<{ id: string; modules: string[] }> {
   return request(`/users/${id}/modules`, { method: "PATCH", body: JSON.stringify({ modules }) });
+}
+
+export function updateTeamMemberLanguage(id: string, language: "es" | "it"): Promise<{ id: string; language: "es" | "it" }> {
+  return request(`/users/${id}/language`, { method: "PATCH", body: JSON.stringify({ language }) });
 }
 
 export function updateTeamMemberLogo(id: string, logo: string | null): Promise<{ id: string; logo: string | null }> {

@@ -1,3 +1,4 @@
+import type { Translate } from "../i18n";
 import { AVL_ID, type Device, type OrgSettings, type Position, type Vehicle, type WeekdayKey } from "./types";
 
 export const LOW_VOLTAGE_THRESHOLD_MV = 11500; // ~11.5V: weak car battery
@@ -65,6 +66,7 @@ export function computeAlerts(
   devices: Device[],
   positions: Record<string, Position>,
   settings: OrgSettings,
+  t: Translate,
 ): Alert[] {
   const deviceById = new Map(devices.map((d) => [d.id, d]));
   const alerts: Alert[] = [];
@@ -83,7 +85,7 @@ export function computeAlerts(
         vehicleId: vehicle.id,
         vehicleName: vehicle.name,
         type: "offline",
-        message: `${vehicle.name} está desconectado`,
+        message: t("alertMsg.offline", { name: vehicle.name }),
       });
     }
 
@@ -92,7 +94,7 @@ export function computeAlerts(
         vehicleId: vehicle.id,
         vehicleName: vehicle.name,
         type: "low_voltage",
-        message: `${vehicle.name} tiene voltaje de batería bajo`,
+        message: t("alertMsg.lowVoltage", { name: vehicle.name }),
       });
     }
 
@@ -101,7 +103,7 @@ export function computeAlerts(
         vehicleId: vehicle.id,
         vehicleName: vehicle.name,
         type: "speeding",
-        message: `${vehicle.name} supera el límite de velocidad (${Math.round(position!.speed)} km/h)`,
+        message: t("alertMsg.speeding", { name: vehicle.name, speed: Math.round(position!.speed) }),
       });
     }
 
@@ -112,7 +114,7 @@ export function computeAlerts(
           vehicleId: vehicle.id,
           vehicleName: vehicle.name,
           type: "after_hours",
-          message: `${vehicle.name} está en uso fuera del horario laboral`,
+          message: t("alertMsg.afterHours", { name: vehicle.name }),
         });
       }
     }

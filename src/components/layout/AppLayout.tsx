@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import { Navigate, NavLink, Outlet, useLocation, useOutletContext } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
+import { useT } from "../../i18n";
 import { trackGlow } from "../../lib/glow";
 import { allowedNav, canOpen, navItemForPath } from "../../lib/oneTrackNav";
 import { AlertsPanel } from "../AlertsPanel";
@@ -40,6 +41,7 @@ function useOneTrackTabIdentity() {
 }
 
 export function AppLayout() {
+  const t = useT();
   const { collapse } = useOutletContext<{ collapse: () => void }>();
   const { currentUser } = useAuth();
   const { theme, toggleTheme } = useTheme();
@@ -85,7 +87,7 @@ export function AppLayout() {
             <button
               onClick={() => setNavOpen(false)}
               className="shrink-0 rounded-lg p-1.5 text-slate-400 hover:bg-violet-50 hover:text-slate-700 dark:hover:bg-white/5 dark:hover:text-white"
-              aria-label="Ocultar menú"
+              aria-label={t("nav.hideMenu")}
             >
               <PanelLeftClose className="h-5 w-5" />
             </button>
@@ -108,7 +110,7 @@ export function AppLayout() {
                 }
               >
                 <Icon className="h-4 w-4" />
-                {label}
+                {t(label)}
               </NavLink>
             ))}
           </nav>
@@ -123,7 +125,7 @@ export function AppLayout() {
               <button
                 type="button"
                 onClick={() => setNavOpen(true)}
-                aria-label="Mostrar menú"
+                aria-label={t("nav.showMenu")}
                 className="logo-nudge relative shrink-0 rounded-xl"
               >
                 <img src="/logos/onetrack-icon.png" alt="OneTrack" className="h-8 w-8 rounded-xl object-cover" />
@@ -145,7 +147,7 @@ export function AppLayout() {
           <div className="flex shrink-0 items-center gap-2 sm:gap-4">
             <button
               onClick={toggleTheme}
-              aria-label={theme === "dark" ? "Activar tema claro" : "Activar tema oscuro"}
+              aria-label={theme === "dark" ? t("workspace.themeLight") : t("workspace.themeDark")}
               className="flex items-center rounded-xl p-2 text-slate-500 transition hover:bg-violet-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/5 dark:hover:text-white"
             >
               {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
@@ -156,7 +158,7 @@ export function AppLayout() {
               className="flex items-center gap-1.5 rounded-xl border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5"
             >
               <Minimize2 className="h-4 w-4" />
-              <span className="hidden sm:inline">Contraer</span>
+              <span className="hidden sm:inline">{t("workspace.collapse")}</span>
             </button>
           </div>
         </header>

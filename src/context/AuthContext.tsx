@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useState, type React
 import { getCurrentUser, login as apiLogin, register as apiRegister } from "../lib/api";
 import type { RegisterInput } from "../lib/api";
 import { clearToken, getToken, setToken } from "../lib/auth";
+import { rememberedLanguage, translate } from "../i18n";
 import { disablePush, enablePush } from "../lib/push";
 import type { CurrentUser } from "../lib/types";
 
@@ -53,7 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsAuthenticated(true);
       return true;
     } catch {
-      setError("Email o contraseña incorrectos");
+      setError(translate(rememberedLanguage(), "auth.badCredentials"));
       return false;
     } finally {
       setLoading(false);
@@ -69,7 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsAuthenticated(true);
       return true;
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No se pudo crear la cuenta");
+      setError(err instanceof Error ? err.message : translate(rememberedLanguage(), "auth.registerFailed"));
       return false;
     } finally {
       setLoading(false);

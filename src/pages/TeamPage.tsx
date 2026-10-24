@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Panel } from "../components/analytics/Panel";
 import { LogoUpload } from "../components/LogoUpload";
+import { LanguageSelect } from "../components/LanguageSelect";
 import { ModulesPicker } from "../components/ModulesPicker";
 import { useAuth } from "../context/AuthContext";
 import {
@@ -14,6 +15,7 @@ import {
   updateTeamMemberArea,
   updateTeamMemberEmail,
   updateTeamMemberLogo,
+  updateTeamMemberLanguage,
   updateTeamMemberModules,
   updateTeamMemberName,
   updateTeamMemberPassword,
@@ -137,6 +139,7 @@ function MemberRow({
   const [savedModules, setSavedModules] = useState(false);
   const [savingLogo, setSavingLogo] = useState(false);
   const [logoError, setLogoError] = useState<string | null>(null);
+  const [savingLanguage, setSavingLanguage] = useState(false);
 
   // `member` is a fresh object after each refetch (e.g. right after a save), but this
   // row never unmounts (same `key`) — resync local edits with the server's version.
@@ -247,6 +250,16 @@ function MemberRow({
       setPasswordError(err instanceof ApiError ? err.message : "No se pudo actualizar la contraseña");
     } finally {
       setSavingPassword(false);
+    }
+  }
+
+  async function handleLanguage(language: "es" | "it") {
+    setSavingLanguage(true);
+    try {
+      await updateTeamMemberLanguage(member.id, language);
+      onChanged();
+    } finally {
+      setSavingLanguage(false);
     }
   }
 
@@ -595,6 +608,15 @@ function MemberRow({
         </div>
       )}
 
+      {canManageOtherOnly && (
+        <div className="mt-3 flex items-center justify-between gap-3 border-t border-slate-200 pt-3 dark:border-white/10">
+          <p className="text-xs font-medium tracking-wide text-slate-400 uppercase dark:text-slate-500">
+            Idioma <span className="font-normal normal-case">(de la app, los avisos y los correos)</span>
+          </p>
+          <LanguageSelect value={member.language ?? "es"} onChange={(l) => void handleLanguage(l)} disabled={savingLanguage} />
+        </div>
+      )}
+
       {showProducts && (
         <div className="mt-3 border-t border-slate-200 pt-3 dark:border-white/10">
           <p className="mb-2 text-xs font-medium tracking-wide text-slate-400 uppercase dark:text-slate-500">
@@ -649,6 +671,7 @@ export function TeamPage() {
   const [area, setArea] = useState("");
   const [logo, setLogo] = useState<string | null>(null);
   const [newModules, setNewModules] = useState<ModuleKey[]>([...MODULE_TEMPLATES.estandar]);
+  const [newLanguage, setNewLanguage] = useState<"es" | "it">("es");
   const [newMemberProducts, setNewMemberProducts] = useState<string[]>([]);
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
@@ -685,6 +708,7 @@ export function TeamPage() {
         role: effectiveRole,
         allowedArea: area || null,
         ...(logo ? { logo } : {}),
+        language: newLanguage,
         ...(showProductsSection ? { modules: newModules } : {}),
         productKeys: showProductsSection ? newMemberProducts : undefined,
       });
@@ -694,6 +718,7 @@ export function TeamPage() {
       setRole("viewer");
       setLogo(null);
       setNewModules([...MODULE_TEMPLATES.estandar]);
+      setNewLanguage("es");
       if (!areaLocked) setArea("");
       await refetch();
     } catch (err) {
@@ -796,6 +821,13 @@ export function TeamPage() {
                   Logo del cliente <span className="font-normal normal-case">(opcional, reemplaza al de la empresa en su pantalla)</span>
                 </p>
                 <LogoUpload value={logo} onChange={setLogo} name={name} />
+              </div>
+
+              <div>
+                <p className="mb-2 text-xs font-medium tracking-wide text-slate-400 uppercase dark:text-slate-500">
+                  Idioma <span className="font-normal normal-case">(de la app, los avisos y los correos)</span>
+                </p>
+                <LanguageSelect value={newLanguage} onChange={setNewLanguage} />
               </div>
 
               {showProductsSection && (

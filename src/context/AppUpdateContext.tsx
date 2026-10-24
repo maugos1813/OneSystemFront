@@ -1,5 +1,6 @@
 import { Capacitor } from "@capacitor/core";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { rememberedLanguage, translate } from "../i18n";
 import {
   fetchLatestRelease,
   isUpdateAvailable,
@@ -49,7 +50,7 @@ export function AppUpdateProvider({ children }: { children: ReactNode }) {
       setLatest(release);
       setCheckedAt(new Date());
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No se pudo buscar la actualización");
+      setError(err instanceof Error ? err.message : translate(rememberedLanguage(), "update.checkFailed"));
     } finally {
       busy.current = false;
       setChecking(false);

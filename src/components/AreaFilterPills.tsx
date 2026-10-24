@@ -1,5 +1,6 @@
 import { useAuth } from "../context/AuthContext";
 import { useFleet } from "../context/FleetContext";
+import { useT } from "../i18n";
 import type { AreaFilter } from "../lib/areaFilter";
 
 const PILL_BASE = "rounded-full px-4 py-1.5 text-sm font-medium transition";
@@ -10,6 +11,7 @@ const PILL_INACTIVE =
  * page's pill-picker row. Self-contained: no props needed. Renders nothing for a
  * hard-restricted user (their own account only ever has one área to show). */
 export function AreaFilterPills() {
+  const t = useT();
   const { currentUser } = useAuth();
   const { selectedArea, setSelectedArea, fleetGroups } = useFleet();
 
@@ -22,7 +24,7 @@ export function AreaFilterPills() {
   return (
     <div className="flex flex-wrap gap-2">
       <button onClick={() => setSelectedArea(null)} className={pillClass(null)}>
-        Todas las flotas
+        {t("fleet.all")}
       </button>
       {fleetGroups.map((area) => (
         <button key={area} onClick={() => setSelectedArea(area)} className={pillClass(area)}>
