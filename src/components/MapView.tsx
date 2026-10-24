@@ -45,6 +45,9 @@ interface MapViewProps {
   historyPath?: Position[];
   /** Gamonal vehicles shown to a client by Gamonal Driver: same colours, fainter, no detail. */
   sharedVehicles?: SharedVehicle[];
+  /** What the filter pills choose: the client's own vehicles and/or the shared ones. */
+  showOwn?: boolean;
+  showShared?: boolean;
 }
 
 const DEFAULT_CENTER = { lat: 41.9028, lng: 12.4964 }; // Roma, como fallback sin posiciones aún
@@ -109,6 +112,8 @@ export function MapView({
   onSelectVehicle,
   historyPath,
   sharedVehicles = [],
+  showOwn = true,
+  showShared = true,
 }: MapViewProps) {
   const t = useT();
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
@@ -122,7 +127,7 @@ export function MapView({
 
   // A vehicle the client also has of their own is drawn once, as theirs.
   const ownPlates = new Set(vehicles.map((v) => normalizePlate(v.plate)));
-  const shared = sharedVehicles.filter((v) => !ownPlates.has(v.plate));
+  const shared = showShared ? sharedVehicles.filter((v) => !(showOwn && ownPlates.has(v.plate))) : [];
 
   const center = (selectedVehicleId && positions[selectedVehicleId]) ?? knownPositions[0] ?? shared[0] ?? null;
 
@@ -175,7 +180,7 @@ export function MapView({
             />
           )}
 
-          {vehicles.map((vehicle) => {
+          {(showOwn ? vehicles : []).map((vehicle) => {
             const position = positions[vehicle.id];
             if (!position) return null;
 

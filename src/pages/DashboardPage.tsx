@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { MapView } from "../components/MapView";
 import { VehicleDetailPanel } from "../components/VehicleDetailPanel";
 import { VehicleList } from "../components/VehicleList";
+import { useAuth } from "../context/AuthContext";
 import { useFleet } from "../context/FleetContext";
 import { useDeviceEvents } from "../hooks/useDeviceEvents";
 import { usePositionHistory } from "../hooks/usePositionHistory";
@@ -14,8 +15,13 @@ function prefersOpenByDefault(): boolean {
   return typeof window !== "undefined" && window.matchMedia("(min-width: 1024px)").matches;
 }
 
+/** Which vehicles the map draws: everything, only the Gamonal ones shared through the Driver, or only the client's own flota. */
+type MapSource = "all" | "gamonal" | "own";
+
 export function DashboardPage() {
   const t = useT();
+  const { currentUser } = useAuth();
+  const [source, setSource] = useState<MapSource>("all");
   const { filteredVehicles: vehicles, devices, positions, loading, error, sharedVehicles } = useFleet();
   const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
   const [historyRangeHours, setHistoryRangeHours] = useState<number | null>(null);
@@ -67,6 +73,8 @@ export function DashboardPage() {
           onSelectVehicle={selectVehicle}
           historyPath={history}
           sharedVehicles={sharedVehicles}
+          showOwn={source !== "gamonal"}
+          showShared={source !== "own"}
         />
 
         {!hasTrackedVehicle && sharedVehicles.length === 0 && (
@@ -82,16 +90,44 @@ export function DashboardPage() {
           </div>
         )}
 
-        {!listOpen && (
-          <button
-            onClick={() => setListOpen(true)}
-            onMouseMove={trackGlow}
-            className="glow float-card absolute top-2 left-2 flex items-center gap-1.5 rounded-full bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-lg shadow-slate-300/40 dark:bg-[#111729] dark:text-slate-200 dark:shadow-black/40"
-          >
-            <List className="h-4 w-4" />
-            {t("map.vehiclesCount", { count: vehicles.length })}
-          </button>
-        )}
+        {/* Top-left, clear of Google's full-screen button on the right. */}
+        <div className="pointer-events-none absolute top-2 right-16 left-2 z-10 flex flex-wrap items-center gap-2">
+          {!listOpen && (
+            <button
+              onClick={() => setListOpen(true)}
+              onMouseMove={trackGlow}
+              className="glow float-card pointer-events-auto flex items-center gap-1.5 rounded-full bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-lg shadow-slate-300/40 dark:bg-[#111729] dark:text-slate-200 dark:shadow-black/40"
+            >
+              <List className="h-4 w-4" />
+              {t("map.vehiclesCount", { count: vehicles.length })}
+            </button>
+          )}
+
+          {/* Only for a client who also sees Gamonal's vehicles: all of them, Gamonal's, or their own flota. */}
+          {sharedVehicles.length > 0 && (
+            <div role="group" aria-label={t("map.filterLabel")} className="pointer-events-auto flex gap-1.5">
+              {(
+                [
+                  ["all", t("map.filterAll")],
+                  ["gamonal", t("map.filterGamonal")],
+                  ["own", currentUser?.allowedArea ?? t("common.fleet")],
+                ] as Array<[MapSource, string]>
+              ).map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  aria-pressed={source === value}
+                  onClick={() => setSource(value)}
+                  className={`rounded-full px-3 py-2 text-xs font-semibold tracking-wide uppercase shadow-lg shadow-slate-300/40 transition dark:shadow-black/40 ${
+                    source === value ? "brand-button" : "bg-white text-slate-600 dark:bg-[#111729] dark:text-slate-300"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
         {selectedVehicle && (
           <VehicleDetailPanel

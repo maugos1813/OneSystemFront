@@ -211,5 +211,8 @@ export const it: Record<MessageKey, string> = {
   "api.error": "Errore {status}",
   "map.legendShared": "Flotta Gamonal (sola lettura)",
   "map.sharedTitle": "Gamonal · {plate}",
+  "map.filterAll": "Tutti",
+  "map.filterGamonal": "Gamonal",
+  "map.filterLabel": "Quali veicoli vedere sulla mappa",
   // @@END
 };

@@ -212,6 +212,9 @@ export const es = {
   "api.error": "Error {status}",
   "map.legendShared": "Flota de Gamonal (solo lectura)",
   "map.sharedTitle": "Gamonal · {plate}",
+  "map.filterAll": "Todos",
+  "map.filterGamonal": "Gamonal",
+  "map.filterLabel": "Qué vehículos ver en el mapa",
   // @@END
 } as const satisfies Record<string, string>;
 
