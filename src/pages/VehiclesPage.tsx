@@ -224,7 +224,7 @@ export function VehiclesPage() {
             />
           </div>
           <div className="w-full sm:w-32">
-            <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Patente</label>
+            <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Targa</label>
             <input
               value={plate}
               onChange={(e) => setPlate(e.target.value)}
@@ -269,7 +269,7 @@ export function VehiclesPage() {
             <thead className="border-b border-violet-100 bg-violet-50/60 text-xs text-slate-500 uppercase dark:border-white/10 dark:bg-white/5 dark:text-slate-400">
               <tr>
                 <th className="px-4 py-2 font-medium">Nombre</th>
-                <th className="px-4 py-2 font-medium">Patente</th>
+                <th className="px-4 py-2 font-medium">Targa</th>
                 <th className="px-4 py-2 font-medium">Dispositivo</th>
                 <th className="px-4 py-2 font-medium">Flota</th>
                 <th className="px-4 py-2 font-medium text-right">Acciones</th>

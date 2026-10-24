@@ -67,7 +67,7 @@ export function VehicleList({
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Buscar por nombre o patente..."
+                placeholder="Buscar por nombre o targa..."
                 className="field-input w-full rounded-lg border border-slate-200 py-1.5 pr-3 pl-8 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
               />
             </div>

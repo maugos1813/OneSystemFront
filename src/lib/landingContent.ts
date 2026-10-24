@@ -54,7 +54,7 @@ export interface LandingFeature {
 export const ONETRACK_FEATURES: LandingFeature[] = [
   {
     title: "Mapa en tiempo real",
-    description: "Posición, velocidad y estado de cada vehículo, con la patente sobre el mapa y vista satélite.",
+    description: "Posición, velocidad y estado de cada vehículo, con la targa sobre el mapa y vista satélite.",
     icon: Map,
   },
   {

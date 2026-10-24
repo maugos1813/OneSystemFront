@@ -153,7 +153,7 @@ export function FleetScoreTable({ rows, categoryLabel, selectedVehicleId, onSele
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Buscar por vehículo o patente..."
+            placeholder="Buscar por vehículo o targa..."
             className="field-input w-full rounded-xl border border-slate-300 py-2 pr-3 pl-9 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
           />
         </div>
