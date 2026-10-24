@@ -83,7 +83,7 @@ export function DashboardPage() {
           <button
             onClick={() => setListOpen(true)}
             onMouseMove={trackGlow}
-            className="glow float-card absolute top-16 left-4 flex items-center gap-1.5 rounded-full bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-lg shadow-slate-300/40 dark:bg-[#111729] dark:text-slate-200 dark:shadow-black/40"
+            className="glow float-card absolute top-2 left-2 flex items-center gap-1.5 rounded-full bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-lg shadow-slate-300/40 dark:bg-[#111729] dark:text-slate-200 dark:shadow-black/40"
           >
             <List className="h-4 w-4" />
             Vehículos ({vehicles.length})

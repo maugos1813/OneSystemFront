@@ -1,5 +1,5 @@
 import { APIProvider, Map, Marker, Polygon, Polyline, useMap } from "@vis.gl/react-google-maps";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useFleet } from "../context/FleetContext";
 import { useTheme } from "../context/ThemeContext";
 import { useSmoothedPosition } from "../hooks/useSmoothedPosition";
@@ -113,9 +113,9 @@ export function MapView({
           defaultZoom={center ? 14 : 4}
           gestureHandling="greedy"
           disableDefaultUI={false}
-          // Replaced by our own MapTypeToggle, docked next to the legend at the bottom
-          // instead of Google's default (which used to float mid-left, on top of markers).
+          // Map/satellite and the street-view figure are left out: the map is the point, so the centre stays clear.
           mapTypeControl={false}
+          streetViewControl={false}
           styles={theme === "dark" ? DARK_MAP_STYLE : undefined}
         >
           <MapCenterOnSelect selectedVehicleId={selectedVehicleId} positions={positions} />
@@ -162,9 +162,9 @@ export function MapView({
           })}
         </Map>
 
-        <div className="absolute bottom-4 left-4 z-0 flex flex-wrap items-end gap-2">
+        {/* Just above Google's own logo, which has to stay visible. */}
+        <div className="absolute bottom-6 left-2 z-0">
           <MapLegend zonePolygons={zonePolygons} />
-          <MapTypeToggle />
         </div>
       </APIProvider>
     </div>
@@ -201,45 +201,6 @@ function MapLegend({ zonePolygons }: { zonePolygons: Geofence[] }) {
           ))}
         </div>
       )}
-    </div>
-  );
-}
-
-/** Replaces Google's default map-type control so it can be docked next to our legend
- * instead of floating mid-left on top of the vehicle markers. */
-function MapTypeToggle() {
-  const map = useMap();
-  const [mapTypeId, setMapTypeIdState] = useState<"roadmap" | "satellite">("roadmap");
-
-  function select(type: "roadmap" | "satellite") {
-    map?.setMapTypeId(type);
-    setMapTypeIdState(type);
-  }
-
-  return (
-    <div className="flex overflow-hidden rounded-2xl border border-white bg-white text-[11px] font-medium shadow-lg shadow-slate-300/40 sm:text-xs dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40">
-      <button
-        type="button"
-        onClick={() => select("roadmap")}
-        className={`px-3 py-2 transition ${
-          mapTypeId === "roadmap"
-            ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900"
-            : "text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-white/5"
-        }`}
-      >
-        Mapa
-      </button>
-      <button
-        type="button"
-        onClick={() => select("satellite")}
-        className={`px-3 py-2 transition ${
-          mapTypeId === "satellite"
-            ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900"
-            : "text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-white/5"
-        }`}
-      >
-        Satélite
-      </button>
     </div>
   );
 }
