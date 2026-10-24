@@ -447,7 +447,7 @@ function ExpandButton({ expanded, onClick }: { expanded: boolean; onClick: () =>
   return (
     <button
       onClick={onClick}
-      className="flex items-center gap-1.5 rounded-xl border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5"
+      className="flex items-center gap-1.5 rounded-xl border border-slate-300 px-3 py-1.5 text-sm font-medium whitespace-nowrap text-slate-700 transition hover:bg-slate-50 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5"
     >
       <Icon className="h-4 w-4" /> {expanded ? "Contraer" : "Desplegar"}
     </button>
@@ -467,25 +467,23 @@ function PanelHeader({
   hideToggle?: boolean;
   action?: ReactNode;
 }) {
+  // Logo and name on the left, the buttons always on the right — also on a phone, where nothing wraps below.
   return (
-    <div className={`flex flex-wrap items-start justify-between gap-3 ${expanded ? "px-4 py-2" : "mb-4"}`}>
-      <div className="flex flex-wrap items-center gap-3">
+    <div className={`flex items-start justify-between gap-3 ${expanded ? "px-4 py-2" : "mb-4"}`}>
+      <div className="flex min-w-0 flex-1 items-center gap-3">
         {PRODUCT_LOGOS[product.key] && <ProductLogo product={product} size={expanded ? "sm" : "lg"} />}
-        <div>
-          <h1 className={`font-semibold text-slate-900 dark:text-white ${expanded ? "text-lg" : "text-2xl"}`}>{product.name}</h1>
+        <div className="min-w-0">
+          <h1 className={`truncate font-semibold text-slate-900 dark:text-white ${expanded ? "text-lg" : "text-2xl"}`}>{product.name}</h1>
           {!expanded && (
             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
               {SUBTITLES[product.key] ?? "Se abre aquí con tu sesión de OneSystec"}
             </p>
           )}
         </div>
-        {!hideToggle && <ExpandButton expanded={expanded} onClick={onToggle} />}
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex shrink-0 items-center gap-2">
         {action}
-        <span className="rounded-full bg-emerald-100 px-3 py-1 text-sm font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400">
-          Activo
-        </span>
+        {!hideToggle && <ExpandButton expanded={expanded} onClick={onToggle} />}
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { AlertTriangle, Pencil, Plus, Trash2 } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { AreaFilterSelect } from "../components/AreaFilterSelect";
 import { useAuth } from "../context/AuthContext";
@@ -86,10 +86,23 @@ function VehicleRow({
     }
   }
 
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
   async function remove() {
-    if (!confirm(`¿Eliminar el vehículo "${vehicle.name}"?`)) return;
-    await deleteVehicle(vehicle.id);
-    onChanged();
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      // Reaching this button already means the person read the warning about the device.
+      await deleteVehicle(vehicle.id, { confirmDevice: true });
+      setConfirmingDelete(false);
+      onChanged();
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : "No se pudo eliminar el vehículo");
+    } finally {
+      setDeleting(false);
+    }
   }
 
   if (editing) {
@@ -159,7 +172,7 @@ function VehicleRow({
               <Pencil className="h-4 w-4" />
             </button>
             <button
-              onClick={remove}
+              onClick={() => setConfirmingDelete(true)}
               className="rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600 dark:text-slate-500 dark:hover:bg-red-500/10 dark:hover:text-red-400"
               aria-label="Eliminar"
             >
@@ -167,8 +180,79 @@ function VehicleRow({
             </button>
           </>
         )}
+        {confirmingDelete && (
+          <DeleteVehicleDialog
+            vehicle={vehicle}
+            deviceImei={deviceImei}
+            deleting={deleting}
+            error={deleteError}
+            onCancel={() => {
+              setConfirmingDelete(false);
+              setDeleteError(null);
+            }}
+            onConfirm={() => void remove()}
+          />
+        )}
       </td>
     </tr>
+  );
+}
+
+/** Asks before deleting a vehicle, and says plainly what happens to its device, documents and maintenance. */
+function DeleteVehicleDialog({
+  vehicle,
+  deviceImei,
+  deleting,
+  error,
+  onCancel,
+  onConfirm,
+}: {
+  vehicle: Vehicle;
+  deviceImei: string | null;
+  deleting: boolean;
+  error: string | null;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  const hasDevice = !!vehicle.deviceId;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 text-left whitespace-normal" role="dialog" aria-modal="true">
+      <div className="w-full max-w-md rounded-2xl border border-white bg-white p-5 shadow-xl dark:border-white/10 dark:bg-[#111729]">
+        <h2 className="text-base font-semibold text-slate-900 dark:text-white">
+          ¿Eliminar {vehicle.name}
+          {vehicle.plate ? ` (${vehicle.plate})` : ""}?
+        </h2>
+
+        {hasDevice && (
+          <div className="mt-3 flex gap-2.5 rounded-xl bg-amber-50 p-3 text-sm text-amber-900 dark:bg-amber-500/10 dark:text-amber-200">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+            <p>
+              <strong>Este vehículo tiene un dispositivo asignado{deviceImei ? ` (${deviceImei})` : ""}.</strong> Si lo eliminas, el dispositivo se
+              desvincula y deja de verse en el mapa. Solo tu administrador podrá volver a asignarlo.
+            </p>
+          </div>
+        )}
+
+        <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">
+          También se borran sus documentos de Vencimientos y sus planes de Mantenimiento. No se puede deshacer.
+        </p>
+        {error && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{error}</p>}
+
+        <div className="mt-5 flex justify-end gap-2">
+          <button type="button" onClick={onCancel} className="rounded-xl px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-white/10">
+            Cancelar
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={deleting}
+            className="rounded-xl bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+          >
+            {hasDevice ? "Eliminar de todos modos" : "Eliminar"}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 

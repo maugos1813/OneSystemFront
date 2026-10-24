@@ -190,8 +190,9 @@ export function updateVehicle(id: string, input: Partial<VehicleInput>): Promise
   return request(`/vehicles/${id}`, { method: "PATCH", body: JSON.stringify(input) });
 }
 
-export function deleteVehicle(id: string): Promise<void> {
-  return request(`/vehicles/${id}`, { method: "DELETE" });
+/** `confirmDevice` says the person was warned that the vehicle's device will be unlinked (a client's request is refused without it). */
+export function deleteVehicle(id: string, options: { confirmDevice?: boolean } = {}): Promise<void> {
+  return request(`/vehicles/${id}${options.confirmDevice ? "?confirmDevice=true" : ""}`, { method: "DELETE" });
 }
 
 // --- Positions & events ---
