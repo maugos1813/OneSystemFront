@@ -509,3 +509,13 @@ export function updateVehicleDocument(id: string, input: Partial<DocumentInput>)
 export function deleteVehicleDocument(id: string): Promise<void> {
   return request(`/vehicle-documents/${id}`, { method: "DELETE" });
 }
+
+// --- Push notifications (the Android app) ---
+
+export function registerPushToken(token: string): Promise<void> {
+  return request("/push-tokens", { method: "POST", body: JSON.stringify({ token, platform: "android" }) });
+}
+
+export function unregisterPushToken(token: string): Promise<void> {
+  return request("/push-tokens/unregister", { method: "POST", body: JSON.stringify({ token }) });
+}

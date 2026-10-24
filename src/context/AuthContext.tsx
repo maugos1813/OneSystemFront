@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useState, type React
 import { getCurrentUser, login as apiLogin, register as apiRegister } from "../lib/api";
 import type { RegisterInput } from "../lib/api";
 import { clearToken, getToken, setToken } from "../lib/auth";
+import { disablePush, enablePush } from "../lib/push";
 import type { CurrentUser } from "../lib/types";
 
 interface AuthContextValue {
@@ -37,6 +38,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (isAuthenticated) void loadCurrentUser();
   }, [isAuthenticated, loadCurrentUser]);
 
+  // In the Android app, a signed-in user gets this phone registered for alert notifications.
+  const signedInUserId = currentUser?.userId;
+  useEffect(() => {
+    if (signedInUserId) void enablePush();
+  }, [signedInUserId]);
+
   const login = useCallback(async (email: string, password: string) => {
     setLoading(true);
     setError(null);
@@ -70,6 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = useCallback(() => {
+    disablePush();
     clearToken();
     setIsAuthenticated(false);
     setCurrentUser(null);
