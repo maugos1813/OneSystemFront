@@ -2,6 +2,7 @@ import { Lock, LockOpen } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { getDeviceCommands, requestImmobilizer } from "../lib/api";
 import type { DeviceCommand, DeviceCommandStatus } from "../lib/types";
+import { ModalPortal } from "./ModalPortal";
 
 const STATUS_LABEL: Record<DeviceCommandStatus, string> = {
   pending: "En espera: se enviará cuando el equipo se conecte",
@@ -110,6 +111,7 @@ export function ImmobilizerPanel({ deviceId, outputValue }: { deviceId: string; 
       )}
 
       {confirming && (
+        <ModalPortal>
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true">
           <div className="w-full max-w-sm rounded-2xl border border-white bg-white p-5 shadow-xl dark:border-white/10 dark:bg-[#111729]">
             <h3 className="text-base font-semibold text-slate-900 dark:text-white">
@@ -139,6 +141,7 @@ export function ImmobilizerPanel({ deviceId, outputValue }: { deviceId: string; 
             </div>
           </div>
         </div>
+        </ModalPortal>
       )}
     </div>
   );

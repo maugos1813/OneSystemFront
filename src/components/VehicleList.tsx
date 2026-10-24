@@ -39,10 +39,10 @@ export function VehicleList({
 
   return (
     <>
-      {open && <div className="fixed inset-0 z-20 bg-slate-900/30 lg:hidden" onClick={onClose} />}
+      {open && <div className="absolute inset-0 z-20 bg-slate-900/30 lg:hidden" onClick={onClose} />}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-30 max-w-[85vw] overflow-hidden border-r border-violet-100 bg-white transition-all duration-200 lg:static lg:z-auto dark:border-white/5 dark:bg-[#0d1220] ${
+        className={`absolute inset-y-0 left-0 z-30 max-w-[85vw] overflow-hidden border-r border-violet-100 bg-white transition-all duration-200 lg:static lg:z-auto dark:border-white/5 dark:bg-[#0d1220] ${
           open
             ? "w-80 translate-x-0 lg:w-72"
             : "w-80 -translate-x-full lg:w-0 lg:translate-x-0 lg:border-transparent"

@@ -21,6 +21,7 @@ import {
   type PlanTemplate,
 } from "../lib/maintenance";
 import type { MaintenanceRecord, MaintenanceState, VehicleMaintenance, MaintenancePlan } from "../lib/types";
+import { ModalPortal } from "../components/ModalPortal";
 
 const CARD =
   "glow float-card rounded-2xl border border-white bg-white shadow-lg shadow-slate-200/50 dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40";
@@ -321,6 +322,7 @@ function Modal({ title, onClose, onSubmit, submitting, error, submitLabel, child
   children: ReactNode;
 }) {
   return (
+    <ModalPortal>
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true" aria-label={title}>
       <form
         onSubmit={onSubmit}
@@ -344,6 +346,7 @@ function Modal({ title, onClose, onSubmit, submitting, error, submitLabel, child
         </div>
       </form>
     </div>
+    </ModalPortal>
   );
 }
 

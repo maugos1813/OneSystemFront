@@ -1,5 +1,4 @@
 import {
-  LogOut,
   Minimize2,
   Moon,
   PanelLeftClose,
@@ -7,7 +6,7 @@ import {
   Sun,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Link, Navigate, NavLink, Outlet, useLocation, useOutletContext } from "react-router-dom";
+import { Navigate, NavLink, Outlet, useLocation, useOutletContext } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
 import { trackGlow } from "../../lib/glow";
@@ -42,7 +41,7 @@ function useOneTrackTabIdentity() {
 
 export function AppLayout() {
   const { collapse } = useOutletContext<{ collapse: () => void }>();
-  const { currentUser, logout } = useAuth();
+  const { currentUser } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { pathname } = useLocation();
   const [navOpen, setNavOpen] = useState(prefersOpenByDefault);
@@ -56,16 +55,16 @@ export function AppLayout() {
   }
 
   return (
-    <div className="flex h-full bg-[#f5f6fb] dark:bg-[#0a0e1a]">
+    <div className="relative flex h-full overflow-hidden bg-[#f5f6fb] dark:bg-[#0a0e1a]">
       {navOpen && (
         <div
-          className="fixed inset-0 z-30 bg-slate-900/30 lg:hidden"
+          className="absolute inset-0 z-30 bg-slate-900/30 lg:hidden"
           onClick={() => setNavOpen(false)}
         />
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-40 max-w-[85vw] overflow-hidden border-r border-violet-100 bg-white transition-all duration-200 lg:static lg:z-auto dark:border-white/5 dark:bg-[#0d1220] ${
+        className={`absolute inset-y-0 left-0 z-40 max-w-[85vw] overflow-hidden border-r border-violet-100 bg-white transition-all duration-200 lg:static lg:z-auto dark:border-white/5 dark:bg-[#0d1220] ${
           navOpen
             ? "w-64 translate-x-0"
             : "w-64 -translate-x-full lg:w-0 lg:translate-x-0 lg:border-transparent"
@@ -73,7 +72,7 @@ export function AppLayout() {
       >
         <div className="flex h-full w-64 flex-col">
           <div className="flex items-center justify-between gap-2 border-b border-violet-100 px-5 py-4 dark:border-white/5">
-            <Link to="/" className="flex min-w-0 items-center gap-2" title="Volver al portal OneSystec">
+            <div className="flex min-w-0 items-center gap-2">
               <img
                 src="/logos/onetrack-icon.png"
                 alt="OneTrack"
@@ -82,7 +81,7 @@ export function AppLayout() {
               <span className="truncate text-lg font-semibold text-slate-900 dark:text-white">
                 One<span className="brand-text-gradient">Track</span>
               </span>
-            </Link>
+            </div>
             <button
               onClick={() => setNavOpen(false)}
               className="shrink-0 rounded-lg p-1.5 text-slate-400 hover:bg-violet-50 hover:text-slate-700 dark:hover:bg-white/5 dark:hover:text-white"
@@ -156,13 +155,6 @@ export function AppLayout() {
             >
               <Minimize2 className="h-4 w-4" />
               <span className="hidden sm:inline">Contraer</span>
-            </button>
-            <button
-              onClick={logout}
-              className="flex items-center gap-1.5 rounded-xl px-2 py-1.5 text-sm text-slate-500 transition hover:bg-violet-50 hover:text-slate-900 sm:px-3 dark:text-slate-400 dark:hover:bg-red-500/10 dark:hover:text-red-400"
-            >
-              <LogOut className="h-4 w-4" />
-              <span className="hidden sm:inline">Salir</span>
             </button>
           </div>
         </header>

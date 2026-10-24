@@ -48,7 +48,7 @@ export function DashboardPage() {
   }
 
   return (
-    <div className="flex h-full">
+    <div className="relative flex h-full overflow-hidden">
       <VehicleList
         vehicles={vehicles}
         devices={devices}

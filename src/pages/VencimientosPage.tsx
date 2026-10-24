@@ -10,6 +10,7 @@ import {
 } from "../lib/api";
 import { trackGlow } from "../lib/glow";
 import type { DocumentKind, DocumentState, VehicleDocument, VehicleWithDocuments } from "../lib/types";
+import { ModalPortal } from "../components/ModalPortal";
 
 const CARD =
   "glow float-card rounded-2xl border border-white bg-white shadow-lg shadow-slate-200/50 dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40";
@@ -203,6 +204,7 @@ function DocumentDialog({ dialog, onClose, onSaved }: { dialog: Dialog; onClose:
   }
 
   return (
+    <ModalPortal>
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true">
       <form
         onSubmit={submit}
@@ -262,5 +264,6 @@ function DocumentDialog({ dialog, onClose, onSaved }: { dialog: Dialog; onClose:
         </div>
       </form>
     </div>
+    </ModalPortal>
   );
 }

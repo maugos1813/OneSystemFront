@@ -12,6 +12,7 @@ import { buildChecklist, type CheckState } from "../lib/deviceChecklist";
 import { hasSetupGuide, modelOptions, modelProfile } from "../lib/deviceModels";
 import { trackGlow } from "../lib/glow";
 import type { DeviceDetail } from "../lib/types";
+import { ModalPortal } from "../components/ModalPortal";
 
 const REFRESH_MS = 30_000;
 
@@ -414,6 +415,7 @@ function EditDialog({ detail, onClose, onSaved }: { detail: DeviceDetail; onClos
   }
 
   return (
+    <ModalPortal>
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true">
       <form
         onSubmit={handleSubmit}
@@ -456,5 +458,6 @@ function EditDialog({ detail, onClose, onSaved }: { detail: DeviceDetail; onClos
         </div>
       </form>
     </div>
+    </ModalPortal>
   );
 }

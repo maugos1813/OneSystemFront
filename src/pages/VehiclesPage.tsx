@@ -7,6 +7,7 @@ import { createVehicle, deleteVehicle, updateVehicle } from "../lib/api";
 import { FleetGroupSelect } from "../components/FleetGroupSelect";
 import { trackGlow } from "../lib/glow";
 import type { Vehicle } from "../lib/types";
+import { ModalPortal } from "../components/ModalPortal";
 
 function DeviceSelect({
   value,
@@ -216,6 +217,7 @@ function DeleteVehicleDialog({
 }) {
   const hasDevice = !!vehicle.deviceId;
   return (
+    <ModalPortal>
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 text-left whitespace-normal" role="dialog" aria-modal="true">
       <div className="w-full max-w-md rounded-2xl border border-white bg-white p-5 shadow-xl dark:border-white/10 dark:bg-[#111729]">
         <h2 className="text-base font-semibold text-slate-900 dark:text-white">
@@ -253,6 +255,7 @@ function DeleteVehicleDialog({
         </div>
       </div>
     </div>
+    </ModalPortal>
   );
 }
 

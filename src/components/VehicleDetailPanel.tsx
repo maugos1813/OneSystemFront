@@ -53,7 +53,7 @@ export function VehicleDetailPanel({
     currentUser?.role === "admin" ||
     !!currentUser?.modules.some((m) => m === "historial" || m === "analiticas");
   return (
-    <div className="fixed inset-x-0 bottom-0 z-10 max-h-[75vh] overflow-y-auto rounded-t-3xl border border-white bg-white p-4 shadow-xl shadow-slate-300/30 sm:absolute sm:inset-x-auto sm:top-4 sm:right-4 sm:bottom-auto sm:max-h-[calc(100%-2rem)] sm:w-80 sm:rounded-3xl dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40">
+    <div className="absolute inset-x-0 bottom-0 z-10 max-h-[75vh] overflow-y-auto rounded-t-3xl border border-white bg-white p-4 shadow-xl shadow-slate-300/30 sm:absolute sm:inset-x-auto sm:top-4 sm:right-4 sm:bottom-auto sm:max-h-[calc(100%-2rem)] sm:w-80 sm:rounded-3xl dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40">
       <div className="mb-3 flex items-start justify-between">
         <div>
           <h2 className="font-semibold text-slate-900 dark:text-white">{vehicle.name}</h2>
