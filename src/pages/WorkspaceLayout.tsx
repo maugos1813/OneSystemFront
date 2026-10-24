@@ -16,7 +16,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { Capacitor } from "@capacitor/core";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link, Navigate, Outlet, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { AlertsPanel } from "../components/AlertsPanel";
 import { useAuth } from "../context/AuthContext";
@@ -118,15 +118,18 @@ function Workspace({ products }: { products: Product[] }) {
   const selected = products.find((p) => p.key === selectedKey) ?? null;
   const showingConfig = selectedKey === CONFIG_KEY;
   const [visited, setVisited] = useState<string[]>([]);
+  // The external app (by key) whose map is showing full screen: the whole window is for it, with no bars around.
+  const [immersive, setImmersive] = useState<string | null>(null);
 
   // Away from "/" OneTrack's own pages are showing; for an external app the flag is in the address.
-  const expanded = !atHome || (params.get("full") === "1" && selected?.type === "external");
+  const expanded = !atHome || (params.get("full") === "1" && selected?.type === "external") || immersive !== null;
 
   // External apps stay mounted once opened, so switching tabs doesn't throw away where you were.
   const select = (key: string) => {
     if (products.some((p) => p.key === key && p.type === "external")) {
       setVisited((current) => (current.includes(key) ? current : [...current, key]));
     }
+    setImmersive(null);
     setParams({ app: key }, { replace: true });
   };
   const expand = () => {
@@ -207,6 +210,8 @@ function Workspace({ products }: { products: Product[] }) {
                 product={product}
                 visible={atHome && product.key === selectedKey && !showingConfig}
                 expanded={expanded}
+                immersive={immersive === product.key}
+                onImmersive={(on) => setImmersive(on ? product.key : null)}
                 onToggle={expanded ? collapse : expand}
               />
             ))}
@@ -416,16 +421,35 @@ function ExternalPanel({
   product,
   visible,
   expanded,
+  immersive,
+  onImmersive,
   onToggle,
 }: {
   product: Product;
   visible: boolean;
   expanded: boolean;
+  /** The app's own map is full screen: this panel gives up its header so the map gets the whole screen. */
+  immersive: boolean;
+  onImmersive: (on: boolean) => void;
   onToggle: () => void;
 }) {
   const [ssoSrc, setSsoSrc] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
   const native = Capacitor.isNativePlatform();
+  const frame = useRef<HTMLIFrameElement>(null);
+
+  // Gamonal Driver tells us when one of its maps goes full screen. Only its own frame and its own address are believed.
+  useEffect(() => {
+    if (!product.url) return;
+    const origin = new URL(product.url).origin;
+    const onMessage = (event: MessageEvent) => {
+      if (event.origin !== origin || event.source !== frame.current?.contentWindow) return;
+      const data = event.data as { source?: string; type?: string; value?: unknown } | null;
+      if (data?.source === "gamonal-driver" && data.type === "fullscreen") onImmersive(data.value === true);
+    };
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+  }, [product.url, onImmersive]);
   const fallback = product.url ?? null;
 
   useEffect(() => {
@@ -444,6 +468,7 @@ function ExternalPanel({
 
   return (
     <div className={visible ? "flex min-h-0 flex-1 flex-col" : "hidden"}>
+      {!immersive && (
       <PanelHeader
         product={product}
         expanded={expanded}
@@ -460,9 +485,10 @@ function ExternalPanel({
           )
         }
       />
+      )}
       <div
         className={`relative min-h-[20rem] flex-1 overflow-hidden border-slate-200 dark:border-white/10 ${
-          expanded ? "border-t" : "rounded-2xl border"
+          immersive ? "" : expanded ? "border-t" : "rounded-2xl border"
         }`}
       >
         {!loaded && (
@@ -472,6 +498,7 @@ function ExternalPanel({
         )}
         {src && (
           <iframe
+            ref={frame}
             src={src}
             title={product.name}
             onLoad={() => setLoaded(true)}
