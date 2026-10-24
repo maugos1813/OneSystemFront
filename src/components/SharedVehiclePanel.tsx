@@ -1,6 +1,6 @@
 import { X } from "lucide-react";
 import { useT } from "../i18n";
-import { formatRelativeTime } from "../lib/relativeTime";
+import { formatAgeInMinutes } from "../lib/relativeTime";
 import type { SharedVehicle } from "../lib/types";
 
 /** What a client sees of a Gamonal vehicle shared through Gamonal Driver: only where it is and how it is moving. */
@@ -35,7 +35,7 @@ export function SharedVehiclePanel({ vehicle, onClose }: { vehicle: SharedVehicl
         {vehicle.updatedAt && (
           <div className="flex items-center justify-between py-1.5">
             <span className="text-slate-500 dark:text-slate-400">{t("detail.lastPosition")}</span>
-            <span className="font-medium text-slate-900 dark:text-white">{formatRelativeTime(vehicle.updatedAt, t)}</span>
+            <span className="font-medium text-slate-900 dark:text-white">{formatAgeInMinutes(vehicle.updatedAt, t)}</span>
           </div>
         )}
       </div>
