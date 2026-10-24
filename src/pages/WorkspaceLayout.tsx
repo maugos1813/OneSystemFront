@@ -18,7 +18,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { Capacitor } from "@capacitor/core";
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link, Navigate, Outlet, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { AlertsPanel } from "../components/AlertsPanel";
 import { useAuth } from "../context/AuthContext";
@@ -547,19 +547,30 @@ function ExternalPanel({
   const [loaded, setLoaded] = useState(false);
   const native = Capacitor.isNativePlatform();
   const frame = useRef<HTMLIFrameElement>(null);
+  const { theme } = useTheme();
 
-  // Gamonal Driver tells us when one of its maps goes full screen. Only its own frame and its own address are believed.
+  // The app inside follows OneSystec's light/dark mode (it has no switch of its own here): sent when the app says it is
+  // listening, when its frame loads, and whenever the mode changes.
+  const sendTheme = useCallback(() => {
+    if (!product.url) return;
+    frame.current?.contentWindow?.postMessage({ source: "onesystec", type: "theme", value: theme }, new URL(product.url).origin);
+  }, [product.url, theme]);
+  useEffect(sendTheme, [sendTheme]);
+
+  // Gamonal Driver tells us when one of its maps goes full screen, and when it is ready for the theme. Only its own frame and its own address are believed.
   useEffect(() => {
     if (!product.url) return;
     const origin = new URL(product.url).origin;
     const onMessage = (event: MessageEvent) => {
       if (event.origin !== origin || event.source !== frame.current?.contentWindow) return;
       const data = event.data as { source?: string; type?: string; value?: unknown } | null;
-      if (data?.source === "gamonal-driver" && data.type === "fullscreen") onImmersive(data.value === true);
+      if (data?.source !== "gamonal-driver") return;
+      if (data.type === "fullscreen") onImmersive(data.value === true);
+      else if (data.type === "ready") sendTheme();
     };
     window.addEventListener("message", onMessage);
     return () => window.removeEventListener("message", onMessage);
-  }, [product.url, onImmersive]);
+  }, [product.url, onImmersive, sendTheme]);
   const fallback = product.url ?? null;
 
   useEffect(() => {
@@ -611,7 +622,10 @@ function ExternalPanel({
             ref={frame}
             src={src}
             title={product.name}
-            onLoad={() => setLoaded(true)}
+            onLoad={() => {
+              setLoaded(true);
+              sendTheme();
+            }}
             allow="geolocation; clipboard-write; fullscreen"
             className="h-full w-full bg-white"
           />
