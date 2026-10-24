@@ -4,7 +4,7 @@ import { AreaFilterSelect } from "../components/AreaFilterSelect";
 import { useAuth } from "../context/AuthContext";
 import { useFleet } from "../context/FleetContext";
 import { createVehicle, deleteVehicle, updateVehicle } from "../lib/api";
-import { AREA_OPTIONS } from "../lib/areaFilter";
+import { FleetGroupSelect } from "../components/FleetGroupSelect";
 import { trackGlow } from "../lib/glow";
 import type { Vehicle } from "../lib/types";
 
@@ -33,20 +33,15 @@ function DeviceSelect({
   );
 }
 
-function AreaSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+function AreaSelect({ value, onChange, groups }: { value: string; onChange: (v: string) => void; groups: readonly string[] }) {
   return (
-    <select
+    <FleetGroupSelect
       value={value}
-      onChange={(e) => onChange(e.target.value)}
+      onChange={onChange}
+      groups={groups}
+      emptyLabel="Sin flota"
       className="field-input w-full rounded-xl border border-slate-300 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
-    >
-      <option value="">Sin área</option>
-      {AREA_OPTIONS.map((area) => (
-        <option key={area} value={area}>
-          {area}
-        </option>
-      ))}
-    </select>
+    />
   );
 }
 
@@ -54,13 +49,18 @@ function VehicleRow({
   vehicle,
   deviceImei,
   devices,
+  groups,
   canManage,
+  isAdmin,
   onChanged,
 }: {
   vehicle: Vehicle;
   deviceImei: string | null;
   devices: { id: string; imei: string }[];
+  groups: readonly string[];
   canManage: boolean;
+  /** Only owner/admin assign the device and the flota; a client only renames their own vehicles. */
+  isAdmin: boolean;
   onChanged: () => void;
 }) {
   const [editing, setEditing] = useState(false);
@@ -73,12 +73,12 @@ function VehicleRow({
   async function save() {
     setSaving(true);
     try {
-      await updateVehicle(vehicle.id, {
-        name,
-        plate: plate || undefined,
-        deviceId: deviceId || undefined,
-        fleetGroup: fleetGroup || null,
-      });
+      await updateVehicle(
+        vehicle.id,
+        isAdmin
+          ? { name, plate: plate || undefined, deviceId: deviceId || undefined, fleetGroup: fleetGroup || null }
+          : { name, plate: plate || undefined },
+      );
       setEditing(false);
       onChanged();
     } finally {
@@ -110,10 +110,10 @@ function VehicleRow({
           />
         </td>
         <td className="px-4 py-2">
-          <DeviceSelect value={deviceId} onChange={setDeviceId} devices={devices} />
+          {isAdmin ? <DeviceSelect value={deviceId} onChange={setDeviceId} devices={devices} /> : <span className="text-slate-600 dark:text-slate-300">{deviceImei ?? "Sin asignar"}</span>}
         </td>
         <td className="px-4 py-2">
-          <AreaSelect value={fleetGroup} onChange={setFleetGroup} />
+          {isAdmin ? <AreaSelect value={fleetGroup} onChange={setFleetGroup} groups={groups} /> : <span className="text-slate-600 dark:text-slate-300">{vehicle.fleetGroup ?? "—"}</span>}
         </td>
         <td className="px-4 py-2 text-right">
           <button
@@ -174,13 +174,15 @@ function VehicleRow({
 
 export function VehiclesPage() {
   const { currentUser } = useAuth();
-  const { vehicles, filteredVehicles, devices, loading, refetch } = useFleet();
+  const { vehicles, filteredVehicles, devices, loading, refetch, fleetGroups } = useFleet();
   const [name, setName] = useState("");
   const [plate, setPlate] = useState("");
   const [deviceId, setDeviceId] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  const canManage = currentUser?.role === "owner" || currentUser?.role === "admin";
+  const isAdmin = currentUser?.role === "owner" || currentUser?.role === "admin";
+  // A client with the Vehículos section and a flota registers and edits the vehicles of that flota (the admin assigns devices).
+  const canManage = isAdmin || (!!currentUser?.allowedArea && !!currentUser.modules.includes("vehiculos"));
   const deviceById = new Map(devices.map((d) => [d.id, d]));
   const unassignedDevices = devices.filter((d) => !vehicles.some((v) => v.deviceId === d.id));
 
@@ -188,7 +190,7 @@ export function VehiclesPage() {
     e.preventDefault();
     setSubmitting(true);
     try {
-      await createVehicle({ name, plate: plate || undefined, deviceId: deviceId || undefined });
+      await createVehicle({ name, plate: plate || undefined, ...(isAdmin && deviceId ? { deviceId } : {}) });
       setName("");
       setPlate("");
       setDeviceId("");
@@ -202,7 +204,7 @@ export function VehiclesPage() {
     <div className="mx-auto max-w-4xl p-4 sm:p-6 lg:p-8">
       <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Vehículos</h1>
       <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">
-        Tu flota y los dispositivos asignados a cada uno.
+        Tu flota y los dispositivos asignados a cada uno.{!isAdmin && canManage && " Tu administrador asigna el dispositivo de cada vehículo."}
       </p>
 
       {canManage && (
@@ -229,10 +231,12 @@ export function VehiclesPage() {
               className="field-input w-full rounded-xl border border-slate-300 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
             />
           </div>
-          <div className="w-full sm:w-48">
-            <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Dispositivo</label>
-            <DeviceSelect value={deviceId} onChange={setDeviceId} devices={unassignedDevices} />
-          </div>
+          {isAdmin && (
+            <div className="w-full sm:w-48">
+              <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Dispositivo</label>
+              <DeviceSelect value={deviceId} onChange={setDeviceId} devices={unassignedDevices} />
+            </div>
+          )}
           <button
             type="submit"
             disabled={submitting}
@@ -245,7 +249,7 @@ export function VehiclesPage() {
       )}
 
       <div className="mb-4 flex items-center justify-between gap-2">
-        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Área</span>
+        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Flota</span>
         <AreaFilterSelect />
       </div>
 
@@ -256,7 +260,7 @@ export function VehiclesPage() {
       )}
 
       {!loading && vehicles.length > 0 && filteredVehicles.length === 0 && (
-        <p className="text-sm text-slate-500 dark:text-slate-400">Ningún vehículo coincide con esta área.</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400">Ningún vehículo coincide con esta flota.</p>
       )}
 
       {!loading && filteredVehicles.length > 0 && (
@@ -267,7 +271,7 @@ export function VehiclesPage() {
                 <th className="px-4 py-2 font-medium">Nombre</th>
                 <th className="px-4 py-2 font-medium">Patente</th>
                 <th className="px-4 py-2 font-medium">Dispositivo</th>
-                <th className="px-4 py-2 font-medium">Área</th>
+                <th className="px-4 py-2 font-medium">Flota</th>
                 <th className="px-4 py-2 font-medium text-right">Acciones</th>
               </tr>
             </thead>
@@ -278,7 +282,9 @@ export function VehiclesPage() {
                   vehicle={vehicle}
                   deviceImei={vehicle.deviceId ? (deviceById.get(vehicle.deviceId)?.imei ?? null) : null}
                   devices={vehicle.deviceId ? [...unassignedDevices, deviceById.get(vehicle.deviceId)!] : unassignedDevices}
+                  groups={fleetGroups}
                   canManage={canManage}
+                  isAdmin={isAdmin}
                   onChanged={refetch}
                 />
               ))}

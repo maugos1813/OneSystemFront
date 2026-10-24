@@ -4,7 +4,7 @@ import { useAllPositions } from "../hooks/useAllPositions";
 import { useLiveAlerts } from "../hooks/useLiveAlerts";
 import { getSettings, listDevices, listGeofences, listVehicles } from "../lib/api";
 import type { Alert } from "../lib/alerts";
-import { getStoredAreaFilter, setStoredAreaFilter, type AreaFilter } from "../lib/areaFilter";
+import { getStoredAreaFilter, setStoredAreaFilter, uniqueFleetGroups, type AreaFilter } from "../lib/areaFilter";
 import type { Device, Geofence, OrgSettings, Position, Vehicle } from "../lib/types";
 
 interface FleetContextValue {
@@ -15,6 +15,8 @@ interface FleetContextValue {
    * filter is "all" — what every page should actually render. */
   filteredVehicles: Vehicle[];
   selectedArea: AreaFilter;
+  /** The flotas the visible vehicles belong to. */
+  fleetGroups: string[];
   setSelectedArea: (area: AreaFilter) => void;
   devices: Device[];
   positions: Record<string, Position>;
@@ -109,7 +111,9 @@ export function FleetProvider({ children }: { children: ReactNode }) {
   // A hard-restricted user's `vehicles` already only contains their allowed área
   // (server-enforced) — their personal filter preference is forced to match so it can
   // never accidentally double-filter that down to nothing.
-  const effectiveArea = (currentUser?.allowedArea as AreaFilter | undefined) ?? selectedArea;
+  const fleetGroups = useMemo(() => uniqueFleetGroups(vehicles), [vehicles]);
+  // A remembered filter for a flota that no longer exists must not hide everything.
+  const effectiveArea = currentUser?.allowedArea ?? (selectedArea && fleetGroups.includes(selectedArea) ? selectedArea : null);
   const filteredVehicles = useMemo(
     () => (effectiveArea ? vehicles.filter((v) => v.fleetGroup === effectiveArea) : vehicles),
     [vehicles, effectiveArea],
@@ -121,6 +125,7 @@ export function FleetProvider({ children }: { children: ReactNode }) {
         vehicles,
         filteredVehicles,
         selectedArea: effectiveArea,
+        fleetGroups,
         setSelectedArea,
         devices,
         positions,

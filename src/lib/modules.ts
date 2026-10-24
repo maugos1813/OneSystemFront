@@ -13,6 +13,7 @@ export const MODULE_KEYS = [
   "cockpit",
   "conduccion",
   "peajes",
+  "vencimientos",
 ] as const;
 
 export type ModuleKey = (typeof MODULE_KEYS)[number];
@@ -33,9 +34,10 @@ export const MODULE_INFO: Record<ModuleKey, ModuleInfo> = {
   cockpit: { label: "Cockpit", hint: "Panel del vehículo con fuerzas G y puntuación de conducción" },
   conduccion: { label: "Conducción", hint: "Comportamiento de los choferes (sensible)" },
   peajes: { label: "Peajes", hint: "Pasajes por peaje y su costo (son costos tuyos)" },
+  vencimientos: { label: "Vencimientos", hint: "Seguro, revisión, bollo y tacógrafo de sus propios vehículos, con avisos" },
 };
 
-/** Ready-made packages. Cockpit, Conducción and Peajes are in none of them. */
+/** Ready-made packages. Cockpit, Conducción, Peajes and Vencimientos are in none of them. */
 export const MODULE_TEMPLATES: Record<"basico" | "estandar" | "completo", readonly ModuleKey[]> = {
   basico: ["mapa", "historial", "alertas"],
   estandar: ["mapa", "historial", "alertas", "analiticas", "vehiculos", "geocercas"],

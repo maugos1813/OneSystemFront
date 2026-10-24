@@ -10,7 +10,9 @@ import type {
   DeviceDetail,
   MaintenancePlan,
   MaintenanceRecord,
+  VehicleDocument,
   VehicleMaintenance,
+  VehicleWithDocuments,
   DrivingStyleResponse,
   DeviceEvent,
   Geofence,
@@ -479,4 +481,31 @@ export function registerMaintenanceService(
 
 export function calibrateOdometer(vehicleId: string, dashboardKm: number): Promise<{ trackerKm: number; offsetKm: number; odometerKm: number }> {
   return request(`/maintenance/vehicles/${vehicleId}/odometer`, { method: "PUT", body: JSON.stringify({ dashboardKm }) });
+}
+
+// --- Vehicle documents (vencimientos) ---
+
+export interface DocumentInput {
+  kind: VehicleDocument["kind"];
+  label?: string | null;
+  /** "YYYY-MM-DD" */
+  expiresOn: string;
+  remindDays?: number;
+  notes?: string | null;
+}
+
+export function listVehicleDocuments(): Promise<VehicleWithDocuments[]> {
+  return request("/vehicle-documents");
+}
+
+export function createVehicleDocument(vehicleId: string, input: DocumentInput): Promise<VehicleDocument> {
+  return request(`/vehicles/${vehicleId}/documents`, { method: "POST", body: JSON.stringify(input) });
+}
+
+export function updateVehicleDocument(id: string, input: Partial<DocumentInput>): Promise<VehicleDocument> {
+  return request(`/vehicle-documents/${id}`, { method: "PATCH", body: JSON.stringify(input) });
+}
+
+export function deleteVehicleDocument(id: string): Promise<void> {
+  return request(`/vehicle-documents/${id}`, { method: "DELETE" });
 }

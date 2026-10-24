@@ -362,3 +362,27 @@ export interface DeviceCommand {
   sentAt: string | null;
   answeredAt: string | null;
 }
+
+export type DocumentKind = "seguro" | "revision" | "bollo" | "tacografo" | "otro";
+export type DocumentState = "ok" | "soon" | "overdue";
+
+export interface VehicleDocument {
+  id: string;
+  vehicleId: string;
+  kind: DocumentKind;
+  label: string | null;
+  /** What to show: the kind's name, or the label of an "otro". */
+  name: string;
+  /** "YYYY-MM-DD" */
+  expiresOn: string;
+  remindDays: number;
+  notes: string | null;
+  status: { state: DocumentState; daysLeft: number };
+}
+
+export interface VehicleWithDocuments {
+  vehicleId: string;
+  name: string;
+  plate: string | null;
+  documents: VehicleDocument[];
+}

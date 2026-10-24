@@ -2,6 +2,7 @@ import {
   BarChart3,
   BellRing,
   Cpu,
+  FileCheck,
   Gauge,
   HeartPulse,
   History,
@@ -42,6 +43,7 @@ export const ONETRACK_NAV: OneTrackNavItem[] = [
   { to: "/salud-dispositivos", label: "Salud del dispositivo", icon: HeartPulse, end: false, ownerAdminOnly: true },
   { to: "/vehiculos", label: "Vehículos", icon: Truck, end: false, module: "vehiculos" },
   { to: "/mantenimiento", label: "Mantenimiento", icon: Wrench, end: false, module: "mantenimiento" },
+  { to: "/vencimientos", label: "Vencimientos", icon: FileCheck, end: false, module: "vencimientos" },
   { to: "/dispositivos", label: "Dispositivos", icon: Smartphone, end: false, ownerAdminOnly: true },
   // API keys authenticate as full access and org settings affect everyone, so these stay with owner/admin.
   { to: "/sims", label: "SIMs", icon: Cpu, end: false, ownerAdminOnly: true },

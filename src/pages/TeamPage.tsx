@@ -20,7 +20,8 @@ import {
   updateTeamMemberProducts,
   updateTeamMemberRole,
 } from "../lib/api";
-import { AREA_OPTIONS } from "../lib/areaFilter";
+import { FleetGroupSelect } from "../components/FleetGroupSelect";
+import { useFleetGroups } from "../lib/useFleetGroups";
 import { fileToLogoDataUrl, LOGO_ACCEPT } from "../lib/logoImage";
 import { MODULE_INFO, MODULE_TEMPLATES, type ModuleKey } from "../lib/modules";
 import type { CurrentUser, Product, TeamMember, TeamRole } from "../lib/types";
@@ -82,19 +83,15 @@ function ProductCheckboxes({
 }
 
 function AreaSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const groups = useFleetGroups();
   return (
-    <select
+    <FleetGroupSelect
       value={value}
-      onChange={(e) => onChange(e.target.value)}
+      onChange={onChange}
+      groups={groups}
+      emptyLabel="Todas las flotas"
       className="field-input rounded-lg border border-slate-300 px-2 py-1 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
-    >
-      <option value="">Todas las áreas</option>
-      {AREA_OPTIONS.map((area) => (
-        <option key={area} value={area}>
-          {area}
-        </option>
-      ))}
-    </select>
+    />
   );
 }
 

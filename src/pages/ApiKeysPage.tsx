@@ -1,8 +1,8 @@
 import { Check, Copy, ExternalLink, Plus, Trash2 } from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
 import { useAuth } from "../context/AuthContext";
+import { useFleet } from "../context/FleetContext";
 import { createApiKey, listApiKeys, revokeApiKey } from "../lib/api";
-import { AREA_OPTIONS } from "../lib/areaFilter";
 import { trackGlow } from "../lib/glow";
 import type { ApiKey, CreatedApiKey } from "../lib/types";
 
@@ -69,6 +69,7 @@ export function ApiKeysPage() {
   const [keys, setKeys] = useState<ApiKey[]>([]);
   const [loading, setLoading] = useState(true);
   const { currentUser } = useAuth();
+  const { fleetGroups } = useFleet();
   const [name, setName] = useState("");
   // "" = access to the whole fleet. A user who is themselves limited to an área can only mint keys for it.
   const [area, setArea] = useState("");
@@ -147,7 +148,7 @@ export function ApiKeysPage() {
             className="field-input w-full rounded-xl border border-slate-300 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
           >
             <option value="">Toda la flota (acceso total)</option>
-            {AREA_OPTIONS.map((a) => (
+            {fleetGroups.map((a) => (
               <option key={a} value={a}>
                 Solo {a}
               </option>

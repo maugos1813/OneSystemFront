@@ -22,6 +22,7 @@ import { SimsPage } from "./pages/SimsPage";
 import { TeamPage } from "./pages/TeamPage";
 import { TollsPage } from "./pages/TollsPage";
 import { VehiclesPage } from "./pages/VehiclesPage";
+import { VencimientosPage } from "./pages/VencimientosPage";
 import { WorkspaceLayout } from "./pages/WorkspaceLayout";
 
 export default function App() {
@@ -56,6 +57,7 @@ export default function App() {
                 />
                 <Route path="/vehiculos" element={<VehiclesPage />} />
                 <Route path="/mantenimiento" element={<MaintenancePage />} />
+                <Route path="/vencimientos" element={<VencimientosPage />} />
                 <Route path="/dispositivos" element={<DevicesPage />} />
                 <Route
                   path="/dispositivos/:id"

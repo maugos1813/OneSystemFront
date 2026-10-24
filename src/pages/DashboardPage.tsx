@@ -3,11 +3,9 @@ import { useMemo, useState } from "react";
 import { MapView } from "../components/MapView";
 import { VehicleDetailPanel } from "../components/VehicleDetailPanel";
 import { VehicleList } from "../components/VehicleList";
-import { useAuth } from "../context/AuthContext";
 import { useFleet } from "../context/FleetContext";
 import { useDeviceEvents } from "../hooks/useDeviceEvents";
 import { usePositionHistory } from "../hooks/usePositionHistory";
-import { AREA_OPTIONS, type AreaFilter } from "../lib/areaFilter";
 import { trackGlow } from "../lib/glow";
 
 /** Below `lg` there isn't room for the vehicle list next to the map, so it starts collapsed there. */
@@ -15,15 +13,8 @@ function prefersOpenByDefault(): boolean {
   return typeof window !== "undefined" && window.matchMedia("(min-width: 1024px)").matches;
 }
 
-const VIEWS: { key: AreaFilter; label: string }[] = [
-  { key: null, label: "Todas" },
-  ...AREA_OPTIONS.map((area) => ({ key: area, label: area })),
-];
-
 export function DashboardPage() {
-  const { currentUser } = useAuth();
-  const { filteredVehicles: vehicles, devices, positions, loading, error, selectedArea, setSelectedArea } =
-    useFleet();
+  const { filteredVehicles: vehicles, devices, positions, loading, error } = useFleet();
   const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
   const [historyRangeHours, setHistoryRangeHours] = useState<number | null>(null);
   const [listOpen, setListOpen] = useState(prefersOpenByDefault);
@@ -36,13 +27,10 @@ export function DashboardPage() {
   const { history } = usePositionHistory(selectedVehicleId, historyFrom);
   const { events } = useDeviceEvents(selectedVehicleId);
 
-  const selectedVehicle = vehicles.find((v) => v.id === selectedVehicleId) ?? null;
+  // A vehicle shows on the map only once it has a device; until then the client waits for their admin to assign one.
+  const hasTrackedVehicle = vehicles.some((v) => v.deviceId);
 
-  function changeView(next: AreaFilter) {
-    setSelectedArea(next);
-    setSelectedVehicleId(null);
-    setHistoryRangeHours(null);
-  }
+  const selectedVehicle = vehicles.find((v) => v.id === selectedVehicleId) ?? null;
 
   function selectVehicle(vehicleId: string) {
     setSelectedVehicleId(vehicleId);
@@ -78,21 +66,16 @@ export function DashboardPage() {
           historyPath={history}
         />
 
-        {!currentUser?.allowedArea && (
-          <div className="float-card absolute top-4 left-4 z-10 flex gap-0.5 rounded-full bg-white p-0.5 shadow-lg shadow-slate-300/40 dark:bg-[#111729] dark:shadow-black/40">
-            {VIEWS.map((v) => (
-              <button
-                key={v.label}
-                onClick={() => changeView(v.key)}
-                className={`rounded-full px-2.5 py-1 text-xs font-medium whitespace-nowrap transition ${
-                  selectedArea === v.key
-                    ? "brand-gradient text-white"
-                    : "text-slate-500 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-white/5"
-                }`}
-              >
-                {v.label}
-              </button>
-            ))}
+        {!hasTrackedVehicle && (
+          <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center p-4">
+            <div className="float-card max-w-sm rounded-3xl bg-white p-6 text-center shadow-xl shadow-slate-300/40 dark:bg-[#111729] dark:shadow-black/40">
+              <p className="text-base font-semibold text-slate-900 dark:text-white">Todavía no hay dispositivos en tu flota</p>
+              <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                {vehicles.length === 0
+                  ? "Tus vehículos aparecerán en el mapa en cuanto tengas un dispositivo asignado."
+                  : "Tus vehículos ya están registrados. Aparecerán en el mapa cuando tu administrador les asigne un dispositivo."}
+              </p>
+            </div>
           </div>
         )}
 

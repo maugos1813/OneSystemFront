@@ -133,7 +133,7 @@ export function AppLayout() {
             )}
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">
-                {currentUser?.orgName ?? "..."}
+                {currentUser?.name.trim() || currentUser?.orgName || "..."}
               </p>
               <p className="hidden truncate text-xs text-slate-500 sm:block dark:text-slate-400">
                 {currentUser?.email}
