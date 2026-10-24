@@ -16,7 +16,7 @@ function prefersOpenByDefault(): boolean {
 
 export function DashboardPage() {
   const t = useT();
-  const { filteredVehicles: vehicles, devices, positions, loading, error } = useFleet();
+  const { filteredVehicles: vehicles, devices, positions, loading, error, sharedVehicles } = useFleet();
   const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
   const [historyRangeHours, setHistoryRangeHours] = useState<number | null>(null);
   const [listOpen, setListOpen] = useState(prefersOpenByDefault);
@@ -66,9 +66,10 @@ export function DashboardPage() {
           selectedVehicleId={selectedVehicleId}
           onSelectVehicle={selectVehicle}
           historyPath={history}
+          sharedVehicles={sharedVehicles}
         />
 
-        {!hasTrackedVehicle && (
+        {!hasTrackedVehicle && sharedVehicles.length === 0 && (
           <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center p-4">
             <div className="float-card max-w-sm rounded-3xl bg-white p-6 text-center shadow-xl shadow-slate-300/40 dark:bg-[#111729] dark:shadow-black/40">
               <p className="text-base font-semibold text-slate-900 dark:text-white">{t("map.noDevicesTitle")}</p>

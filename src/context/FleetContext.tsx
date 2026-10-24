@@ -1,11 +1,12 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useAuth } from "./AuthContext";
 import { useAllPositions } from "../hooks/useAllPositions";
+import { useDriverVehicles } from "../hooks/useDriverVehicles";
 import { useLiveAlerts } from "../hooks/useLiveAlerts";
 import { getSettings, listDevices, listGeofences, listVehicles } from "../lib/api";
 import type { Alert } from "../lib/alerts";
 import { getStoredAreaFilter, setStoredAreaFilter, uniqueFleetGroups, type AreaFilter } from "../lib/areaFilter";
-import type { Device, Geofence, OrgSettings, Position, Vehicle } from "../lib/types";
+import type { Device, Geofence, OrgSettings, Position, SharedVehicle, Vehicle } from "../lib/types";
 
 interface FleetContextValue {
   /** The complete fleet, regardless of the área filter — positions/alerts always poll
@@ -23,6 +24,8 @@ interface FleetContextValue {
   settings: OrgSettings | null;
   geofences: Geofence[];
   alerts: Alert[];
+  /** Gamonal vehicles Gamonal Driver lets a client see on the map (read-only, not part of their fleet). */
+  sharedVehicles: SharedVehicle[];
   loading: boolean;
   error: string | null;
   refetch: () => void;
@@ -100,6 +103,8 @@ export function FleetProvider({ children }: { children: ReactNode }) {
   }, [geofencesToken]);
 
   const positions = useAllPositions(vehicles);
+  // Only a client with a flota and the map: the organization's own people already see the whole fleet.
+  const sharedVehicles = useDriverVehicles(!!currentUser?.allowedArea && !!currentUser.modules.includes("mapa"));
   const alerts = useLiveAlerts(vehicles, devices, positions, settings, geofences);
   const refetch = useCallback(() => setRefetchToken((t) => t + 1), []);
   const refetchSettings = useCallback(() => setSettingsToken((t) => t + 1), []);
@@ -132,6 +137,7 @@ export function FleetProvider({ children }: { children: ReactNode }) {
         settings,
         geofences,
         alerts,
+        sharedVehicles,
         loading,
         error,
         refetch,

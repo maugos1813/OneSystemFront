@@ -210,6 +210,8 @@ export const es = {
   "api.invalidCredentials": "Email o contraseña incorrectos",
   "api.deviceAssigned": "Este vehículo tiene un dispositivo asignado. Confirma que quieres eliminarlo.",
   "api.error": "Error {status}",
+  "map.legendShared": "Flota de Gamonal (solo lectura)",
+  "map.sharedTitle": "Gamonal · {plate}",
   // @@END
 } as const satisfies Record<string, string>;
 

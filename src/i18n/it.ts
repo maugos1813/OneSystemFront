@@ -209,5 +209,7 @@ export const it: Record<MessageKey, string> = {
   "api.invalidCredentials": "E-mail o password errati",
   "api.deviceAssigned": "Questo veicolo ha un dispositivo assegnato. Conferma di volerlo eliminare.",
   "api.error": "Errore {status}",
+  "map.legendShared": "Flotta Gamonal (sola lettura)",
+  "map.sharedTitle": "Gamonal · {plate}",
   // @@END
 };

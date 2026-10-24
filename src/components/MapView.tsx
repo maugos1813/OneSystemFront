@@ -8,7 +8,7 @@ import { useSmoothedPosition } from "../hooks/useSmoothedPosition";
 import { geofenceZoneColor } from "../lib/geo";
 import { DARK_MAP_STYLE } from "../lib/mapStyle";
 import { getVehicleIcon } from "../lib/markerIcon";
-import type { Geofence, Position, Vehicle } from "../lib/types";
+import { AVL_ID, type Geofence, type Position, type SharedVehicle, type Vehicle } from "../lib/types";
 
 const FOCUS_ZOOM = 15;
 
@@ -43,6 +43,8 @@ interface MapViewProps {
   selectedVehicleId: string | null;
   onSelectVehicle: (vehicleId: string) => void;
   historyPath?: Position[];
+  /** Gamonal vehicles shown to a client by Gamonal Driver: same colours, fainter, no detail. */
+  sharedVehicles?: SharedVehicle[];
 }
 
 const DEFAULT_CENTER = { lat: 41.9028, lng: 12.4964 }; // Roma, como fallback sin posiciones aún
@@ -53,6 +55,26 @@ interface AnimatedVehicleMarkerProps {
   selected: boolean;
   onSelect: (vehicleId: string) => void;
   theme: "light" | "dark";
+}
+
+const normalizePlate = (plate: string | null | undefined) => (plate ?? "").replace(/\s+/g, "").toUpperCase();
+
+/** A Gamonal vehicle seen through Gamonal Driver: the same colours as the client's own, fainter, with its plate. */
+function SharedVehicleMarker({ vehicle, theme, title }: { vehicle: SharedVehicle; theme: "light" | "dark"; title: string }) {
+  const position = {
+    ioData: { [AVL_ID.IGNITION]: vehicle.ignition ? 1 : 0 },
+    speed: vehicle.speed ?? 0,
+    angle: vehicle.direction ?? 0,
+  } as unknown as Position;
+  return (
+    <Marker
+      position={{ lat: vehicle.lat, lng: vehicle.lng }}
+      title={title}
+      opacity={0.6}
+      icon={getVehicleIcon(position)}
+      label={{ text: vehicle.plate, className: "vehicle-plate-label", color: theme === "dark" ? "#e2e8f0" : "#0f172a" }}
+    />
+  );
 }
 
 /** Glides between real reports instead of snapping — see useSmoothedPosition. Split out
@@ -86,6 +108,7 @@ export function MapView({
   selectedVehicleId,
   onSelectVehicle,
   historyPath,
+  sharedVehicles = [],
 }: MapViewProps) {
   const t = useT();
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
@@ -97,7 +120,11 @@ export function MapView({
     .map((v) => positions[v.id])
     .filter((p): p is Position => p !== undefined);
 
-  const center = (selectedVehicleId && positions[selectedVehicleId]) ?? knownPositions[0] ?? null;
+  // A vehicle the client also has of their own is drawn once, as theirs.
+  const ownPlates = new Set(vehicles.map((v) => normalizePlate(v.plate)));
+  const shared = sharedVehicles.filter((v) => !ownPlates.has(v.plate));
+
+  const center = (selectedVehicleId && positions[selectedVehicleId]) ?? knownPositions[0] ?? shared[0] ?? null;
 
   if (!apiKey) {
     return (
@@ -163,18 +190,22 @@ export function MapView({
               />
             );
           })}
+
+          {shared.map((vehicle) => (
+            <SharedVehicleMarker key={vehicle.plate} vehicle={vehicle} theme={theme} title={t("map.sharedTitle", { plate: vehicle.plate })} />
+          ))}
         </Map>
 
         {/* Just above Google's own logo, which has to stay visible. */}
         <div className="absolute bottom-6 left-2 z-0">
-          <MapLegend zonePolygons={zonePolygons} />
+          <MapLegend zonePolygons={zonePolygons} showShared={shared.length > 0} />
         </div>
       </MapsProvider>
     </div>
   );
 }
 
-function MapLegend({ zonePolygons }: { zonePolygons: Geofence[] }) {
+function MapLegend({ zonePolygons, showShared }: { zonePolygons: Geofence[]; showShared: boolean }) {
   const t = useT();
   const zoneNames = [...new Set(zonePolygons.map((g) => g.name))];
 
@@ -192,6 +223,12 @@ function MapLegend({ zonePolygons }: { zonePolygons: Geofence[] }) {
         <span className="text-green-600">▲</span>
         {t("map.legendMoving")}
       </div>
+      {showShared && (
+        <div className="flex items-center gap-2 border-t border-slate-100 pt-1.5 dark:border-white/10">
+          <span className="h-2.5 w-2.5 rounded-full border-2 border-slate-400 bg-transparent" />
+          {t("map.legendShared")}
+        </div>
+      )}
       {zoneNames.length > 0 && (
         <div className="mt-1 flex flex-col gap-1.5 border-t border-slate-100 pt-1.5 dark:border-white/10">
           {zoneNames.map((name) => (

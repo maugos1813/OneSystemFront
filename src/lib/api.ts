@@ -8,6 +8,7 @@ import type {
   CurrentUser,
   Device,
   DeviceCommand,
+  SharedVehicle,
   DeviceDetail,
   MaintenancePlan,
   MaintenanceRecord,
@@ -189,6 +190,11 @@ export function getSimSecrets(id: string): Promise<SimSecrets> {
 
 export function listVehicles(): Promise<Vehicle[]> {
   return request("/vehicles");
+}
+
+/** The Gamonal vehicles Gamonal Driver lets this client see on the map (empty for anyone without that access). */
+export async function listDriverVehicles(): Promise<SharedVehicle[]> {
+  return (await request<{ vehicles: SharedVehicle[] }>("/driver-vehicles")).vehicles;
 }
 
 export interface VehicleInput {

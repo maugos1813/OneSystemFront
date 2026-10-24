@@ -101,6 +101,17 @@ export interface CurrentUser {
   language: "es" | "it";
 }
 
+/** A Gamonal vehicle a client sees on the map because the admin of Gamonal Driver switched it on there. Read-only. */
+export interface SharedVehicle {
+  plate: string;
+  lat: number;
+  lng: number;
+  speed: number | null;
+  ignition: boolean | null;
+  direction: number | null;
+  updatedAt: string | null;
+}
+
 export interface DeviceEvent {
   id: string;
   deviceId: string;
