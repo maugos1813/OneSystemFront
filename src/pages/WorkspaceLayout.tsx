@@ -15,6 +15,7 @@ import {
   Users,
   type LucideIcon,
 } from "lucide-react";
+import { Capacitor } from "@capacitor/core";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link, Navigate, Outlet, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { AlertsPanel } from "../components/AlertsPanel";
@@ -424,6 +425,7 @@ function ExternalPanel({
 }) {
   const [ssoSrc, setSsoSrc] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
+  const native = Capacitor.isNativePlatform();
   const fallback = product.url ?? null;
 
   useEffect(() => {
@@ -447,12 +449,15 @@ function ExternalPanel({
         expanded={expanded}
         onToggle={onToggle}
         action={
-          <button
-            onClick={() => void openInNewTab(product)}
-            className="flex items-center gap-1.5 rounded-xl border border-slate-300 px-3 py-1.5 text-sm text-slate-700 transition hover:bg-slate-50 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5"
-          >
-            <ExternalLink className="h-4 w-4" /> <span className="hidden sm:inline">Abrir en pestaña nueva</span>
-          </button>
+          // Inside the Android app, and on a phone, everything opens in place: a second tab has no place there.
+          native ? undefined : (
+            <button
+              onClick={() => void openInNewTab(product)}
+              className="hidden items-center gap-1.5 rounded-xl border border-slate-300 px-3 py-1.5 text-sm text-slate-700 transition hover:bg-slate-50 sm:flex dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5"
+            >
+              <ExternalLink className="h-4 w-4" /> Abrir en pestaña nueva
+            </button>
+          )
         }
       />
       <div
@@ -475,8 +480,8 @@ function ExternalPanel({
           />
         )}
       </div>
-      {!expanded && (
-        <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">¿No carga o pide iniciar sesión? Ábrelo en una pestaña nueva.</p>
+      {!expanded && !native && (
+        <p className="mt-2 hidden text-xs text-slate-400 sm:block dark:text-slate-500">¿No carga o pide iniciar sesión? Ábrelo en una pestaña nueva.</p>
       )}
     </div>
   );

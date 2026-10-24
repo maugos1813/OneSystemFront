@@ -1,5 +1,5 @@
 import { Bell, Download } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState, type CSSProperties } from "react";
 import { Link } from "react-router-dom";
 import { useAppUpdate } from "../context/AppUpdateContext";
 import { useFleet } from "../context/FleetContext";
@@ -10,11 +10,19 @@ export function AlertsPanel() {
   // A newer Android app counts as one more notification, so the bell calls attention to it.
   const count = alerts.length + (update.available ? 1 : 0);
   const [open, setOpen] = useState(false);
+  // On a phone the bell is in the middle of the bar, so a panel hanging from it would run off the screen: there it opens
+  // across the screen, just below the bell. On a larger screen it hangs from the bell as before.
+  const button = useRef<HTMLButtonElement>(null);
+  const [top, setTop] = useState(0);
 
   return (
     <div className="relative">
       <button
-        onClick={() => setOpen((o) => !o)}
+        ref={button}
+        onClick={() => {
+          setTop((button.current?.getBoundingClientRect().bottom ?? 56) + 8);
+          setOpen((o) => !o);
+        }}
         className="relative rounded-xl p-2 text-slate-500 transition hover:bg-violet-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/5 dark:hover:text-white"
         aria-label="Alertas"
       >
@@ -29,7 +37,9 @@ export function AlertsPanel() {
       {open && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 z-20 mt-2 w-[85vw] max-w-80 rounded-2xl border border-violet-100 bg-white p-2 shadow-lg shadow-violet-100 dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40">
+          <div
+            style={{ "--panel-top": `${top}px` } as CSSProperties}
+            className="fixed inset-x-3 top-[var(--panel-top)] z-20 max-h-[70vh] overflow-y-auto rounded-2xl sm:absolute sm:inset-x-auto sm:top-auto sm:right-0 sm:mt-2 sm:w-80 border border-violet-100 bg-white p-2 shadow-lg shadow-violet-100 dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40">
             <p className="px-2 py-1 text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-500">
               Alertas
             </p>
