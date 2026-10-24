@@ -27,6 +27,53 @@ body,
   }
 }
 
+/*
+ * The client's logo on a phone opens the apps menu. Every few seconds it wiggles and sends out a ring, like a button
+ * asking to be pressed; from 1024px up (where the menu is always visible) and for anyone who asked their phone for less
+ * motion it stays still.
+ */
+@keyframes logo-nudge {
+  0%,
+  62%,
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
+  70% {
+    transform: scale(1.14) rotate(-7deg);
+  }
+  78% {
+    transform: scale(1.14) rotate(7deg);
+  }
+  86% {
+    transform: scale(1.08) rotate(-3deg);
+  }
+  93% {
+    transform: scale(1.03) rotate(0deg);
+  }
+}
+
+@keyframes logo-ring {
+  0%,
+  62% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.5);
+  }
+  100% {
+    box-shadow: 0 0 0 16px rgba(59, 130, 246, 0);
+  }
+}
+
+.logo-nudge {
+  animation:
+    logo-nudge 4.5s ease-in-out infinite,
+    logo-ring 4.5s ease-out infinite;
+}
+
+@media (min-width: 1024px), (prefers-reduced-motion: reduce) {
+  .logo-nudge {
+    animation: none;
+  }
+}
+
 body {
   background: #f5f6fb;
 }

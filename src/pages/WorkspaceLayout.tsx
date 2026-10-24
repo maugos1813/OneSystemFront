@@ -7,12 +7,14 @@ import {
   LogOut,
   Map as MapIcon,
   Maximize2,
+  Menu,
   Minimize2,
   Moon,
   Settings,
   Sun,
   Truck,
   Users,
+  X,
   type LucideIcon,
 } from "lucide-react";
 import { Capacitor } from "@capacitor/core";
@@ -120,6 +122,8 @@ function Workspace({ products }: { products: Product[] }) {
   const [visited, setVisited] = useState<string[]>([]);
   // The external app (by key) whose map is showing full screen: the whole window is for it, with no bars around.
   const [immersive, setImmersive] = useState<string | null>(null);
+  // The apps menu on a phone: it slides in from the left when the client taps their logo.
+  const [menuOpen, setMenuOpen] = useState(false);
 
   // Away from "/" OneTrack's own pages are showing; for an external app the flag is in the address.
   const expanded = !atHome || (params.get("full") === "1" && selected?.type === "external") || immersive !== null;
@@ -130,6 +134,7 @@ function Workspace({ products }: { products: Product[] }) {
       setVisited((current) => (current.includes(key) ? current : [...current, key]));
     }
     setImmersive(null);
+    setMenuOpen(false);
     setParams({ app: key }, { replace: true });
   };
   const expand = () => {
@@ -155,12 +160,12 @@ function Workspace({ products }: { products: Product[] }) {
           expanded ? "mb-0 max-h-0 overflow-hidden opacity-0" : "mb-3 max-h-28 sm:mb-4"
         }`}
       >
-        <TopBar bell={hasOneTrack ? <AlertsPanel /> : null} />
+        <TopBar bell={hasOneTrack ? <AlertsPanel /> : null} onOpenMenu={() => setMenuOpen(true)} />
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
         <aside
-          className={`${PANEL} shrink-0 overflow-hidden transition-all duration-300 lg:w-72 ${
+          className={`${PANEL} hidden shrink-0 overflow-hidden transition-all duration-300 lg:block lg:w-72 ${
             expanded
               ? "mb-0 max-h-0 max-w-0 border-0 p-0 opacity-0 lg:mr-0"
               : "mb-3 max-h-96 p-3 sm:mb-4 lg:mr-4 lg:mb-0 lg:max-h-none lg:max-w-72"
@@ -217,11 +222,20 @@ function Workspace({ products }: { products: Product[] }) {
             ))}
         </main>
       </div>
+
+      <MobileMenu
+        open={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        products={products}
+        selectedKey={selectedKey}
+        showingConfig={showingConfig}
+        onSelect={select}
+      />
     </div>
   );
 }
 
-function TopBar({ bell }: { bell: ReactNode }) {
+function TopBar({ bell, onOpenMenu }: { bell: ReactNode; onOpenMenu: () => void }) {
   const { currentUser, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [open, setOpen] = useState(false);
@@ -233,15 +247,18 @@ function TopBar({ bell }: { bell: ReactNode }) {
     <header className={`${PANEL} flex items-center justify-between gap-3 px-4 py-3 sm:px-5`}>
       {/* The client using the app: their logo (or an initial until they upload one) and name. */}
       <div className="flex min-w-0 items-center gap-3">
-        <span className="flex h-11 max-w-40 min-w-11 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white p-0.5 shadow-md shadow-blue-200/60 ring-1 ring-slate-200 dark:ring-white/10">
-          {logo ? (
-            <img src={logo} alt={title} className="h-full w-auto max-w-full object-contain" />
-          ) : (
-            <span className="brand-gradient flex aspect-square h-full items-center justify-center rounded-[0.85rem] text-lg font-bold text-white">
-              {(title.trim().charAt(0) || "·").toUpperCase()}
-            </span>
-          )}
-        </span>
+        {/* On a phone the logo opens the apps menu, and it nudges now and then so people find out. */}
+        <button
+          type="button"
+          onClick={onOpenMenu}
+          aria-label="Abrir el menú de aplicaciones"
+          className="logo-nudge relative shrink-0 rounded-2xl lg:pointer-events-none lg:cursor-default"
+        >
+          <ClientLogo logo={logo} title={title} />
+          <span className="absolute -right-1 -bottom-1 flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-white shadow ring-2 ring-white lg:hidden dark:ring-[#111729]">
+            <Menu className="h-3 w-3" />
+          </span>
+        </button>
         <div className="min-w-0">
           <p className="truncate text-xl font-semibold text-slate-900 dark:text-white">{title}</p>
           <p className="truncate text-sm text-slate-500 dark:text-slate-400">Business Workspace</p>
@@ -288,12 +305,106 @@ function TopBar({ bell }: { bell: ReactNode }) {
   );
 }
 
-function SidebarItem({ active, onClick, children }: { active: boolean; onClick: () => void; children: ReactNode }) {
+/** The client's logo (or an initial in a coloured tile until they upload one). */
+function ClientLogo({ logo, title }: { logo: string | null; title: string }) {
+  return (
+    <span className="flex h-11 max-w-40 min-w-11 items-center justify-center overflow-hidden rounded-2xl bg-white p-0.5 shadow-md shadow-blue-200/60 ring-1 ring-slate-200 dark:ring-white/10">
+      {logo ? (
+        <img src={logo} alt={title} className="h-full w-auto max-w-full object-contain" />
+      ) : (
+        <span className="brand-gradient flex aspect-square h-full items-center justify-center rounded-[0.85rem] text-lg font-bold text-white">
+          {(title.trim().charAt(0) || "·").toUpperCase()}
+        </span>
+      )}
+    </span>
+  );
+}
+
+/** The apps menu for a phone: the apps on top, and the system's settings and sign out at the bottom. */
+function MobileMenu({
+  open,
+  onClose,
+  products,
+  selectedKey,
+  showingConfig,
+  onSelect,
+}: {
+  open: boolean;
+  onClose: () => void;
+  products: Product[];
+  selectedKey: string;
+  showingConfig: boolean;
+  onSelect: (key: string) => void;
+}) {
+  const { currentUser, logout } = useAuth();
+  const logo = currentUser?.userLogo ?? currentUser?.orgLogo ?? null;
+  const title = currentUser?.name.trim() || currentUser?.orgName || "...";
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (event: KeyboardEvent) => event.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+
+  return (
+    <div className={`fixed inset-0 z-50 lg:hidden ${open ? "" : "pointer-events-none"}`} aria-hidden={!open}>
+      <div onClick={onClose} className={`absolute inset-0 bg-slate-900/40 transition-opacity duration-200 ${open ? "opacity-100" : "opacity-0"}`} />
+      <aside
+        role="dialog"
+        aria-label="Menú de aplicaciones"
+        className={`absolute inset-y-0 left-0 flex w-72 max-w-[85vw] flex-col bg-white p-3 shadow-2xl transition-transform duration-200 dark:bg-[#111729] ${
+          open ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <div className="mb-3 flex items-center gap-3 px-1 pt-1">
+          <ClientLogo logo={logo} title={title} />
+          <p className="min-w-0 flex-1 truncate text-base font-semibold text-slate-900 dark:text-white">{title}</p>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Cerrar el menú"
+            className="rounded-xl p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-white/10"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <p className="px-2 pb-2 text-xs font-semibold tracking-wide text-slate-500 uppercase dark:text-slate-400">Aplicaciones</p>
+        <nav className="flex flex-col gap-1">
+          {products.map((product) => (
+            <SidebarItem key={product.key} active={product.key === selectedKey && !showingConfig} onClick={() => onSelect(product.key)} full>
+              <ProductIcon product={product} />
+              {product.name}
+            </SidebarItem>
+          ))}
+        </nav>
+
+        <div className="mt-auto flex flex-col gap-1 border-t border-slate-200 pt-3 dark:border-white/10">
+          <SidebarItem active={showingConfig} onClick={() => onSelect(CONFIG_KEY)} full>
+            <Settings className="h-5 w-5 shrink-0 text-slate-400" />
+            Configuración
+          </SidebarItem>
+          <button
+            type="button"
+            onClick={logout}
+            className="flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left text-[15px] font-medium text-slate-600 transition hover:bg-red-50 hover:text-red-600 dark:text-slate-300 dark:hover:bg-red-500/10 dark:hover:text-red-400"
+          >
+            <LogOut className="h-5 w-5 shrink-0" />
+            Cerrar sesión
+          </button>
+        </div>
+      </aside>
+    </div>
+  );
+}
+
+function SidebarItem({ active, onClick, children, full = false }: { active: boolean; onClick: () => void; children: ReactNode; full?: boolean }) {
   return (
     <button
       onClick={onClick}
       onMouseMove={trackGlow}
-      className={`glow flex shrink-0 items-center gap-3 rounded-2xl px-3 py-3 text-left text-[15px] font-medium whitespace-nowrap transition lg:w-full ${
+      className={`glow flex shrink-0 items-center gap-3 rounded-2xl px-3 py-3 text-left text-[15px] font-medium whitespace-nowrap transition ${full ? "w-full" : "lg:w-full"} ${
         active
           ? "bg-blue-100 text-blue-900 dark:bg-blue-500/20 dark:text-blue-100"
           : "text-slate-600 hover:bg-violet-50 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white"
