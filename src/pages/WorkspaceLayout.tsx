@@ -275,10 +275,11 @@ function TopBar({ bell, onOpenMenu }: { bell: ReactNode; onOpenMenu: () => void 
         >
           {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
         </button>
+        {/* On a phone sign out lives in the apps menu and the profile in Configuración, so this menu is for larger screens. */}
         <button
           onClick={() => setOpen((o) => !o)}
           aria-label="Mi cuenta"
-          className="rounded-xl p-2 text-slate-500 transition hover:bg-violet-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/5 dark:hover:text-white"
+          className="hidden rounded-xl p-2 lg:block text-slate-500 transition hover:bg-violet-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/5 dark:hover:text-white"
         >
           <CircleUser className="h-6 w-6" />
         </button>
@@ -623,6 +624,35 @@ function ExternalPanel({
   );
 }
 
+/** Who is signed in, kept short: these are companies, so just the name, the email and the fleet they see. */
+function ProfileCard() {
+  const { currentUser } = useAuth();
+  if (!currentUser) return null;
+  const rows: Array<[string, string | null]> = [
+    ["Nombre", currentUser.name.trim() || currentUser.orgName],
+    ["Correo", currentUser.email],
+    ["Flota", currentUser.allowedArea],
+  ];
+  return (
+    <div className="flex items-start gap-3 rounded-2xl border border-slate-200 p-4 dark:border-white/10 sm:col-span-2">
+      <CircleUser className="mt-0.5 h-5 w-5 shrink-0 text-blue-600 dark:text-blue-400" />
+      <div className="min-w-0 flex-1">
+        <p className="text-[15px] font-medium text-slate-900 dark:text-white">Mi perfil</p>
+        <dl className="mt-1 space-y-0.5 text-sm">
+          {rows.map(([label, value]) =>
+            value ? (
+              <div key={label} className="flex gap-2">
+                <dt className="w-14 shrink-0 text-slate-500 dark:text-slate-400">{label}</dt>
+                <dd className="min-w-0 break-words text-slate-900 dark:text-white">{value}</dd>
+              </div>
+            ) : null,
+          )}
+        </dl>
+      </div>
+    </div>
+  );
+}
+
 function ConfigPanel({ role }: { role: string | undefined }) {
   const manageTeam = role !== "viewer";
   const admin = role === "owner" || role === "admin";
@@ -641,6 +671,7 @@ function ConfigPanel({ role }: { role: string | undefined }) {
       <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">Configuración</h1>
       <p className="mt-1 mb-4 text-sm text-slate-500 dark:text-slate-400">Administración de tu espacio de trabajo</p>
       <div className="grid gap-3 sm:grid-cols-2">
+        <ProfileCard />
         <AppUpdateCard />
         {items.map(({ to, label, hint, icon: Icon }) => (
             <Link
