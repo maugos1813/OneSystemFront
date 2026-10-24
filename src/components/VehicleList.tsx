@@ -4,6 +4,7 @@ import { useT } from "../i18n";
 import { trackGlow } from "../lib/glow";
 import type { Device, Vehicle } from "../lib/types";
 import { StatusBadge } from "./StatusBadge";
+import type { SharedVehicle } from "../lib/types";
 
 interface VehicleListProps {
   vehicles: Vehicle[];
@@ -13,6 +14,10 @@ interface VehicleListProps {
   /** Below `lg` there's no room for the list next to the map, so it's an off-canvas drawer there. */
   open: boolean;
   onClose: () => void;
+  /** Gamonal vehicles the client also sees on the map (already narrowed by the map's pills), listed after their own. */
+  sharedVehicles?: SharedVehicle[];
+  selectedSharedPlate?: string | null;
+  onSelectShared?: (plate: string) => void;
 }
 
 function isOffCanvasSize(): boolean {
@@ -26,6 +31,9 @@ export function VehicleList({
   onSelect,
   open,
   onClose,
+  sharedVehicles = [],
+  selectedSharedPlate = null,
+  onSelectShared,
 }: VehicleListProps) {
   const t = useT();
   const deviceById = new Map(devices.map((d) => [d.id, d]));
@@ -38,6 +46,11 @@ export function VehicleList({
       (v) => v.name.toLowerCase().includes(query) || (v.plate ?? "").toLowerCase().includes(query),
     );
   }, [vehicles, search]);
+
+  const filteredShared = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    return query ? sharedVehicles.filter((v) => v.plate.toLowerCase().includes(query)) : sharedVehicles;
+  }, [sharedVehicles, search]);
 
   return (
     <>
@@ -76,9 +89,9 @@ export function VehicleList({
           </div>
 
           <div className="styled-scrollbar flex-1 overflow-y-auto">
-            {filteredVehicles.length === 0 && (
+            {filteredVehicles.length === 0 && filteredShared.length === 0 && (
               <p className="p-4 text-sm text-slate-500 dark:text-slate-400">
-                {vehicles.length === 0 ? t("vehicles.noneYet") : t("vehicles.noMatch")}
+                {vehicles.length === 0 && sharedVehicles.length === 0 ? t("vehicles.noneYet") : t("vehicles.noMatch")}
               </p>
             )}
 
@@ -114,6 +127,38 @@ export function VehicleList({
                   <div className="shrink-0">
                     <StatusBadge lastSeenAt={device?.lastSeenAt ?? null} />
                   </div>
+                </button>
+              );
+            })}
+
+            {filteredShared.map((vehicle) => {
+              const moving = (vehicle.speed ?? 0) > 0;
+              const dot = moving ? "bg-green-600" : vehicle.ignition ? "bg-orange-500" : "bg-red-600";
+              const label = moving ? t("map.legendMoving") : vehicle.ignition ? t("map.legendIdle") : t("map.legendOff");
+              return (
+                <button
+                  key={vehicle.plate}
+                  onClick={() => {
+                    onSelectShared?.(vehicle.plate);
+                    if (isOffCanvasSize()) onClose();
+                  }}
+                  onMouseMove={trackGlow}
+                  className={`glow flex w-full items-center justify-between gap-2 border-b border-slate-100 px-4 py-4 text-left transition dark:border-white/5 ${
+                    selectedSharedPlate === vehicle.plate ? "brand-gradient-soft dark:bg-blue-500/15" : "hover:bg-slate-50 dark:hover:bg-white/5"
+                  }`}
+                >
+                  <div className="flex min-w-0 flex-col gap-1.5">
+                    <div className="flex min-w-0 items-center gap-1.5">
+                      <span className="truncate font-medium text-slate-900 dark:text-white">{vehicle.plate}</span>
+                      <span className="inline-flex shrink-0 items-center rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600 uppercase dark:bg-white/10 dark:text-slate-300">
+                        {t("map.filterGamonal")}
+                      </span>
+                    </div>
+                  </div>
+                  <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600 dark:bg-white/5 dark:text-slate-300">
+                    <span className={`h-1.5 w-1.5 rounded-full ${dot}`} />
+                    {label}
+                  </span>
                 </button>
               );
             })}

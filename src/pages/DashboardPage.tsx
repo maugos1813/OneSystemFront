@@ -2,6 +2,7 @@ import { List } from "lucide-react";
 import { useMemo, useState } from "react";
 import { MapView } from "../components/MapView";
 import { VehicleDetailPanel } from "../components/VehicleDetailPanel";
+import { SharedVehiclePanel } from "../components/SharedVehiclePanel";
 import { VehicleList } from "../components/VehicleList";
 import { useAuth } from "../context/AuthContext";
 import { useFleet } from "../context/FleetContext";
@@ -9,6 +10,7 @@ import { useDeviceEvents } from "../hooks/useDeviceEvents";
 import { usePositionHistory } from "../hooks/usePositionHistory";
 import { useT } from "../i18n";
 import { trackGlow } from "../lib/glow";
+import { normalizePlate } from "../lib/plate";
 
 /** Below `lg` there isn't room for the vehicle list next to the map, so it starts collapsed there. */
 function prefersOpenByDefault(): boolean {
@@ -24,6 +26,7 @@ export function DashboardPage() {
   const [source, setSource] = useState<MapSource>("all");
   const { filteredVehicles: vehicles, devices, positions, loading, error, sharedVehicles } = useFleet();
   const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
+  const [selectedSharedPlate, setSelectedSharedPlate] = useState<string | null>(null);
   const [historyRangeHours, setHistoryRangeHours] = useState<number | null>(null);
   const [listOpen, setListOpen] = useState(prefersOpenByDefault);
 
@@ -40,8 +43,24 @@ export function DashboardPage() {
 
   const selectedVehicle = vehicles.find((v) => v.id === selectedVehicleId) ?? null;
 
+  // What the pills ask for. A Gamonal vehicle the client also has of their own is shown once, as theirs.
+  const showOwn = source !== "gamonal";
+  const visibleShared = useMemo(() => {
+    if (source === "own") return [];
+    const ownPlates = new Set(vehicles.map((v) => normalizePlate(v.plate)));
+    return sharedVehicles.filter((v) => !(showOwn && ownPlates.has(v.plate)));
+  }, [source, showOwn, vehicles, sharedVehicles]);
+  const selectedShared = visibleShared.find((v) => v.plate === selectedSharedPlate) ?? null;
+
   function selectVehicle(vehicleId: string) {
     setSelectedVehicleId(vehicleId);
+    setSelectedSharedPlate(null);
+    setHistoryRangeHours(null);
+  }
+
+  function selectShared(plate: string) {
+    setSelectedSharedPlate(plate);
+    setSelectedVehicleId(null);
     setHistoryRangeHours(null);
   }
 
@@ -58,12 +77,15 @@ export function DashboardPage() {
   return (
     <div className="relative flex h-full overflow-hidden">
       <VehicleList
-        vehicles={vehicles}
+        vehicles={showOwn ? vehicles : []}
         devices={devices}
         selectedVehicleId={selectedVehicleId}
         onSelect={selectVehicle}
         open={listOpen}
         onClose={() => setListOpen(false)}
+        sharedVehicles={visibleShared}
+        selectedSharedPlate={selectedSharedPlate}
+        onSelectShared={selectShared}
       />
       <div className="relative flex-1">
         <MapView
@@ -72,9 +94,10 @@ export function DashboardPage() {
           selectedVehicleId={selectedVehicleId}
           onSelectVehicle={selectVehicle}
           historyPath={history}
-          sharedVehicles={sharedVehicles}
-          showOwn={source !== "gamonal"}
-          showShared={source !== "own"}
+          sharedVehicles={visibleShared}
+          selectedSharedPlate={selectedSharedPlate}
+          onSelectShared={selectShared}
+          showOwn={showOwn}
         />
 
         {!hasTrackedVehicle && sharedVehicles.length === 0 && (
@@ -99,7 +122,7 @@ export function DashboardPage() {
               className="glow float-card pointer-events-auto flex items-center gap-1.5 rounded-full bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-lg shadow-slate-300/40 dark:bg-[#111729] dark:text-slate-200 dark:shadow-black/40"
             >
               <List className="h-4 w-4" />
-              {t("map.vehiclesCount", { count: vehicles.length })}
+              {t("map.vehiclesCount", { count: (showOwn ? vehicles.length : 0) + visibleShared.length })}
             </button>
           )}
 
@@ -128,6 +151,8 @@ export function DashboardPage() {
             </div>
           )}
         </div>
+
+        {selectedShared && <SharedVehiclePanel vehicle={selectedShared} onClose={() => setSelectedSharedPlate(null)} />}
 
         {selectedVehicle && (
           <VehicleDetailPanel

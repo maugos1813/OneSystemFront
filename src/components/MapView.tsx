@@ -37,17 +37,31 @@ function MapCenterOnSelect({
   return null;
 }
 
+/** Pans to the Gamonal vehicle picked in the list (the way the client's own vehicles do on selection). */
+function MapCenterOnShared({ vehicle }: { vehicle: SharedVehicle | null }) {
+  const map = useMap();
+  const plate = vehicle?.plate;
+  useEffect(() => {
+    if (!map || !vehicle) return;
+    map.panTo({ lat: vehicle.lat, lng: vehicle.lng });
+    if ((map.getZoom() ?? 0) < FOCUS_ZOOM) map.setZoom(FOCUS_ZOOM);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- re-run only when the choice changes, not on every position update
+  }, [map, plate]);
+  return null;
+}
+
 interface MapViewProps {
   vehicles: Vehicle[];
   positions: Record<string, Position>;
   selectedVehicleId: string | null;
   onSelectVehicle: (vehicleId: string) => void;
   historyPath?: Position[];
-  /** Gamonal vehicles shown to a client by Gamonal Driver: same colours, fainter, no detail. */
+  /** Gamonal vehicles shown to a client by Gamonal Driver (already narrowed by the pills): same colours, fainter, no detail. */
   sharedVehicles?: SharedVehicle[];
-  /** What the filter pills choose: the client's own vehicles and/or the shared ones. */
+  selectedSharedPlate?: string | null;
+  onSelectShared?: (plate: string) => void;
+  /** False when the pills ask for the Gamonal vehicles only. */
   showOwn?: boolean;
-  showShared?: boolean;
 }
 
 const DEFAULT_CENTER = { lat: 41.9028, lng: 12.4964 }; // Roma, como fallback sin posiciones aún
@@ -60,10 +74,20 @@ interface AnimatedVehicleMarkerProps {
   theme: "light" | "dark";
 }
 
-const normalizePlate = (plate: string | null | undefined) => (plate ?? "").replace(/\s+/g, "").toUpperCase();
-
 /** A Gamonal vehicle seen through Gamonal Driver: the same colours as the client's own, fainter, with its plate. */
-function SharedVehicleMarker({ vehicle, theme, title }: { vehicle: SharedVehicle; theme: "light" | "dark"; title: string }) {
+function SharedVehicleMarker({
+  vehicle,
+  theme,
+  title,
+  selected,
+  onSelect,
+}: {
+  vehicle: SharedVehicle;
+  theme: "light" | "dark";
+  title: string;
+  selected: boolean;
+  onSelect?: (plate: string) => void;
+}) {
   const position = {
     ioData: { [AVL_ID.IGNITION]: vehicle.ignition ? 1 : 0 },
     speed: vehicle.speed ?? 0,
@@ -73,7 +97,8 @@ function SharedVehicleMarker({ vehicle, theme, title }: { vehicle: SharedVehicle
     <Marker
       position={{ lat: vehicle.lat, lng: vehicle.lng }}
       title={title}
-      opacity={0.6}
+      opacity={selected ? 1 : 0.6}
+      onClick={() => onSelect?.(vehicle.plate)}
       icon={getVehicleIcon(position)}
       label={{ text: vehicle.plate, className: "vehicle-plate-label", color: theme === "dark" ? "#e2e8f0" : "#0f172a" }}
     />
@@ -111,9 +136,10 @@ export function MapView({
   selectedVehicleId,
   onSelectVehicle,
   historyPath,
-  sharedVehicles = [],
+  sharedVehicles: shared = [],
+  selectedSharedPlate = null,
+  onSelectShared,
   showOwn = true,
-  showShared = true,
 }: MapViewProps) {
   const t = useT();
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
@@ -124,10 +150,6 @@ export function MapView({
   const knownPositions = vehicles
     .map((v) => positions[v.id])
     .filter((p): p is Position => p !== undefined);
-
-  // A vehicle the client also has of their own is drawn once, as theirs.
-  const ownPlates = new Set(vehicles.map((v) => normalizePlate(v.plate)));
-  const shared = showShared ? sharedVehicles.filter((v) => !(showOwn && ownPlates.has(v.plate))) : [];
 
   const center = (selectedVehicleId && positions[selectedVehicleId]) ?? knownPositions[0] ?? shared[0] ?? null;
 
@@ -154,6 +176,7 @@ export function MapView({
           styles={theme === "dark" ? DARK_MAP_STYLE : undefined}
         >
           <MapCenterOnSelect selectedVehicleId={selectedVehicleId} positions={positions} />
+          <MapCenterOnShared vehicle={shared.find((v) => v.plate === selectedSharedPlate) ?? null} />
 
           {zonePolygons.map((g) => {
             const color = geofenceZoneColor(g.name);
@@ -197,7 +220,14 @@ export function MapView({
           })}
 
           {shared.map((vehicle) => (
-            <SharedVehicleMarker key={vehicle.plate} vehicle={vehicle} theme={theme} title={t("map.sharedTitle", { plate: vehicle.plate })} />
+            <SharedVehicleMarker
+              key={vehicle.plate}
+              vehicle={vehicle}
+              theme={theme}
+              title={t("map.sharedTitle", { plate: vehicle.plate })}
+              selected={vehicle.plate === selectedSharedPlate}
+              onSelect={onSelectShared}
+            />
           ))}
         </Map>
 

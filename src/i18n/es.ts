@@ -215,6 +215,7 @@ export const es = {
   "map.filterAll": "Todos",
   "map.filterGamonal": "Gamonal",
   "map.filterLabel": "Qué vehículos ver en el mapa",
+  "detail.status": "Estado",
   // @@END
 } as const satisfies Record<string, string>;
 

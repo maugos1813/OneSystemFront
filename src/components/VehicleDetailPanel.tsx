@@ -1,6 +1,7 @@
 import { useAuth } from "../context/AuthContext";
 import { X } from "lucide-react";
-import { useT, type Translate } from "../i18n";
+import { useT } from "../i18n";
+import { formatRelativeTime } from "../lib/relativeTime";
 import { describeEvent } from "../lib/deviceEvents";
 import { AVL_ID, type DeviceEvent, type Position, type Vehicle } from "../lib/types";
 import { SpeedChart } from "./SpeedChart";
@@ -20,14 +21,6 @@ const HISTORY_RANGES = [
   { label: "24h", hours: 24 },
   { label: "detail.days7", hours: 24 * 7 },
 ] as const;
-
-function formatRelativeTime(iso: string, t: Translate): string {
-  const seconds = Math.round((Date.now() - new Date(iso).getTime()) / 1000);
-  if (seconds < 60) return t("time.secondsAgo", { count: seconds });
-  if (seconds < 3600) return t("time.minutesAgo", { count: Math.round(seconds / 60) });
-  if (seconds < 86400) return t("time.hoursAgo", { count: Math.round(seconds / 3600) });
-  return t("time.daysAgo", { count: Math.round(seconds / 86400) });
-}
 
 function Row({ label, value }: { label: string; value: string }) {
   return (

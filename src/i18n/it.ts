@@ -214,5 +214,6 @@ export const it: Record<MessageKey, string> = {
   "map.filterAll": "Tutti",
   "map.filterGamonal": "Gamonal",
   "map.filterLabel": "Quali veicoli vedere sulla mappa",
+  "detail.status": "Stato",
   // @@END
 };
