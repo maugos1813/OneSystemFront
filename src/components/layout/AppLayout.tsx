@@ -1,8 +1,8 @@
 import {
+  Menu,
   Minimize2,
   Moon,
   PanelLeftClose,
-  PanelLeftOpen,
   Sun,
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -119,16 +119,18 @@ export function AppLayout() {
         <header className="flex items-center justify-between gap-3 border-b border-violet-100 bg-white px-4 py-3 sm:px-6 dark:border-white/5 dark:bg-[#0d1220]">
           <div className="flex min-w-0 items-center gap-3">
             {!navOpen && (
-              <>
-                <button
-                  onClick={() => setNavOpen(true)}
-                  className="shrink-0 rounded-lg p-1.5 text-slate-500 hover:bg-violet-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/5 dark:hover:text-white"
-                  aria-label="Mostrar menú"
-                >
-                  <PanelLeftOpen className="h-5 w-5" />
-                </button>
-                <img src="/logos/onetrack-icon.png" alt="OneTrack" className="h-8 w-8 shrink-0 rounded-xl object-cover" />
-              </>
+              // The OneTrack icon is the menu button, like the client's logo is in the workspace around it: it nudges on a phone.
+              <button
+                type="button"
+                onClick={() => setNavOpen(true)}
+                aria-label="Mostrar menú"
+                className="logo-nudge relative shrink-0 rounded-xl"
+              >
+                <img src="/logos/onetrack-icon.png" alt="OneTrack" className="h-8 w-8 rounded-xl object-cover" />
+                <span className="absolute -right-1 -bottom-1 flex h-4 w-4 items-center justify-center rounded-full bg-blue-600 text-white shadow ring-2 ring-white dark:ring-[#0d1220]">
+                  <Menu className="h-2.5 w-2.5" />
+                </span>
+              </button>
             )}
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">
