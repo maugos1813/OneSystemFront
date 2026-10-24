@@ -102,3 +102,7 @@ app/src/main/res/xml/config.xml
 
 # Firebase client config for push notifications: kept out of git, copy it from the Firebase console (see README)
 google-services.json
+
+# Release signing: the keystore and its passwords stay on the machine that builds releases
+keystore.properties
+*.keystore

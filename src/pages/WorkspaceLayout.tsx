@@ -25,6 +25,7 @@ import { getProductSsoUrl, listProducts } from "../lib/api";
 import { trackGlow } from "../lib/glow";
 import { firstAllowedPath } from "../lib/oneTrackNav";
 import type { Product } from "../lib/types";
+import { AppUpdateCard } from "../components/AppUpdateCard";
 import { DashboardPage } from "./DashboardPage";
 import { LandingPage } from "./LandingPage";
 
@@ -498,11 +499,9 @@ function ConfigPanel({ role }: { role: string | undefined }) {
     <div className="min-h-0 flex-1 overflow-auto">
       <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">Configuración</h1>
       <p className="mt-1 mb-4 text-sm text-slate-500 dark:text-slate-400">Administración de tu espacio de trabajo</p>
-      {items.length === 0 ? (
-        <p className="text-sm text-slate-500 dark:text-slate-400">Tu cuenta no tiene opciones de configuración.</p>
-      ) : (
-        <div className="grid gap-3 sm:grid-cols-2">
-          {items.map(({ to, label, hint, icon: Icon }) => (
+      <div className="grid gap-3 sm:grid-cols-2">
+        <AppUpdateCard />
+        {items.map(({ to, label, hint, icon: Icon }) => (
             <Link
               key={to}
               to={to}
@@ -515,9 +514,8 @@ function ConfigPanel({ role }: { role: string | undefined }) {
                 <span className="block text-xs text-slate-500 dark:text-slate-400">{hint}</span>
               </span>
             </Link>
-          ))}
-        </div>
-      )}
+        ))}
+      </div>
     </div>
   );
 }

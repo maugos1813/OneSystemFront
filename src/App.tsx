@@ -1,6 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { AppLayout } from "./components/layout/AppLayout";
 import { RequireAuth } from "./components/layout/RequireAuth";
+import { AppUpdateProvider } from "./context/AppUpdateContext";
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { AlertsPage } from "./pages/AlertsPage";
@@ -28,6 +29,7 @@ import { WorkspaceLayout } from "./pages/WorkspaceLayout";
 export default function App() {
   return (
     <ThemeProvider>
+      <AppUpdateProvider>
       <AuthProvider>
         <BrowserRouter>
           <Routes>
@@ -73,6 +75,7 @@ export default function App() {
           </Routes>
         </BrowserRouter>
       </AuthProvider>
+      </AppUpdateProvider>
     </ThemeProvider>
   );
 }
