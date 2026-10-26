@@ -132,15 +132,16 @@ export function DrivingBehaviorPage() {
   const loading = fleetLoading || (!style && !error);
   const categoryLabel = selection === "overall" ? "General" : INCIDENT_LABELS[selection];
   const qualityNote = current ? QUALITY_NOTES[current.quality] : undefined;
+  const fromVelocity = current?.source === "velocity";
   const pointsPerIncident = style?.rules.pointsPerIncidentPer100Km ?? 5;
 
   return (
     <div className="h-full overflow-y-auto bg-[#f5f6fb] p-4 sm:p-6 lg:p-8 dark:bg-[#0a0e1a]">
       <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Conducción</h1>
       <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">
-        Puntaje de manejo por vehículo, calculado por cada 100 km recorridos: cada incidente por 100 km resta{" "}
-        {pointsPerIncident} puntos. Hacé click en cualquier puntaje para ver cuándo y dónde pasó cada incidente, y comparar
-        toda la flota en esa métrica.
+        Puntaje de manejo por vehículo. Los vehículos de Radius Velocity muestran el mismo puntaje que su informe de Driver
+        Performance; para los demás se calcula por cada 100 km recorridos: cada incidente por 100 km resta {pointsPerIncident}{" "}
+        puntos. Hacé click en cualquier puntaje para comparar toda la flota en esa métrica.
       </p>
 
       <div className="mb-4">
@@ -209,6 +210,13 @@ export function DrivingBehaviorPage() {
             {current.trips === 1 ? "viaje" : "viajes"}
           </p>
 
+          {fromVelocity && (
+            <p className="mb-4 rounded-xl bg-blue-50 px-4 py-2 text-sm text-blue-800 dark:bg-blue-500/10 dark:text-blue-300">
+              Puntajes de Radius Velocity para los días del periodo (por días completos). Cada categoría resta puntos según los
+              eventos que detecta el dispositivo por hora de conducción, y el puntaje general es el promedio de las cuatro.
+            </p>
+          )}
+
           {qualityNote && (
             <p className="mb-4 rounded-xl bg-amber-50 px-4 py-2 text-sm text-amber-800 dark:bg-amber-500/10 dark:text-amber-300">
               {qualityNote}
@@ -238,11 +246,14 @@ export function DrivingBehaviorPage() {
           </div>
 
           <Panel title={selection === "overall" ? "Todos los incidentes" : INCIDENT_LABELS[selection]} className="mb-6">
-            <IncidentList
-              incidents={visibleIncidents}
-              activeIndex={activeIncidentIndex}
-              onSelect={setActiveIncidentIndex}
-            />
+            {fromVelocity ? (
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                Velocity informa cuántos eventos hubo, pero no dónde ni cuándo ocurrió cada uno, así que para este vehículo no hay
+                lista de incidentes en el mapa.
+              </p>
+            ) : (
+              <IncidentList incidents={visibleIncidents} activeIndex={activeIncidentIndex} onSelect={setActiveIncidentIndex} />
+            )}
           </Panel>
         </>
       )}

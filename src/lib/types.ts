@@ -276,6 +276,8 @@ export interface VehicleDrivingStyle {
   name: string;
   plate: string | null;
   fleetGroup: string | null;
+  /** "velocity": the numbers are Radius Velocity's own report; "onetrack": calculated here from the GPS positions. */
+  source?: "onetrack" | "velocity";
   samples: number;
   distanceKm: number;
   drivingHours: number;
