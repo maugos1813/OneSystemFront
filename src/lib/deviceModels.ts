@@ -77,6 +77,7 @@ const PROFILES: Record<string, ModelProfile> = {
           "Amarillo (DIN1): señal de contacto/ignición (+12 V solo con la llave en ON).",
           "Blanco (DOUT1): salida a colector abierto, máx. 0,5 A. Va a la bobina de un relé, nunca directo a la carga.",
           "Montarlo con la cara marcada “MOUNT THIS SIDE UP” hacia arriba.",
+          "SIM con datos (LTE Cat 1): insertarla con el equipo sin alimentación; con el equipo encendido puede no detectarse.",
         ],
       },
       {
@@ -94,6 +95,21 @@ const PROFILES: Record<string, ModelProfile> = {
           "Ignition Source: DIN1 (ignición por cable). Si el vehículo no entrega señal de contacto, usar Power Voltage.",
           "I/O con envío activo: Ignition (239), Movement (240), GSM Signal (21), GNSS Status (69), External Voltage (66), Battery Voltage/Level (67/113), Digital Input 1 (1), Digital Output 1 (179), Total Odometer (16).",
           "Alarmas: Unplug (252), Jamming (249) y Crash (247). Towing solo cuando la ignición ya esté validada.",
+        ],
+      },
+      {
+        title: "4. Bloqueo del encendido (opcional)",
+        lines: [
+          "DOUT1 (blanco) alimenta la bobina de un relé; el relé interrumpe el arranque o la bomba de combustible (contacto normalmente cerrado).",
+          "Con el relé ya instalado, el botón “Bloquear” de esta ficha envía setdigout 1 y “Desbloquear” envía setdigout 0.",
+          "Si el equipo pierde la alimentación, el relé se suelta y el vehículo vuelve a arrancar: es el comportamiento esperado.",
+        ],
+      },
+      {
+        title: "5. Conducción (acelerómetro)",
+        lines: [
+          "Se activa desde esta ficha, en la sección “Conducción”: no hace falta tocar el Configurator.",
+          "Para que mida bien, el equipo debe ir fijo, nivelado y con los cables hacia la parte delantera del vehículo.",
         ],
       },
     ],

@@ -5,7 +5,7 @@ import type { DeviceCommand, DeviceCommandStatus } from "../lib/types";
 import { ModalPortal } from "./ModalPortal";
 
 /** The models whose Green Driving parameters are in Teltonika's own lists (same as the server). */
-const GREEN_DRIVING_MODELS: ReadonlySet<string> = new Set(["FMB204", "FMC003", "FMB920"]);
+const GREEN_DRIVING_MODELS: ReadonlySet<string> = new Set(["FMB204", "FMC003", "FMB920", "FTC920"]);
 
 export function supportsGreenDriving(model: string, source: string): boolean {
   return source === "teltonika" && GREEN_DRIVING_MODELS.has(model);
@@ -108,7 +108,7 @@ export function GreenDrivingPanel({ deviceId, since, onChanged }: { deviceId: st
           {commands.slice(0, 3).map((command) => (
             <li key={command.id} className="flex items-baseline justify-between gap-3 text-xs">
               <span className="text-slate-700 dark:text-slate-300">
-                <strong>{command.command.includes("11000:0") ? "Desactivar" : "Activar"}</strong> · {STATUS_LABEL[command.status]}
+                <strong>{/\b(11000|1025300):0\b/.test(command.command) ? "Desactivar" : "Activar"}</strong> · {STATUS_LABEL[command.status]}
               </span>
               <span className="shrink-0 text-slate-500 dark:text-slate-400">{new Date(command.createdAt).toLocaleString()}</span>
             </li>
@@ -125,7 +125,7 @@ export function GreenDrivingPanel({ deviceId, since, onChanged }: { deviceId: st
               </h3>
               <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
                 {confirming === "enable"
-                  ? "Se cambian ajustes del equipo (Green Driving): el acelerómetro mide aceleraciones de 3 m/s² o más, frenadas de 3,5 y curvas de 4. Para que midan bien, el equipo debe ir fijo y lo más nivelado posible. Conducción puntuará con estos eventos desde que el equipo confirme; hasta tener 2 horas de conducción medidas, sigue usando el GPS."
+                  ? "Se cambian ajustes del equipo (Green Driving): el acelerómetro mide aceleraciones, frenadas y curvas bruscas con los límites de fábrica de Teltonika (2,5, 2,7 y 3,4 m/s²). Para que midan bien, el equipo debe ir fijo y lo más nivelado posible. Conducción puntuará con estos eventos desde que el equipo confirme; hasta tener 2 horas de conducción medidas, sigue usando el GPS."
                   : "Se apaga la medición del equipo y Conducción vuelve a deducir los eventos del GPS."}
               </p>
               <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
