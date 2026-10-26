@@ -147,6 +147,11 @@ export function getDeviceCommands(id: string): Promise<DeviceCommand[]> {
   return request(`/devices/${id}/commands`);
 }
 
+/** Switches the tracker's own harsh-driving measurement (Green Driving) on or off. */
+export function requestGreenDriving(id: string, action: "enable" | "disable"): Promise<DeviceCommand> {
+  return request(`/devices/${id}/green-driving`, { method: "POST", body: JSON.stringify({ action, source: "accelerometer" }) });
+}
+
 /** Locks (`lock`) or releases (`unlock`) the vehicle through the tracker's output. */
 export function requestImmobilizer(id: string, action: "lock" | "unlock"): Promise<DeviceCommand> {
   return request(`/devices/${id}/immobilizer`, { method: "POST", body: JSON.stringify({ action }) });

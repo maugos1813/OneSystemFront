@@ -16,6 +16,8 @@ export interface Device {
   status: DeviceStatus;
   source: DeviceSource;
   lastSeenAt: string | null;
+  /** When the device confirmed it measures harsh driving itself (Green Driving); null while it does not. */
+  greenDrivingSince?: string | null;
   createdAt: string;
 }
 
@@ -278,6 +280,10 @@ export interface VehicleDrivingStyle {
   fleetGroup: string | null;
   /** "velocity": the numbers are Radius Velocity's own report; "onetrack": calculated here from the GPS positions. */
   source?: "onetrack" | "velocity";
+  /** What found the harsh events: the device's own sensor, the GPS positions, or Velocity's devices. */
+  eventSource?: "device" | "gps" | "velocity";
+  /** For "device": the moment its own measurement started (what the score is judged from). */
+  measuredSince?: string | null;
   /** "per_hour": Velocity's formula (events per hour of driving); "per_100km": OneTrack's original (incidents per 100 km). */
   scoring?: "per_hour" | "per_100km";
   samples: number;
@@ -373,7 +379,9 @@ export type DeviceCommandStatus = "pending" | "sent" | "confirmed" | "failed" | 
 /** An order given to a tracker's output (lock/unlock of the vehicle), with how far it got. */
 export interface DeviceCommand {
   id: string;
-  kind: "immobilize" | "release";
+  kind: "immobilize" | "release" | "green_driving";
+  /** The text sent to the device. */
+  command: string;
   status: DeviceCommandStatus;
   response: string | null;
   createdAt: string;

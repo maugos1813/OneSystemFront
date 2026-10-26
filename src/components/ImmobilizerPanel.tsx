@@ -31,7 +31,11 @@ export function ImmobilizerPanel({ deviceId, outputValue }: { deviceId: string; 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const load = useCallback(() => getDeviceCommands(deviceId).then(setCommands).catch(() => undefined), [deviceId]);
+  // Only the lock orders: the device sheet has its own panel for the settings orders.
+  const load = useCallback(
+    () => getDeviceCommands(deviceId).then((all) => setCommands(all.filter((c) => c.kind !== "green_driving"))).catch(() => undefined),
+    [deviceId],
+  );
   const waiting = commands.some((command) => ACTIVE.has(command.status));
 
   useEffect(() => {

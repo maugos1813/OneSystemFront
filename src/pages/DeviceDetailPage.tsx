@@ -2,6 +2,7 @@ import { AlertTriangle, ArrowLeft, CheckCircle2, Circle, Pencil, RefreshCw, X } 
 import { useCallback, useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
 import { Link, useParams } from "react-router-dom";
 import { DeviceSourceBadge } from "../components/DeviceSourceBadge";
+import { GreenDrivingPanel, supportsGreenDriving } from "../components/GreenDrivingPanel";
 import { ImmobilizerPanel } from "../components/ImmobilizerPanel";
 import { StatusBadge } from "../components/StatusBadge";
 import { useAuth } from "../context/AuthContext";
@@ -259,6 +260,12 @@ export function DeviceDetailPage() {
             {profile.output && canEdit && (
               <ImmobilizerPanel deviceId={device.id} outputValue={detail.io.find((r) => r.id === profile.output!.id)?.value} />
             )}
+          </Section>
+        )}
+
+        {canEdit && supportsGreenDriving(device.model, device.source) && (
+          <Section title="Conducción">
+            <GreenDrivingPanel deviceId={device.id} since={device.greenDrivingSince} onChanged={() => void load()} />
           </Section>
         )}
 

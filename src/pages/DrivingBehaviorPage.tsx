@@ -133,7 +133,8 @@ export function DrivingBehaviorPage() {
   const categoryLabel = selection === "overall" ? "General" : INCIDENT_LABELS[selection];
   const qualityNote = current ? QUALITY_NOTES[current.quality] : undefined;
   const fromVelocity = current?.source === "velocity";
-  const byGps = !!current && !fromVelocity && current.scoring === "per_hour" && current.quality !== "no_data";
+  const byGps = !!current && !fromVelocity && current.scoring === "per_hour" && current.eventSource === "gps" && current.quality !== "no_data";
+  const byDevice = !!current && current.eventSource === "device";
 
   return (
     <div className="h-full overflow-y-auto bg-[#f5f6fb] p-4 sm:p-6 lg:p-8 dark:bg-[#0a0e1a]">
@@ -215,6 +216,13 @@ export function DrivingBehaviorPage() {
             <p className="mb-4 rounded-xl bg-blue-50 px-4 py-2 text-sm text-blue-800 dark:bg-blue-500/10 dark:text-blue-300">
               Puntajes de Radius Velocity para los días del periodo (por días completos). Cada categoría resta puntos según los
               eventos que detecta el dispositivo por hora de conducción, y el puntaje general es el promedio de las cuatro.
+            </p>
+          )}
+
+          {byDevice && current.measuredSince && (
+            <p className="mb-4 rounded-xl bg-emerald-50 px-4 py-2 text-sm text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-300">
+              Eventos medidos por el propio equipo (acelerómetro) desde el {new Date(current.measuredSince).toLocaleString()}: la
+              misma forma de medir que Radius Velocity. Los kilómetros y las horas de esta tarjeta son de ese periodo.
             </p>
           )}
 
