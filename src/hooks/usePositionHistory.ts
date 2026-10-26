@@ -15,7 +15,7 @@ export function usePositionHistory(vehicleId: string | null, from: Date | null) 
     let cancelled = false;
     setLoading(true);
 
-    getPositionHistory(vehicleId, { from, limit: 2000 })
+    getPositionHistory(vehicleId, { from, maxPoints: 5000 })
       .then((rows) => {
         if (!cancelled) setHistory(rows.slice().reverse()); // oldest -> newest, for drawing a route
       })

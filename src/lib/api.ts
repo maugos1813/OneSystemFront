@@ -235,13 +235,16 @@ export interface DateRangeQuery {
   from?: Date;
   to?: Date;
   limit?: number;
+  /** Spread up to this many points over the whole range (the server keeps the speeding peaks) instead of only its newest rows. */
+  maxPoints?: number;
 }
 
-function dateRangeQueryString({ from, to, limit }: DateRangeQuery): string {
+function dateRangeQueryString({ from, to, limit, maxPoints }: DateRangeQuery): string {
   const params = new URLSearchParams();
   if (from) params.set("from", from.toISOString());
   if (to) params.set("to", to.toISOString());
   if (limit) params.set("limit", String(limit));
+  if (maxPoints) params.set("maxPoints", String(maxPoints));
   const qs = params.toString();
   return qs ? `?${qs}` : "";
 }

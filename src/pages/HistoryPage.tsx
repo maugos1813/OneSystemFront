@@ -13,6 +13,8 @@ const RANGES: Array<{ label: string; hours: number }> = [
   { label: "24h", hours: 24 },
   { label: "3 días", hours: 24 * 3 },
   { label: "7 días", hours: 24 * 7 },
+  { label: "15 días", hours: 24 * 15 },
+  { label: "30 días", hours: 24 * 30 },
 ];
 
 const DEFAULT_SPEED_LIMIT_KMH = 120;
