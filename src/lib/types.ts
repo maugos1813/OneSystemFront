@@ -278,6 +278,8 @@ export interface VehicleDrivingStyle {
   fleetGroup: string | null;
   /** "velocity": the numbers are Radius Velocity's own report; "onetrack": calculated here from the GPS positions. */
   source?: "onetrack" | "velocity";
+  /** "per_hour": Velocity's formula (events per hour of driving); "per_100km": OneTrack's original (incidents per 100 km). */
+  scoring?: "per_hour" | "per_100km";
   samples: number;
   distanceKm: number;
   drivingHours: number;
@@ -293,7 +295,7 @@ export interface DrivingStyleResponse {
   from: string;
   to: string;
   vehicles: VehicleDrivingStyle[];
-  rules: { pointsPerIncidentPer100Km: number; minDistanceKm: number };
+  rules: { pointsPerIncidentPer100Km: number; minDistanceKm: number; velocityMinHours?: number };
 }
 
 /** A SIM card, as listed. PIN/PUK are never part of it — only whether they are stored. */

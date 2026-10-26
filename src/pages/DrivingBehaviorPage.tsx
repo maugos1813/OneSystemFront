@@ -24,7 +24,7 @@ type Selection = "overall" | IncidentType;
 
 const QUALITY_NOTES: Partial<Record<VehicleDrivingStyle["quality"], string>> = {
   no_data: "Este vehículo no tiene posiciones en el periodo elegido.",
-  insufficient_data: "Recorrió menos de 20 km en el periodo: no hay datos suficientes para puntuar su manejo.",
+  insufficient_data: "Condujo muy poco en el periodo (menos de 2 horas): no hay datos suficientes para puntuar su manejo.",
   speeding_only:
     "Este dispositivo reporta con poca frecuencia, así que no se pueden detectar frenadas, aceleraciones ni curvas bruscas. Solo se puntúa la velocidad.",
 };
@@ -133,15 +133,16 @@ export function DrivingBehaviorPage() {
   const categoryLabel = selection === "overall" ? "General" : INCIDENT_LABELS[selection];
   const qualityNote = current ? QUALITY_NOTES[current.quality] : undefined;
   const fromVelocity = current?.source === "velocity";
-  const pointsPerIncident = style?.rules.pointsPerIncidentPer100Km ?? 5;
+  const byGps = !!current && !fromVelocity && current.scoring === "per_hour" && current.quality !== "no_data";
 
   return (
     <div className="h-full overflow-y-auto bg-[#f5f6fb] p-4 sm:p-6 lg:p-8 dark:bg-[#0a0e1a]">
       <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Conducción</h1>
       <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">
-        Puntaje de manejo por vehículo. Los vehículos de Radius Velocity muestran el mismo puntaje que su informe de Driver
-        Performance; para los demás se calcula por cada 100 km recorridos: cada incidente por 100 km resta {pointsPerIncident}{" "}
-        puntos. Hacé click en cualquier puntaje para comparar toda la flota en esa métrica.
+        Puntaje de manejo por vehículo con el método de Radius Velocity: cada categoría (aceleración, frenado, curvas y velocidad)
+        baja según los eventos por hora de conducción, y el general es el promedio de las cuatro. Los vehículos de Velocity
+        muestran el mismo puntaje que su informe de Driver Performance. Hacé click en cualquier puntaje para comparar toda la
+        flota en esa métrica.
       </p>
 
       <div className="mb-4">
@@ -214,6 +215,14 @@ export function DrivingBehaviorPage() {
             <p className="mb-4 rounded-xl bg-blue-50 px-4 py-2 text-sm text-blue-800 dark:bg-blue-500/10 dark:text-blue-300">
               Puntajes de Radius Velocity para los días del periodo (por días completos). Cada categoría resta puntos según los
               eventos que detecta el dispositivo por hora de conducción, y el puntaje general es el promedio de las cuatro.
+            </p>
+          )}
+
+          {byGps && current.quality === "full" && (
+            <p className="mb-4 rounded-xl bg-slate-100 px-4 py-2 text-sm text-slate-600 dark:bg-white/5 dark:text-slate-300">
+              Este vehículo no está en Velocity: los eventos los detecta OneTrack en su GPS, no un acelerómetro como el de los
+              dispositivos de Velocity. Suelen salir más eventos que en Velocity, así que el puntaje tiende a ser más bajo. La
+              fórmula es la misma.
             </p>
           )}
 
