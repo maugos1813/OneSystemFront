@@ -48,6 +48,7 @@ const SERVER_MESSAGES: Record<string, MessageKey> = {
   Forbidden: "api.forbidden",
   "Vehicle not found": "api.vehicleNotFound",
   "Invalid credentials": "api.invalidCredentials",
+  "Too many attempts. Try again later.": "api.tooManyAttempts",
   "Este vehículo tiene un dispositivo asignado. Confirma que quieres eliminarlo.": "api.deviceAssigned",
 };
 

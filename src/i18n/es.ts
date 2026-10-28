@@ -209,6 +209,7 @@ export const es = {
   "api.forbidden": "No tienes permiso para hacer esto",
   "api.vehicleNotFound": "Vehículo no encontrado",
   "api.invalidCredentials": "Email o contraseña incorrectos",
+  "api.tooManyAttempts": "Demasiados intentos. Espera unos minutos e inténtalo de nuevo.",
   "api.deviceAssigned": "Este vehículo tiene un dispositivo asignado. Confirma que quieres eliminarlo.",
   "api.error": "Error {status}",
   "map.legendShared": "Flota de Gamonal (solo lectura)",

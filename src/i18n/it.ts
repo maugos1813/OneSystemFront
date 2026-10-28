@@ -208,6 +208,7 @@ export const it: Record<MessageKey, string> = {
   "api.forbidden": "Non hai il permesso di eseguire questa operazione",
   "api.vehicleNotFound": "Veicolo non trovato",
   "api.invalidCredentials": "E-mail o password errati",
+  "api.tooManyAttempts": "Troppi tentativi. Attendi qualche minuto e riprova.",
   "api.deviceAssigned": "Questo veicolo ha un dispositivo assegnato. Conferma di volerlo eliminare.",
   "api.error": "Errore {status}",
   "map.legendShared": "Flotta Gamonal (sola lettura)",
