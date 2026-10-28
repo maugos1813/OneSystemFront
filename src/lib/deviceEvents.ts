@@ -30,6 +30,11 @@ export function describeEvent(event: DeviceEvent, t: Translate): EventDescriptio
   if (event.type === "movement_change") {
     return { label: value(event, 240) === 1 ? t("event.started") : t("event.stopped"), tone: "info" };
   }
+  if (event.type === "tracking_gap") {
+    const minutes = Number(event.payload.minutes ?? 0);
+    const duration = minutes >= 60 ? `${Math.floor(minutes / 60)} h ${minutes % 60} min` : `${minutes} min`;
+    return { label: t("event.trackingGap", { duration }), tone: "alarm" };
+  }
   const alarm = ALARMS[event.type as keyof typeof ALARMS];
   if (alarm) {
     return value(event, alarm.avlId) !== 0

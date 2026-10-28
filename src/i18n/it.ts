@@ -101,6 +101,7 @@ export const it: Record<MessageKey, string> = {
   "event.towingCleared": "Traino terminato",
   "event.crashRaised": "Possibile urto o incidente",
   "event.crashCleared": "Allarme urto terminato",
+  "event.trackingGap": "Senza registrazione per {duration}: dispositivo spento o scollegato",
   "event.ignitionOn": "Accensione attivata",
   "event.ignitionOff": "Accensione disattivata",
   "event.started": "Ha iniziato a muoversi",

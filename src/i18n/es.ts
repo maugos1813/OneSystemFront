@@ -102,6 +102,7 @@ export const es = {
   "event.towingCleared": "Remolque terminado",
   "event.crashRaised": "Posible choque o impacto",
   "event.crashCleared": "Alarma de choque terminada",
+  "event.trackingGap": "Sin registrar durante {duration}: equipo apagado o desconectado",
   "event.ignitionOn": "Ignición encendida",
   "event.ignitionOff": "Ignición apagada",
   "event.started": "Empezó a moverse",
