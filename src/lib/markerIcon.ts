@@ -8,8 +8,10 @@ const COLOR_MOVING = "#16a34a"; // green-600: en movimiento
  * Un círculo rojo/naranja para el vehículo detenido (apagado/encendido), o una flecha
  * verde apuntando en la dirección de marcha (AVL angle: grados desde el norte, en
  * sentido horario — coincide con `rotation` de google.maps.Symbol) cuando se mueve.
+ * `opacity` atenúa solo el ícono (los vehículos no seleccionados): la opacidad del Marker
+ * también aclararía la placa, que tiene que verse sólida.
  */
-export function getVehicleIcon(position: Position | undefined): google.maps.Symbol | undefined {
+export function getVehicleIcon(position: Position | undefined, opacity = 1): google.maps.Symbol | undefined {
   // The Maps JS script may not have finished loading on the very first render — core
   // `google.maps` can exist before its `SymbolPath` sub-namespace does — so undefined
   // falls back to the marker's default pin until everything we use here is ready.
@@ -20,7 +22,8 @@ export function getVehicleIcon(position: Position | undefined): google.maps.Symb
       path: google.maps.SymbolPath.CIRCLE,
       scale: 7,
       fillColor: "#94a3b8",
-      fillOpacity: 1,
+      fillOpacity: opacity,
+      strokeOpacity: opacity,
       strokeColor: "#fff",
       strokeWeight: 2,
     };
@@ -34,7 +37,8 @@ export function getVehicleIcon(position: Position | undefined): google.maps.Symb
       path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
       scale: 5,
       fillColor: COLOR_MOVING,
-      fillOpacity: 1,
+      fillOpacity: opacity,
+      strokeOpacity: opacity,
       strokeColor: "#fff",
       strokeWeight: 1.5,
       rotation: position.angle,
@@ -45,7 +49,8 @@ export function getVehicleIcon(position: Position | undefined): google.maps.Symb
     path: google.maps.SymbolPath.CIRCLE,
     scale: 8,
     fillColor: ignitionOn ? COLOR_IDLE : COLOR_OFF,
-    fillOpacity: 1,
+    fillOpacity: opacity,
+      strokeOpacity: opacity,
     strokeColor: "#fff",
     strokeWeight: 2,
   };

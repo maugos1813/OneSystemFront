@@ -97,9 +97,8 @@ function SharedVehicleMarker({
     <Marker
       position={{ lat: vehicle.lat, lng: vehicle.lng }}
       title={title}
-      opacity={selected ? 1 : 0.6}
       onClick={() => onSelect?.(vehicle.plate)}
-      icon={getVehicleIcon(position)}
+      icon={getVehicleIcon(position, selected ? 1 : 0.6)}
       label={{ text: vehicle.plate, className: "vehicle-plate-label", color: theme === "dark" ? "#e2e8f0" : "#0f172a" }}
     />
   );
@@ -116,8 +115,7 @@ function AnimatedVehicleMarker({ vehicle, position, selected, onSelect, theme }:
       position={{ lat: smoothed.lat, lng: smoothed.lng }}
       title={vehicle.name}
       onClick={() => onSelect(vehicle.id)}
-      opacity={selected ? 1 : 0.75}
-      icon={getVehicleIcon({ ...position, angle: smoothed.angle })}
+      icon={getVehicleIcon({ ...position, angle: smoothed.angle }, selected ? 1 : 0.75)}
       label={{
         text: vehicle.plate ?? vehicle.name,
         className: "vehicle-plate-label",
