@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { AreaFilterPills } from "../components/AreaFilterPills";
+import { VehiclePicker } from "../components/VehiclePicker";
 import { Panel } from "../components/analytics/Panel";
 import { HistoryMapView } from "../components/history/HistoryMapView";
 import { PlaybackBar } from "../components/history/PlaybackBar";
@@ -91,19 +92,7 @@ export function HistoryPage() {
       </div>
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        {vehicles.map((v) => (
-          <button
-            key={v.id}
-            onClick={() => setSelectedVehicleId(v.id)}
-            className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
-              v.id === selectedVehicleId
-                ? "brand-button"
-                : "bg-white text-slate-500 hover:bg-violet-50 dark:bg-[#111729] dark:text-slate-400 dark:hover:bg-white/10"
-            }`}
-          >
-            {v.name}
-          </button>
-        ))}
+        <VehiclePicker vehicles={vehicles} selectedId={selectedVehicleId} onSelect={setSelectedVehicleId} />
 
         {vehicles.length > 0 && <span className="mx-1 h-5 w-px bg-slate-200 dark:bg-white/10" />}
 
@@ -124,9 +113,7 @@ export function HistoryPage() {
 
       {!vehicle && <p className="text-sm text-slate-500 dark:text-slate-400">Todavía no hay vehículos cargados.</p>}
 
-      {vehicle && historyLoading && (
-        <p className="text-sm text-slate-500 dark:text-slate-400">Cargando recorrido...</p>
-      )}
+      {vehicle && historyLoading && <p className="text-sm text-slate-500 dark:text-slate-400">Cargando recorrido...</p>}
 
       {vehicle && !historyLoading && history.length < 2 && (
         <p className="text-sm text-slate-500 dark:text-slate-400">

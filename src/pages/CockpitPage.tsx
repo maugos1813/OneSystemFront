@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { AreaFilterPills } from "../components/AreaFilterPills";
+import { VehiclePicker } from "../components/VehiclePicker";
 import { DrivingScoreCard } from "../components/cockpit/DrivingScoreCard";
 import { GForceGauge } from "../components/cockpit/GForceGauge";
 import { MileageCard } from "../components/cockpit/MileageCard";
@@ -58,20 +59,8 @@ export function CockpitPage() {
         {vehicle && (
           <>
             {vehicles.length > 1 && (
-              <div className="mb-6 flex flex-wrap gap-2">
-                {vehicles.map((v) => (
-                  <button
-                    key={v.id}
-                    onClick={() => setSelectedId(v.id)}
-                    className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
-                      v.id === selectedId
-                        ? "brand-button"
-                        : "bg-white text-slate-500 hover:bg-violet-100 dark:bg-[#111729] dark:text-slate-400 dark:hover:bg-white/10"
-                    }`}
-                  >
-                    {v.name}
-                  </button>
-                ))}
+              <div className="mb-6">
+                <VehiclePicker vehicles={vehicles} selectedId={selectedId} onSelect={setSelectedId} />
               </div>
             )}
 
@@ -83,15 +72,15 @@ export function CockpitPage() {
                 {vehicle.plate && <p className="text-sm text-slate-400 dark:text-slate-500">{vehicle.plate}</p>}
               </div>
               <p className="shrink-0 text-sm text-slate-400 dark:text-slate-500">
-                {new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                {new Date().toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
               </p>
             </div>
 
             <div className="brand-border-glow grid grid-cols-1 gap-4 rounded-3xl p-4 shadow-lg shadow-blue-100/40 sm:p-6 lg:grid-cols-[260px_1fr_260px] dark:bg-[#111729] dark:shadow-black/40">
-              <div
-                onMouseMove={trackGlow}
-                className="glow float-card rounded-2xl bg-violet-50/60 p-3 dark:bg-white/5"
-              >
+              <div onMouseMove={trackGlow} className="glow float-card rounded-2xl bg-violet-50/60 p-3 dark:bg-white/5">
                 <p className="mb-2 px-1 text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-500">
                   Ubicación
                 </p>
@@ -102,10 +91,7 @@ export function CockpitPage() {
                 <SpeedGauge speed={smoothed?.speed ?? 0} state={state} />
               </div>
 
-              <div
-                onMouseMove={trackGlow}
-                className="glow float-card rounded-2xl bg-violet-50/60 p-4 dark:bg-white/5"
-              >
+              <div onMouseMove={trackGlow} className="glow float-card rounded-2xl bg-violet-50/60 p-4 dark:bg-white/5">
                 <p className="mb-4 px-1 text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-500">
                   Estado del vehículo
                 </p>

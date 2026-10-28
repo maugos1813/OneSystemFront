@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { AreaFilterPills } from "../components/AreaFilterPills";
+import { VehiclePicker } from "../components/VehiclePicker";
 import { Panel } from "../components/analytics/Panel";
 import { FleetScoreTable, type FleetRow } from "../components/driving/FleetScoreTable";
 import { IncidentList } from "../components/driving/IncidentList";
@@ -24,7 +25,8 @@ type Selection = "overall" | IncidentType;
 
 const QUALITY_NOTES: Partial<Record<VehicleDrivingStyle["quality"], string>> = {
   no_data: "Este vehículo no tiene posiciones en el periodo elegido.",
-  insufficient_data: "Condujo muy poco en el periodo (menos de 2 horas): no hay datos suficientes para puntuar su manejo.",
+  insufficient_data:
+    "Condujo muy poco en el periodo (menos de 2 horas): no hay datos suficientes para puntuar su manejo.",
   speeding_only:
     "Este dispositivo reporta con poca frecuencia, así que no se pueden detectar frenadas, aceleraciones ni curvas bruscas. Solo se puntúa la velocidad.",
 };
@@ -106,7 +108,10 @@ export function DrivingBehaviorPage() {
   }, [selectedVehicleId, rangeDays, speedLimit]);
 
   const visibleIds = useMemo(() => new Set(vehicles.map((v) => v.id)), [vehicles]);
-  const visibleStyles = useMemo(() => (style?.vehicles ?? []).filter((v) => visibleIds.has(v.vehicleId)), [style, visibleIds]);
+  const visibleStyles = useMemo(
+    () => (style?.vehicles ?? []).filter((v) => visibleIds.has(v.vehicleId)),
+    [style, visibleIds],
+  );
   const current = visibleStyles.find((v) => v.vehicleId === selectedVehicleId) ?? null;
 
   const visibleIncidents = useMemo(
@@ -133,17 +138,22 @@ export function DrivingBehaviorPage() {
   const categoryLabel = selection === "overall" ? "General" : INCIDENT_LABELS[selection];
   const qualityNote = current ? QUALITY_NOTES[current.quality] : undefined;
   const fromVelocity = current?.source === "velocity";
-  const byGps = !!current && !fromVelocity && current.scoring === "per_hour" && current.eventSource === "gps" && current.quality !== "no_data";
+  const byGps =
+    !!current &&
+    !fromVelocity &&
+    current.scoring === "per_hour" &&
+    current.eventSource === "gps" &&
+    current.quality !== "no_data";
   const byDevice = !!current && current.eventSource === "device";
 
   return (
     <div className="h-full overflow-y-auto bg-[#f5f6fb] p-4 sm:p-6 lg:p-8 dark:bg-[#0a0e1a]">
       <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Conducción</h1>
       <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">
-        Puntaje de manejo por vehículo con el método de Radius Velocity: cada categoría (aceleración, frenado, curvas y velocidad)
-        baja según los eventos por hora de conducción, y el general es el promedio de las cuatro. Los vehículos de Velocity
-        muestran el mismo puntaje que su informe de Driver Performance. Hacé click en cualquier puntaje para comparar toda la
-        flota en esa métrica.
+        Puntaje de manejo por vehículo con el método de Radius Velocity: cada categoría (aceleración, frenado, curvas y
+        velocidad) baja según los eventos por hora de conducción, y el general es el promedio de las cuatro. Los
+        vehículos de Velocity muestran el mismo puntaje que su informe de Driver Performance. Hacé click en cualquier
+        puntaje para comparar toda la flota en esa métrica.
       </p>
 
       <div className="mb-4">
@@ -151,19 +161,7 @@ export function DrivingBehaviorPage() {
       </div>
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        {vehicles.map((v) => (
-          <button
-            key={v.id}
-            onClick={() => setSelectedVehicleId(v.id)}
-            className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
-              v.id === selectedVehicleId
-                ? "brand-button"
-                : "bg-white text-slate-500 hover:bg-violet-50 dark:bg-[#111729] dark:text-slate-400 dark:hover:bg-white/10"
-            }`}
-          >
-            {v.name}
-          </button>
-        ))}
+        <VehiclePicker vehicles={vehicles} selectedId={selectedVehicleId} onSelect={setSelectedVehicleId} />
       </div>
 
       <div className="mb-6 flex flex-wrap items-center gap-2">
@@ -190,7 +188,9 @@ export function DrivingBehaviorPage() {
             min={10}
             max={300}
             value={speedLimitInput}
-            onChange={(e) => setSpeedLimitInput(Math.min(300, Math.max(10, Number(e.target.value) || DEFAULT_SPEED_LIMIT_KMH)))}
+            onChange={(e) =>
+              setSpeedLimitInput(Math.min(300, Math.max(10, Number(e.target.value) || DEFAULT_SPEED_LIMIT_KMH)))
+            }
             className="field-input w-16 rounded-lg border border-slate-300 px-2 py-1 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
           />
           km/h
@@ -214,23 +214,25 @@ export function DrivingBehaviorPage() {
 
           {fromVelocity && (
             <p className="mb-4 rounded-xl bg-blue-50 px-4 py-2 text-sm text-blue-800 dark:bg-blue-500/10 dark:text-blue-300">
-              Puntajes de Radius Velocity para los días del periodo (por días completos). Cada categoría resta puntos según los
-              eventos que detecta el dispositivo por hora de conducción, y el puntaje general es el promedio de las cuatro.
+              Puntajes de Radius Velocity para los días del periodo (por días completos). Cada categoría resta puntos
+              según los eventos que detecta el dispositivo por hora de conducción, y el puntaje general es el promedio
+              de las cuatro.
             </p>
           )}
 
           {byDevice && current.measuredSince && (
             <p className="mb-4 rounded-xl bg-emerald-50 px-4 py-2 text-sm text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-300">
-              Eventos medidos por el propio equipo (acelerómetro) desde el {new Date(current.measuredSince).toLocaleString()}: la
-              misma forma de medir que Radius Velocity. Los kilómetros y las horas de esta tarjeta son de ese periodo.
+              Eventos medidos por el propio equipo (acelerómetro) desde el{" "}
+              {new Date(current.measuredSince).toLocaleString()}: la misma forma de medir que Radius Velocity. Los
+              kilómetros y las horas de esta tarjeta son de ese periodo.
             </p>
           )}
 
           {byGps && current.quality === "full" && (
             <p className="mb-4 rounded-xl bg-slate-100 px-4 py-2 text-sm text-slate-600 dark:bg-white/5 dark:text-slate-300">
-              Este vehículo no está en Velocity: los eventos los detecta OneTrack en su GPS, no un acelerómetro como el de los
-              dispositivos de Velocity. Suelen salir más eventos que en Velocity, así que el puntaje tiende a ser más bajo. La
-              fórmula es la misma.
+              Este vehículo no está en Velocity: los eventos los detecta OneTrack en su GPS, no un acelerómetro como el
+              de los dispositivos de Velocity. Suelen salir más eventos que en Velocity, así que el puntaje tiende a ser
+              más bajo. La fórmula es la misma.
             </p>
           )}
 
@@ -265,11 +267,15 @@ export function DrivingBehaviorPage() {
           <Panel title={selection === "overall" ? "Todos los incidentes" : INCIDENT_LABELS[selection]} className="mb-6">
             {fromVelocity ? (
               <p className="text-sm text-slate-500 dark:text-slate-400">
-                Velocity informa cuántos eventos hubo, pero no dónde ni cuándo ocurrió cada uno, así que para este vehículo no hay
-                lista de incidentes en el mapa.
+                Velocity informa cuántos eventos hubo, pero no dónde ni cuándo ocurrió cada uno, así que para este
+                vehículo no hay lista de incidentes en el mapa.
               </p>
             ) : (
-              <IncidentList incidents={visibleIncidents} activeIndex={activeIncidentIndex} onSelect={setActiveIncidentIndex} />
+              <IncidentList
+                incidents={visibleIncidents}
+                activeIndex={activeIncidentIndex}
+                onSelect={setActiveIncidentIndex}
+              />
             )}
           </Panel>
         </>
