@@ -25,7 +25,6 @@ import { RegisterPage } from "./pages/RegisterPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { SimsPage } from "./pages/SimsPage";
 import { TeamPage } from "./pages/TeamPage";
-import { TollsPage } from "./pages/TollsPage";
 import { VehiclesPage } from "./pages/VehiclesPage";
 import { VencimientosPage } from "./pages/VencimientosPage";
 import { WorkspaceLayout } from "./pages/WorkspaceLayout";
@@ -65,7 +64,6 @@ export default function App() {
                 <Route path="/conduccion" element={<DrivingBehaviorPage />} />
                 <Route path="/alertas" element={<AlertsPage />} />
                 <Route path="/geocercas" element={<GeofencesPage />} />
-                <Route path="/peajes" element={<TollsPage />} />
                 <Route
                   path="/salud-dispositivos"
                   element={<DeviceHealthPage />}

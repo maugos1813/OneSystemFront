@@ -227,32 +227,6 @@ export interface TeamMember {
   productKeys: string[];
 }
 
-export interface TollPassage {
-  id: string;
-  ts: string;
-  /** Marked by the org as an unauthorized use of the toll. */
-  flagged: boolean;
-  /** A GPS report near the gates showed the vehicle slowing through them. */
-  confirmed: boolean;
-  vehicleId: string;
-  vehicleName: string;
-  plate: string | null;
-  fleetGroup: string | null;
-  plazaId: string;
-  plazaName: string;
-  operator: string | null;
-  lat: number;
-  lng: number;
-}
-
-export interface TollMonthSummary {
-  /** "YYYY-MM" */
-  month: string;
-  total: number;
-  flagged: number;
-  vehicles: number;
-}
-
 export type DrivingQuality = "full" | "speeding_only" | "insufficient_data" | "no_data";
 
 export interface DrivingScores {

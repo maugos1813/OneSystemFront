@@ -1,4 +1,4 @@
-import { BarChart3, BellRing, History, Map, MapPin, Receipt, ShieldCheck, Users, type LucideIcon } from "lucide-react";
+import { BarChart3, BellRing, History, Map, MapPin, ShieldCheck, Users, type LucideIcon } from "lucide-react";
 
 /** Everything the public site says lives here, so the copy can be edited without touching layout. */
 
@@ -77,11 +77,6 @@ export const ONETRACK_FEATURES: LandingFeature[] = [
     title: "Estilo de conducción",
     description: "Puntaje por vehículo según frenadas, aceleraciones, curvas y velocidad.",
     icon: ShieldCheck,
-  },
-  {
-    title: "Control de peajes",
-    description: "Pasos por peaje detectados a partir del recorrido, ordenados por mes y con marca de uso indebido.",
-    icon: Receipt,
   },
   {
     title: "Analíticas",

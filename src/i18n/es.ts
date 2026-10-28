@@ -114,7 +114,6 @@ export const es = {
   "nav.driving": "Conducción",
   "nav.alerts": "Alertas",
   "nav.geofences": "Geocercas",
-  "nav.tolls": "Peajes",
   "nav.deviceHealth": "Salud del dispositivo",
   "nav.vehicles": "Vehículos",
   "nav.maintenance": "Mantenimiento",

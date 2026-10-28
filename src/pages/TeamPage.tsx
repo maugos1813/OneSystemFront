@@ -834,7 +834,7 @@ export function TeamPage() {
                 <div>
                   <p className="mb-2 text-xs font-medium tracking-wide text-slate-400 uppercase dark:text-slate-500">
                     Secciones de OneTrack{" "}
-                    <span className="font-normal normal-case">(Conducción, Peajes y Cockpit vienen apagados)</span>
+                    <span className="font-normal normal-case">(Conducción y Cockpit vienen apagados)</span>
                   </p>
                   <ModulesPicker
                     selected={newModules}

@@ -113,7 +113,6 @@ export const it: Record<MessageKey, string> = {
   "nav.driving": "Stile di guida",
   "nav.alerts": "Avvisi",
   "nav.geofences": "Geofence",
-  "nav.tolls": "Pedaggi",
   "nav.deviceHealth": "Stato del dispositivo",
   "nav.vehicles": "Veicoli",
   "nav.maintenance": "Manutenzione",

@@ -24,8 +24,6 @@ import type {
   SimSecrets,
   Product,
   TeamMember,
-  TollMonthSummary,
-  TollPassage,
   Vehicle,
   WorkingHours,
 } from "./types";
@@ -330,45 +328,6 @@ export function deleteGeofence(id: string): Promise<void> {
   return request(`/geofences/${id}`, { method: "DELETE" });
 }
 
-// --- Tolls ---
-
-export interface TollFilters {
-  vehicleId?: string;
-  fleetGroup?: string;
-  flaggedOnly?: boolean;
-}
-
-function tollParams(filters: TollFilters): URLSearchParams {
-  const params = new URLSearchParams();
-  if (filters.vehicleId) params.set("vehicleId", filters.vehicleId);
-  if (filters.fleetGroup) params.set("fleetGroup", filters.fleetGroup);
-  if (filters.flaggedOnly) params.set("flaggedOnly", "true");
-  return params;
-}
-
-/** Per-month totals only — the passages themselves are fetched per month, on demand. */
-export function listTollMonths(filters: TollFilters = {}): Promise<TollMonthSummary[]> {
-  return request(`/tolls/months?${tollParams(filters)}`);
-}
-
-export interface TollPassagesQuery extends TollFilters {
-  /** "YYYY-MM" */
-  month: string;
-  limit?: number;
-  offset?: number;
-}
-
-export function listTollPassages(query: TollPassagesQuery): Promise<TollPassage[]> {
-  const params = tollParams(query);
-  params.set("month", query.month);
-  if (query.limit) params.set("limit", String(query.limit));
-  if (query.offset) params.set("offset", String(query.offset));
-  return request(`/tolls/passages?${params}`);
-}
-
-export function flagTollPassage(id: string, flagged: boolean): Promise<{ id: string; flagged: boolean }> {
-  return request(`/tolls/passages/${id}`, { method: "PATCH", body: JSON.stringify({ flagged }) });
-}
 
 // --- Driving style (calculated on the server) ---
 
