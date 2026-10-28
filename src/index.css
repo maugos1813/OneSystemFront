@@ -241,6 +241,16 @@ body {
     pointer-events: none;
     box-shadow: 0 1px 4px rgba(15, 23, 42, 0.25);
   }
+  /* The client's tag opening the plate ("DH ER643VY"): letters and colours come from the per-fleet rules MapView injects. */
+  .vehicle-plate-label[class*="plate-fleet-"]::before {
+    content: var(--fleet-tag);
+    display: inline-block;
+    background: var(--fleet-bg);
+    color: var(--fleet-fg);
+    margin: -1px 5px -1px -6px;
+    padding: 1px 5px;
+    border-radius: 6px 0 0 6px;
+  }
   .dark .vehicle-plate-label {
     /* color is set inline per-marker in MapView.tsx (inline style always beats a class),
        so only the chip's own background/shadow need a dark override here. */

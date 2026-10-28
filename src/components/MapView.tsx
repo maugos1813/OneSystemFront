@@ -7,6 +7,7 @@ import { useT } from "../i18n";
 import { useSmoothedPosition } from "../hooks/useSmoothedPosition";
 import { geofenceZoneColor } from "../lib/geo";
 import { DARK_MAP_STYLE } from "../lib/mapStyle";
+import { fleetClass, fleetColors, fleetPrefixes, fleetTagCss, GAMONAL_FLEET } from "../lib/fleetBrand";
 import { getVehicleIcon } from "../lib/markerIcon";
 import { AVL_ID, type Geofence, type Position, type SharedVehicle, type Vehicle } from "../lib/types";
 
@@ -99,7 +100,7 @@ function SharedVehicleMarker({
       title={title}
       onClick={() => onSelect?.(vehicle.plate)}
       icon={getVehicleIcon(position, selected ? 1 : 0.6)}
-      label={{ text: vehicle.plate, className: "vehicle-plate-label", color: theme === "dark" ? "#e2e8f0" : "#0f172a" }}
+      label={{ text: vehicle.plate, className: `vehicle-plate-label ${fleetClass(GAMONAL_FLEET)}`, color: theme === "dark" ? "#e2e8f0" : "#0f172a" }}
     />
   );
 }
@@ -118,7 +119,8 @@ function AnimatedVehicleMarker({ vehicle, position, selected, onSelect, theme }:
       icon={getVehicleIcon({ ...position, angle: smoothed.angle }, selected ? 1 : 0.75)}
       label={{
         text: vehicle.plate ?? vehicle.name,
-        className: "vehicle-plate-label",
+        // The fleet's coloured tag ("DH", "UN"…) is drawn in CSS from this class — see fleetBrand.ts.
+        className: vehicle.fleetGroup ? `vehicle-plate-label ${fleetClass(vehicle.fleetGroup)}` : "vehicle-plate-label",
         // Google always renders a label color inline (defaulting to black), which beats
         // any CSS class on specificity — has to be set here per-theme, not in index.css,
         // or the plate text goes invisible against the dark chip in dark mode.
@@ -151,6 +153,9 @@ export function MapView({
 
   const center = (selectedVehicleId && positions[selectedVehicleId]) ?? knownPositions[0] ?? shared[0] ?? null;
 
+  // The fleets on the map, each with its tag on the plate (and a line in the legend).
+  const fleets = [...new Set([...(showOwn ? vehicles.map((v) => v.fleetGroup) : []), ...(shared.length > 0 ? [GAMONAL_FLEET] : [])].filter((f): f is string => !!f))];
+
   if (!apiKey) {
     return (
       <div className="flex h-full flex-1 items-center justify-center bg-slate-100 text-sm text-slate-500 dark:bg-[#0d1220] dark:text-slate-400">
@@ -161,6 +166,7 @@ export function MapView({
 
   return (
     <div className="relative h-full flex-1">
+      <style>{fleetTagCss(fleets)}</style>
       <MapsProvider apiKey={apiKey}>
         <Map
           className="h-full"
@@ -231,16 +237,17 @@ export function MapView({
 
         {/* Just above Google's own logo, which has to stay visible. */}
         <div className="absolute bottom-6 left-2 z-0">
-          <MapLegend zonePolygons={zonePolygons} showShared={shared.length > 0} />
+          <MapLegend zonePolygons={zonePolygons} showShared={shared.length > 0} fleets={fleets} />
         </div>
       </MapsProvider>
     </div>
   );
 }
 
-function MapLegend({ zonePolygons, showShared }: { zonePolygons: Geofence[]; showShared: boolean }) {
+function MapLegend({ zonePolygons, showShared, fleets }: { zonePolygons: Geofence[]; showShared: boolean; fleets: string[] }) {
   const t = useT();
   const zoneNames = [...new Set(zonePolygons.map((g) => g.name))];
+  const prefixes = fleetPrefixes(fleets);
 
   return (
     <div className="flex flex-col gap-1.5 rounded-2xl border border-white bg-white px-2.5 py-2 text-[11px] text-slate-600 shadow-lg shadow-slate-300/40 sm:px-3 sm:text-xs dark:border-white/10 dark:bg-[#111729] dark:text-slate-300 dark:shadow-black/40">
@@ -260,6 +267,21 @@ function MapLegend({ zonePolygons, showShared }: { zonePolygons: Geofence[]; sho
         <div className="flex items-center gap-2 border-t border-slate-100 pt-1.5 dark:border-white/10">
           <span className="h-2.5 w-2.5 rounded-full border-2 border-slate-400 bg-transparent" />
           {t("map.legendShared")}
+        </div>
+      )}
+      {prefixes.size > 1 && (
+        <div className="flex flex-col gap-1.5 border-t border-slate-100 pt-1.5 dark:border-white/10">
+          {[...prefixes].map(([fleet, prefix]) => {
+            const { bg, fg } = fleetColors(fleet);
+            return (
+              <div key={fleet} className="flex items-center gap-2">
+                <span className="rounded px-1 text-[10px] font-semibold leading-4" style={{ backgroundColor: bg, color: fg }}>
+                  {prefix}
+                </span>
+                {fleet}
+              </div>
+            );
+          })}
         </div>
       )}
       {zoneNames.length > 0 && (
