@@ -596,6 +596,8 @@ function ExternalPanel({
   }, [product, fallback]);
 
   const src = product.ssoEnabled ? ssoSrc : fallback;
+  // Gamonal Driver opens in place only: no "open in a new tab" button (nor the hint that points to it).
+  const canOpenInNewTab = !native && product.key !== "driver";
 
   return (
     <div className={visible ? "flex min-h-0 flex-1 flex-col" : "hidden"}>
@@ -606,7 +608,7 @@ function ExternalPanel({
         onToggle={onToggle}
         action={
           // Inside the Android app, and on a phone, everything opens in place: a second tab has no place there.
-          native ? undefined : (
+          !canOpenInNewTab ? undefined : (
             <button
               onClick={() => void openInNewTab(product)}
               className="hidden items-center gap-1.5 rounded-xl border border-slate-300 px-3 py-1.5 text-sm text-slate-700 transition hover:bg-slate-50 sm:flex dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5"
@@ -641,7 +643,7 @@ function ExternalPanel({
           />
         )}
       </div>
-      {!expanded && !native && (
+      {!expanded && canOpenInNewTab && (
         <p className="mt-2 hidden text-xs text-slate-400 sm:block dark:text-slate-500">{t("workspace.notLoading")}</p>
       )}
     </div>
