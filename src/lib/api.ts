@@ -534,6 +534,11 @@ export function assignDriverBeacon(beaconId: string, driverName: string): Promis
   return request("/driver-beacons", { method: "POST", body: JSON.stringify({ beaconId, driverName }) });
 }
 
+/** For an EYE Beacon still on its factory identity: the MAC printed on its label is enough. */
+export function assignDriverBeaconByMac(mac: string, driverName: string): Promise<DriverBeacon> {
+  return request("/driver-beacons", { method: "POST", body: JSON.stringify({ mac, driverName }) });
+}
+
 export function renameDriverBeacon(id: string, driverName: string): Promise<DriverBeacon> {
   return request(`/driver-beacons/${id}`, { method: "PATCH", body: JSON.stringify({ driverName }) });
 }

@@ -1,8 +1,9 @@
 import { Trash2 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useT } from "../i18n";
 import {
   assignDriverBeacon,
+  assignDriverBeaconByMac,
   listDetectedBeacons,
   listDriverBeacons,
   removeDriverBeacon,
@@ -72,6 +73,71 @@ function NameCell({ row, onSaved }: { row: Row; onSaved: () => void }) {
   );
 }
 
+/** Registers a beacon before any tracker has heard it, from the MAC on its label. */
+function AddByMacForm({ onAdded }: { onAdded: () => void }) {
+  const [mac, setMac] = useState("");
+  const [name, setName] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function submit(e: FormEvent) {
+    e.preventDefault();
+    setSaving(true);
+    setError(null);
+    try {
+      await assignDriverBeaconByMac(mac, name);
+      setMac("");
+      setName("");
+      onAdded();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No se pudo guardar");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <form
+      onSubmit={submit}
+      onMouseMove={trackGlow}
+      className="glow float-card mb-6 rounded-2xl border border-white bg-white p-4 shadow-lg shadow-slate-200/50 dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40"
+    >
+      <p className="mb-1 text-sm font-semibold text-slate-900 dark:text-white">Dar de alta por MAC</p>
+      <p className="mb-3 text-xs text-slate-500 dark:text-slate-400">
+        La MAC está impresa en la etiqueta de la baliza (por ejemplo 7C:D9:F4:0B:39:E3). Sirve para balizas con su
+        identidad de fábrica; si le cambiaste el namespace o el ID, espera a que un GPS la oiga y asígnala desde la
+        lista.
+      </p>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start">
+        <input
+          required
+          value={mac}
+          onChange={(e) => setMac(e.target.value)}
+          placeholder="7C:D9:F4:0B:39:E3"
+          maxLength={17}
+          className="field-input w-full rounded-xl border border-slate-300 px-3 py-2 font-mono text-sm sm:w-56 dark:border-white/10 dark:bg-white/5 dark:text-white"
+        />
+        <input
+          required
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Nombre del chofer"
+          maxLength={100}
+          className="field-input w-full flex-1 rounded-xl border border-slate-300 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
+        />
+        <button
+          type="submit"
+          disabled={saving}
+          className="brand-button rounded-xl px-4 py-2 text-sm font-medium disabled:opacity-50"
+        >
+          Dar de alta
+        </button>
+      </div>
+      {error && <p className="mt-2 text-xs text-red-500">{error}</p>}
+    </form>
+  );
+}
+
 export function DriversPage() {
   const t = useT();
   const [registered, setRegistered] = useState<DriverBeacon[]>([]);
@@ -134,10 +200,15 @@ export function DriversPage() {
         <p className="mb-1 font-semibold text-slate-900 dark:text-white">Cómo agregar la baliza de un chofer</p>
         <ol className="list-decimal space-y-1 pl-5">
           <li>El GPS del vehículo debe tener Bluetooth activado y escanear balizas (Beacon Detection: All).</li>
-          <li>Sube con la baliza a ese vehículo y deja pasar unos minutos: aparece abajo como «sin asignar».</li>
+          <li>
+            Dala de alta con su MAC (abajo) o sube con ella a ese vehículo y deja pasar unos minutos: aparece en la
+            lista como «sin asignar».
+          </li>
           <li>Escribe el nombre del chofer y pulsa Asignar.</li>
         </ol>
       </div>
+
+      <AddByMacForm onAdded={refetch} />
 
       {loading && <p className="text-sm text-slate-500 dark:text-slate-400">Cargando...</p>}
       {error && <p className="text-sm text-red-500">{error}</p>}
