@@ -23,6 +23,7 @@ import type {
   SimCard,
   DetectedBeacon,
   DriverBeacon,
+  VehicleBeacons,
   VehicleDriver,
   SimSecrets,
   Product,
@@ -533,6 +534,11 @@ export function listDriverBeacons(): Promise<DriverBeacon[]> {
 
 export function listDetectedBeacons(hours = 24): Promise<DetectedBeacon[]> {
   return request(`/driver-beacons/detected?hours=${hours}`);
+}
+
+/** Per vehicle with a Teltonika tracker, the beacons it heard in the last `hours` hours. */
+export function listBeaconsByVehicle(hours = 24): Promise<VehicleBeacons[]> {
+  return request(`/driver-beacons/by-vehicle?hours=${hours}`);
 }
 
 export function assignDriverBeacon(beaconId: string, driverName: string): Promise<DriverBeacon> {

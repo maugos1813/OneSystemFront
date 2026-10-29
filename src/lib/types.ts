@@ -438,3 +438,25 @@ export interface VehicleDriver {
   driver: NamedDriver | null;
   others: NamedDriver[];
 }
+
+/** A beacon one tracker heard, with the driver it belongs to if it is registered. */
+export interface BeaconInVehicle {
+  beaconId: string;
+  driverName: string | null;
+  registeredId: string | null;
+  firstSeen: string;
+  lastSeen: string;
+  /** Beacon reports it appeared in, and how many of those were taken while the vehicle was moving. */
+  sightings: number;
+  movingSightings: number;
+  /** Mean RSSI in dBm: about -50 to -70 close by, -90 and below far away. */
+  avgRssi: number | null;
+}
+
+/** One vehicle with a Teltonika tracker and the beacons it heard in the period. */
+export interface VehicleBeacons {
+  vehicle: { id: string; name: string; plate: string | null; model: string };
+  /** The tracker's last beacon report in the period (even one with no beacons); null if it sent none. */
+  lastReport: string | null;
+  beacons: BeaconInVehicle[];
+}
