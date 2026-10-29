@@ -5,7 +5,7 @@ import { useFleet } from "../context/FleetContext";
 import { useTheme } from "../context/ThemeContext";
 import { useT } from "../i18n";
 import { useSmoothedPosition } from "../hooks/useSmoothedPosition";
-import { geofenceZoneColor } from "../lib/geo";
+import { geofenceZoneColor, isRomeZtl } from "../lib/geo";
 import { DARK_MAP_STYLE } from "../lib/mapStyle";
 import { fleetClass, fleetColors, fleetPrefixes, fleetTagCss, GAMONAL_FLEET } from "../lib/fleetBrand";
 import { getVehicleIcon } from "../lib/markerIcon";
@@ -145,7 +145,7 @@ export function MapView({
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
   const { theme } = useTheme();
   const { geofences } = useFleet();
-  const zonePolygons = geofences.filter((g) => g.type === "polygon" && g.path);
+  const zonePolygons = geofences.filter((g) => g.type === "polygon" && g.path && !isRomeZtl(g.name));
 
   const knownPositions = vehicles
     .map((v) => positions[v.id])

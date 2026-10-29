@@ -23,6 +23,12 @@ export function formatDuration(ms: number): string {
  * amber), and so do Rome's ZTL (day zones in red, night zones in indigo, the large
  * environmental Fascia Verde in green); any other geofence falls back to the app's
  * usual brand violet. */
+/** Rome's ZTL zones watch over the fleet (alerts) but are not drawn on the live map: eleven shaded areas and legend lines
+ * crowd it, most of all on a phone. They still show on the Geofences page. */
+export function isRomeZtl(name: string): boolean {
+  return name.startsWith("ZTL Roma");
+}
+
 export function geofenceZoneColor(name: string): { stroke: string; fill: string } {
   if (name === "Area C") return { stroke: "#dc2626", fill: "#dc2626" };
   if (name === "Area B") return { stroke: "#f59e0b", fill: "#f59e0b" };
