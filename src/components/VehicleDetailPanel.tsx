@@ -1,9 +1,11 @@
+import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
+import { getVehicleDriver } from "../lib/api";
 import { X } from "lucide-react";
 import { useT } from "../i18n";
 import { formatRelativeTime } from "../lib/relativeTime";
 import { describeEvent } from "../lib/deviceEvents";
-import { AVL_ID, type DeviceEvent, type Position, type Vehicle } from "../lib/types";
+import { AVL_ID, type DeviceEvent, type Position, type Vehicle, type VehicleDriver } from "../lib/types";
 import { SpeedChart } from "./SpeedChart";
 
 interface VehicleDetailPanelProps {
@@ -47,6 +49,22 @@ export function VehicleDetailPanel({
     currentUser?.role === "owner" ||
     currentUser?.role === "admin" ||
     !!currentUser?.modules.some((m) => m === "historial" || m === "analiticas");
+  // Who drove it lately is about people: it needs the Conducción section.
+  const canSeeDriver =
+    currentUser?.role === "owner" || currentUser?.role === "admin" || !!currentUser?.modules.some((m) => m === "conduccion");
+  const [driver, setDriver] = useState<VehicleDriver | null>(null);
+  useEffect(() => {
+    setDriver(null);
+    if (!canSeeDriver) return;
+    let cancelled = false;
+    getVehicleDriver(vehicle.id)
+      .then((d) => !cancelled && setDriver(d))
+      .catch(() => undefined); // an identification that fails is simply not shown
+    return () => {
+      cancelled = true;
+    };
+  }, [vehicle.id, canSeeDriver]);
+
   return (
     <div className="absolute inset-x-0 bottom-0 z-10 max-h-[75vh] overflow-y-auto rounded-t-3xl border border-white bg-white p-4 shadow-xl shadow-slate-300/30 sm:absolute sm:inset-x-auto sm:top-4 sm:right-4 sm:bottom-auto sm:max-h-[calc(100%-2rem)] sm:w-80 sm:rounded-3xl dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40">
       <div className="mb-3 flex items-start justify-between">
@@ -69,6 +87,24 @@ export function VehicleDetailPanel({
 
       {position && (
         <div className="divide-y divide-slate-100 dark:divide-white/10">
+          {driver?.driver && (
+            <div className="py-1.5">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-slate-500 dark:text-slate-400">{t("detail.driver")}</span>
+                <span className="text-sm font-medium text-slate-900 dark:text-white">
+                  {driver.driver.name}
+                  {driver.confidence === "low" && (
+                    <span className="ml-1 text-xs font-normal text-slate-400">({t("detail.driverProbable")})</span>
+                  )}
+                </span>
+              </div>
+              {driver.others.length > 0 && (
+                <p className="mt-0.5 text-right text-xs text-slate-400 dark:text-slate-500">
+                  {t("detail.driverAlso")}: {driver.others.map((o) => o.name).join(", ")}
+                </p>
+              )}
+            </div>
+          )}
           <Row label={t("detail.speed")} value={`${position.speed} km/h`} />
           <Row
             label={t("detail.ignition")}

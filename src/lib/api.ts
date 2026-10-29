@@ -21,6 +21,9 @@ import type {
   OrgSettings,
   Position,
   SimCard,
+  DetectedBeacon,
+  DriverBeacon,
+  VehicleDriver,
   SimSecrets,
   Product,
   TeamMember,
@@ -515,4 +518,33 @@ export function registerPushToken(token: string): Promise<void> {
 
 export function unregisterPushToken(token: string): Promise<void> {
   return request("/push-tokens/unregister", { method: "POST", body: JSON.stringify({ token }) });
+}
+
+// --- Drivers (Bluetooth beacons) ---
+
+export function listDriverBeacons(): Promise<DriverBeacon[]> {
+  return request("/driver-beacons");
+}
+
+export function listDetectedBeacons(hours = 24): Promise<DetectedBeacon[]> {
+  return request(`/driver-beacons/detected?hours=${hours}`);
+}
+
+export function assignDriverBeacon(beaconId: string, driverName: string): Promise<DriverBeacon> {
+  return request("/driver-beacons", { method: "POST", body: JSON.stringify({ beaconId, driverName }) });
+}
+
+export function renameDriverBeacon(id: string, driverName: string): Promise<DriverBeacon> {
+  return request(`/driver-beacons/${id}`, { method: "PATCH", body: JSON.stringify({ driverName }) });
+}
+
+export function removeDriverBeacon(id: string): Promise<void> {
+  return request(`/driver-beacons/${id}`, { method: "DELETE" });
+}
+
+export function getVehicleDriver(vehicleId: string, range: { from?: Date; to?: Date } = {}): Promise<VehicleDriver> {
+  const params = new URLSearchParams();
+  if (range.from) params.set("from", range.from.toISOString());
+  if (range.to) params.set("to", range.to.toISOString());
+  return request(`/vehicles/${vehicleId}/driver?${params}`);
 }

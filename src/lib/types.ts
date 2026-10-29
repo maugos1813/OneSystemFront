@@ -387,3 +387,41 @@ export interface VehicleWithDocuments {
   plate: string | null;
   documents: VehicleDocument[];
 }
+
+/** A Bluetooth beacon assigned to a driver. */
+export interface DriverBeacon {
+  id: string;
+  beaconId: string;
+  driverName: string;
+  createdAt: string;
+}
+
+/** A beacon the trackers heard recently, with its driver if it is already assigned. */
+export interface DetectedBeacon {
+  beaconId: string;
+  driverName: string | null;
+  registeredId: string | null;
+  lastSeen: string;
+  vehicle: { id: string; name: string; plate: string | null };
+  avgRssi: number | null;
+  sightings: number;
+}
+
+export interface NamedDriver {
+  name: string;
+  beaconId: string;
+  presence: number;
+  avgRssi: number | null;
+}
+
+/** Who drove a vehicle in a period, from the beacons its tracker heard while it moved. */
+export interface VehicleDriver {
+  vehicleId: string;
+  from: string;
+  to: string;
+  movingScans: number;
+  /** "low" when several drivers were in the cab: the first is only the probable one. */
+  confidence: "high" | "low" | null;
+  driver: NamedDriver | null;
+  others: NamedDriver[];
+}

@@ -23,6 +23,7 @@ import { MaintenancePage } from "./pages/MaintenancePage";
 import { LoginPage } from "./pages/LoginPage";
 import { RegisterPage } from "./pages/RegisterPage";
 import { SettingsPage } from "./pages/SettingsPage";
+import { DriversPage } from "./pages/DriversPage";
 import { SimsPage } from "./pages/SimsPage";
 import { TeamPage } from "./pages/TeamPage";
 import { VehiclesPage } from "./pages/VehiclesPage";
@@ -76,6 +77,7 @@ export default function App() {
                   path="/dispositivos/:id"
                   element={<DeviceDetailPage />}
                 />
+                <Route path="/choferes" element={<DriversPage />} />
                 <Route path="/sims" element={<SimsPage />} />
                 <Route path="/api-keys" element={<ApiKeysPage />} />
                 <Route path="/ajustes" element={<SettingsPage />} />

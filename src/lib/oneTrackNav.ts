@@ -13,6 +13,7 @@ import {
   ShieldCheck,
   Smartphone,
   Truck,
+  UserRound,
   Wrench,
   type LucideIcon,
 } from "lucide-react";
@@ -43,6 +44,7 @@ export const ONETRACK_NAV: OneTrackNavItem[] = [
   { to: "/vehiculos", label: "nav.vehicles", icon: Truck, end: false, module: "vehiculos" },
   { to: "/mantenimiento", label: "nav.maintenance", icon: Wrench, end: false, module: "mantenimiento" },
   { to: "/vencimientos", label: "nav.documents", icon: FileCheck, end: false, module: "vencimientos" },
+  { to: "/choferes", label: "nav.drivers", icon: UserRound, end: false, ownerAdminOnly: true },
   { to: "/dispositivos", label: "nav.devices", icon: Smartphone, end: false, ownerAdminOnly: true },
   // API keys authenticate as full access and org settings affect everyone, so these stay with owner/admin.
   { to: "/sims", label: "nav.sims", icon: Cpu, end: false, ownerAdminOnly: true },

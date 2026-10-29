@@ -6,7 +6,10 @@ import { HistoryMapView } from "../components/history/HistoryMapView";
 import { PlaybackBar } from "../components/history/PlaybackBar";
 import { SpeedTimelineChart } from "../components/history/SpeedTimelineChart";
 import { ViolationsList } from "../components/history/ViolationsList";
+import { useAuth } from "../context/AuthContext";
 import { useFleet } from "../context/FleetContext";
+import { getVehicleDriver } from "../lib/api";
+import type { VehicleDriver } from "../lib/types";
 import { usePositionHistory } from "../hooks/usePositionHistory";
 import { findSpeedViolations } from "../lib/speedTimeline";
 
@@ -39,6 +42,25 @@ export function HistoryPage() {
 
   const from = useMemo(() => new Date(Date.now() - rangeHours * 60 * 60 * 1000), [rangeHours]);
   const { history, loading: historyLoading } = usePositionHistory(selectedVehicleId, from);
+
+  // Who drove it in this period (from the drivers' beacons); needs the Conducción section.
+  const { currentUser } = useAuth();
+  const canSeeDriver =
+    currentUser?.role === "owner" ||
+    currentUser?.role === "admin" ||
+    !!currentUser?.modules.some((m) => m === "conduccion");
+  const [driver, setDriver] = useState<VehicleDriver | null>(null);
+  useEffect(() => {
+    setDriver(null);
+    if (!canSeeDriver || !selectedVehicleId) return;
+    let cancelled = false;
+    getVehicleDriver(selectedVehicleId, { from })
+      .then((d) => !cancelled && setDriver(d))
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [canSeeDriver, selectedVehicleId, from]);
 
   useEffect(() => {
     setCurrentIndex(0);
@@ -110,6 +132,16 @@ export function HistoryPage() {
           </button>
         ))}
       </div>
+
+      {driver?.driver && (
+        <p className="mb-4 text-sm text-slate-600 dark:text-slate-300">
+          Conductor: <strong>{driver.driver.name}</strong>
+          {driver.confidence === "low" && " (probable)"}
+          {driver.others.length > 0 && (
+            <span className="text-slate-400"> · también en cabina: {driver.others.map((o) => o.name).join(", ")}</span>
+          )}
+        </p>
+      )}
 
       {!vehicle && <p className="text-sm text-slate-500 dark:text-slate-400">Todavía no hay vehículos cargados.</p>}
 
