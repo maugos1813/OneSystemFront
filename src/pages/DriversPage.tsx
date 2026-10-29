@@ -102,7 +102,7 @@ function AddByMacForm({ onAdded }: { onAdded: () => void }) {
       onMouseMove={trackGlow}
       className="glow float-card mb-6 rounded-2xl border border-white bg-white p-4 shadow-lg shadow-slate-200/50 dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40"
     >
-      <p className="mb-1 text-sm font-semibold text-slate-900 dark:text-white">Dar de alta por MAC</p>
+      <p className="mb-1 text-sm font-semibold text-slate-900 dark:text-white">Asignar baliza por MAC</p>
       <p className="mb-3 text-xs text-slate-500 dark:text-slate-400">
         La MAC está impresa en la etiqueta de la baliza (por ejemplo 7C:D9:F4:0B:39:E3). Sirve para balizas con su
         identidad de fábrica; si le cambiaste el namespace o el ID, espera a que un GPS la oiga y asígnala desde la
@@ -130,7 +130,7 @@ function AddByMacForm({ onAdded }: { onAdded: () => void }) {
           disabled={saving}
           className="brand-button rounded-xl px-4 py-2 text-sm font-medium disabled:opacity-50"
         >
-          Dar de alta
+          Asignar baliza
         </button>
       </div>
       {error && <p className="mt-2 text-xs text-red-500">{error}</p>}
@@ -201,7 +201,7 @@ export function DriversPage() {
         <ol className="list-decimal space-y-1 pl-5">
           <li>El GPS del vehículo debe tener Bluetooth activado y escanear balizas (Beacon Detection: All).</li>
           <li>
-            Dala de alta con su MAC (abajo) o sube con ella a ese vehículo y deja pasar unos minutos: aparece en la
+            Asígnala con su MAC (abajo) o sube con ella a ese vehículo y deja pasar unos minutos: aparece en la
             lista como «sin asignar».
           </li>
           <li>Escribe el nombre del chofer y pulsa Asignar.</li>
