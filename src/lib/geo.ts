@@ -20,10 +20,17 @@ export function formatDuration(ms: number): string {
 
 /** Milan's official traffic-restricted zones get their own colors (Area C — the paid,
  * fine-relevant congestion zone — in red; Area B, the broader low-emission zone, in
- * amber); any other geofence falls back to the app's usual brand violet. */
+ * amber), and so do Rome's ZTL (day zones in red, night zones in indigo, the large
+ * environmental Fascia Verde in green); any other geofence falls back to the app's
+ * usual brand violet. */
 export function geofenceZoneColor(name: string): { stroke: string; fill: string } {
   if (name === "Area C") return { stroke: "#dc2626", fill: "#dc2626" };
   if (name === "Area B") return { stroke: "#f59e0b", fill: "#f59e0b" };
+  if (name.startsWith("ZTL Roma")) {
+    if (name.includes("Fascia Verde")) return { stroke: "#16a34a", fill: "#16a34a" };
+    if (name.includes("notturna")) return { stroke: "#6366f1", fill: "#6366f1" };
+    return { stroke: "#dc2626", fill: "#dc2626" };
+  }
   return { stroke: "#7c3aed", fill: "#7c3aed" };
 }
 
