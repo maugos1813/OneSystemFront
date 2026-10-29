@@ -4,7 +4,7 @@ import { VehiclePicker } from "../components/VehiclePicker";
 import { DrivingScoreCard } from "../components/cockpit/DrivingScoreCard";
 import { GForceGauge } from "../components/cockpit/GForceGauge";
 import { MileageCard } from "../components/cockpit/MileageCard";
-import { MiniMapCard } from "../components/cockpit/MiniMapCard";
+import { DriveMap } from "../components/cockpit/DriveMap";
 import { SpeedGauge } from "../components/cockpit/SpeedGauge";
 import { StatePills } from "../components/cockpit/StatePills";
 import { StatusList } from "../components/cockpit/StatusList";
@@ -44,90 +44,85 @@ export function CockpitPage() {
       : null;
 
   return (
-    <div className="h-full overflow-y-auto bg-violet-50 p-4 sm:p-6 lg:p-8 dark:bg-[#0a0e1a]">
-      <div className="mx-auto max-w-5xl">
-        <div className="mb-4">
-          <AreaFilterPills />
-        </div>
-
-        {!vehicle && (
-          <p className="flex h-40 items-center justify-center text-sm text-slate-500 dark:text-slate-400">
-            Ningún vehículo en esta área.
-          </p>
+    <div className="flex h-full flex-col gap-3 overflow-y-auto bg-violet-50 p-3 sm:p-4 lg:overflow-hidden dark:bg-[#0a0e1a]">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        <AreaFilterPills />
+        {vehicle && vehicles.length > 1 && (
+          <VehiclePicker vehicles={vehicles} selectedId={selectedId} onSelect={setSelectedId} />
         )}
-
         {vehicle && (
-          <>
-            {vehicles.length > 1 && (
-              <div className="mb-6">
-                <VehiclePicker vehicles={vehicles} selectedId={selectedId} onSelect={setSelectedId} />
-              </div>
+          <div className="ml-auto flex items-baseline gap-3">
+            <h1 className="text-lg font-bold tracking-wide text-slate-900 sm:text-xl dark:text-white">
+              {vehicle.name.toUpperCase()}
+            </h1>
+            {vehicle.plate && vehicle.plate !== vehicle.name && (
+              <span className="text-sm text-slate-400 dark:text-slate-500">{vehicle.plate}</span>
             )}
-
-            <div className="mb-4 flex items-center justify-between gap-2">
-              <div className="min-w-0">
-                <h1 className="truncate text-lg font-bold tracking-wide text-slate-900 sm:text-xl dark:text-white">
-                  {vehicle.name.toUpperCase()}
-                </h1>
-                {vehicle.plate && <p className="text-sm text-slate-400 dark:text-slate-500">{vehicle.plate}</p>}
-              </div>
-              <p className="shrink-0 text-sm text-slate-400 dark:text-slate-500">
-                {new Date().toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </p>
-            </div>
-
-            <div className="brand-border-glow grid grid-cols-1 gap-4 rounded-3xl p-4 shadow-lg shadow-blue-100/40 sm:p-6 lg:grid-cols-[260px_1fr_260px] dark:bg-[#111729] dark:shadow-black/40">
-              <div onMouseMove={trackGlow} className="glow float-card rounded-2xl bg-violet-50/60 p-3 dark:bg-white/5">
-                <p className="mb-2 px-1 text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-500">
-                  Ubicación
-                </p>
-                <MiniMapCard position={position} />
-              </div>
-
-              <div className="flex items-center justify-center py-6">
-                <SpeedGauge speed={smoothed?.speed ?? 0} state={state} />
-              </div>
-
-              <div onMouseMove={trackGlow} className="glow float-card rounded-2xl bg-violet-50/60 p-4 dark:bg-white/5">
-                <p className="mb-4 px-1 text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-500">
-                  Estado del vehículo
-                </p>
-                <StatusList position={position} />
-              </div>
-            </div>
-
-            <div className="mt-4 grid grid-cols-2 gap-4 lg:grid-cols-12">
-              <div
-                onMouseMove={trackGlow}
-                className="glow float-card col-span-1 flex items-center justify-center rounded-3xl border border-white bg-white p-4 shadow-lg shadow-slate-200/50 lg:col-span-2 dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40"
-              >
-                <GForceGauge eventCount={harshEventCount} />
-              </div>
-              <div className="col-span-1 lg:col-span-2">
-                <MileageCard label="Total recorrido" km={totalKm} />
-              </div>
-              <div
-                onMouseMove={trackGlow}
-                className="glow float-card col-span-2 rounded-3xl border border-white bg-white p-4 shadow-lg shadow-slate-200/50 lg:col-span-4 dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40"
-              >
-                <DrivingScoreCard style={todayStyle} loading={styleLoading} />
-              </div>
-              <div className="col-span-1 lg:col-span-2">
-                <MileageCard label="Recorrido hoy" km={todayStyle?.distanceKm ?? null} />
-              </div>
-              <div
-                onMouseMove={trackGlow}
-                className="glow float-card col-span-1 flex items-center justify-center rounded-3xl border border-white bg-white p-4 shadow-lg shadow-slate-200/50 lg:col-span-2 dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40"
-              >
-                <StatePills current={state} />
-              </div>
-            </div>
-          </>
+            <span className="text-sm text-slate-400 dark:text-slate-500">
+              {new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+            </span>
+          </div>
         )}
       </div>
+
+      {!vehicle && (
+        <p className="flex h-40 items-center justify-center text-sm text-slate-500 dark:text-slate-400">
+          Ningún vehículo en esta área.
+        </p>
+      )}
+
+      {vehicle && (
+        <>
+          <div className="relative min-h-[60vh] flex-1 overflow-hidden rounded-3xl border border-white bg-white shadow-lg shadow-blue-100/40 lg:min-h-[320px] dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40">
+            <DriveMap key={vehicle.id} position={position} smoothed={smoothed} />
+
+            {/* The instruments sit over the map, like a dashboard: forced dark so they read on any map. */}
+            <div className="dark pointer-events-none absolute bottom-3 left-3 w-32 sm:w-52 lg:w-60">
+              <div className="rounded-full bg-slate-950/85 p-2 backdrop-blur-md">
+                <SpeedGauge speed={smoothed?.speed ?? 0} state={state} />
+              </div>
+            </div>
+            <div className="dark absolute top-3 right-3 hidden w-72 rounded-2xl bg-slate-950/85 p-4 backdrop-blur-md lg:block">
+              <p className="mb-3 text-xs font-semibold tracking-wide text-slate-400 uppercase">Estado del vehículo</p>
+              <StatusList position={position} />
+            </div>
+          </div>
+
+          <div onMouseMove={trackGlow} className="glow float-card rounded-2xl bg-white p-4 lg:hidden dark:bg-[#111729]">
+            <p className="mb-3 text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-500">
+              Estado del vehículo
+            </p>
+            <StatusList position={position} />
+          </div>
+
+          <div className="grid shrink-0 grid-cols-2 gap-3 lg:grid-cols-12">
+            <div
+              onMouseMove={trackGlow}
+              className="glow float-card col-span-1 flex items-center justify-center rounded-3xl border border-white bg-white p-4 shadow-lg shadow-slate-200/50 lg:col-span-2 dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40"
+            >
+              <GForceGauge eventCount={harshEventCount} />
+            </div>
+            <div className="col-span-1 lg:col-span-2">
+              <MileageCard label="Total recorrido" km={totalKm} />
+            </div>
+            <div
+              onMouseMove={trackGlow}
+              className="glow float-card col-span-2 rounded-3xl border border-white bg-white p-4 shadow-lg shadow-slate-200/50 lg:col-span-4 dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40"
+            >
+              <DrivingScoreCard style={todayStyle} loading={styleLoading} />
+            </div>
+            <div className="col-span-1 lg:col-span-2">
+              <MileageCard label="Recorrido hoy" km={todayStyle?.distanceKm ?? null} />
+            </div>
+            <div
+              onMouseMove={trackGlow}
+              className="glow float-card col-span-1 flex items-center justify-center rounded-3xl border border-white bg-white p-4 shadow-lg shadow-slate-200/50 lg:col-span-2 dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40"
+            >
+              <StatePills current={state} />
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
