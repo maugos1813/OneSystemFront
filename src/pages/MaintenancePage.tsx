@@ -73,6 +73,7 @@ export function MaintenancePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [dialog, setDialog] = useState<Dialog | null>(null);
+  const [search, setSearch] = useState("");
 
   const load = useCallback(() => {
     listMaintenance()
@@ -95,6 +96,12 @@ export function MaintenancePage() {
       ),
     [vehicles],
   );
+  // Spaces and case do not matter: "er643 vy" finds ER643VY.
+  const shown = useMemo(() => {
+    const q = search.toLowerCase().replace(/\s/g, "");
+    if (!q) return sorted;
+    return sorted.filter((v) => `${v.name}${v.plate ?? ""}`.toLowerCase().replace(/\s/g, "").includes(q));
+  }, [sorted, search]);
   const counts = useMemo(() => {
     const all = vehicles.flatMap((v) => v.plans);
     return {
@@ -131,14 +138,35 @@ export function MaintenancePage() {
         </div>
       )}
 
+      {vehicles.length > 1 && (
+        <div className="mb-4 flex items-center gap-3">
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar placa…"
+            aria-label="Buscar vehículo por placa"
+            className="field-input w-full rounded-xl border border-slate-300 px-3 py-2 text-sm sm:w-72 dark:border-white/10 dark:bg-white/5 dark:text-white"
+          />
+          {search && (
+            <span className="text-xs text-slate-500 dark:text-slate-400">
+              {shown.length} de {vehicles.length}
+            </span>
+          )}
+        </div>
+      )}
+
       {loading && <p className="text-sm text-slate-500 dark:text-slate-400">Cargando...</p>}
       {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
       {!loading && !error && vehicles.length === 0 && (
         <p className="text-sm text-slate-500 dark:text-slate-400">No hay vehículos. Agrégalos primero en la página Vehículos.</p>
       )}
 
+      {search && shown.length === 0 && (
+        <p className="text-sm text-slate-500 dark:text-slate-400">Ningún vehículo coincide con «{search}».</p>
+      )}
+
       <div className="space-y-4">
-        {sorted.map((vehicle) => (
+        {shown.map((vehicle) => (
           <VehicleCard key={vehicle.vehicleId} vehicle={vehicle} canManage={canManage} onDialog={setDialog} onChanged={load} />
         ))}
       </div>
