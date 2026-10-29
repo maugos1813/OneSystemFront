@@ -1,9 +1,13 @@
 import { Pause, Play, Square } from "lucide-react";
+import { PLAYBACK_RATES } from "../../lib/playback";
 
 interface PlaybackBarProps {
   playing: boolean;
   onTogglePlay: () => void;
   onStop: () => void;
+  /** Times faster than real life. */
+  rate: number;
+  onRateChange: (rate: number) => void;
   currentIndex: number;
   total: number;
   onSeek: (index: number) => void;
@@ -17,6 +21,8 @@ export function PlaybackBar({
   playing,
   onTogglePlay,
   onStop,
+  rate,
+  onRateChange,
   currentIndex,
   total,
   onSeek,
@@ -65,6 +71,24 @@ export function PlaybackBar({
         onChange={(e) => onSeek(Number(e.target.value))}
         className="brand-range h-1.5 w-full flex-1 cursor-pointer rounded-full"
       />
+
+      <div className="flex shrink-0 items-center gap-1" role="group" aria-label="Velocidad de reproducción">
+        {PLAYBACK_RATES.map((r) => (
+          <button
+            key={r}
+            type="button"
+            onClick={() => onRateChange(r)}
+            aria-pressed={rate === r}
+            className={`rounded-full px-2.5 py-1 text-xs font-medium tabular-nums transition ${
+              rate === r
+                ? "bg-slate-900 text-white dark:bg-blue-600"
+                : "bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-white/10 dark:text-slate-400 dark:hover:bg-white/20"
+            }`}
+          >
+            {r}×
+          </button>
+        ))}
+      </div>
 
       <label className="flex shrink-0 items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
         Límite

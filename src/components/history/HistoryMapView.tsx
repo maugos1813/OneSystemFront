@@ -22,6 +22,8 @@ import type { Position } from "../../lib/types";
 interface HistoryMapViewProps {
   positions: Position[];
   currentPosition: Position | null;
+  /** The last report playback has passed (the current position itself sits between reports). */
+  currentIndex: number;
   speedLimit: number;
   /** Harsh events and speeding to mark as pins on the route. */
   incidents?: Incident[];
@@ -74,6 +76,7 @@ interface CameraTarget {
 interface MapCameraProps {
   positions: Position[];
   currentPosition: Position | null;
+  currentIndex: number;
   mode: Mode;
   follow: boolean;
   onUserMove: () => void;
@@ -82,10 +85,9 @@ interface MapCameraProps {
 
 /** The heading of a report: its own while moving, otherwise the one of the next stretch driven (a vehicle waiting to set
  * off still faces where it will go), otherwise null. */
-function headingAt(positions: Position[], current: Position): number | null {
+function headingAt(positions: Position[], current: Position, index: number): number | null {
   if (current.speed >= MIN_HEADING_SPEED_KMH) return norm(current.angle);
-  const from = positions.indexOf(current);
-  for (let i = from + 1; i < Math.min(positions.length, from + 60); i++) {
+  for (let i = index + 1; i < Math.min(positions.length, index + 60); i++) {
     if (positions[i]!.speed >= MIN_HEADING_SPEED_KMH) return norm(positions[i]!.angle);
   }
   return null;
@@ -95,7 +97,7 @@ function headingAt(positions: Position[], current: Position): number | null {
  * every playback tick and makes it impossible to look around. In "overview" the map follows the vehicle over the whole
  * route; in "drive" the camera sits behind it, tilted and turned to its heading. Either way, the moment the person drags or
  * zooms, following stops and the map stays wherever they put it. */
-function MapCamera({ positions, currentPosition, mode, follow, onUserMove, fitSignal }: MapCameraProps) {
+function MapCamera({ positions, currentPosition, currentIndex, mode, follow, onUserMove, fitSignal }: MapCameraProps) {
   const map = useMap();
   const lastHeading = useRef(0);
   const target = useRef<CameraTarget | null>(null);
@@ -129,7 +131,7 @@ function MapCamera({ positions, currentPosition, mode, follow, onUserMove, fitSi
   // Drive: where the camera should be for the current report.
   useEffect(() => {
     if (!map || mode !== "drive" || !currentPosition) return;
-    lastHeading.current = headingAt(positions, currentPosition) ?? lastHeading.current;
+    lastHeading.current = headingAt(positions, currentPosition, currentIndex) ?? lastHeading.current;
     const zoom = zoomForSpeed(currentPosition.speed);
     const center = pointAhead(
       currentPosition.lat,
@@ -138,7 +140,7 @@ function MapCamera({ positions, currentPosition, mode, follow, onUserMove, fitSi
       AHEAD_PX * metersPerPixel(currentPosition.lat, zoom),
     );
     target.current = { lat: center.lat, lng: center.lng, heading: lastHeading.current, zoom };
-  }, [map, mode, positions, currentPosition]);
+  }, [map, mode, positions, currentPosition, currentIndex]);
 
   // A new route or a new mode starts the camera right at its place instead of flying there.
   useEffect(() => {
@@ -189,6 +191,7 @@ function MapCamera({ positions, currentPosition, mode, follow, onUserMove, fitSi
 export function HistoryMapView({
   positions,
   currentPosition,
+  currentIndex,
   speedLimit,
   incidents = [],
   onIncidentSelect,
@@ -253,6 +256,7 @@ export function HistoryMapView({
           <MapCamera
             positions={positions}
             currentPosition={currentPosition}
+            currentIndex={currentIndex}
             mode={mode}
             follow={follow}
             onUserMove={stopFollowing}

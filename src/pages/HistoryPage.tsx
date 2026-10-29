@@ -10,6 +10,7 @@ import { useFleet } from "../context/FleetContext";
 import { getVehicleDriver } from "../lib/api";
 import type { VehicleDriver } from "../lib/types";
 import { usePositionHistory } from "../hooks/usePositionHistory";
+import { usePlayback } from "../hooks/usePlayback";
 import { useVehicleIncidents } from "../hooks/useVehicleIncidents";
 import { INCIDENT_COLORS, INCIDENT_LABELS, type Incident, type IncidentType } from "../lib/drivingBehavior";
 import { incidentPinUrl } from "../lib/incidentPins";
@@ -24,16 +25,12 @@ const RANGES: Array<{ label: string; hours: number }> = [
 
 const INCIDENT_TYPES: IncidentType[] = ["harshBraking", "harshAcceleration", "harshCornering", "speeding"];
 const DEFAULT_SPEED_LIMIT_KMH = 120;
-const PLAYBACK_TICK_MS = 80;
-const PLAYBACK_STEPS = 300; // any route plays back fully in ~300 ticks, short or long
 
 export function HistoryPage() {
   const { filteredVehicles: vehicles, loading: fleetLoading } = useFleet();
   const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
   const [rangeHours, setRangeHours] = useState(24);
   const [speedLimit, setSpeedLimit] = useState(DEFAULT_SPEED_LIMIT_KMH);
-  const [playing, setPlaying] = useState(false);
-  const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
     if (vehicles.length === 0) return;
@@ -64,28 +61,16 @@ export function HistoryPage() {
     };
   }, [canSeeDriver, selectedVehicleId, from]);
 
-  useEffect(() => {
-    setCurrentIndex(0);
-    setPlaying(false);
-  }, [selectedVehicleId, rangeHours]);
-
-  useEffect(() => {
-    if (!playing || history.length < 2) return;
-    const step = Math.max(1, Math.ceil(history.length / PLAYBACK_STEPS));
-    const interval = setInterval(() => {
-      setCurrentIndex((i) => {
-        const next = i + step;
-        if (next >= history.length - 1) {
-          setPlaying(false);
-          return history.length - 1;
-        }
-        return next;
-      });
-    }, PLAYBACK_TICK_MS);
-    return () => clearInterval(interval);
-  }, [playing, history.length]);
-
-  const currentPosition = history[currentIndex] ?? null;
+  const {
+    playing,
+    togglePlay,
+    stop: handleStop,
+    rate,
+    setRate,
+    index: currentIndex,
+    position: currentPosition,
+    seek: handleSeek,
+  } = usePlayback(history, `${selectedVehicleId}|${rangeHours}`);
   const incidents = useVehicleIncidents(selectedVehicleId, Math.max(1, Math.round(rangeHours / 24)), speedLimit);
   const [hiddenTypes, setHiddenTypes] = useState<ReadonlySet<IncidentType>>(new Set());
   const shownIncidents = useMemo(() => incidents.filter((i) => !hiddenTypes.has(i.type)), [incidents, hiddenTypes]);
@@ -112,19 +97,11 @@ export function HistoryPage() {
   function handleIncidentSelect(incident: Incident) {
     const at = new Date(incident.ts).getTime();
     const index = history.findIndex((p) => new Date(p.ts).getTime() >= at);
+    if (playing) togglePlay();
     handleSeek(index === -1 ? history.length - 1 : index);
-    setPlaying(false);
   }
+
   const vehicle = vehicles.find((v) => v.id === selectedVehicleId) ?? null;
-
-  function handleSeek(index: number) {
-    setCurrentIndex(Math.max(0, Math.min(index, history.length - 1)));
-  }
-
-  function handleStop() {
-    setPlaying(false);
-    setCurrentIndex(0);
-  }
 
   if (fleetLoading) {
     return (
@@ -219,6 +196,7 @@ export function HistoryPage() {
               <HistoryMapView
                 positions={history}
                 currentPosition={currentPosition}
+                currentIndex={currentIndex}
                 speedLimit={speedLimit}
                 incidents={shownIncidents}
                 onIncidentSelect={handleIncidentSelect}
@@ -236,7 +214,9 @@ export function HistoryPage() {
             <div className="mt-4 border-t border-slate-100 pt-4 dark:border-white/10">
               <PlaybackBar
                 playing={playing}
-                onTogglePlay={() => setPlaying((p) => !p)}
+                onTogglePlay={togglePlay}
+                rate={rate}
+                onRateChange={setRate}
                 onStop={handleStop}
                 currentIndex={currentIndex}
                 total={history.length}
