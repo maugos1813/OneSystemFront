@@ -302,7 +302,8 @@ export interface SimSecrets {
 
 // --- Maintenance ---
 
-export type MaintenanceState = "ok" | "soon" | "overdue" | "unknown";
+/** ok = green, soon = orange, due = red (about to be due), overdue = red (past it). */
+export type MaintenanceState = "ok" | "soon" | "due" | "overdue" | "unknown";
 
 export interface PlanStatus {
   state: MaintenanceState;
@@ -324,6 +325,14 @@ export interface MaintenancePlan {
   lastDoneAt: string | null;
   lastDoneKm: number | null;
   notes: string | null;
+  /** Where the km come from: the car's own odometer (OBD) or the GPS route counted since the service. */
+  kmSource: "obd" | "gps";
+  /** Km driven since the last service, when it can be told. */
+  kmSince: number | null;
+  /** The dashboard reading now: the km of the last service plus what has been driven since. */
+  dashboardKm: number | null;
+  /** The service was before the GPS started counting for this vehicle, so the km since it fall short. */
+  partialCoverage: boolean;
   status: PlanStatus;
 }
 
@@ -331,11 +340,15 @@ export interface VehicleMaintenance {
   vehicleId: string;
   name: string;
   plate: string | null;
-  /** What the tracker reports; null if the device doesn't report a kilometrage. */
+  kmSource: "obd" | "gps";
+  /** The car's own odometer through OBD; null if the device doesn't read it. */
   trackerKm: number | null;
   offsetKm: number;
-  /** Dashboard-scale odometer (tracker + offset). */
+  /** Dashboard-scale odometer (OBD + offset), when the car's own is read. */
   odometerKm: number | null;
+  /** All the km the GPS has counted for this vehicle, and since which day (YYYY-MM-DD). */
+  gpsKmTotal: number;
+  gpsCoverageFrom: string | null;
   plans: MaintenancePlan[];
 }
 

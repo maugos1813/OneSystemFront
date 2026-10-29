@@ -17,6 +17,7 @@ import {
   PLAN_TEMPLATES,
   STATE_BADGE,
   STATE_BAR,
+  STATE_EDGE,
   STATE_LABEL,
   type PlanTemplate,
 } from "../lib/maintenance";
@@ -31,7 +32,7 @@ const LABEL = "mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300
 const GHOST_BUTTON =
   "inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-white/10";
 
-const STATE_ORDER: Record<MaintenanceState, number> = { overdue: 0, soon: 1, ok: 2, unknown: 3 };
+const STATE_ORDER: Record<MaintenanceState, number> = { overdue: 0, due: 1, soon: 2, ok: 3, unknown: 4 };
 
 type Dialog =
   | { kind: "plan"; vehicle: VehicleMaintenance; plan?: MaintenancePlan }
@@ -50,7 +51,11 @@ function dayToIso(value: string): string | undefined {
   return new Date(`${value}T12:00:00`).toISOString();
 }
 
-const formatDay = (iso: string) => new Date(iso).toLocaleDateString("es-AR");
+const formatDay = (value: string) => {
+  // a bare date (YYYY-MM-DD) is a calendar day, not an instant: read it as that day, not as midnight UTC
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(value) ? new Date(`${value}T12:00:00`) : new Date(value);
+  return date.toLocaleDateString("es-AR");
+};
 
 function intervalText(plan: MaintenancePlan): string {
   const parts: string[] = [];
@@ -105,7 +110,7 @@ export function MaintenancePage() {
   const counts = useMemo(() => {
     const all = vehicles.flatMap((v) => v.plans);
     return {
-      overdue: all.filter((p) => p.status.state === "overdue").length,
+      red: all.filter((p) => p.status.state === "overdue" || p.status.state === "due").length,
       soon: all.filter((p) => p.status.state === "soon").length,
       total: all.length,
     };
@@ -120,17 +125,18 @@ export function MaintenancePage() {
     <div className="mx-auto max-w-5xl p-4 sm:p-6 lg:p-8">
       <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Mantenimiento</h1>
       <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">
-        Planes de servicio por vehículo (aceite, neumáticos, revisión…), medidos con el kilometraje que informa el tracker y con
-        fechas. Lo que primero se cumpla es lo que cuenta.
+        Planes de servicio por vehículo (tagliando, aceite, neumáticos, revisión…). Los km se cuentan solos con el GPS desde el
+        día siguiente al último servicio; solo hay que indicar su fecha y los km del tablero. Naranja: quedan entre el 40 % y el
+        20 % del intervalo (8.000 a 4.000 km en un tagliando de 20.000). Rojo: menos del 20 % (3.999 km o menos) o ya vencido.
       </p>
 
       {!loading && counts.total > 0 && (
         <div className="mb-6 flex flex-wrap gap-2">
           <span className="rounded-full bg-red-50 px-3 py-1 text-xs font-medium text-red-600 dark:bg-red-500/15 dark:text-red-400">
-            {counts.overdue} vencidos
+            {counts.red} en rojo
           </span>
-          <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-600 dark:bg-amber-500/15 dark:text-amber-400">
-            {counts.soon} próximos
+          <span className="rounded-full bg-orange-50 px-3 py-1 text-xs font-medium text-orange-600 dark:bg-orange-500/15 dark:text-orange-400">
+            {counts.soon} en naranja
           </span>
           <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600 dark:bg-white/5 dark:text-slate-300">
             {counts.total} planes en total
@@ -189,20 +195,31 @@ function VehicleCard({
   onDialog: (dialog: Dialog) => void;
   onChanged: () => void;
 }) {
+  const worst = worstState(vehicle);
+  const byGps = vehicle.kmSource === "gps";
   return (
-    <section onMouseMove={trackGlow} className={`${CARD} p-4`}>
+    <section onMouseMove={trackGlow} className={`${CARD} p-4 ${STATE_EDGE[worst]}`}>
       <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="font-semibold text-slate-900 dark:text-white">
+          <h2 className="flex flex-wrap items-center gap-2 font-semibold text-slate-900 dark:text-white">
             {vehicle.name}
-            {vehicle.plate && <span className="ml-2 text-sm font-normal text-slate-500">{vehicle.plate}</span>}
+            {vehicle.plate && vehicle.plate !== vehicle.name && <span className="text-sm font-normal text-slate-500">{vehicle.plate}</span>}
+            {(worst === "soon" || worst === "due" || worst === "overdue") && (
+              <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATE_BADGE[worst]}`}>{STATE_LABEL[worst]}</span>
+            )}
           </h2>
-          <p className="mt-0.5 flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400">
+          <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400">
             <Gauge className="h-4 w-4" />
-            {vehicle.odometerKm !== null ? formatKm(vehicle.odometerKm) : "Sin lectura de kilometraje"}
-            {canManage && vehicle.trackerKm !== null && (
+            {byGps
+              ? vehicle.gpsCoverageFrom
+                ? `Contados por GPS desde el ${formatDay(vehicle.gpsCoverageFrom)}: ${formatKm(vehicle.gpsKmTotal)}`
+                : "El GPS todavía no contó kilómetros de este vehículo"
+              : vehicle.odometerKm !== null
+                ? formatKm(vehicle.odometerKm)
+                : "Sin lectura de kilometraje"}
+            {canManage && vehicle.plans.length > 0 && (byGps || vehicle.trackerKm !== null) && (
               <button type="button" onClick={() => onDialog({ kind: "odometer", vehicle })} className="ml-1 underline hover:no-underline">
-                Calibrar con el tablero
+                {byGps ? "Ajustar con el tablero" : "Calibrar con el tablero"}
               </button>
             )}
           </p>
@@ -314,6 +331,28 @@ function PlanRow({
         {status.dueKm !== null && ` · toca a los ${formatKm(status.dueKm)}`}
         {status.dueDate && ` · hasta el ${formatDay(status.dueDate)}`}
       </p>
+      {plan.kmSince !== null && (
+        <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">
+          Recorridos desde el servicio: {formatKm(plan.kmSince)}
+          {plan.kmSource === "gps" && " (por GPS)"}
+          {plan.kmSource === "gps" && plan.dashboardKm !== null && ` · tablero estimado ${formatKm(plan.dashboardKm)}`}
+        </p>
+      )}
+      {plan.partialCoverage && (
+        <p className="mt-1 rounded-lg bg-amber-50 px-2.5 py-1.5 text-xs text-amber-800 dark:bg-amber-500/10 dark:text-amber-300">
+          Este servicio fue antes de que el GPS empezara a contar (desde el {vehicle.gpsCoverageFrom ? formatDay(vehicle.gpsCoverageFrom) : "—"}), así que
+          faltan los km de ese tramo.
+          {canManage && (
+            <>
+              {" "}
+              <button type="button" onClick={() => onDialog({ kind: "odometer", vehicle })} className="font-medium underline hover:no-underline">
+                Ajustar con el tablero
+              </button>
+              .
+            </>
+          )}
+        </p>
+      )}
 
       {open && (
         <div className="mt-2 rounded-xl bg-slate-50 p-3 text-xs dark:bg-white/5">
@@ -409,6 +448,7 @@ function PlanDialog({ dialog, onClose, onDone }: { dialog: Extract<Dialog, { kin
   const [intervalMonths, setIntervalMonths] = useState(plan?.intervalMonths?.toString() ?? "");
   const [lastDoneAt, setLastDoneAt] = useState("");
   const [lastDoneKm, setLastDoneKm] = useState("");
+  const [dashboardKm, setDashboardKm] = useState("");
   const [notes, setNotes] = useState(plan?.notes ?? "");
   const { submitting, error, run } = useSubmit(onDone);
 
@@ -423,7 +463,8 @@ function PlanDialog({ dialog, onClose, onDone }: { dialog: Extract<Dialog, { kin
     const km = toInt(intervalKm);
     const months = toInt(intervalMonths);
     void run(() => {
-      if (plan) return updateMaintenancePlan(plan.id, { name, intervalKm: km, intervalMonths: months, notes });
+      const today = toInt(dashboardKm);
+      if (plan) return updateMaintenancePlan(plan.id, { name, intervalKm: km, intervalMonths: months, notes, ...(today !== null ? { dashboardKm: today } : {}) });
       return createMaintenancePlan(vehicle.vehicleId, {
         name,
         intervalKm: km,
@@ -431,6 +472,7 @@ function PlanDialog({ dialog, onClose, onDone }: { dialog: Extract<Dialog, { kin
         notes,
         lastDoneAt: dayToIso(lastDoneAt),
         lastDoneKm: toInt(lastDoneKm),
+        ...(today !== null ? { dashboardKm: today } : {}),
       });
     });
   }
@@ -480,12 +522,28 @@ function PlanDialog({ dialog, onClose, onDone }: { dialog: Extract<Dialog, { kin
             <input id="plan-last-at" type="date" max={todayLocal()} value={lastDoneAt} onChange={(e) => setLastDoneAt(e.target.value)} className={INPUT} />
           </div>
           <div>
-            <label className={LABEL} htmlFor="plan-last-km">Última vez (km)</label>
-            <input id="plan-last-km" inputMode="numeric" value={lastDoneKm} onChange={(e) => setLastDoneKm(e.target.value)} placeholder={vehicle.odometerKm?.toString() ?? ""} className={INPUT} />
+            <label className={LABEL} htmlFor="plan-last-km">Última vez (km del tablero)</label>
+            <input id="plan-last-km" inputMode="numeric" value={lastDoneKm} onChange={(e) => setLastDoneKm(e.target.value)} placeholder={vehicle.odometerKm?.toString() ?? "130000"} className={INPUT} />
           </div>
         </div>
       )}
-      {!plan && <p className="-mt-1 text-xs text-slate-500 dark:text-slate-400">Si los dejas vacíos, empieza a contar desde hoy con el kilometraje actual.</p>}
+      {!plan && (
+        <p className="-mt-1 text-xs text-slate-500 dark:text-slate-400">
+          {vehicle.kmSource === "gps"
+            ? "El GPS cuenta los km desde el día siguiente a esa fecha. Si los dejas vacíos, empieza a contar desde hoy."
+            : "Si los dejas vacíos, empieza a contar desde hoy con el kilometraje actual."}
+        </p>
+      )}
+      {vehicle.kmSource === "gps" && (
+        <div>
+          <label className={LABEL} htmlFor="plan-dash-km">Km del tablero hoy (opcional)</label>
+          <input id="plan-dash-km" inputMode="numeric" value={dashboardKm} onChange={(e) => setDashboardKm(e.target.value)} placeholder="Para alinear el conteo con el tablero" className={INPUT} />
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+            Úsalo si el servicio fue antes de {vehicle.gpsCoverageFrom ? formatDay(vehicle.gpsCoverageFrom) : "que el GPS empezara a contar"} o si quieres corregir el conteo.
+            Necesita la fecha y los km del último servicio.
+          </p>
+        </div>
+      )}
       <div>
         <label className={LABEL} htmlFor="plan-notes">Notas</label>
         <input id="plan-notes" maxLength={1000} value={notes} onChange={(e) => setNotes(e.target.value)} className={INPUT} />
@@ -522,11 +580,11 @@ function ServiceDialog({ dialog, onClose, onDone }: { dialog: Extract<Dialog, { 
           inputMode="numeric"
           value={odometerKm}
           onChange={(e) => setOdometerKm(e.target.value)}
-          placeholder={isToday && vehicle.odometerKm !== null ? `${vehicle.odometerKm} (actual)` : ""}
+          placeholder={isToday && (plan.dashboardKm ?? vehicle.odometerKm) !== null ? `${plan.dashboardKm ?? vehicle.odometerKm} (estimado)` : ""}
           className={INPUT}
         />
         <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-          {isToday ? "Si lo dejas vacío usa el kilometraje actual." : "Para una fecha pasada, indica el kilometraje de ese día (o déjalo vacío)."}
+          {isToday ? "Si lo dejas vacío usa el estimado: los km del último servicio más lo que contó el GPS." : "Para una fecha pasada, indica el kilometraje de ese día (o déjalo vacío)."}
         </p>
       </div>
       <div>
@@ -549,21 +607,47 @@ function OdometerDialog({ dialog, onClose, onDone }: { dialog: Extract<Dialog, {
     void run(() => calibrateOdometer(vehicle.vehicleId, km));
   }
 
+  const byGps = vehicle.kmSource === "gps";
   return (
-    <Modal title={`Calibrar odómetro · ${vehicle.name}`} onClose={onClose} onSubmit={handleSubmit} submitting={submitting} error={error} submitLabel="Calibrar">
-      <p className="text-sm text-slate-600 dark:text-slate-300">
-        El tracker cuenta los km desde que se instaló, no desde que el auto es nuevo. Indica lo que marca hoy el tablero y los planes
-        se medirán con ese número.
-      </p>
-      <dl className="rounded-xl bg-slate-50 p-3 text-sm dark:bg-white/5">
-        <div className="flex justify-between"><dt className="text-slate-500">Lee el tracker</dt><dd className="font-medium">{vehicle.trackerKm !== null ? formatKm(vehicle.trackerKm) : "—"}</dd></div>
-        <div className="flex justify-between"><dt className="text-slate-500">Ajuste actual</dt><dd className="font-medium">{vehicle.offsetKm >= 0 ? "+" : ""}{formatKm(vehicle.offsetKm)}</dd></div>
-      </dl>
+    <Modal
+      title={`${byGps ? "Ajustar con el tablero" : "Calibrar odómetro"} · ${vehicle.name}`}
+      onClose={onClose}
+      onSubmit={handleSubmit}
+      submitting={submitting}
+      error={error}
+      submitLabel={byGps ? "Ajustar" : "Calibrar"}
+    >
+      {byGps ? (
+        <>
+          <p className="text-sm text-slate-600 dark:text-slate-300">
+            Los km se cuentan con el GPS{vehicle.gpsCoverageFrom ? ` desde el ${formatDay(vehicle.gpsCoverageFrom)}` : ""}. Indica lo que marca hoy el tablero y cada plan se
+            ajusta para coincidir con él; a partir de ahí el GPS sigue sumando solo.
+          </p>
+          <dl className="rounded-xl bg-slate-50 p-3 text-sm dark:bg-white/5">
+            <div className="flex justify-between"><dt className="text-slate-500">Contado por GPS</dt><dd className="font-medium">{formatKm(vehicle.gpsKmTotal)}</dd></div>
+          </dl>
+        </>
+      ) : (
+        <>
+          <p className="text-sm text-slate-600 dark:text-slate-300">
+            El tracker cuenta los km desde que se instaló, no desde que el auto es nuevo. Indica lo que marca hoy el tablero y los planes
+            se medirán con ese número.
+          </p>
+          <dl className="rounded-xl bg-slate-50 p-3 text-sm dark:bg-white/5">
+            <div className="flex justify-between"><dt className="text-slate-500">Lee el tracker</dt><dd className="font-medium">{vehicle.trackerKm !== null ? formatKm(vehicle.trackerKm) : "—"}</dd></div>
+            <div className="flex justify-between"><dt className="text-slate-500">Ajuste actual</dt><dd className="font-medium">{vehicle.offsetKm >= 0 ? "+" : ""}{formatKm(vehicle.offsetKm)}</dd></div>
+          </dl>
+        </>
+      )}
       <div>
         <label className={LABEL} htmlFor="dash-km">Kilometraje del tablero</label>
         <input id="dash-km" required inputMode="numeric" value={dashboardKm} onChange={(e) => setDashboardKm(e.target.value)} placeholder="85000" className={INPUT} />
       </div>
-      <p className="text-xs text-slate-500 dark:text-slate-400">Los kilómetros ya guardados en los planes se corrigen con el mismo ajuste, para que sigan significando lo mismo.</p>
+      <p className="text-xs text-slate-500 dark:text-slate-400">
+        {byGps
+          ? "Los planes sin el km del último servicio no se pueden ajustar."
+          : "Los kilómetros ya guardados en los planes se corrigen con el mismo ajuste, para que sigan significando lo mismo."}
+      </p>
     </Modal>
   );
 }

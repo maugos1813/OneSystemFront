@@ -449,6 +449,8 @@ export interface MaintenancePlanInput {
   intervalMonths?: number | null;
   lastDoneAt?: string | null;
   lastDoneKm?: number | null;
+  /** What the dashboard reads now: lines the GPS count up with it. */
+  dashboardKm?: number | null;
   notes?: string | null;
 }
 
@@ -474,12 +476,15 @@ export function listMaintenanceRecords(planId: string): Promise<MaintenanceRecor
 
 export function registerMaintenanceService(
   planId: string,
-  input: { doneAt?: string; odometerKm?: number | null; notes?: string | null },
+  input: { doneAt?: string; odometerKm?: number | null; dashboardKm?: number | null; notes?: string | null },
 ): Promise<MaintenancePlan> {
   return request(`/maintenance/plans/${planId}/records`, { method: "POST", body: JSON.stringify(input) });
 }
 
-export function calibrateOdometer(vehicleId: string, dashboardKm: number): Promise<{ trackerKm: number; offsetKm: number; odometerKm: number }> {
+export function calibrateOdometer(
+  vehicleId: string,
+  dashboardKm: number,
+): Promise<{ source: "obd" | "gps"; trackerKm: number | null; offsetKm: number; odometerKm: number }> {
   return request(`/maintenance/vehicles/${vehicleId}/odometer`, { method: "PUT", body: JSON.stringify({ dashboardKm }) });
 }
 
