@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { Map, Marker, Polyline, useMap } from "@vis.gl/react-google-maps";
+import { InfoWindow, Map, Marker, Polyline, useMap } from "@vis.gl/react-google-maps";
 import { MapsProvider } from "../MapsProvider";
 import { useTheme } from "../../context/ThemeContext";
+import { INCIDENT_LABELS, type Incident } from "../../lib/drivingBehavior";
+import { incidentPinUrl, PIN_HEIGHT, PIN_WIDTH } from "../../lib/incidentPins";
 import { DARK_MAP_STYLE, MUTED_MAP_STYLE } from "../../lib/mapStyle";
 import { buildRouteSegments } from "../../lib/speedTimeline";
 import type { Position } from "../../lib/types";
@@ -10,6 +12,19 @@ interface HistoryMapViewProps {
   positions: Position[];
   currentPosition: Position | null;
   speedLimit: number;
+  /** Harsh events and speeding to mark as pins on the route. */
+  incidents?: Incident[];
+  /** Called when a pin is opened, so playback can jump to that moment. */
+  onIncidentSelect?: (incident: Incident) => void;
+}
+
+function incidentIcon(type: Incident["type"]): google.maps.Icon | undefined {
+  if (typeof google === "undefined" || !google.maps?.Size) return undefined;
+  return {
+    url: incidentPinUrl(type),
+    scaledSize: new google.maps.Size(PIN_WIDTH, PIN_HEIGHT),
+    anchor: new google.maps.Point(PIN_WIDTH / 2, PIN_HEIGHT),
+  };
 }
 
 function currentPositionIcon(overLimit: boolean): google.maps.Symbol | undefined {
@@ -74,11 +89,21 @@ function MapCamera({ positions, currentPosition, follow, onUserMove, fitSignal }
 
 /** A deliberately spare map: the route as a couple of colored segments plus a single
  * marker for the current playback position — no swarm of per-point pins. */
-export function HistoryMapView({ positions, currentPosition, speedLimit }: HistoryMapViewProps) {
+export function HistoryMapView({
+  positions,
+  currentPosition,
+  speedLimit,
+  incidents = [],
+  onIncidentSelect,
+}: HistoryMapViewProps) {
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
   const { theme } = useTheme();
   const [follow, setFollow] = useState(true);
   const [fitSignal, setFitSignal] = useState(0);
+  const [openIncident, setOpenIncident] = useState<Incident | null>(null);
+
+  // Another vehicle or period brings other events: a pin left open would point at nothing.
+  useEffect(() => setOpenIncident(null), [incidents]);
 
   // A different vehicle or period starts over, following the vehicle.
   useEffect(() => setFollow(true), [positions]);
@@ -128,6 +153,36 @@ export function HistoryMapView({ positions, currentPosition, speedLimit }: Histo
               strokeWeight={segment.violation ? 5 : 4}
             />
           ))}
+
+          {incidents.map((incident, i) => (
+            <Marker
+              key={`${incident.type}-${incident.ts}-${i}`}
+              position={{ lat: incident.lat, lng: incident.lng }}
+              icon={incidentIcon(incident.type)}
+              title={INCIDENT_LABELS[incident.type]}
+              zIndex={10}
+              onClick={() => {
+                setOpenIncident(incident);
+                onIncidentSelect?.(incident);
+              }}
+            />
+          ))}
+
+          {openIncident && (
+            <InfoWindow
+              position={{ lat: openIncident.lat, lng: openIncident.lng }}
+              pixelOffset={[0, -PIN_HEIGHT]}
+              onCloseClick={() => setOpenIncident(null)}
+            >
+              <div className="text-slate-900">
+                <p className="text-sm font-semibold">{INCIDENT_LABELS[openIncident.type]}</p>
+                <p className="text-xs">{openIncident.detail}</p>
+                <p className="text-xs text-slate-500">
+                  {new Date(openIncident.ts).toLocaleString([], { dateStyle: "short", timeStyle: "short" })}
+                </p>
+              </div>
+            </InfoWindow>
+          )}
 
           {currentPosition && (
             <Marker

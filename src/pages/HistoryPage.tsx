@@ -5,13 +5,14 @@ import { Panel } from "../components/analytics/Panel";
 import { HistoryMapView } from "../components/history/HistoryMapView";
 import { PlaybackBar } from "../components/history/PlaybackBar";
 import { SpeedTimelineChart } from "../components/history/SpeedTimelineChart";
-import { ViolationsList } from "../components/history/ViolationsList";
 import { useAuth } from "../context/AuthContext";
 import { useFleet } from "../context/FleetContext";
 import { getVehicleDriver } from "../lib/api";
 import type { VehicleDriver } from "../lib/types";
 import { usePositionHistory } from "../hooks/usePositionHistory";
-import { findSpeedViolations } from "../lib/speedTimeline";
+import { useVehicleIncidents } from "../hooks/useVehicleIncidents";
+import { INCIDENT_COLORS, INCIDENT_LABELS, type Incident, type IncidentType } from "../lib/drivingBehavior";
+import { incidentPinUrl } from "../lib/incidentPins";
 
 const RANGES: Array<{ label: string; hours: number }> = [
   { label: "24h", hours: 24 },
@@ -21,6 +22,7 @@ const RANGES: Array<{ label: string; hours: number }> = [
   { label: "30 días", hours: 24 * 30 },
 ];
 
+const INCIDENT_TYPES: IncidentType[] = ["harshBraking", "harshAcceleration", "harshCornering", "speeding"];
 const DEFAULT_SPEED_LIMIT_KMH = 120;
 const PLAYBACK_TICK_MS = 80;
 const PLAYBACK_STEPS = 300; // any route plays back fully in ~300 ticks, short or long
@@ -84,7 +86,35 @@ export function HistoryPage() {
   }, [playing, history.length]);
 
   const currentPosition = history[currentIndex] ?? null;
-  const violations = useMemo(() => findSpeedViolations(history, speedLimit), [history, speedLimit]);
+  const incidents = useVehicleIncidents(selectedVehicleId, Math.max(1, Math.round(rangeHours / 24)), speedLimit);
+  const [hiddenTypes, setHiddenTypes] = useState<ReadonlySet<IncidentType>>(new Set());
+  const shownIncidents = useMemo(() => incidents.filter((i) => !hiddenTypes.has(i.type)), [incidents, hiddenTypes]);
+  const countByType = useMemo(() => {
+    const counts: Record<IncidentType, number> = {
+      harshBraking: 0,
+      harshAcceleration: 0,
+      harshCornering: 0,
+      speeding: 0,
+    };
+    for (const i of incidents) counts[i.type] += 1;
+    return counts;
+  }, [incidents]);
+
+  function toggleType(type: IncidentType) {
+    setHiddenTypes((current) => {
+      const next = new Set(current);
+      if (!next.delete(type)) next.add(type);
+      return next;
+    });
+  }
+
+  /** Playback jumps to the first report at or after the moment of the event. */
+  function handleIncidentSelect(incident: Incident) {
+    const at = new Date(incident.ts).getTime();
+    const index = history.findIndex((p) => new Date(p.ts).getTime() >= at);
+    handleSeek(index === -1 ? history.length - 1 : index);
+    setPlaying(false);
+  }
   const vehicle = vehicles.find((v) => v.id === selectedVehicleId) ?? null;
 
   function handleSeek(index: number) {
@@ -155,14 +185,39 @@ export function HistoryPage() {
 
       {vehicle && !historyLoading && history.length >= 2 && (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-          <Panel title="Mapa del recorrido" className="lg:col-span-2">
-            <div className="h-72 overflow-hidden rounded-2xl sm:h-80">
-              <HistoryMapView positions={history} currentPosition={currentPosition} speedLimit={speedLimit} />
+          <Panel title="Mapa del recorrido" className="lg:col-span-3">
+            <div className="mb-3 flex flex-wrap gap-2">
+              {INCIDENT_TYPES.map((type) => {
+                const hidden = hiddenTypes.has(type);
+                return (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={() => toggleType(type)}
+                    aria-pressed={!hidden}
+                    className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition ${
+                      hidden
+                        ? "border-slate-200 bg-transparent text-slate-400 line-through dark:border-white/10 dark:text-slate-500"
+                        : "border-slate-200 bg-white text-slate-700 dark:border-white/10 dark:bg-white/5 dark:text-slate-200"
+                    }`}
+                    style={hidden ? undefined : { borderColor: `${INCIDENT_COLORS[type]}66` }}
+                  >
+                    <img src={incidentPinUrl(type)} alt="" className={`h-5 w-4 ${hidden ? "opacity-40" : ""}`} />
+                    {INCIDENT_LABELS[type]}
+                    <span className="tabular-nums opacity-70">{countByType[type]}</span>
+                  </button>
+                );
+              })}
             </div>
-          </Panel>
-
-          <Panel title={`Excesos de velocidad (${violations.length})`}>
-            <ViolationsList violations={violations} activeIndex={currentIndex} onSelect={handleSeek} />
+            <div className="h-80 overflow-hidden rounded-2xl sm:h-[28rem]">
+              <HistoryMapView
+                positions={history}
+                currentPosition={currentPosition}
+                speedLimit={speedLimit}
+                incidents={shownIncidents}
+                onIncidentSelect={handleIncidentSelect}
+              />
+            </div>
           </Panel>
 
           <Panel title="Velocidad" className="lg:col-span-3">
