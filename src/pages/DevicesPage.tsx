@@ -1,5 +1,5 @@
 import { Plus } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { DeviceSourceBadge } from "../components/DeviceSourceBadge";
 import { StatusBadge } from "../components/StatusBadge";
@@ -8,11 +8,20 @@ import { useFleet } from "../context/FleetContext";
 import { ApiError, claimDevice } from "../lib/api";
 import { DEVICE_MODELS, hasProfile, modelProfile } from "../lib/deviceModels";
 import { trackGlow } from "../lib/glow";
+import type { DeviceSource } from "../lib/types";
 
 function formatDate(iso: string | null): string {
   if (!iso) return "Nunca";
   return new Date(iso).toLocaleString();
 }
+
+type SourceFilter = "all" | DeviceSource;
+
+const SOURCE_FILTERS: Array<{ key: SourceFilter; label: string }> = [
+  { key: "all", label: "Todos" },
+  { key: "teltonika", label: "Teltonika" },
+  { key: "radius_velocity", label: "Velocity" },
+];
 
 function ModelTags({ model }: { model: string }) {
   if (!hasProfile(model)) return null;
@@ -40,6 +49,32 @@ export function DevicesPage() {
   const [model, setModel] = useState<string>(DEVICE_MODELS[0]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [sourceFilter, setSourceFilter] = useState<SourceFilter>("all");
+  const [search, setSearch] = useState("");
+
+  const counts = useMemo(() => {
+    const byKey: Record<SourceFilter, number> = { all: devices.length, teltonika: 0, radius_velocity: 0 };
+    for (const d of devices) byKey[d.source] += 1;
+    return byKey;
+  }, [devices]);
+
+  // Teltonika first, then each group by vehicle, so the same kind of device sits together.
+  const shown = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return devices
+      .filter((d) => sourceFilter === "all" || d.source === sourceFilter)
+      .filter((d) => {
+        if (!q) return true;
+        const v = vehicleByDeviceId.get(d.id);
+        return [d.imei, d.model, v?.name, v?.plate].some((field) => field?.toLowerCase().includes(q));
+      })
+      .sort(
+        (a, b) =>
+          Number(b.source === "teltonika") - Number(a.source === "teltonika") ||
+          (vehicleByDeviceId.get(a.id)?.name ?? "\uffff").localeCompare(vehicleByDeviceId.get(b.id)?.name ?? "\uffff"),
+      );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [devices, vehicles, sourceFilter, search]);
 
   async function handleClaim(e: FormEvent) {
     e.preventDefault();
@@ -63,7 +98,7 @@ export function DevicesPage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl p-4 sm:p-6 lg:p-8">
+    <div className="p-4 sm:p-6 lg:p-8">
       <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Dispositivos</h1>
       <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">
         Los trackers GPS vinculados a tu empresa.
@@ -130,6 +165,34 @@ export function DevicesPage() {
       )}
 
       {!loading && devices.length > 0 && (
+        <div className="mb-4 flex flex-wrap items-center gap-2">
+          {SOURCE_FILTERS.map(({ key, label }) => (
+            <button
+              key={key}
+              onClick={() => setSourceFilter(key)}
+              className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
+                sourceFilter === key
+                  ? "brand-button"
+                  : "bg-white text-slate-500 hover:bg-violet-100 dark:bg-[#111729] dark:text-slate-400 dark:hover:bg-white/10"
+              }`}
+            >
+              {label} <span className="opacity-70">{counts[key]}</span>
+            </button>
+          ))}
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar IMEI, modelo o placa…"
+            className="field-input ml-auto w-full rounded-xl border border-slate-300 px-3 py-1.5 text-sm sm:w-64 dark:border-white/10 dark:bg-white/5 dark:text-white"
+          />
+        </div>
+      )}
+
+      {!loading && devices.length > 0 && shown.length === 0 && (
+        <p className="text-sm text-slate-500 dark:text-slate-400">Ningún dispositivo coincide con el filtro.</p>
+      )}
+
+      {!loading && shown.length > 0 && (
         <div className="float-card overflow-x-auto rounded-2xl border border-white bg-white shadow-lg shadow-slate-200/50 dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40">
           <table className="w-full min-w-[640px] text-left text-sm">
             <thead className="border-b border-violet-100 bg-violet-50/60 text-xs text-slate-500 uppercase dark:border-white/10 dark:bg-white/5 dark:text-slate-400">
@@ -143,7 +206,7 @@ export function DevicesPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-white/10">
-              {devices.map((device) => (
+              {shown.map((device) => (
                 <tr
                   key={device.id}
                   onClick={() => navigate(`/dispositivos/${device.id}`)}
