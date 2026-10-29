@@ -20,10 +20,13 @@ interface Row {
   detected: DetectedBeacon | null;
 }
 
-/** "eddystone:00112233445566778899-abcde0810047" → "Eddystone · …810047": enough to tell beacons apart at a glance. */
-function shortId(beaconId: string): string {
-  const [kind = "", rest = ""] = beaconId.split(":");
-  return `${kind === "ibeacon" ? "iBeacon" : "Eddystone"} · …${rest.slice(-8)}`;
+const kindOf = (beaconId: string): string => (beaconId.startsWith("ibeacon:") ? "iBeacon" : "Eddystone");
+const idOf = (beaconId: string): string => beaconId.slice(beaconId.indexOf(":") + 1);
+
+/** The MAC of an EYE Beacon still on its factory identity (zero namespace, MAC as instance); null for any other beacon. */
+function factoryMac(beaconId: string): string | null {
+  const m = /^eddystone:0{20}-([0-9a-f]{12})$/.exec(beaconId);
+  return m ? m[1]!.toUpperCase().replace(/(..)(?=.)/g, "$1:") : null;
 }
 
 function NameCell({ row, onSaved }: { row: Row; onSaved: () => void }) {
@@ -100,7 +103,7 @@ function AddByMacForm({ onAdded }: { onAdded: () => void }) {
     <form
       onSubmit={submit}
       onMouseMove={trackGlow}
-      className="glow float-card mb-6 rounded-2xl border border-white bg-white p-4 shadow-lg shadow-slate-200/50 dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40"
+      className="glow float-card rounded-2xl border border-white bg-white p-4 shadow-lg shadow-slate-200/50 dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40"
     >
       <p className="mb-1 text-sm font-semibold text-slate-900 dark:text-white">Asignar baliza por MAC</p>
       <p className="mb-3 text-xs text-slate-500 dark:text-slate-400">
@@ -184,7 +187,7 @@ export function DriversPage() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl p-4 sm:p-6 lg:p-8">
+    <div className="p-4 sm:p-6 lg:p-8">
       <h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t("nav.drivers")}</h1>
       <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">
         Cada chofer lleva una baliza Bluetooth (Teltonika EYE Beacon). El GPS del vehículo la oye mientras se conduce y
@@ -193,22 +196,24 @@ export function DriversPage() {
         vehículo se mueve, así que juntar a los choferes en una reunión no confunde nada.
       </p>
 
-      <div
-        onMouseMove={trackGlow}
-        className="glow float-card mb-6 rounded-2xl border border-white bg-white p-4 text-sm text-slate-600 shadow-lg shadow-slate-200/50 dark:border-white/10 dark:bg-[#111729] dark:text-slate-300 dark:shadow-black/40"
-      >
-        <p className="mb-1 font-semibold text-slate-900 dark:text-white">Cómo agregar la baliza de un chofer</p>
-        <ol className="list-decimal space-y-1 pl-5">
-          <li>El GPS del vehículo debe tener Bluetooth activado y escanear balizas (Beacon Detection: All).</li>
-          <li>
-            Asígnala con su MAC (abajo) o sube con ella a ese vehículo y deja pasar unos minutos: aparece en la
-            lista como «sin asignar».
-          </li>
-          <li>Escribe el nombre del chofer y pulsa Asignar.</li>
-        </ol>
-      </div>
+      <div className="mb-6 grid gap-6 lg:grid-cols-2">
+        <div
+          onMouseMove={trackGlow}
+          className="glow float-card rounded-2xl border border-white bg-white p-4 text-sm text-slate-600 shadow-lg shadow-slate-200/50 dark:border-white/10 dark:bg-[#111729] dark:text-slate-300 dark:shadow-black/40"
+        >
+          <p className="mb-1 font-semibold text-slate-900 dark:text-white">Cómo agregar la baliza de un chofer</p>
+          <ol className="list-decimal space-y-1 pl-5">
+            <li>El GPS del vehículo debe tener Bluetooth activado y escanear balizas (Beacon Detection: All).</li>
+            <li>
+              Asígnala con su MAC (abajo) o sube con ella a ese vehículo y deja pasar unos minutos: aparece en la lista
+              como «sin asignar».
+            </li>
+            <li>Escribe el nombre del chofer y pulsa Asignar.</li>
+          </ol>
+        </div>
 
-      <AddByMacForm onAdded={refetch} />
+        <AddByMacForm onAdded={refetch} />
+      </div>
 
       {loading && <p className="text-sm text-slate-500 dark:text-slate-400">Cargando...</p>}
       {error && <p className="text-sm text-red-500">{error}</p>}
@@ -225,9 +230,13 @@ export function DriversPage() {
             <thead className="text-xs tracking-wide text-slate-400 uppercase dark:text-slate-500">
               <tr>
                 <th className="px-4 py-3 font-semibold">Chofer</th>
-                <th className="px-4 py-3 font-semibold">Baliza</th>
+                <th className="px-4 py-3 font-semibold">Tipo</th>
+                <th className="px-4 py-3 font-semibold">Identificador</th>
+                <th className="px-4 py-3 font-semibold">MAC</th>
                 <th className="px-4 py-3 font-semibold">Oída por</th>
-                <th className="px-4 py-3 font-semibold">Señal</th>
+                <th className="px-4 py-3 font-semibold">Última vez</th>
+                <th className="px-4 py-3 font-semibold">Señal media</th>
+                <th className="px-4 py-3 font-semibold">Detecciones</th>
                 <th className="px-4 py-3" />
               </tr>
             </thead>
@@ -236,29 +245,43 @@ export function DriversPage() {
                 <tr key={row.beaconId}>
                   <td className="px-4 py-3">
                     <NameCell key={`${row.beaconId}:${row.driverName}`} row={row} onSaved={refetch} />
-                  </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-slate-600 dark:text-slate-300" title={row.beaconId}>
-                    {shortId(row.beaconId)}
                     {!row.driverName && (
-                      <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-500/15 dark:text-amber-300">
+                      <span className="mt-1 inline-block rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-500/15 dark:text-amber-300">
                         sin asignar
                       </span>
                     )}
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap text-slate-600 dark:text-slate-300">
+                    {kindOf(row.beaconId)}
+                  </td>
+                  <td className="px-4 py-3 font-mono text-xs break-all text-slate-600 dark:text-slate-300">
+                    {idOf(row.beaconId)}
+                  </td>
+                  <td className="px-4 py-3 font-mono text-xs whitespace-nowrap text-slate-600 dark:text-slate-300">
+                    {factoryMac(row.beaconId) ?? "—"}
                   </td>
                   <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
                     {row.detected ? (
                       <>
                         {row.detected.vehicle.plate ?? row.detected.vehicle.name}
-                        <span className="block text-xs text-slate-400 dark:text-slate-500">
-                          {formatRelativeTime(row.detected.lastSeen, t)}
-                        </span>
+                        {row.detected.vehicle.plate && row.detected.vehicle.name !== row.detected.vehicle.plate && (
+                          <span className="block text-xs text-slate-400 dark:text-slate-500">
+                            {row.detected.vehicle.name}
+                          </span>
+                        )}
                       </>
                     ) : (
                       <span className="text-slate-400 dark:text-slate-500">Sin señal en 24 h</span>
                     )}
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap text-slate-600 dark:text-slate-300">
+                    {row.detected ? formatRelativeTime(row.detected.lastSeen, t) : "—"}
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap text-slate-600 dark:text-slate-300">
                     {row.detected?.avgRssi != null ? `${row.detected.avgRssi} dBm` : "—"}
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap text-slate-600 dark:text-slate-300">
+                    {row.detected ? row.detected.sightings : "—"}
                   </td>
                   <td className="px-4 py-3 text-right">
                     {row.registeredId && (
