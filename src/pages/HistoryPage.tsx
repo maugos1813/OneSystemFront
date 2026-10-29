@@ -175,7 +175,9 @@ export function HistoryPage() {
 
       {!vehicle && <p className="text-sm text-slate-500 dark:text-slate-400">Todavía no hay vehículos cargados.</p>}
 
-      {vehicle && historyLoading && <p className="text-sm text-slate-500 dark:text-slate-400">Cargando recorrido...</p>}
+      {vehicle && historyLoading && (
+        <p className="mb-3 text-sm text-slate-500 dark:text-slate-400">Cargando recorrido...</p>
+      )}
 
       {vehicle && !historyLoading && history.length < 2 && (
         <p className="text-sm text-slate-500 dark:text-slate-400">
@@ -183,8 +185,12 @@ export function HistoryPage() {
         </p>
       )}
 
-      {vehicle && !historyLoading && history.length >= 2 && (
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+      {/* While another route loads, the previous one stays on screen, dimmed: unmounting the map would create a new one
+          (a new, billed load) for every change of vehicle or period. */}
+      {vehicle && history.length >= 2 && (
+        <div
+          className={`grid grid-cols-1 gap-4 transition-opacity lg:grid-cols-3 ${historyLoading ? "pointer-events-none opacity-50" : ""}`}
+        >
           <Panel title="Mapa del recorrido" className="lg:col-span-3">
             <div className="mb-3 flex flex-wrap gap-2">
               {INCIDENT_TYPES.map((type) => {

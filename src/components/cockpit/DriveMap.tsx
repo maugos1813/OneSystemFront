@@ -12,6 +12,16 @@ import { useEffect, useRef, useState } from "react";
 import { MapsProvider } from "../MapsProvider";
 import { useTheme } from "../../context/ThemeContext";
 import type { SmoothedPosition } from "../../hooks/useSmoothedPosition";
+import {
+  AHEAD_PX,
+  metersPerPixel,
+  MIN_HEADING_SPEED_KMH,
+  norm,
+  pointAhead,
+  TILT,
+  zoomForSpeed,
+} from "../../lib/driveCamera";
+import { MAP_ID } from "../../lib/mapConfig";
 import type { Position } from "../../lib/types";
 
 /**
@@ -21,36 +31,10 @@ import type { Position } from "../../lib/types";
  * VITE_GOOGLE_MAPS_MAP_ID to a vector Map ID of your own for production.
  */
 
-const MAP_ID = import.meta.env.VITE_GOOGLE_MAPS_MAP_ID || "DEMO_MAP_ID";
 const MODE_KEY = "cockpit-map-mode";
-const TILT = 65;
-/** How far below the middle of the screen the vehicle sits, in pixels (the camera looks ahead of it by this much). */
-const AHEAD_PX = 150;
-/** Below this the GPS heading is noise, so the last real one is kept. */
-const MIN_HEADING_SPEED_KMH = 3;
 const TRAIL_POINTS = 150;
 
 type Mode = "drive" | "map";
-
-const norm = (deg: number): number => ((deg % 360) + 360) % 360;
-
-/** Closer at city speeds, wider on the motorway so there is room to see what comes. */
-function zoomForSpeed(speedKmh: number): number {
-  const t = Math.min(Math.max((speedKmh - 20) / 70, 0), 1);
-  return 18.2 - t * 1.6;
-}
-
-function metersPerPixel(lat: number, zoom: number): number {
-  return (156543.03392 * Math.cos((lat * Math.PI) / 180)) / 2 ** zoom;
-}
-
-function pointAhead(lat: number, lng: number, headingDeg: number, meters: number): google.maps.LatLngLiteral {
-  const h = (headingDeg * Math.PI) / 180;
-  return {
-    lat: lat + (meters * Math.cos(h)) / 111_320,
-    lng: lng + (meters * Math.sin(h)) / (111_320 * Math.cos((lat * Math.PI) / 180)),
-  };
-}
 
 function readMode(): Mode {
   try {
@@ -120,19 +104,27 @@ function VehicleArrow({ rotation }: { rotation: number }) {
 }
 
 interface DriveMapProps {
+  /** Another vehicle starts a fresh trail and heading; the map itself is kept (a new map would be a new, billed load). */
+  vehicleId: string;
   /** The raw report (its time tells when a new point arrived). */
   position: Position | null;
   /** The same position eased between reports, so the camera glides instead of jumping. */
   smoothed: SmoothedPosition | null;
 }
 
-export function DriveMap({ position, smoothed }: DriveMapProps) {
+export function DriveMap({ vehicleId, position, smoothed }: DriveMapProps) {
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
   const { theme } = useTheme();
   const [mode, setMode] = useState<Mode>(readMode);
   const [follow, setFollow] = useState(true);
   const [trail, setTrail] = useState<google.maps.LatLngLiteral[]>([]);
   const headingRef = useRef(0);
+
+  useEffect(() => {
+    setTrail([]);
+    setFollow(true);
+    headingRef.current = 0;
+  }, [vehicleId]);
 
   // The path just driven, from the reports as they arrive (nothing is fetched for it).
   useEffect(() => {

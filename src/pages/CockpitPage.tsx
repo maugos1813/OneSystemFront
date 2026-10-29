@@ -74,7 +74,7 @@ export function CockpitPage() {
       {vehicle && (
         <>
           <div className="relative min-h-[60vh] flex-1 overflow-hidden rounded-3xl border border-white bg-white shadow-lg shadow-blue-100/40 lg:min-h-[320px] dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40">
-            <DriveMap key={vehicle.id} position={position} smoothed={smoothed} />
+            <DriveMap vehicleId={vehicle.id} position={position} smoothed={smoothed} />
 
             {/* The instruments sit over the map, like a dashboard: forced dark so they read on any map. */}
             <div className="dark pointer-events-none absolute bottom-3 left-3 w-32 sm:w-52 lg:w-60">

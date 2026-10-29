@@ -1,10 +1,21 @@
 import { useEffect, useRef, useState } from "react";
-import { InfoWindow, Map, Marker, Polyline, useMap } from "@vis.gl/react-google-maps";
+import { ColorScheme, InfoWindow, Map, Marker, Polyline, RenderingType, useMap } from "@vis.gl/react-google-maps";
+import { Box, Map as MapIcon } from "lucide-react";
 import { MapsProvider } from "../MapsProvider";
 import { useTheme } from "../../context/ThemeContext";
 import { INCIDENT_LABELS, type Incident } from "../../lib/drivingBehavior";
 import { incidentPinUrl, PIN_HEIGHT, PIN_WIDTH } from "../../lib/incidentPins";
-import { DARK_MAP_STYLE, MUTED_MAP_STYLE } from "../../lib/mapStyle";
+import {
+  AHEAD_PX,
+  metersPerPixel,
+  MIN_HEADING_SPEED_KMH,
+  norm,
+  pointAhead,
+  shortestTurn,
+  TILT,
+  zoomForSpeed,
+} from "../../lib/driveCamera";
+import { MAP_ID } from "../../lib/mapConfig";
 import { buildRouteSegments } from "../../lib/speedTimeline";
 import type { Position } from "../../lib/types";
 
@@ -27,11 +38,12 @@ function incidentIcon(type: Incident["type"]): google.maps.Icon | undefined {
   };
 }
 
-function currentPositionIcon(overLimit: boolean): google.maps.Symbol | undefined {
+function currentPositionIcon(overLimit: boolean, drive: boolean): google.maps.Symbol | undefined {
   if (typeof google === "undefined" || !google.maps?.SymbolPath) return undefined;
+  // In the 3D view the map turns with the vehicle, so an arrow that always points up reads as "forward".
   return {
-    path: google.maps.SymbolPath.CIRCLE,
-    scale: 8,
+    path: drive ? google.maps.SymbolPath.FORWARD_CLOSED_ARROW : google.maps.SymbolPath.CIRCLE,
+    scale: drive ? 7 : 8,
     fillColor: overLimit ? "#dc2626" : "#7c3aed",
     fillOpacity: 1,
     strokeColor: "#fff",
@@ -39,49 +51,134 @@ function currentPositionIcon(overLimit: boolean): google.maps.Symbol | undefined
   };
 }
 
+type Mode = "overview" | "drive";
+const MODE_KEY = "history-map-mode";
+/** Share of the remaining distance the 3D camera covers each frame: it glides between playback steps. */
+const EASE = 0.18;
+
+function readMode(): Mode {
+  try {
+    return localStorage.getItem(MODE_KEY) === "drive" ? "drive" : "overview";
+  } catch {
+    return "overview";
+  }
+}
+
+interface CameraTarget {
+  lat: number;
+  lng: number;
+  heading: number;
+  zoom: number;
+}
+
 interface MapCameraProps {
   positions: Position[];
   currentPosition: Position | null;
+  mode: Mode;
   follow: boolean;
   onUserMove: () => void;
   fitSignal: number;
 }
 
+/** The heading of a report: its own while moving, otherwise the one of the next stretch driven (a vehicle waiting to set
+ * off still faces where it will go), otherwise null. */
+function headingAt(positions: Position[], current: Position): number | null {
+  if (current.speed >= MIN_HEADING_SPEED_KMH) return norm(current.angle);
+  const from = positions.indexOf(current);
+  for (let i = from + 1; i < Math.min(positions.length, from + 60); i++) {
+    if (positions[i]!.speed >= MIN_HEADING_SPEED_KMH) return norm(positions[i]!.angle);
+  }
+  return null;
+}
+
 /** The camera is driven from here instead of through the Map's `center` prop: a controlled center snaps the map back on
- * every playback tick and makes it impossible to look around. While `follow` is on the map tracks the vehicle; the moment
- * the person drags or zooms, follow turns off and the map stays wherever they put it. */
-function MapCamera({ positions, currentPosition, follow, onUserMove, fitSignal }: MapCameraProps) {
+ * every playback tick and makes it impossible to look around. In "overview" the map follows the vehicle over the whole
+ * route; in "drive" the camera sits behind it, tilted and turned to its heading. Either way, the moment the person drags or
+ * zooms, following stops and the map stays wherever they put it. */
+function MapCamera({ positions, currentPosition, mode, follow, onUserMove, fitSignal }: MapCameraProps) {
   const map = useMap();
-  const moving = useRef(false);
+  const lastHeading = useRef(0);
+  const target = useRef<CameraTarget | null>(null);
+  const shown = useRef<CameraTarget | null>(null);
 
   useEffect(() => {
     if (!map) return;
-    const start = map.addListener("dragstart", onUserMove);
-    const wheel = map.addListener("zoom_changed", () => {
-      if (!moving.current) onUserMove();
-    });
+    const div = map.getDiv();
+    const drag = map.addListener("dragstart", onUserMove);
+    div.addEventListener("wheel", onUserMove, { passive: true });
+    div.addEventListener("touchstart", onUserMove, { passive: true });
     return () => {
-      start.remove();
-      wheel.remove();
+      drag.remove();
+      div.removeEventListener("wheel", onUserMove);
+      div.removeEventListener("touchstart", onUserMove);
     };
   }, [map, onUserMove]);
 
+  // Overview: keep the vehicle in view without touching the zoom the person chose.
   useEffect(() => {
-    if (!map || !follow || !currentPosition) return;
-    moving.current = true;
+    if (!map || mode !== "overview" || !follow || !currentPosition) return;
     map.panTo({ lat: currentPosition.lat, lng: currentPosition.lng });
-    const t = setTimeout(() => (moving.current = false), 50);
-    return () => clearTimeout(t);
-  }, [map, follow, currentPosition]);
+  }, [map, mode, follow, currentPosition]);
+
+  // Back to the overview: level the camera and point north again.
+  useEffect(() => {
+    if (!map || mode !== "overview") return;
+    map.moveCamera({ tilt: 0, heading: 0 });
+  }, [map, mode]);
+
+  // Drive: where the camera should be for the current report.
+  useEffect(() => {
+    if (!map || mode !== "drive" || !currentPosition) return;
+    lastHeading.current = headingAt(positions, currentPosition) ?? lastHeading.current;
+    const zoom = zoomForSpeed(currentPosition.speed);
+    const center = pointAhead(
+      currentPosition.lat,
+      currentPosition.lng,
+      lastHeading.current,
+      AHEAD_PX * metersPerPixel(currentPosition.lat, zoom),
+    );
+    target.current = { lat: center.lat, lng: center.lng, heading: lastHeading.current, zoom };
+  }, [map, mode, positions, currentPosition]);
+
+  // A new route or a new mode starts the camera right at its place instead of flying there.
+  useEffect(() => {
+    shown.current = null;
+  }, [mode, positions]);
+
+  // Drive: ease the camera toward that place, frame by frame, so it glides between playback steps.
+  useEffect(() => {
+    if (!map || mode !== "drive" || !follow) return;
+    let frame = 0;
+    const tick = () => {
+      const goal = target.current;
+      if (goal) {
+        const now = (shown.current ??= { ...goal });
+        const dHeading = shortestTurn(now.heading, goal.heading);
+        const settled =
+          Math.abs(goal.lat - now.lat) < 1e-7 &&
+          Math.abs(goal.lng - now.lng) < 1e-7 &&
+          Math.abs(goal.zoom - now.zoom) < 1e-3 &&
+          Math.abs(dHeading) < 0.05;
+        if (!settled) {
+          now.lat += (goal.lat - now.lat) * EASE;
+          now.lng += (goal.lng - now.lng) * EASE;
+          now.zoom += (goal.zoom - now.zoom) * EASE;
+          now.heading = norm(now.heading + dHeading * EASE);
+          map.moveCamera({ center: { lat: now.lat, lng: now.lng }, zoom: now.zoom, heading: now.heading, tilt: TILT });
+        }
+      }
+      frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [map, mode, follow]);
 
   useEffect(() => {
     if (!map || fitSignal === 0 || positions.length === 0) return;
     const bounds = new google.maps.LatLngBounds();
     for (const p of positions) bounds.extend({ lat: p.lat, lng: p.lng });
-    moving.current = true;
+    map.moveCamera({ tilt: 0, heading: 0 });
     map.fitBounds(bounds, 40);
-    const t = setTimeout(() => (moving.current = false), 300);
-    return () => clearTimeout(t);
   }, [map, fitSignal, positions]);
 
   return null;
@@ -100,6 +197,7 @@ export function HistoryMapView({
   const { theme } = useTheme();
   const [follow, setFollow] = useState(true);
   const [fitSignal, setFitSignal] = useState(0);
+  const [mode, setMode] = useState<Mode>(readMode);
   const [openIncident, setOpenIncident] = useState<Incident | null>(null);
 
   // Another vehicle or period brings other events: a pin left open would point at nothing.
@@ -120,13 +218,27 @@ export function HistoryMapView({
   const center = currentPosition ?? positions[0]!;
 
   const stopFollowing = () => setFollow(false);
-  const buttonClass =
-    "rounded-lg bg-white/95 px-3 py-1.5 text-xs font-medium text-slate-700 shadow ring-1 ring-black/10 hover:bg-white dark:bg-slate-800/95 dark:text-slate-100 dark:ring-white/10 dark:hover:bg-slate-800";
+  function chooseMode(next: Mode) {
+    setMode(next);
+    setFollow(true);
+    try {
+      localStorage.setItem(MODE_KEY, next);
+    } catch {
+      // not remembered, that is all
+    }
+  }
+  const buttonClass = (active = false) =>
+    `flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium shadow ring-1 ring-black/10 transition ${
+      active
+        ? "brand-button"
+        : "bg-white/95 text-slate-700 hover:bg-white dark:bg-slate-800/95 dark:text-slate-100 dark:ring-white/10 dark:hover:bg-slate-800"
+    }`;
 
   return (
     <MapsProvider apiKey={apiKey}>
       <div className="relative h-full">
         <Map
+          key={theme}
           className="h-full"
           defaultCenter={{ lat: center.lat, lng: center.lng }}
           defaultZoom={14}
@@ -134,11 +246,14 @@ export function HistoryMapView({
           disableDefaultUI
           zoomControl
           fullscreenControl
-          styles={theme === "dark" ? DARK_MAP_STYLE : MUTED_MAP_STYLE}
+          mapId={MAP_ID}
+          renderingType={RenderingType.VECTOR}
+          colorScheme={theme === "dark" ? ColorScheme.DARK : ColorScheme.LIGHT}
         >
           <MapCamera
             positions={positions}
             currentPosition={currentPosition}
+            mode={mode}
             follow={follow}
             onUserMove={stopFollowing}
             fitSignal={fitSignal}
@@ -187,24 +302,36 @@ export function HistoryMapView({
           {currentPosition && (
             <Marker
               position={{ lat: currentPosition.lat, lng: currentPosition.lng }}
-              icon={currentPositionIcon(currentPosition.speed > speedLimit)}
+              icon={currentPositionIcon(currentPosition.speed > speedLimit, mode === "drive")}
             />
           )}
         </Map>
-        <div className="absolute left-3 top-3 flex gap-2">
-          <button
-            type="button"
-            className={buttonClass}
-            onClick={() => {
-              setFollow(false);
-              setFitSignal((n) => n + 1);
-            }}
-          >
-            Ver recorrido completo
+        <div className="absolute top-3 left-3 flex flex-wrap gap-2">
+          <button type="button" className={buttonClass(mode === "overview")} onClick={() => chooseMode("overview")}>
+            <MapIcon className="h-3.5 w-3.5" />
+            Vista general
           </button>
-          <button type="button" className={buttonClass} onClick={() => setFollow(true)} disabled={follow}>
-            {follow ? "Siguiendo vehículo" : "Seguir vehículo"}
+          <button type="button" className={buttonClass(mode === "drive")} onClick={() => chooseMode("drive")}>
+            <Box className="h-3.5 w-3.5" />
+            Conducción 3D
           </button>
+          {mode === "overview" && (
+            <button
+              type="button"
+              className={buttonClass()}
+              onClick={() => {
+                setFollow(false);
+                setFitSignal((n) => n + 1);
+              }}
+            >
+              Ver recorrido completo
+            </button>
+          )}
+          {!follow && (
+            <button type="button" className={buttonClass()} onClick={() => setFollow(true)}>
+              Seguir vehículo
+            </button>
+          )}
         </div>
       </div>
     </MapsProvider>
