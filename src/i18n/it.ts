@@ -100,6 +100,7 @@ export const it: Record<MessageKey, string> = {
   "detail.etaPlaceholder": "Dove? Città o via",
   "detail.etaLabel": "Destinazione per calcolare l’arrivo",
   "detail.etaGo": "Calcola",
+  "detail.etaClear": "Rimuovi il percorso dalla mappa",
   "detail.etaLoading": "Calcolo in corso…",
   "detail.etaError": "Impossibile calcolare l’arrivo",
   "detail.etaArrives": "Arriva tra {time}",

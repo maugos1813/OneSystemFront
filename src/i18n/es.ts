@@ -101,6 +101,7 @@ export const es = {
   "detail.etaPlaceholder": "¿A dónde? Ciudad o calle",
   "detail.etaLabel": "Destino para calcular la llegada",
   "detail.etaGo": "Calcular",
+  "detail.etaClear": "Quitar la ruta del mapa",
   "detail.etaLoading": "Calculando…",
   "detail.etaError": "No se pudo calcular la llegada",
   "detail.etaArrives": "Llega en {time}",

@@ -1,6 +1,6 @@
-import { Map, Marker, Polygon, useMap } from "@vis.gl/react-google-maps";
+import { Map, Marker, Polygon, Polyline, useMap } from "@vis.gl/react-google-maps";
 import { MapsProvider } from "./MapsProvider";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useFleet } from "../context/FleetContext";
 import { useTheme } from "../context/ThemeContext";
 import { useT } from "../i18n";
@@ -9,7 +9,7 @@ import { geofenceZoneColor, isRomeZtl } from "../lib/geo";
 import { DARK_MAP_STYLE } from "../lib/mapStyle";
 import { fleetClass, fleetColors, fleetPrefixes, fleetTagCss, GAMONAL_FLEET } from "../lib/fleetBrand";
 import { getVehicleIcon } from "../lib/markerIcon";
-import { AVL_ID, type Geofence, type Position, type SharedVehicle, type Vehicle } from "../lib/types";
+import { AVL_ID, type Geofence, type Position, type SharedVehicle, type Vehicle, type VehicleEta } from "../lib/types";
 
 const FOCUS_ZOOM = 15;
 
@@ -51,6 +51,46 @@ function MapCenterOnShared({ vehicle }: { vehicle: SharedVehicle | null }) {
   return null;
 }
 
+/** How much of the map the vehicle panel covers (the bottom sheet on a phone, the card on the right on a screen): the road is framed in the rest. */
+function freeMapPadding(mapDiv: HTMLElement): google.maps.Padding {
+  const edge = 48;
+  const map = mapDiv.getBoundingClientRect();
+  const panel = document.querySelector("[data-vehicle-panel]")?.getBoundingClientRect();
+  // The "Vehículos" button sits at the top left and the full-screen one at the top right.
+  const padding = { top: 76, right: edge, bottom: edge, left: edge };
+  if (panel && panel.width > 0) {
+    if (panel.width >= map.width * 0.8) padding.bottom = Math.min(map.bottom - panel.top + 16, map.height * 0.7);
+    else padding.right = Math.min(map.right - panel.left + 16, map.width * 0.6);
+  }
+  return padding;
+}
+
+/** The road still ahead of the vehicle to the destination it was asked about, with a pin on it, and the camera framing all of it. */
+function RouteLayer({ route }: { route: VehicleEta }) {
+  const map = useMap();
+  const path = useMemo(() => route.path.map(([lat, lng]) => ({ lat, lng })), [route]);
+
+  useEffect(() => {
+    if (!map) return;
+    // After the panel has laid out its answer, so what it covers is known.
+    const timer = window.setTimeout(() => {
+      const bounds = new google.maps.LatLngBounds();
+      for (const point of path) bounds.extend(point);
+      bounds.extend(route.from);
+      bounds.extend(route.destination);
+      map.fitBounds(bounds, freeMapPadding(map.getDiv()));
+    }, 120);
+    return () => window.clearTimeout(timer);
+  }, [map, route, path]);
+
+  return (
+    <>
+      {path.length > 1 && <Polyline path={path} strokeColor="#2563eb" strokeOpacity={0.9} strokeWeight={6} clickable={false} />}
+      <Marker position={route.destination} title={route.destination.label} />
+    </>
+  );
+}
+
 interface MapViewProps {
   vehicles: Vehicle[];
   positions: Record<string, Position>;
@@ -62,6 +102,8 @@ interface MapViewProps {
   onSelectShared?: (plate: string) => void;
   /** False when the pills ask for the Gamonal vehicles only. */
   showOwn?: boolean;
+  /** The road ahead of the selected vehicle to a searched destination: drawn and framed whole. */
+  route?: VehicleEta | null;
 }
 
 const DEFAULT_CENTER = { lat: 41.9028, lng: 12.4964 }; // Roma, como fallback sin posiciones aún
@@ -138,6 +180,7 @@ export function MapView({
   selectedSharedPlate = null,
   onSelectShared,
   showOwn = true,
+  route = null,
 }: MapViewProps) {
   const t = useT();
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
@@ -179,6 +222,7 @@ export function MapView({
         >
           <MapCenterOnSelect selectedVehicleId={selectedVehicleId} positions={positions} />
           <MapCenterOnShared vehicle={shared.find((v) => v.plate === selectedSharedPlate) ?? null} />
+          {route && <RouteLayer route={route} />}
 
           {zonePolygons.map((g) => {
             const color = geofenceZoneColor(g.name);

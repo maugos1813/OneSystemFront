@@ -456,6 +456,8 @@ export interface VehicleEta {
   baseDurationMin: number;
   /** When it would get there if it left now. */
   arrivalAt: string;
+  /** The road ahead from the vehicle to the destination, as [lat, lng] points. */
+  path: Array<[number, number]>;
   from: { lat: number; lng: number; at: string };
   /** How old the position the estimate starts from is. */
   positionAgeMin: number;

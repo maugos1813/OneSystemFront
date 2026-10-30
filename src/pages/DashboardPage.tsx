@@ -9,6 +9,7 @@ import { useFleet } from "../context/FleetContext";
 import { useT } from "../i18n";
 import { trackGlow } from "../lib/glow";
 import { normalizePlate } from "../lib/plate";
+import type { VehicleEta } from "../lib/types";
 
 /** Below `lg` there isn't room for the vehicle list next to the map, so it starts collapsed there. */
 function prefersOpenByDefault(): boolean {
@@ -25,6 +26,8 @@ export function DashboardPage() {
   const { filteredVehicles: vehicles, devices, positions, loading, error, sharedVehicles } = useFleet();
   const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
   const [selectedSharedPlate, setSelectedSharedPlate] = useState<string | null>(null);
+  // The road ahead of the selected vehicle to a destination searched in its panel, drawn on the map.
+  const [route, setRoute] = useState<VehicleEta | null>(null);
   const [listOpen, setListOpen] = useState(prefersOpenByDefault);
 
   // A vehicle shows on the map only once it has a device; until then the client waits for their admin to assign one.
@@ -84,6 +87,7 @@ export function DashboardPage() {
           selectedSharedPlate={selectedSharedPlate}
           onSelectShared={selectShared}
           showOwn={showOwn}
+          route={route}
         />
 
         {!hasTrackedVehicle && sharedVehicles.length === 0 && (
@@ -145,6 +149,7 @@ export function DashboardPage() {
             vehicle={selectedVehicle}
             position={positions[selectedVehicle.id] ?? null}
             onClose={() => setSelectedVehicleId(null)}
+            onRoute={setRoute}
           />
         )}
       </div>

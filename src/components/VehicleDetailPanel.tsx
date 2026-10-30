@@ -6,13 +6,14 @@ import { History, Map as MapIcon, Navigation, Phone, Wrench, X, type LucideIcon 
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { useT } from "../i18n";
-import { formatRelativeTime } from "../lib/relativeTime";
-import { AVL_ID, type Position, type Vehicle, type VehicleDriver, type VehicleEta } from "../lib/types";
+import { type Position, type Vehicle, type VehicleDriver, type VehicleEta } from "../lib/types";
 
 interface VehicleDetailPanelProps {
   vehicle: Vehicle;
   position: Position | null;
   onClose: () => void;
+  /** The road ahead to a searched destination, to draw on the map (null: none). */
+  onRoute?: (route: VehicleEta | null) => void;
 }
 
 const ACTION_CLASS =
@@ -67,19 +68,10 @@ function Action({
   );
 }
 
-function Row({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between py-1.5">
-      <span className="text-sm text-slate-500 dark:text-slate-400">{label}</span>
-      <span className="text-sm font-medium text-slate-900 dark:text-white">{value}</span>
-    </div>
-  );
-}
-
-export function VehicleDetailPanel({ vehicle, position, onClose }: VehicleDetailPanelProps) {
+export function VehicleDetailPanel({ vehicle, position, onClose, onRoute }: VehicleDetailPanelProps) {
   const t = useT();
   const { currentUser } = useAuth();
-  // The route is the history behind Historial and Analíticas; an account with neither doesn't get it.
+  // Trip history is behind Historial and Analíticas; an account with neither doesn't get the shortcut.
   const hasAccess = (...modules: string[]) =>
     currentUser?.role === "owner" ||
     currentUser?.role === "admin" ||
@@ -95,8 +87,15 @@ export function VehicleDetailPanel({ vehicle, position, onClose }: VehicleDetail
     error: null,
     loading: false,
   });
-  // Another vehicle: the answer about the previous one no longer applies.
-  useEffect(() => setEta({ eta: null, error: null, loading: false }), [vehicle.id]);
+  // Another vehicle, or the panel closing: the answer (and the line on the map) about the previous one no longer applies.
+  useEffect(() => {
+    setEta({ eta: null, error: null, loading: false });
+    return () => onRoute?.(null);
+  }, [vehicle.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  function showResult(result: { eta: VehicleEta | null; error: string | null; loading: boolean }) {
+    setEta(result);
+    onRoute?.(result.eta);
+  }
   const phone = driver?.driver?.phone ?? null;
   useEffect(() => {
     setDriver(null);
@@ -111,7 +110,10 @@ export function VehicleDetailPanel({ vehicle, position, onClose }: VehicleDetail
   }, [vehicle.id, canSeeDriver]);
 
   return (
-    <div className="absolute inset-x-0 bottom-0 z-10 max-h-[75vh] overflow-y-auto rounded-t-3xl border border-white bg-white p-4 shadow-xl shadow-slate-300/30 sm:absolute sm:inset-x-auto sm:top-4 sm:right-4 sm:bottom-auto sm:max-h-[calc(100%-2rem)] sm:w-80 sm:rounded-3xl dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40">
+    <div
+      data-vehicle-panel
+      className="absolute inset-x-0 bottom-0 z-10 max-h-[75vh] overflow-y-auto rounded-t-3xl border border-white bg-white p-4 shadow-xl shadow-slate-300/30 sm:absolute sm:inset-x-auto sm:top-4 sm:right-4 sm:bottom-auto sm:max-h-[calc(100%-2rem)] sm:w-80 sm:rounded-3xl dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40"
+    >
       <div className="mb-3 flex items-start justify-between">
         <div>
           <h2 className="font-semibold text-slate-900 dark:text-white">{vehicle.name}</h2>
@@ -128,54 +130,28 @@ export function VehicleDetailPanel({ vehicle, position, onClose }: VehicleDetail
 
       {!position && <p className="text-sm text-slate-500 dark:text-slate-400">{t("detail.noPositions")}</p>}
 
-      {position && (
-        <div className="divide-y divide-slate-100 dark:divide-white/10">
-          {driver?.driver && (
-            <div className="py-1.5">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-500 dark:text-slate-400">{t("detail.driver")}</span>
-                <span className="text-sm font-medium text-slate-900 dark:text-white">
-                  {driver.driver.name}
-                  {driver.confidence === "low" && (
-                    <span className="ml-1 text-xs font-normal text-slate-400">({t("detail.driverProbable")})</span>
-                  )}
-                </span>
-              </div>
-              {driver.others.length > 0 && (
-                <p className="mt-0.5 text-right text-xs text-slate-400 dark:text-slate-500">
-                  {t(driver.source === "driver" ? "detail.driverAlsoWith" : "detail.driverAlso")}:{" "}
-                  {driver.others.map((o) => o.name).join(", ")}
-                </p>
+      {driver?.driver && (
+        <div className="mb-1">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-slate-500 dark:text-slate-400">{t("detail.driver")}</span>
+            <span className="text-sm font-medium text-slate-900 dark:text-white">
+              {driver.driver.name}
+              {driver.confidence === "low" && (
+                <span className="ml-1 text-xs font-normal text-slate-400">({t("detail.driverProbable")})</span>
               )}
-              {driver.beaconDriver && (
-                <p className="mt-0.5 text-right text-xs text-amber-600 dark:text-amber-400">
-                  {t("detail.beaconHeard", { name: driver.beaconDriver.name })}
-                </p>
-              )}
-            </div>
+            </span>
+          </div>
+          {driver.others.length > 0 && (
+            <p className="mt-0.5 text-right text-xs text-slate-400 dark:text-slate-500">
+              {t(driver.source === "driver" ? "detail.driverAlsoWith" : "detail.driverAlso")}:{" "}
+              {driver.others.map((o) => o.name).join(", ")}
+            </p>
           )}
-          <Row label={t("detail.speed")} value={`${position.speed} km/h`} />
-          <Row
-            label={t("detail.ignition")}
-            value={
-              position.ioData[AVL_ID.IGNITION] === 1 || position.ioData[AVL_ID.IGNITION] === "1"
-                ? t("detail.ignitionOn")
-                : t("detail.ignitionOff")
-            }
-          />
-          <Row
-            label={t("detail.voltage")}
-            value={
-              position.ioData[AVL_ID.EXTERNAL_VOLTAGE] !== undefined
-                ? `${(Number(position.ioData[AVL_ID.EXTERNAL_VOLTAGE]) / 1000).toFixed(1)} V`
-                : "—"
-            }
-          />
-          <Row
-            label={t("detail.satellites")}
-            value={position.satellites !== null ? String(position.satellites) : "—"}
-          />
-          <Row label={t("detail.lastPosition")} value={formatRelativeTime(position.ts, t)} />
+          {driver.beaconDriver && (
+            <p className="mt-0.5 text-right text-xs text-amber-600 dark:text-amber-400">
+              {t("detail.beaconHeard", { name: driver.beaconDriver.name })}
+            </p>
+          )}
         </div>
       )}
 
@@ -223,10 +199,10 @@ export function VehicleDetailPanel({ vehicle, position, onClose }: VehicleDetail
               wide={
                 [canSeeHistory, canSeeCockpit, canSeeDriver, canSeeMaintenance, true].filter(Boolean).length % 2 === 0
               }
-              onResult={setEta}
+              onResult={showResult}
             />
           )}
-          <EtaResult {...eta} />
+          <EtaResult {...eta} onClear={() => showResult({ eta: null, error: null, loading: false })} />
         </div>
       </div>
     </div>
