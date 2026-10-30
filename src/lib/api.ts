@@ -541,8 +541,8 @@ export function listBeaconsByVehicle(hours = 24): Promise<VehicleBeacons[]> {
   return request(`/driver-beacons/by-vehicle?hours=${hours}`);
 }
 
-export function assignDriverBeacon(beaconId: string, driverName: string): Promise<DriverBeacon> {
-  return request("/driver-beacons", { method: "POST", body: JSON.stringify({ beaconId, driverName }) });
+export function assignDriverBeacon(beaconId: string, driverName: string, phone?: string): Promise<DriverBeacon> {
+  return request("/driver-beacons", { method: "POST", body: JSON.stringify({ beaconId, driverName, phone }) });
 }
 
 /** For an EYE Beacon still on its factory identity: the MAC printed on its label is enough. */
@@ -550,8 +550,9 @@ export function assignDriverBeaconByMac(mac: string, driverName: string): Promis
   return request("/driver-beacons", { method: "POST", body: JSON.stringify({ mac, driverName }) });
 }
 
-export function renameDriverBeacon(id: string, driverName: string): Promise<DriverBeacon> {
-  return request(`/driver-beacons/${id}`, { method: "PATCH", body: JSON.stringify({ driverName }) });
+/** Changes the driver's name and/or phone; a phone of "" removes it. */
+export function updateDriverBeacon(id: string, changes: { driverName?: string; phone?: string }): Promise<DriverBeacon> {
+  return request(`/driver-beacons/${id}`, { method: "PATCH", body: JSON.stringify(changes) });
 }
 
 export function removeDriverBeacon(id: string): Promise<void> {

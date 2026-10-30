@@ -7,7 +7,7 @@ import {
   listBeaconsByVehicle,
   listDriverBeacons,
   removeDriverBeacon,
-  renameDriverBeacon,
+  updateDriverBeacon,
 } from "../lib/api";
 import { trackGlow } from "../lib/glow";
 import { formatRelativeTime } from "../lib/relativeTime";
@@ -18,6 +18,7 @@ interface Row {
   beaconId: string;
   registeredId: string | null;
   driverName: string | null;
+  phone: string | null;
 }
 
 const PERIODS = [
@@ -49,17 +50,19 @@ function proximity(rssi: number | null): { label: string; tone: string } {
 
 function NameCell({ row, onSaved }: { row: Row; onSaved: () => void }) {
   const [name, setName] = useState(row.driverName ?? "");
+  const [phone, setPhone] = useState(row.phone ?? "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const changed = name.trim() !== (row.driverName ?? "");
+  const changed = name.trim() !== (row.driverName ?? "") || phone.trim() !== (row.phone ?? "");
 
   async function save() {
     if (!name.trim() || !changed) return;
     setSaving(true);
     setError(null);
     try {
-      if (row.registeredId) await renameDriverBeacon(row.registeredId, name.trim());
-      else await assignDriverBeacon(row.beaconId, name.trim());
+      if (row.registeredId)
+        await updateDriverBeacon(row.registeredId, { driverName: name.trim(), phone: phone.trim() });
+      else await assignDriverBeacon(row.beaconId, name.trim(), phone.trim() || undefined);
       onSaved();
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudo guardar");
@@ -78,6 +81,17 @@ function NameCell({ row, onSaved }: { row: Row; onSaved: () => void }) {
           placeholder="Nombre del chofer"
           maxLength={100}
           className="field-input w-44 rounded-lg border border-slate-300 px-2 py-1 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
+        />
+        <input
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && save()}
+          placeholder="Teléfono"
+          type="tel"
+          inputMode="tel"
+          maxLength={30}
+          aria-label="Teléfono del chofer"
+          className="field-input w-36 rounded-lg border border-slate-300 px-2 py-1 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
         />
         {changed && name.trim() && (
           <button
@@ -170,11 +184,16 @@ function BeaconLine({
 }) {
   const t = useT();
   const near = proximity(beacon.avgRssi);
-  const row: Row = { beaconId: beacon.beaconId, registeredId: beacon.registeredId, driverName: beacon.driverName };
+  const row: Row = {
+    beaconId: beacon.beaconId,
+    registeredId: beacon.registeredId,
+    driverName: beacon.driverName,
+    phone: beacon.phone,
+  };
   return (
     <li className="flex flex-wrap items-center gap-x-4 gap-y-1 py-2">
-      <div className="w-48 shrink-0">
-        <NameCell key={`${beacon.beaconId}:${beacon.driverName}`} row={row} onSaved={onSaved} />
+      <div className="w-auto shrink-0">
+        <NameCell key={`${beacon.beaconId}:${beacon.driverName}:${beacon.phone}`} row={row} onSaved={onSaved} />
       </div>
       <div className="min-w-0 flex-1 text-xs text-slate-500 dark:text-slate-400">
         <span className="font-mono">{shortLabel(beacon.beaconId)}</span>
@@ -402,10 +421,10 @@ export function DriversPage() {
           <ul className="divide-y divide-slate-100 dark:divide-white/10">
             {silent.map((r) => (
               <li key={r.id} className="flex flex-wrap items-center gap-x-4 gap-y-1 py-2">
-                <div className="w-48 shrink-0">
+                <div className="w-auto shrink-0">
                   <NameCell
-                    key={`${r.beaconId}:${r.driverName}`}
-                    row={{ beaconId: r.beaconId, registeredId: r.id, driverName: r.driverName }}
+                    key={`${r.beaconId}:${r.driverName}:${r.phone}`}
+                    row={{ beaconId: r.beaconId, registeredId: r.id, driverName: r.driverName, phone: r.phone }}
                     onSaved={refetch}
                   />
                 </div>

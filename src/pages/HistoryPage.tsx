@@ -28,7 +28,8 @@ const DEFAULT_SPEED_LIMIT_KMH = 120;
 
 export function HistoryPage() {
   const { filteredVehicles: vehicles, loading: fleetLoading } = useFleet();
-  const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
+  // The vehicle panel on the map links here with ?vehicle=<id>.
+  const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(() => new URLSearchParams(window.location.search).get("vehicle"));
   const [rangeHours, setRangeHours] = useState(24);
   const [speedLimit, setSpeedLimit] = useState(DEFAULT_SPEED_LIMIT_KMH);
 

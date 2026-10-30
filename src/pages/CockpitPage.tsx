@@ -17,7 +17,8 @@ import { AVL_ID } from "../lib/types";
 
 export function CockpitPage() {
   const { filteredVehicles: vehicles, positions, loading } = useFleet();
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  // The vehicle panel on the map links here with ?vehicle=<id>.
+  const [selectedId, setSelectedId] = useState<string | null>(() => new URLSearchParams(window.location.search).get("vehicle"));
 
   useEffect(() => {
     if (vehicles.length === 0) return;

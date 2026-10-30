@@ -6,7 +6,6 @@ import { SharedVehiclePanel } from "../components/SharedVehiclePanel";
 import { VehicleList } from "../components/VehicleList";
 import { useAuth } from "../context/AuthContext";
 import { useFleet } from "../context/FleetContext";
-import { useDeviceEvents } from "../hooks/useDeviceEvents";
 import { usePositionHistory } from "../hooks/usePositionHistory";
 import { useT } from "../i18n";
 import { trackGlow } from "../lib/glow";
@@ -36,7 +35,6 @@ export function DashboardPage() {
   }, [historyRangeHours]);
 
   const { history } = usePositionHistory(selectedVehicleId, historyFrom);
-  const { events } = useDeviceEvents(selectedVehicleId);
 
   // A vehicle shows on the map only once it has a device; until then the client waits for their admin to assign one.
   const hasTrackedVehicle = vehicles.some((v) => v.deviceId);
@@ -158,7 +156,6 @@ export function DashboardPage() {
           <VehicleDetailPanel
             vehicle={selectedVehicle}
             position={positions[selectedVehicle.id] ?? null}
-            events={events}
             history={history}
             historyRangeHours={historyRangeHours}
             onHistoryRangeChange={setHistoryRangeHours}

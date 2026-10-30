@@ -78,7 +78,8 @@ export function MaintenancePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [dialog, setDialog] = useState<Dialog | null>(null);
-  const [search, setSearch] = useState("");
+  // The vehicle panel on the map links here with ?q=<plate>.
+  const [search, setSearch] = useState(() => new URLSearchParams(window.location.search).get("q") ?? "");
 
   const load = useCallback(() => {
     listMaintenance()

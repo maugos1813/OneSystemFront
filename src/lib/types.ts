@@ -406,6 +406,8 @@ export interface DriverBeacon {
   id: string;
   beaconId: string;
   driverName: string;
+  /** Where to call the driver from the vehicle's panel. */
+  phone: string | null;
   createdAt: string;
 }
 
@@ -422,6 +424,7 @@ export interface DetectedBeacon {
 
 export interface NamedDriver {
   name: string;
+  phone: string | null;
   beaconId: string;
   presence: number;
   avgRssi: number | null;
@@ -443,6 +446,7 @@ export interface VehicleDriver {
 export interface BeaconInVehicle {
   beaconId: string;
   driverName: string | null;
+  phone: string | null;
   registeredId: string | null;
   firstSeen: string;
   lastSeen: string;
