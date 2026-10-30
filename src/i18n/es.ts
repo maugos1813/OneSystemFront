@@ -88,6 +88,8 @@ export const es = {
   "detail.driver": "Conductor",
   "detail.driverProbable": "probable",
   "detail.driverAlso": "También en cabina",
+  "detail.driverAlsoWith": "También con el vehículo",
+  "detail.beaconHeard": "La baliza oyó a {name}",
   "detail.route": "Recorrido",
   "detail.noRoute": "Sin recorrido",
   "detail.days7": "7 días",

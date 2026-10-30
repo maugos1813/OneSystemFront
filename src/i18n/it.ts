@@ -86,6 +86,8 @@ export const it: Record<MessageKey, string> = {
   "detail.driver": "Conducente",
   "detail.driverProbable": "probabile",
   "detail.driverAlso": "Anche in cabina",
+  "detail.driverAlsoWith": "Anche con il veicolo",
+  "detail.beaconHeard": "Il beacon ha rilevato {name}",
   "detail.lastPosition": "Ultima posizione",
   "detail.route": "Percorso",
   "detail.noRoute": "Nessun percorso",

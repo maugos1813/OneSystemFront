@@ -7,8 +7,8 @@ import { PlaybackBar } from "../components/history/PlaybackBar";
 import { SpeedTimelineChart } from "../components/history/SpeedTimelineChart";
 import { useAuth } from "../context/AuthContext";
 import { useFleet } from "../context/FleetContext";
-import { getVehicleDriver } from "../lib/api";
-import type { VehicleDriver } from "../lib/types";
+import { getVehicleDriver, getVehicleUsages } from "../lib/api";
+import type { VehicleDriver, VehicleUsage } from "../lib/types";
 import { usePositionHistory } from "../hooks/usePositionHistory";
 import { usePlayback } from "../hooks/usePlayback";
 import { useVehicleIncidents } from "../hooks/useVehicleIncidents";
@@ -25,6 +25,17 @@ const RANGES: Array<{ label: string; hours: number }> = [
 
 const INCIDENT_TYPES: IncidentType[] = ["harshBraking", "harshAcceleration", "harshCornering", "speeding"];
 const DEFAULT_SPEED_LIMIT_KMH = 120;
+
+const USAGE_TIME = new Intl.DateTimeFormat("es-ES", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+
+/** "28/10 06:00 – 13:10", or "desde 28/10 06:00" when the Driver has no end time. */
+function formatUsageWindow(u: VehicleUsage): string {
+  const from = USAGE_TIME.format(new Date(u.from));
+  if (!u.to) return `desde ${from}`;
+  const to = USAGE_TIME.format(new Date(u.to));
+  // Same day: show the end time only.
+  return `${from} – ${from.slice(0, 5) === to.slice(0, 5) ? to.slice(-5) : to}`;
+}
 
 export function HistoryPage() {
   const { filteredVehicles: vehicles, loading: fleetLoading } = useFleet();
@@ -50,12 +61,18 @@ export function HistoryPage() {
     currentUser?.role === "admin" ||
     !!currentUser?.modules.some((m) => m === "conduccion");
   const [driver, setDriver] = useState<VehicleDriver | null>(null);
+  // Who Gamonal Driver gave the vehicle to in the period: several drivers can have used it, and this is the exact record.
+  const [usages, setUsages] = useState<VehicleUsage[]>([]);
   useEffect(() => {
     setDriver(null);
+    setUsages([]);
     if (!canSeeDriver || !selectedVehicleId) return;
     let cancelled = false;
     getVehicleDriver(selectedVehicleId, { from })
       .then((d) => !cancelled && setDriver(d))
+      .catch(() => undefined);
+    getVehicleUsages(selectedVehicleId, { from, to: new Date() })
+      .then((r) => !cancelled && setUsages(r.usages))
       .catch(() => undefined);
     return () => {
       cancelled = true;
@@ -141,7 +158,28 @@ export function HistoryPage() {
         ))}
       </div>
 
-      {driver?.driver && (
+      {usages.length > 0 && (
+        <div className="mb-4 text-sm text-slate-600 dark:text-slate-300">
+          <p className="mb-1 font-medium text-slate-800 dark:text-slate-100">
+            Quién lo usó <span className="text-xs font-normal text-slate-400">(servicios de Gamonal Driver)</span>
+          </p>
+          <ul className="max-h-40 space-y-0.5 overflow-y-auto">
+            {usages.map((u, i) => (
+              <li key={`${u.from}:${i}`}>
+                <strong>{u.driver.name}</strong>
+                <span className="text-slate-400">
+                  {" · "}
+                  {formatUsageWindow(u)}
+                  {!u.declared && " (horario estimado)"}
+                  {u.switched && " · cambió de furgón"}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {usages.length === 0 && driver?.driver && (
         <p className="mb-4 text-sm text-slate-600 dark:text-slate-300">
           Conductor: <strong>{driver.driver.name}</strong>
           {driver.confidence === "low" && " (probable)"}

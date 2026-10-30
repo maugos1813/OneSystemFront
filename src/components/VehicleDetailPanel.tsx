@@ -150,7 +150,13 @@ export function VehicleDetailPanel({
               </div>
               {driver.others.length > 0 && (
                 <p className="mt-0.5 text-right text-xs text-slate-400 dark:text-slate-500">
-                  {t("detail.driverAlso")}: {driver.others.map((o) => o.name).join(", ")}
+                  {t(driver.source === "driver" ? "detail.driverAlsoWith" : "detail.driverAlso")}:{" "}
+                  {driver.others.map((o) => o.name).join(", ")}
+                </p>
+              )}
+              {driver.beaconDriver && (
+                <p className="mt-0.5 text-right text-xs text-amber-600 dark:text-amber-400">
+                  {t("detail.beaconHeard", { name: driver.beaconDriver.name })}
                 </p>
               )}
             </div>

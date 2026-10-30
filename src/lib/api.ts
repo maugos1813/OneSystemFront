@@ -25,6 +25,7 @@ import type {
   DriverBeacon,
   VehicleBeacons,
   VehicleDriver,
+  VehicleUsage,
   SimSecrets,
   Product,
   TeamMember,
@@ -557,6 +558,12 @@ export function updateDriverBeacon(id: string, changes: { driverName?: string; p
 
 export function removeDriverBeacon(id: string): Promise<void> {
   return request(`/driver-beacons/${id}`, { method: "DELETE" });
+}
+
+/** Every driver Gamonal Driver gave the vehicle to between `from` and `to`. */
+export function getVehicleUsages(vehicleId: string, range: { from: Date; to: Date }): Promise<{ usages: VehicleUsage[] }> {
+  const params = new URLSearchParams({ from: range.from.toISOString(), to: range.to.toISOString() });
+  return request(`/vehicles/${vehicleId}/usage?${params}`);
 }
 
 export function getVehicleDriver(vehicleId: string, range: { from?: Date; to?: Date } = {}): Promise<VehicleDriver> {

@@ -425,12 +425,13 @@ export interface DetectedBeacon {
 export interface NamedDriver {
   name: string;
   phone: string | null;
-  beaconId: string;
-  presence: number;
+  /** Null for a driver Gamonal Driver names (no beacon involved). */
+  beaconId: string | null;
+  presence: number | null;
   avgRssi: number | null;
 }
 
-/** Who drove a vehicle in a period, from the beacons its tracker heard while it moved. */
+/** Who drove a vehicle in a period: Gamonal Driver's answer, or else the beacons its tracker heard while it moved. */
 export interface VehicleDriver {
   vehicleId: string;
   from: string;
@@ -438,8 +439,24 @@ export interface VehicleDriver {
   movingScans: number;
   /** "low" when several drivers were in the cab: the first is only the probable one. */
   confidence: "high" | "low" | null;
+  source: "driver" | "beacon" | null;
   driver: NamedDriver | null;
   others: NamedDriver[];
+  /** When Gamonal Driver names someone and the beacon heard somebody else: who the beacon heard. */
+  beaconDriver: NamedDriver | null;
+}
+
+/** One service of Gamonal Driver on a vehicle. */
+export interface VehicleUsage {
+  driver: { name: string; phone: string | null; active: boolean };
+  from: string;
+  /** Null when the Driver has no end time for it. */
+  to: string | null;
+  /** The hours the driver declared, or only an estimate from departure and ETA. */
+  declared: boolean;
+  /** The service started on another van and ended on this one, or the other way round: the switch time is unknown. */
+  switched: boolean;
+  status: string;
 }
 
 /** A beacon one tracker heard, with the driver it belongs to if it is registered. */
