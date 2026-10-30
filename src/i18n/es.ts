@@ -6,6 +6,7 @@ export const es = {
   "common.loading": "Cargando...",
   "workspace.apps": "Aplicaciones",
   "workspace.settings": "Configuración",
+  "workspace.noOneTrack": "Esta cuenta no tiene OneTrack habilitado. Pide a OneSystec que lo active.",
   "workspace.noApps": "No tienes aplicaciones habilitadas todavía.",
   "workspace.openMenu": "Abrir el menú de aplicaciones",
   "workspace.themeLight": "Activar tema claro",

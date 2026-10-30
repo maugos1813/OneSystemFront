@@ -1,6 +1,7 @@
 apply plugin: 'com.android.application'
 
-// The version of the app lives in android/version.properties (written by scripts/release-android.sh).
+// The version of each app lives in android/version.properties (written by scripts/release-android.sh): VERSION_* is
+// OneSystec, ONETRACK_VERSION_* is OneTrack (the same website, opened straight on the GPS section: see productFlavors).
 def versionProps = new Properties()
 file("../version.properties").withInputStream { versionProps.load(it) }
 
@@ -13,16 +14,30 @@ android {
     namespace = "com.onesystec.app"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.onesystec.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode versionProps.getProperty("VERSION_CODE").toInteger()
-        versionName versionProps.getProperty("VERSION_NAME")
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
              // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
+        }
+    }
+    // Two apps from one project: they install side by side. OneTrack has its own name, icon, splash (src/onetrack/res) and
+    // capacitor.config.json (src/onetrack/assets: it announces itself to the website as "OneTrackApp").
+    flavorDimensions = ["app"]
+    productFlavors {
+        onesystec {
+            dimension = "app"
+            applicationId "com.onesystec.app"
+            versionCode versionProps.getProperty("VERSION_CODE").toInteger()
+            versionName versionProps.getProperty("VERSION_NAME")
+        }
+        onetrack {
+            dimension = "app"
+            applicationId "com.onetrack.app"
+            versionCode versionProps.getProperty("ONETRACK_VERSION_CODE").toInteger()
+            versionName versionProps.getProperty("ONETRACK_VERSION_NAME")
         }
     }
     signingConfigs {
@@ -68,6 +83,13 @@ try {
     def servicesJSON = file('google-services.json')
     if (servicesJSON.text) {
         apply plugin: 'com.google.gms.google-services'
+        // Push needs the app registered in Firebase (its package in google-services.json). Until com.onetrack.app is there,
+        // OneTrack is built without it (and tells the website, see scripts/release-android.sh) instead of failing the build.
+        def clients = new groovy.json.JsonSlurper().parseText(servicesJSON.text).client
+        def packages = clients.collect { it.client_info.android_client_info.package_name }
+        tasks.configureEach { task ->
+            if (task.name ==~ /process.*Onetrack.*GoogleServices/ && !packages.contains("com.onetrack.app")) task.enabled = false
+        }
     }
 } catch(Exception e) {
     logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")

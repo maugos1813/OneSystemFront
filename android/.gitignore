@@ -106,3 +106,6 @@ google-services.json
 # Release signing: the keystore and its passwords stay on the machine that builds releases
 keystore.properties
 *.keystore
+
+# OneTrack's own config (written by scripts/release-android.sh, it differs per release)
+!app/src/onetrack/assets/capacitor.config.json

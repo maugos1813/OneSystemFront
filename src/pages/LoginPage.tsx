@@ -4,6 +4,7 @@ import { Link, Navigate, useNavigate } from "react-router-dom";
 import { AuthLayout } from "../components/layout/AuthLayout";
 import { useAuth } from "../context/AuthContext";
 import { useT } from "../i18n";
+import { isOneTrackApp } from "../lib/appFlavor";
 import { trackGlow } from "../lib/glow";
 
 export function LoginPage() {
@@ -27,6 +28,7 @@ export function LoginPage() {
         onMouseMove={trackGlow}
         className="glow w-full max-w-sm rounded-3xl bg-white p-6 shadow-xl shadow-slate-200/60 sm:p-8 dark:border dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40"
       >
+        {isOneTrackApp && <img src="/logos/onetrack-symbol.png" alt="OneTrack" className="mx-auto mb-4 h-16 w-auto" />}
         <h1 className="mb-1 text-xl font-semibold text-slate-900 dark:text-white">{t("login.title")}</h1>
         <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">{t("login.subtitle")}</p>
 

@@ -27,6 +27,7 @@ import { FleetProvider } from "../context/FleetContext";
 import { useTheme } from "../context/ThemeContext";
 import { getProductSsoUrl, listProducts } from "../lib/api";
 import { trackGlow } from "../lib/glow";
+import { isOneTrackApp } from "../lib/appFlavor";
 import { firstAllowedPath } from "../lib/oneTrackNav";
 import type { Product } from "../lib/types";
 import { AppUpdateCard } from "../components/AppUpdateCard";
@@ -145,6 +146,12 @@ function Workspace({ products }: { products: Product[] }) {
   };
   const collapse = () => (atHome ? setParams({ app: selectedKey }) : navigate("/?app=gps"));
 
+  // The OneTrack app is only the GPS: "/" (the workspace and its other apps) is never shown, it opens on its first section.
+  if (isOneTrackApp) {
+    if (!hasOneTrack) return <NoOneTrack />;
+    if (atHome) return <Navigate to={firstAllowedPath(currentUser) ?? "/gps"} replace />;
+  }
+
   // OneTrack's pages need its fleet; an account without it has nothing to show there.
   if (!atHome && !hasOneTrack) return <Navigate to="/" replace />;
 
@@ -231,6 +238,23 @@ function Workspace({ products }: { products: Product[] }) {
         showingConfig={showingConfig}
         onSelect={select}
       />
+    </div>
+  );
+}
+
+/** The OneTrack app, signed in with an account that doesn't have OneTrack: nothing to open, only a way out. */
+function NoOneTrack() {
+  const t = useT();
+  const { logout } = useAuth();
+  return (
+    <div className="flex h-screen flex-col items-center justify-center gap-4 bg-[#f5f6fb] p-6 text-center dark:bg-[#0a0e1a]">
+      <p className="max-w-xs text-sm text-slate-600 dark:text-slate-300">{t("workspace.noOneTrack")}</p>
+      <button
+        onClick={logout}
+        className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 dark:border-white/10 dark:text-slate-300"
+      >
+        {t("workspace.signOut")}
+      </button>
     </div>
   );
 }

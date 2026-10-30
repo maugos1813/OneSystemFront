@@ -1,6 +1,7 @@
 import { Capacitor } from "@capacitor/core";
 import { PushNotifications } from "@capacitor/push-notifications";
 import { registerPushToken, unregisterPushToken } from "./api";
+import { pushUnavailable } from "./appFlavor";
 
 let currentToken: string | null = null;
 let listening = false;
@@ -13,7 +14,7 @@ const CHANNEL_ID = "alerts";
  * (the Capacitor wrapper); in a normal browser it is a no-op. Safe to call on every sign-in.
  */
 export async function enablePush(): Promise<void> {
-  if (!Capacitor.isNativePlatform()) return;
+  if (!Capacitor.isNativePlatform() || pushUnavailable) return;
   try {
     let status = await PushNotifications.checkPermissions();
     if (status.receive === "prompt" || status.receive === "prompt-with-rationale") {

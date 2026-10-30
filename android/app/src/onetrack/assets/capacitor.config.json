@@ -1,0 +1,13 @@
+{
+	"appId": "com.onetrack.app",
+	"appName": "OneTrack",
+	"webDir": "dist",
+	"server": {
+		"url": "https://one-system-front-two.vercel.app",
+		"cleartext": false
+	},
+	"android": {
+		"allowMixedContent": false,
+		"appendUserAgent": "OneTrackApp NoPush"
+	}
+}

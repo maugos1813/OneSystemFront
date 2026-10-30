@@ -2,8 +2,12 @@ import { App } from "@capacitor/app";
 import { Browser } from "@capacitor/browser";
 import { Capacitor } from "@capacitor/core";
 import { rememberedLanguage, translate } from "../i18n";
+import { isOneTrackApp } from "./appFlavor";
 
-/** What the server says is the newest Android app (public/android-latest.json, written by scripts/release-android.sh). */
+/** Each Android app has its own release file: OneSystec's and OneTrack's versions go up independently. */
+const RELEASE_FILE = isOneTrackApp ? "/android-onetrack-latest.json" : "/android-latest.json";
+
+/** What the server says is the newest Android app (public/android*-latest.json, written by scripts/release-android.sh). */
 export interface AndroidRelease {
   versionCode: number;
   versionName: string;
@@ -19,7 +23,7 @@ export interface InstalledApp {
 
 /** The newest release published on this site. */
 export async function fetchLatestRelease(): Promise<AndroidRelease> {
-  const res = await fetch(`/android-latest.json?t=${Date.now()}`, { cache: "no-store" });
+  const res = await fetch(`${RELEASE_FILE}?t=${Date.now()}`, { cache: "no-store" });
   if (!res.ok) throw new Error(translate(rememberedLanguage(), "update.fetchFailed"));
   const data = (await res.json()) as { versionCode: number; versionName: string; url: string; notes?: string | null };
   return {

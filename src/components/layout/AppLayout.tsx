@@ -1,5 +1,6 @@
 import {
   Menu,
+  LogOut,
   Minimize2,
   Moon,
   PanelLeftClose,
@@ -10,6 +11,7 @@ import { Navigate, NavLink, Outlet, useLocation, useOutletContext } from "react-
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
 import { useT } from "../../i18n";
+import { isOneTrackApp } from "../../lib/appFlavor";
 import { trackGlow } from "../../lib/glow";
 import { allowedNav, canOpen, navItemForPath } from "../../lib/oneTrackNav";
 import { AlertsPanel } from "../AlertsPanel";
@@ -57,7 +59,7 @@ function useOneTrackTabIdentity() {
 export function AppLayout() {
   const t = useT();
   const { collapse } = useOutletContext<{ collapse: () => void }>();
-  const { currentUser } = useAuth();
+  const { currentUser, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { pathname } = useLocation();
   const [navOpen, setNavOpen] = useState(prefersOpenByDefault);
@@ -167,12 +169,13 @@ export function AppLayout() {
               {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </button>
             <AlertsPanel />
+            {/* Inside the OneTrack app there is no workspace to fold back into: the way out is signing out. */}
             <button
-              onClick={collapse}
+              onClick={isOneTrackApp ? logout : collapse}
               className="flex items-center gap-1.5 rounded-xl border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5"
             >
-              <Minimize2 className="h-4 w-4" />
-              <span className="hidden sm:inline">{t("workspace.collapse")}</span>
+              {isOneTrackApp ? <LogOut className="h-4 w-4" /> : <Minimize2 className="h-4 w-4" />}
+              <span className="hidden sm:inline">{t(isOneTrackApp ? "workspace.signOutShort" : "workspace.collapse")}</span>
             </button>
           </div>
         </header>

@@ -5,6 +5,7 @@ export const it: Record<MessageKey, string> = {
   "common.loading": "Caricamento...",
   "workspace.apps": "Applicazioni",
   "workspace.settings": "Impostazioni",
+  "workspace.noOneTrack": "Questo account non ha OneTrack abilitato. Chiedi a OneSystec di attivarlo.",
   "workspace.noApps": "Non hai ancora applicazioni abilitate.",
   "workspace.openMenu": "Apri il menu delle applicazioni",
   "workspace.themeLight": "Attiva il tema chiaro",
