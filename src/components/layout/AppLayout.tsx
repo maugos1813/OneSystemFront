@@ -19,22 +19,36 @@ function prefersOpenByDefault(): boolean {
   return typeof window !== "undefined" && window.matchMedia("(min-width: 1024px)").matches;
 }
 
+/** The OneTrack symbol on a transparent 64 px canvas; `?v=` makes browsers drop the icon they cached for this tab. */
+const ONETRACK_TAB_ICON = "/logos/onetrack-favicon.png?v=2";
+
 /** This layout *is* the OneTrack app (the portal and login stay OneSystec), so the browser
  * tab takes its name and icon while it's mounted and puts the portal's back on leave. */
 function useOneTrackTabIdentity() {
   useEffect(() => {
-    const link = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
-    const previous = { title: document.title, href: link?.href, type: link?.type };
+    // index.html declares two icons (32 and 192 px) and the browser picks between them: both are swapped, or the portal's can win.
+    const links = Array.from(document.querySelectorAll<HTMLLinkElement>('link[rel="icon"]'));
+    const previous = {
+      title: document.title,
+      links: links.map((link) => ({
+        link,
+        href: link.getAttribute("href"),
+        type: link.getAttribute("type"),
+        sizes: link.getAttribute("sizes"),
+      })),
+    };
     document.title = "OneTrack";
-    if (link) {
-      link.type = "image/png";
-      link.href = "/logos/onetrack-icon.png";
+    for (const link of links) {
+      link.setAttribute("type", "image/png");
+      link.removeAttribute("sizes");
+      link.setAttribute("href", ONETRACK_TAB_ICON);
     }
     return () => {
       document.title = previous.title;
-      if (link && previous.href) {
-        link.href = previous.href;
-        link.type = previous.type ?? "";
+      for (const { link, href, type, sizes } of previous.links) {
+        if (href !== null) link.setAttribute("href", href);
+        if (type !== null) link.setAttribute("type", type);
+        if (sizes !== null) link.setAttribute("sizes", sizes);
       }
     };
   }, []);
