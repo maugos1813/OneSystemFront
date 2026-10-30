@@ -3,7 +3,6 @@ import {
   AdvancedMarkerAnchorPoint,
   ColorScheme,
   Map as GoogleMap,
-  Polyline,
   RenderingType,
   useMap,
 } from "@vis.gl/react-google-maps";
@@ -32,7 +31,6 @@ import type { Position } from "../../lib/types";
  */
 
 const MODE_KEY = "cockpit-map-mode";
-const TRAIL_POINTS = 150;
 
 type Mode = "drive" | "map";
 
@@ -104,7 +102,7 @@ function VehicleArrow({ rotation }: { rotation: number }) {
 }
 
 interface DriveMapProps {
-  /** Another vehicle starts a fresh trail and heading; the map itself is kept (a new map would be a new, billed load). */
+  /** Another vehicle starts a fresh heading; the map itself is kept (a new map would be a new, billed load). */
   vehicleId: string;
   /** The raw report (its time tells when a new point arrived). */
   position: Position | null;
@@ -117,24 +115,12 @@ export function DriveMap({ vehicleId, position, smoothed }: DriveMapProps) {
   const { theme } = useTheme();
   const [mode, setMode] = useState<Mode>(readMode);
   const [follow, setFollow] = useState(true);
-  const [trail, setTrail] = useState<google.maps.LatLngLiteral[]>([]);
   const headingRef = useRef(0);
 
   useEffect(() => {
-    setTrail([]);
     setFollow(true);
     headingRef.current = 0;
   }, [vehicleId]);
-
-  // The path just driven, from the reports as they arrive (nothing is fetched for it).
-  useEffect(() => {
-    if (!position) return;
-    setTrail((points) => {
-      const last = points[points.length - 1];
-      if (last && last.lat === position.lat && last.lng === position.lng) return points;
-      return [...points, { lat: position.lat, lng: position.lng }].slice(-TRAIL_POINTS);
-    });
-  }, [position?.ts, position?.lat, position?.lng]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function chooseMode(next: Mode) {
     setMode(next);
@@ -182,9 +168,6 @@ export function DriveMap({ vehicleId, position, smoothed }: DriveMapProps) {
             headingRef={headingRef}
             onUserMove={() => setFollow(false)}
           />
-          {trail.length > 1 && (
-            <Polyline path={trail} strokeColor="#3b82f6" strokeOpacity={0.85} strokeWeight={mode === "drive" ? 7 : 4} />
-          )}
           <AdvancedMarker
             position={{ lat: smoothed.lat, lng: smoothed.lng }}
             anchorPoint={AdvancedMarkerAnchorPoint.CENTER}
