@@ -1,4 +1,4 @@
-import { Map, Marker, Polygon, Polyline, useMap } from "@vis.gl/react-google-maps";
+import { Map, Marker, Polygon, useMap } from "@vis.gl/react-google-maps";
 import { MapsProvider } from "./MapsProvider";
 import { useEffect } from "react";
 import { useFleet } from "../context/FleetContext";
@@ -56,7 +56,6 @@ interface MapViewProps {
   positions: Record<string, Position>;
   selectedVehicleId: string | null;
   onSelectVehicle: (vehicleId: string) => void;
-  historyPath?: Position[];
   /** Gamonal vehicles shown to a client by Gamonal Driver (already narrowed by the pills): same colours, fainter, no detail. */
   sharedVehicles?: SharedVehicle[];
   selectedSharedPlate?: string | null;
@@ -135,7 +134,6 @@ export function MapView({
   positions,
   selectedVehicleId,
   onSelectVehicle,
-  historyPath,
   sharedVehicles: shared = [],
   selectedSharedPlate = null,
   onSelectShared,
@@ -197,15 +195,6 @@ export function MapView({
               />
             );
           })}
-
-          {historyPath && historyPath.length > 1 && (
-            <Polyline
-              path={historyPath.map((p) => ({ lat: p.lat, lng: p.lng }))}
-              strokeColor="#7c3aed"
-              strokeOpacity={0.8}
-              strokeWeight={4}
-            />
-          )}
 
           {(showOwn ? vehicles : []).map((vehicle) => {
             const position = positions[vehicle.id];

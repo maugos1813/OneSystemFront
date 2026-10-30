@@ -7,22 +7,12 @@ import { Link } from "react-router-dom";
 import { useT } from "../i18n";
 import { formatRelativeTime } from "../lib/relativeTime";
 import { AVL_ID, type Position, type Vehicle, type VehicleDriver } from "../lib/types";
-import { SpeedChart } from "./SpeedChart";
 
 interface VehicleDetailPanelProps {
   vehicle: Vehicle;
   position: Position | null;
-  history: Position[];
-  historyRangeHours: number | null;
-  onHistoryRangeChange: (hours: number | null) => void;
   onClose: () => void;
 }
-
-const HISTORY_RANGES = [
-  { label: "detail.noRoute", hours: null },
-  { label: "24h", hours: 24 },
-  { label: "detail.days7", hours: 24 * 7 },
-] as const;
 
 const ACTION_CLASS =
   "flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-left text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-100 dark:border-white/10 dark:bg-white/5 dark:text-slate-200 dark:hover:bg-white/10";
@@ -86,9 +76,6 @@ function Row({ label, value }: { label: string; value: string }) {
 export function VehicleDetailPanel({
   vehicle,
   position,
-  history,
-  historyRangeHours,
-  onHistoryRangeChange,
   onClose,
 }: VehicleDetailPanelProps) {
   const t = useT();
@@ -183,38 +170,6 @@ export function VehicleDetailPanel({
             value={position.satellites !== null ? String(position.satellites) : "—"}
           />
           <Row label={t("detail.lastPosition")} value={formatRelativeTime(position.ts, t)} />
-        </div>
-      )}
-
-      {canSeeHistory && (
-        <div className="mt-4">
-          <p className="mb-2 text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-500">
-            {t("detail.route")}
-          </p>
-          <div className="flex gap-1.5">
-            {HISTORY_RANGES.map((range) => (
-              <button
-                key={range.label}
-                onClick={() => onHistoryRangeChange(range.hours)}
-                className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${
-                  historyRangeHours === range.hours
-                    ? "brand-button"
-                    : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10"
-                }`}
-              >
-                {range.label.startsWith("detail.") ? t(range.label as "detail.noRoute") : range.label}
-              </button>
-            ))}
-          </div>
-
-          {historyRangeHours !== null && (
-            <div className="mt-3">
-              <p className="mb-1 text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-500">
-                {t("detail.speed")}
-              </p>
-              <SpeedChart positions={history} />
-            </div>
-          )}
         </div>
       )}
 

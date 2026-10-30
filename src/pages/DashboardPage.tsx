@@ -6,7 +6,6 @@ import { SharedVehiclePanel } from "../components/SharedVehiclePanel";
 import { VehicleList } from "../components/VehicleList";
 import { useAuth } from "../context/AuthContext";
 import { useFleet } from "../context/FleetContext";
-import { usePositionHistory } from "../hooks/usePositionHistory";
 import { useT } from "../i18n";
 import { trackGlow } from "../lib/glow";
 import { normalizePlate } from "../lib/plate";
@@ -26,15 +25,7 @@ export function DashboardPage() {
   const { filteredVehicles: vehicles, devices, positions, loading, error, sharedVehicles } = useFleet();
   const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
   const [selectedSharedPlate, setSelectedSharedPlate] = useState<string | null>(null);
-  const [historyRangeHours, setHistoryRangeHours] = useState<number | null>(null);
   const [listOpen, setListOpen] = useState(prefersOpenByDefault);
-
-  const historyFrom = useMemo(() => {
-    if (historyRangeHours === null) return null;
-    return new Date(Date.now() - historyRangeHours * 60 * 60 * 1000);
-  }, [historyRangeHours]);
-
-  const { history } = usePositionHistory(selectedVehicleId, historyFrom);
 
   // A vehicle shows on the map only once it has a device; until then the client waits for their admin to assign one.
   const hasTrackedVehicle = vehicles.some((v) => v.deviceId);
@@ -53,13 +44,11 @@ export function DashboardPage() {
   function selectVehicle(vehicleId: string) {
     setSelectedVehicleId(vehicleId);
     setSelectedSharedPlate(null);
-    setHistoryRangeHours(null);
   }
 
   function selectShared(plate: string) {
     setSelectedSharedPlate(plate);
     setSelectedVehicleId(null);
-    setHistoryRangeHours(null);
   }
 
   if (loading) {
@@ -91,7 +80,6 @@ export function DashboardPage() {
           positions={positions}
           selectedVehicleId={selectedVehicleId}
           onSelectVehicle={selectVehicle}
-          historyPath={history}
           sharedVehicles={visibleShared}
           selectedSharedPlate={selectedSharedPlate}
           onSelectShared={selectShared}
@@ -156,13 +144,7 @@ export function DashboardPage() {
           <VehicleDetailPanel
             vehicle={selectedVehicle}
             position={positions[selectedVehicle.id] ?? null}
-            history={history}
-            historyRangeHours={historyRangeHours}
-            onHistoryRangeChange={setHistoryRangeHours}
-            onClose={() => {
-              setSelectedVehicleId(null);
-              setHistoryRangeHours(null);
-            }}
+            onClose={() => setSelectedVehicleId(null)}
           />
         )}
       </div>
