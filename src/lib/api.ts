@@ -25,6 +25,7 @@ import type {
   DriverBeacon,
   VehicleBeacons,
   VehicleDriver,
+  VehicleEta,
   VehicleUsage,
   SimSecrets,
   Product,
@@ -558,6 +559,11 @@ export function updateDriverBeacon(id: string, changes: { driverName?: string; p
 
 export function removeDriverBeacon(id: string): Promise<void> {
   return request(`/driver-beacons/${id}`, { method: "DELETE" });
+}
+
+/** How long the vehicle takes to reach a city or an address (by road, with a traffic allowance). */
+export function getVehicleEta(vehicleId: string, to: string): Promise<VehicleEta> {
+  return request(`/vehicles/${vehicleId}/eta?${new URLSearchParams({ to })}`);
 }
 
 /** Every driver Gamonal Driver gave the vehicle to between `from` and `to`. */

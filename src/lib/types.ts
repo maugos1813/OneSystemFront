@@ -446,6 +446,21 @@ export interface VehicleDriver {
   beaconDriver: NamedDriver | null;
 }
 
+/** How long a vehicle takes to reach an address, by road with a traffic allowance. */
+export interface VehicleEta {
+  vehicleId: string;
+  destination: { label: string; lat: number; lng: number };
+  distanceKm: number;
+  /** Minutes with the traffic allowance, and the road time without it. */
+  durationMin: number;
+  baseDurationMin: number;
+  /** When it would get there if it left now. */
+  arrivalAt: string;
+  from: { lat: number; lng: number; at: string };
+  /** How old the position the estimate starts from is. */
+  positionAgeMin: number;
+}
+
 /** One service of Gamonal Driver on a vehicle. */
 export interface VehicleUsage {
   driver: { name: string; phone: string | null; active: boolean };

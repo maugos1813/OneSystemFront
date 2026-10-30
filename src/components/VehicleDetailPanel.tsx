@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { getVehicleDriver } from "../lib/api";
+import { EtaInput, EtaResult } from "./VehicleEta";
 import { History, Map as MapIcon, Navigation, Phone, Wrench, X, type LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { useT } from "../i18n";
 import { formatRelativeTime } from "../lib/relativeTime";
-import { AVL_ID, type Position, type Vehicle, type VehicleDriver } from "../lib/types";
+import { AVL_ID, type Position, type Vehicle, type VehicleDriver, type VehicleEta } from "../lib/types";
 
 interface VehicleDetailPanelProps {
   vehicle: Vehicle;
@@ -35,8 +36,10 @@ function Action({
     <>
       <Icon className="h-4 w-4 shrink-0 text-slate-500 dark:text-slate-400" />
       <span className="min-w-0">
-        <span className="block truncate">{label}</span>
-        {hint && <span className="block truncate text-xs font-normal text-slate-400 dark:text-slate-500">{hint}</span>}
+        <span className="block leading-tight">{label}</span>
+        {hint && (
+          <span className="block text-xs leading-tight font-normal text-slate-400 dark:text-slate-500">{hint}</span>
+        )}
       </span>
     </>
   );
@@ -73,11 +76,7 @@ function Row({ label, value }: { label: string; value: string }) {
   );
 }
 
-export function VehicleDetailPanel({
-  vehicle,
-  position,
-  onClose,
-}: VehicleDetailPanelProps) {
+export function VehicleDetailPanel({ vehicle, position, onClose }: VehicleDetailPanelProps) {
   const t = useT();
   const { currentUser } = useAuth();
   // The route is the history behind Historial and Analíticas; an account with neither doesn't get it.
@@ -91,6 +90,13 @@ export function VehicleDetailPanel({
   const canSeeCockpit = hasAccess("cockpit");
   const canSeeMaintenance = hasAccess("mantenimiento");
   const [driver, setDriver] = useState<VehicleDriver | null>(null);
+  const [eta, setEta] = useState<{ eta: VehicleEta | null; error: string | null; loading: boolean }>({
+    eta: null,
+    error: null,
+    loading: false,
+  });
+  // Another vehicle: the answer about the previous one no longer applies.
+  useEffect(() => setEta({ eta: null, error: null, loading: false }), [vehicle.id]);
   const phone = driver?.driver?.phone ?? null;
   useEffect(() => {
     setDriver(null);
@@ -210,6 +216,17 @@ export function VehicleDetailPanel({
               href={`https://www.google.com/maps/dir/?api=1&destination=${position.lat},${position.lng}`}
             />
           )}
+          {position && (
+            <EtaInput
+              vehicleId={vehicle.id}
+              // The actions fill the grid two by two: with an even number the box gets a row of its own.
+              wide={
+                [canSeeHistory, canSeeCockpit, canSeeDriver, canSeeMaintenance, true].filter(Boolean).length % 2 === 0
+              }
+              onResult={setEta}
+            />
+          )}
+          <EtaResult {...eta} />
         </div>
       </div>
     </div>
