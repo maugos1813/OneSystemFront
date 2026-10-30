@@ -470,6 +470,8 @@ export interface BeaconInVehicle {
   /** Beacon reports it appeared in, and how many of those were taken while the vehicle was moving. */
   sightings: number;
   movingSightings: number;
+  /** How many of them were taken with the ignition on, moving or not. */
+  ignitionSightings: number;
   /** Mean RSSI in dBm: about -50 to -70 close by, -90 and below far away. */
   avgRssi: number | null;
 }

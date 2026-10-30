@@ -73,7 +73,7 @@ function NameCell({ row, onSaved }: { row: Row; onSaved: () => void }) {
 
   return (
     <div>
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -191,11 +191,20 @@ function BeaconLine({
     phone: beacon.phone,
   };
   return (
-    <li className="flex flex-wrap items-center gap-x-4 gap-y-1 py-2">
-      <div className="w-auto shrink-0">
+    <li className="py-2.5">
+      <div className="flex items-start justify-between gap-2">
         <NameCell key={`${beacon.beaconId}:${beacon.driverName}:${beacon.phone}`} row={row} onSaved={onSaved} />
+        {onRemove && (
+          <button
+            onClick={onRemove}
+            aria-label="Quitar baliza"
+            className="shrink-0 rounded-lg p-1.5 text-slate-400 transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+        )}
       </div>
-      <div className="min-w-0 flex-1 text-xs text-slate-500 dark:text-slate-400">
+      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
         <span className="font-mono">{shortLabel(beacon.beaconId)}</span>
         <span className="mx-1.5">·</span>
         última vez {formatRelativeTime(beacon.lastSeen, t)}
@@ -205,19 +214,10 @@ function BeaconLine({
         </span>
         <span className="mx-1.5">·</span>
         {beacon.sightings} lecturas
-        {beacon.movingSightings > 0
-          ? `, ${beacon.movingSightings} con el vehículo en marcha`
-          : ", solo con el vehículo parado"}
-      </div>
-      {onRemove && (
-        <button
-          onClick={onRemove}
-          aria-label="Quitar baliza"
-          className="rounded-lg p-1.5 text-slate-400 transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10"
-        >
-          <Trash2 className="h-4 w-4" />
-        </button>
-      )}
+        {beacon.ignitionSightings > 0
+          ? `, ${beacon.ignitionSightings} con el vehículo encendido`
+          : ", solo con el vehículo apagado"}
+      </p>
     </li>
   );
 }
@@ -240,7 +240,7 @@ function VehicleCard({
   return (
     <section
       onMouseMove={trackGlow}
-      className="glow float-card rounded-2xl border border-white bg-white p-4 shadow-lg shadow-slate-200/50 dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40"
+      className="glow float-card mb-4 break-inside-avoid rounded-2xl border border-white bg-white p-4 shadow-lg shadow-slate-200/50 dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40"
     >
       <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
         <h2 className="font-semibold text-slate-900 dark:text-white">
@@ -352,7 +352,8 @@ export function DriversPage() {
       <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">
         Cada chofer lleva una baliza Bluetooth (Teltonika EYE Beacon). El GPS del vehículo la oye y así sabemos quién
         estuvo en él. Con dos choferes en la cabina se muestra como probable conductor el que se oye más fuerte: es una
-        identificación, no una prueba. Solo cuentan los momentos en que el vehículo se mueve.
+        identificación, no una prueba. Para decidir quién conduce solo cuentan los momentos en que el vehículo se mueve;
+        en la lista de cada vehículo se ven todas las lecturas, también las del motor encendido.
       </p>
 
       <div className="mb-6 grid gap-6 lg:grid-cols-2">
@@ -399,7 +400,7 @@ export function DriversPage() {
         </p>
       )}
 
-      <div className="grid gap-4 xl:grid-cols-2">
+      <div className="gap-4 xl:columns-2">
         {byVehicle.map((entry) => (
           <VehicleCard
             key={entry.vehicle.id}
