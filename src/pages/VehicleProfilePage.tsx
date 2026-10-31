@@ -166,9 +166,15 @@ function OdometerCard({
     setSaving(true);
     setMessage(null);
     try {
-      await setVehicleOdometer(vehicleId, { mode, ...(typed !== undefined ? { km: typed } : {}) });
+      const saved = await setVehicleOdometer(vehicleId, { mode, ...(typed !== undefined ? { km: typed } : {}) });
       setKm("");
-      setMessage({ ok: true, text: t("vehicleProfile.kmSaved") });
+      setMessage(
+        saved.factorResult === "updated"
+          ? { ok: true, text: t("vehicleProfile.factorUpdated", { factor: saved.kmFactor.toLocaleString("es-AR") }) }
+          : saved.factorResult === "outOfRange"
+            ? { ok: false, text: t("vehicleProfile.factorOutOfRange") }
+            : { ok: true, text: t("vehicleProfile.kmSaved") },
+      );
       onChanged();
     } catch (err) {
       setMessage({ ok: false, text: err instanceof Error ? err.message : t("vehicleProfile.saveFailed") });
@@ -200,6 +206,11 @@ function OdometerCard({
         {odometer.km !== null ? formatKm(odometer.km) : <span className="text-xl text-slate-400">{t("vehicleProfile.kmUnknown")}</span>}
       </p>
       <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{source}</p>
+      {odometer.needsCheck && (
+        <p className="mt-2 rounded-lg bg-amber-50 px-2.5 py-1.5 text-xs text-amber-800 dark:bg-amber-500/10 dark:text-amber-300">
+          {t("vehicleProfile.recheck", { days: odometer.daysSinceBase ?? 0 })}
+        </p>
+      )}
       {odometer.mode === "manual" && odometer.trackerKm !== null && (
         <p className="mt-2 rounded-lg bg-blue-50 px-2.5 py-1.5 text-xs text-blue-800 dark:bg-blue-500/10 dark:text-blue-300">
           {t("vehicleProfile.vehicleReads", { km: formatKm(Math.max(0, odometer.trackerKm + odometer.offsetKm)) })}
@@ -210,6 +221,13 @@ function OdometerCard({
           ? t("vehicleProfile.gpsCount", { km: formatKm(odometer.gpsKmTotal), date: formatDay(odometer.gpsCoverageFrom) })
           : t("vehicleProfile.gpsNone")}
       </p>
+
+      {odometer.source === "gps" && odometer.baseAt && odometer.daysSinceBase !== null && (
+        <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
+          {t("vehicleProfile.lastAdjust", { date: formatDay(odometer.baseAt), days: odometer.daysSinceBase })}
+          {odometer.kmFactor !== 1 && ` ${t("vehicleProfile.factor", { factor: odometer.kmFactor.toLocaleString("es-AR") })}`}
+        </p>
+      )}
 
       {canSet && (
         <form onSubmit={save} className="mt-4 border-t border-slate-100 pt-4 dark:border-white/10">

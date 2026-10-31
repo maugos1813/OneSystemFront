@@ -173,6 +173,9 @@ function VehicleRow({
       <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{vehicle.plate ?? "—"}</td>
       <td className="px-4 py-3 whitespace-nowrap text-slate-600 dark:text-slate-300">
         {odometer?.km != null ? formatKm(odometer.km) : <span className="text-slate-400 dark:text-slate-500">—</span>}
+        {odometer?.needsCheck && (
+          <span className="ml-1.5 inline-block h-2 w-2 rounded-full bg-amber-500 align-middle" title={t("vehiclesPage.recheck")} aria-label={t("vehiclesPage.recheck")} />
+        )}
       </td>
       {showMaintenance && (
         <td className="px-4 py-3">

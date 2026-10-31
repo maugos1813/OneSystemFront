@@ -86,6 +86,15 @@ export interface VehicleOdometer {
   gpsKmSinceBase: number | null;
   trackerKm: number | null;
   offsetKm: number;
+  /** The GPS correction learned for this vehicle (1 = none yet) and when. */
+  kmFactor: number;
+  kmFactorAt: string | null;
+  /** Whole days since the dashboard km were last typed; null when they never were. */
+  daysSinceBase: number | null;
+  /** Counted by GPS and not checked against the dashboard for a while. */
+  needsCheck: boolean;
+  /** Only in the answer to a save: the correction was learned, or the difference was too big to trust. */
+  factorResult?: "updated" | "outOfRange" | null;
 }
 
 export interface VehicleProfile {
@@ -98,6 +107,7 @@ export interface VehicleOdometerRow {
   km: number | null;
   source: OdometerSource;
   mode: "auto" | "manual";
+  needsCheck: boolean;
 }
 
 /** Raw IO elements keyed by AVL ID (as strings, since they come from a JSON object). */
