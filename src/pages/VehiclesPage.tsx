@@ -1,13 +1,15 @@
-import { AlertTriangle, Pencil, Plus, Trash2 } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import { AlertTriangle, IdCard, Pencil, Plus, Trash2 } from "lucide-react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { AreaFilterSelect } from "../components/AreaFilterSelect";
 import { useAuth } from "../context/AuthContext";
 import { useFleet } from "../context/FleetContext";
-import { createVehicle, deleteVehicle, updateVehicle } from "../lib/api";
+import { createVehicle, deleteVehicle, listMaintenance, listVehicleOdometers, updateVehicle } from "../lib/api";
 import { FleetGroupSelect } from "../components/FleetGroupSelect";
 import { useT } from "../i18n";
 import { trackGlow } from "../lib/glow";
-import type { Vehicle } from "../lib/types";
+import { formatKm, STATE_BADGE, STATE_LABEL, worstState } from "../lib/maintenance";
+import type { MaintenanceState, Vehicle, VehicleOdometerRow } from "../lib/types";
 import { ModalPortal } from "../components/ModalPortal";
 
 function DeviceSelect({
@@ -56,6 +58,9 @@ function VehicleRow({
   groups,
   canManage,
   isAdmin,
+  odometer,
+  maintenance,
+  showMaintenance,
   onChanged,
 }: {
   vehicle: Vehicle;
@@ -65,6 +70,10 @@ function VehicleRow({
   canManage: boolean;
   /** Only owner/admin assign the device and the flota; a client only renames their own vehicles. */
   isAdmin: boolean;
+  odometer: VehicleOdometerRow | undefined;
+  /** The most urgent maintenance state of its plans, or null when it has none. */
+  maintenance: MaintenanceState | null;
+  showMaintenance: boolean;
   onChanged: () => void;
 }) {
   const t = useT();
@@ -127,6 +136,8 @@ function VehicleRow({
             className="field-input w-full rounded-xl border border-slate-300 px-2 py-1.5 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
           />
         </td>
+        <td className="px-4 py-2" />
+        {showMaintenance && <td className="px-4 py-2" />}
         <td className="px-4 py-2">
           {isAdmin ? <DeviceSelect value={deviceId} onChange={setDeviceId} devices={devices} /> : <span className="text-slate-600 dark:text-slate-300">{deviceImei ?? t("vehiclesPage.unassigned")}</span>}
         </td>
@@ -154,8 +165,24 @@ function VehicleRow({
 
   return (
     <tr>
-      <td className="px-4 py-3 font-medium text-slate-900 dark:text-white">{vehicle.name}</td>
+      <td className="px-4 py-3 font-medium text-slate-900 dark:text-white">
+        <Link to={`/vehiculos/${vehicle.id}`} className="hover:text-blue-600 hover:underline dark:hover:text-blue-400">
+          {vehicle.name}
+        </Link>
+      </td>
       <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{vehicle.plate ?? "—"}</td>
+      <td className="px-4 py-3 whitespace-nowrap text-slate-600 dark:text-slate-300">
+        {odometer?.km != null ? formatKm(odometer.km) : <span className="text-slate-400 dark:text-slate-500">—</span>}
+      </td>
+      {showMaintenance && (
+        <td className="px-4 py-3">
+          {maintenance && maintenance !== "unknown" ? (
+            <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${STATE_BADGE[maintenance]}`}>{STATE_LABEL[maintenance]}</span>
+          ) : (
+            <span className="text-slate-400 dark:text-slate-500">—</span>
+          )}
+        </td>
+      )}
       <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{deviceImei ?? t("vehiclesPage.unassigned")}</td>
       <td className="px-4 py-3">
         {vehicle.fleetGroup ? (
@@ -166,7 +193,15 @@ function VehicleRow({
           <span className="text-slate-400 dark:text-slate-500">—</span>
         )}
       </td>
-      <td className="px-4 py-3 text-right">
+      <td className="px-4 py-3 text-right whitespace-nowrap">
+        <Link
+          to={`/vehiculos/${vehicle.id}`}
+          className="mr-1 inline-flex rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-500 dark:hover:bg-white/5 dark:hover:text-white"
+          aria-label={t("vehicleProfile.open")}
+          title={t("vehicleProfile.open")}
+        >
+          <IdCard className="h-4 w-4" />
+        </Link>
         {canManage && (
           <>
             <button
@@ -271,10 +306,37 @@ export function VehiclesPage() {
   const [plate, setPlate] = useState("");
   const [deviceId, setDeviceId] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [params] = useSearchParams();
+  const [search, setSearch] = useState(() => params.get("q") ?? "");
+  const [odometers, setOdometers] = useState<Map<string, VehicleOdometerRow>>(new Map());
+  const [maintenance, setMaintenance] = useState<Map<string, MaintenanceState>>(new Map());
 
   const isAdmin = currentUser?.role === "owner" || currentUser?.role === "admin";
   // A client with the Vehículos section and a flota registers and edits the vehicles of that flota (the admin assigns devices).
   const canManage = isAdmin || (!!currentUser?.allowedArea && !!currentUser.modules.includes("vehiculos"));
+  // Maintenance is shown for those who have it; its state comes from the plans of each vehicle.
+  const showMaintenance = isAdmin || !!currentUser?.modules.includes("mantenimiento");
+  const vehicleCount = vehicles.length;
+  useEffect(() => {
+    let cancelled = false;
+    listVehicleOdometers()
+      .then((rows) => !cancelled && setOdometers(new Map(rows.map((r) => [r.vehicleId, r]))))
+      .catch(() => undefined); // the km are a convenience here: the list works without them
+    if (showMaintenance) {
+      listMaintenance()
+        .then((rows) => !cancelled && setMaintenance(new Map(rows.filter((r) => r.plans.length > 0).map((r) => [r.vehicleId, worstState(r.plans)]))))
+        .catch(() => undefined);
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [showMaintenance, vehicleCount]);
+  // Spaces and case do not matter: "er643 vy" finds ER643VY.
+  const shownVehicles = useMemo(() => {
+    const q = search.toLowerCase().replace(/\s/g, "");
+    if (!q) return filteredVehicles;
+    return filteredVehicles.filter((v) => `${v.name}${v.plate ?? ""}`.toLowerCase().replace(/\s/g, "").includes(q));
+  }, [filteredVehicles, search]);
   const deviceById = new Map(devices.map((d) => [d.id, d]));
   const unassignedDevices = devices.filter((d) => !vehicles.some((v) => v.deviceId === d.id));
 
@@ -340,9 +402,18 @@ export function VehiclesPage() {
         </form>
       )}
 
-      <div className="mb-4 flex items-center justify-between gap-2">
-        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{t("common.fleet")}</span>
-        <AreaFilterSelect />
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder={t("vehiclesPage.search")}
+          aria-label={t("vehiclesPage.search")}
+          className="field-input w-full rounded-xl border border-slate-300 px-3 py-2 text-sm sm:w-72 dark:border-white/10 dark:bg-white/5 dark:text-white"
+        />
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{t("common.fleet")}</span>
+          <AreaFilterSelect />
+        </div>
       </div>
 
       {loading && <p className="text-sm text-slate-500 dark:text-slate-400">{t("common.loading")}</p>}
@@ -355,23 +426,32 @@ export function VehiclesPage() {
         <p className="text-sm text-slate-500 dark:text-slate-400">{t("vehiclesPage.noMatchFleet")}</p>
       )}
 
-      {!loading && filteredVehicles.length > 0 && (
+      {!loading && filteredVehicles.length > 0 && shownVehicles.length === 0 && (
+        <p className="text-sm text-slate-500 dark:text-slate-400">«{search}»: {t("vehiclesPage.noMatchFleet").toLowerCase()}</p>
+      )}
+
+      {!loading && shownVehicles.length > 0 && (
         <div className="float-card overflow-x-auto rounded-2xl border border-white bg-white shadow-lg shadow-slate-200/50 dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40">
-          <table className="w-full min-w-[680px] text-left text-sm">
+          <table className="w-full min-w-[760px] text-left text-sm">
             <thead className="border-b border-violet-100 bg-violet-50/60 text-xs text-slate-500 uppercase dark:border-white/10 dark:bg-white/5 dark:text-slate-400">
               <tr>
                 <th className="px-4 py-2 font-medium">{t("common.name")}</th>
                 <th className="px-4 py-2 font-medium">{t("common.plate")}</th>
+                <th className="px-4 py-2 font-medium">{t("vehiclesPage.km")}</th>
+                {showMaintenance && <th className="px-4 py-2 font-medium">{t("vehiclesPage.maintenance")}</th>}
                 <th className="px-4 py-2 font-medium">{t("common.device")}</th>
                 <th className="px-4 py-2 font-medium">{t("common.fleet")}</th>
                 <th className="px-4 py-2 font-medium text-right">{t("common.actions")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-white/10">
-              {filteredVehicles.map((vehicle) => (
+              {shownVehicles.map((vehicle) => (
                 <VehicleRow
                   key={vehicle.id}
                   vehicle={vehicle}
+                  odometer={odometers.get(vehicle.id)}
+                  maintenance={maintenance.get(vehicle.id) ?? null}
+                  showMaintenance={showMaintenance}
                   deviceImei={vehicle.deviceId ? (deviceById.get(vehicle.deviceId)?.imei ?? null) : null}
                   devices={vehicle.deviceId ? [...unassignedDevices, deviceById.get(vehicle.deviceId)!] : unassignedDevices}
                   groups={fleetGroups}

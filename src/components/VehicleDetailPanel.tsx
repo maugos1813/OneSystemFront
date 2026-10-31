@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { getVehicleDriver } from "../lib/api";
 import { EtaInput, EtaResult } from "./VehicleEta";
-import { History, Map as MapIcon, Navigation, Phone, Wrench, X, type LucideIcon } from "lucide-react";
+import { History, IdCard, Map as MapIcon, Navigation, Phone, X, type LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { useT } from "../i18n";
@@ -80,7 +80,8 @@ export function VehicleDetailPanel({ vehicle, position, onClose, onRoute }: Vehi
   // Who drove it lately is about people: it needs the Conducción section.
   const canSeeDriver = hasAccess("conduccion");
   const canSeeCockpit = hasAccess("cockpit");
-  const canSeeMaintenance = hasAccess("mantenimiento");
+  // The profile holds the vehicle's data, its km and its maintenance.
+  const canSeeProfile = hasAccess("vehiculos", "mantenimiento");
   const [driver, setDriver] = useState<VehicleDriver | null>(null);
   const [eta, setEta] = useState<{ eta: VehicleEta | null; error: string | null; loading: boolean }>({
     eta: null,
@@ -178,13 +179,7 @@ export function VehicleDetailPanel({ vehicle, position, onClose, onRoute }: Vehi
               }
             />
           )}
-          {canSeeMaintenance && (
-            <Action
-              icon={Wrench}
-              label={t("detail.maintenance")}
-              to={`/mantenimiento?q=${encodeURIComponent(vehicle.plate ?? vehicle.name)}`}
-            />
-          )}
+          {canSeeProfile && <Action icon={IdCard} label={t("detail.profile")} to={`/vehiculos/${vehicle.id}`} />}
           {position && (
             <Action
               icon={Navigation}
@@ -197,7 +192,7 @@ export function VehicleDetailPanel({ vehicle, position, onClose, onRoute }: Vehi
               vehicleId={vehicle.id}
               // The actions fill the grid two by two: with an even number the box gets a row of its own.
               wide={
-                [canSeeHistory, canSeeCockpit, canSeeDriver, canSeeMaintenance, true].filter(Boolean).length % 2 === 0
+                [canSeeHistory, canSeeCockpit, canSeeDriver, canSeeProfile, true].filter(Boolean).length % 2 === 0
               }
               onResult={showResult}
             />

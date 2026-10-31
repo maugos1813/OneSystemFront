@@ -1,6 +1,6 @@
 import { ChevronDown, ChevronRight, Gauge, History, Pencil, Plus, Trash2, Wrench, X } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
-import { useAuth } from "../context/AuthContext";
+import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from "react";
+import { useAuth } from "../../context/AuthContext";
 import {
   calibrateOdometer,
   createMaintenancePlan,
@@ -9,20 +9,21 @@ import {
   listMaintenanceRecords,
   registerMaintenanceService,
   updateMaintenancePlan,
-} from "../lib/api";
-import { trackGlow } from "../lib/glow";
+} from "../../lib/api";
+import { trackGlow } from "../../lib/glow";
 import {
   describeRemaining,
   formatKm,
+  worstState,
   PLAN_TEMPLATES,
   STATE_BADGE,
   STATE_BAR,
   STATE_EDGE,
   STATE_LABEL,
   type PlanTemplate,
-} from "../lib/maintenance";
-import type { MaintenanceRecord, MaintenanceState, VehicleMaintenance, MaintenancePlan } from "../lib/types";
-import { ModalPortal } from "../components/ModalPortal";
+} from "../../lib/maintenance";
+import type { MaintenanceRecord, VehicleMaintenance, MaintenancePlan } from "../../lib/types";
+import { ModalPortal } from "../ModalPortal";
 
 const CARD =
   "glow float-card rounded-2xl border border-white bg-white shadow-lg shadow-slate-200/50 dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40";
@@ -31,8 +32,6 @@ const INPUT =
 const LABEL = "mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300";
 const GHOST_BUTTON =
   "inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-white/10";
-
-const STATE_ORDER: Record<MaintenanceState, number> = { overdue: 0, due: 1, soon: 2, ok: 3, unknown: 4 };
 
 type Dialog =
   | { kind: "plan"; vehicle: VehicleMaintenance; plan?: MaintenancePlan }
@@ -64,58 +63,32 @@ function intervalText(plan: MaintenancePlan): string {
   return `Cada ${parts.join(" o ")}`;
 }
 
-function worstState(vehicle: VehicleMaintenance): MaintenanceState {
-  return vehicle.plans.reduce<MaintenanceState>(
-    (worst, plan) => (STATE_ORDER[plan.status.state] < STATE_ORDER[worst] ? plan.status.state : worst),
-    "unknown",
-  );
-}
 
-export function MaintenancePage() {
+/**
+ * The maintenance of one vehicle, inside its profile: its service plans and where each stands. The km are counted by
+ * themselves (the car's odometer, or the GPS), a person only says when a service was done and what the dashboard reads.
+ */
+export function MaintenancePanel({ vehicleId }: { vehicleId: string }) {
   const { currentUser } = useAuth();
   const canManage = currentUser?.role === "owner" || currentUser?.role === "admin" || currentUser?.role === "manager";
-  const [vehicles, setVehicles] = useState<VehicleMaintenance[]>([]);
+  const [vehicle, setVehicle] = useState<VehicleMaintenance | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [dialog, setDialog] = useState<Dialog | null>(null);
-  // The vehicle panel on the map links here with ?q=<plate>.
-  const [search, setSearch] = useState(() => new URLSearchParams(window.location.search).get("q") ?? "");
 
   const load = useCallback(() => {
-    listMaintenance()
+    listMaintenance(vehicleId)
       .then((rows) => {
-        setVehicles(rows);
+        setVehicle(rows[0] ?? null);
         setError(null);
       })
       .catch((err: unknown) => setError(err instanceof Error ? err.message : "No se pudo cargar el mantenimiento"))
       .finally(() => setLoading(false));
-  }, []);
+  }, [vehicleId]);
 
   useEffect(() => {
     load();
   }, [load]);
-
-  const sorted = useMemo(
-    () =>
-      [...vehicles].sort(
-        (a, b) => STATE_ORDER[worstState(a)] - STATE_ORDER[worstState(b)] || a.name.localeCompare(b.name),
-      ),
-    [vehicles],
-  );
-  // Spaces and case do not matter: "er643 vy" finds ER643VY.
-  const shown = useMemo(() => {
-    const q = search.toLowerCase().replace(/\s/g, "");
-    if (!q) return sorted;
-    return sorted.filter((v) => `${v.name}${v.plate ?? ""}`.toLowerCase().replace(/\s/g, "").includes(q));
-  }, [sorted, search]);
-  const counts = useMemo(() => {
-    const all = vehicles.flatMap((v) => v.plans);
-    return {
-      red: all.filter((p) => p.status.state === "overdue" || p.status.state === "due").length,
-      soon: all.filter((p) => p.status.state === "soon").length,
-      total: all.length,
-    };
-  }, [vehicles]);
 
   function closeAndReload() {
     setDialog(null);
@@ -123,60 +96,16 @@ export function MaintenancePage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl p-4 sm:p-6 lg:p-8">
-      <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Mantenimiento</h1>
-      <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">
-        Planes de servicio por vehículo (tagliando, aceite, neumáticos, revisión…). Los km se cuentan solos con el GPS desde el
-        día siguiente al último servicio; solo hay que indicar su fecha y los km del tablero. Naranja: quedan entre el 40 % y el
-        20 % del intervalo (8.000 a 4.000 km en un tagliando de 20.000). Rojo: menos del 20 % (3.999 km o menos) o ya vencido.
+    <div>
+      <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">
+        Planes de servicio (tagliando, aceite, neumáticos, revisión…). Los km se cuentan solos con el GPS desde el día siguiente al
+        último servicio; solo hay que indicar su fecha y los km del tablero. Naranja: quedan entre el 40 % y el 20 % del intervalo
+        (8.000 a 4.000 km en un tagliando de 20.000). Rojo: menos del 20 % (3.999 km o menos) o ya vencido.
       </p>
-
-      {!loading && counts.total > 0 && (
-        <div className="mb-6 flex flex-wrap gap-2">
-          <span className="rounded-full bg-red-50 px-3 py-1 text-xs font-medium text-red-600 dark:bg-red-500/15 dark:text-red-400">
-            {counts.red} en rojo
-          </span>
-          <span className="rounded-full bg-orange-50 px-3 py-1 text-xs font-medium text-orange-600 dark:bg-orange-500/15 dark:text-orange-400">
-            {counts.soon} en naranja
-          </span>
-          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600 dark:bg-white/5 dark:text-slate-300">
-            {counts.total} planes en total
-          </span>
-        </div>
-      )}
-
-      {vehicles.length > 1 && (
-        <div className="mb-4 flex items-center gap-3">
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar placa…"
-            aria-label="Buscar vehículo por placa"
-            className="field-input w-full rounded-xl border border-slate-300 px-3 py-2 text-sm sm:w-72 dark:border-white/10 dark:bg-white/5 dark:text-white"
-          />
-          {search && (
-            <span className="text-xs text-slate-500 dark:text-slate-400">
-              {shown.length} de {vehicles.length}
-            </span>
-          )}
-        </div>
-      )}
-
       {loading && <p className="text-sm text-slate-500 dark:text-slate-400">Cargando...</p>}
       {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
-      {!loading && !error && vehicles.length === 0 && (
-        <p className="text-sm text-slate-500 dark:text-slate-400">No hay vehículos. Agrégalos primero en la página Vehículos.</p>
-      )}
-
-      {search && shown.length === 0 && (
-        <p className="text-sm text-slate-500 dark:text-slate-400">Ningún vehículo coincide con «{search}».</p>
-      )}
-
-      <div className="space-y-4">
-        {shown.map((vehicle) => (
-          <VehicleCard key={vehicle.vehicleId} vehicle={vehicle} canManage={canManage} onDialog={setDialog} onChanged={load} />
-        ))}
-      </div>
+      {!loading && !error && !vehicle && <p className="text-sm text-slate-500 dark:text-slate-400">No se pudo leer el mantenimiento de este vehículo.</p>}
+      {vehicle && <VehicleCard vehicle={vehicle} canManage={canManage} onDialog={setDialog} onChanged={load} />}
 
       {dialog?.kind === "plan" && <PlanDialog dialog={dialog} onClose={() => setDialog(null)} onDone={closeAndReload} />}
       {dialog?.kind === "service" && <ServiceDialog dialog={dialog} onClose={() => setDialog(null)} onDone={closeAndReload} />}
@@ -196,20 +125,16 @@ function VehicleCard({
   onDialog: (dialog: Dialog) => void;
   onChanged: () => void;
 }) {
-  const worst = worstState(vehicle);
+  const worst = worstState(vehicle.plans);
   const byGps = vehicle.kmSource === "gps";
   return (
     <section onMouseMove={trackGlow} className={`${CARD} p-4 ${STATE_EDGE[worst]}`}>
       <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="flex flex-wrap items-center gap-2 font-semibold text-slate-900 dark:text-white">
-            {vehicle.name}
-            {vehicle.plate && vehicle.plate !== vehicle.name && <span className="text-sm font-normal text-slate-500">{vehicle.plate}</span>}
-            {(worst === "soon" || worst === "due" || worst === "overdue") && (
-              <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATE_BADGE[worst]}`}>{STATE_LABEL[worst]}</span>
-            )}
-          </h2>
-          <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400">
+          {(worst === "soon" || worst === "due" || worst === "overdue") && (
+            <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${STATE_BADGE[worst]}`}>{STATE_LABEL[worst]}</span>
+          )}
+          <p className="flex flex-wrap items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400">
             <Gauge className="h-4 w-4" />
             {byGps
               ? vehicle.gpsCoverageFrom

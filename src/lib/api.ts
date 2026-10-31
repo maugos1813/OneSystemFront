@@ -13,7 +13,11 @@ import type {
   MaintenancePlan,
   MaintenanceRecord,
   VehicleDocument,
+  FuelType,
   VehicleMaintenance,
+  VehicleOdometer,
+  VehicleOdometerRow,
+  VehicleProfile,
   VehicleWithDocuments,
   DrivingStyleResponse,
   DeviceEvent,
@@ -212,6 +216,26 @@ export interface VehicleInput {
   plate?: string;
   deviceId?: string;
   fleetGroup?: string | null;
+  brand?: string | null;
+  model?: string | null;
+  year?: number | null;
+  vin?: string | null;
+  fuelType?: FuelType | null;
+  color?: string | null;
+  notes?: string | null;
+}
+
+export function getVehicleProfile(id: string): Promise<VehicleProfile> {
+  return request(`/vehicles/${id}/profile`);
+}
+
+export function listVehicleOdometers(): Promise<VehicleOdometerRow[]> {
+  return request("/vehicles/odometers");
+}
+
+/** Sets the current km and whether it is kept by itself ("auto": the GPS counts on from it) or by hand ("manual"). */
+export function setVehicleOdometer(id: string, input: { mode: "auto" | "manual"; km?: number }): Promise<VehicleOdometer> {
+  return request(`/vehicles/${id}/odometer`, { method: "PUT", body: JSON.stringify(input) });
 }
 
 export function createVehicle(input: VehicleInput): Promise<Vehicle> {
@@ -457,8 +481,9 @@ export interface MaintenancePlanInput {
   notes?: string | null;
 }
 
-export function listMaintenance(): Promise<VehicleMaintenance[]> {
-  return request("/maintenance");
+/** Every vehicle's plans, or only `vehicleId`'s. */
+export function listMaintenance(vehicleId?: string): Promise<VehicleMaintenance[]> {
+  return request(vehicleId ? `/maintenance?vehicleId=${vehicleId}` : "/maintenance");
 }
 
 export function createMaintenancePlan(vehicleId: string, input: MaintenancePlanInput): Promise<MaintenancePlan> {

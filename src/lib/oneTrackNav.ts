@@ -14,7 +14,6 @@ import {
   Smartphone,
   Truck,
   UserRound,
-  Wrench,
   type LucideIcon,
 } from "lucide-react";
 import type { MessageKey } from "../i18n";
@@ -28,6 +27,8 @@ export interface OneTrackNavItem {
   end: boolean;
   /** The section an admin can grant; owner/admin always have it. */
   module?: ModuleKey;
+  /** Opens with any of these sections instead (Vehículos also holds each vehicle's maintenance). */
+  anyOf?: readonly ModuleKey[];
   /** Administration: only owner/admin, and it cannot be granted to anyone else. */
   ownerAdminOnly?: boolean;
 }
@@ -41,8 +42,7 @@ export const ONETRACK_NAV: OneTrackNavItem[] = [
   { to: "/alertas", label: "nav.alerts", icon: BellRing, end: false, module: "alertas" },
   { to: "/geocercas", label: "nav.geofences", icon: MapPin, end: false, module: "geocercas" },
   { to: "/salud-dispositivos", label: "nav.deviceHealth", icon: HeartPulse, end: false, ownerAdminOnly: true },
-  { to: "/vehiculos", label: "nav.vehicles", icon: Truck, end: false, module: "vehiculos" },
-  { to: "/mantenimiento", label: "nav.maintenance", icon: Wrench, end: false, module: "mantenimiento" },
+  { to: "/vehiculos", label: "nav.vehicles", icon: Truck, end: false, anyOf: ["vehiculos", "mantenimiento"] },
   { to: "/vencimientos", label: "nav.documents", icon: FileCheck, end: false, module: "vencimientos" },
   { to: "/choferes", label: "nav.drivers", icon: UserRound, end: false, ownerAdminOnly: true },
   { to: "/dispositivos", label: "nav.devices", icon: Smartphone, end: false, ownerAdminOnly: true },
@@ -57,6 +57,7 @@ export function canOpen(user: CurrentUser | null, item: OneTrackNavItem): boolea
   if (!user) return false;
   if (user.role === "owner" || user.role === "admin") return true;
   if (item.ownerAdminOnly) return false;
+  if (item.anyOf) return item.anyOf.some((module) => user.modules.includes(module));
   return item.module ? user.modules.includes(item.module) : true;
 }
 

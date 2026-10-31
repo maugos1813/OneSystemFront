@@ -55,7 +55,49 @@ export interface Vehicle {
   /** Client-contract tag (e.g. "DHL", "UNIVEX") — only set for vehicles synced from Radius Velocity. */
   fleetGroup: string | null;
   deviceId: string | null;
+  // Profile
+  brand: string | null;
+  model: string | null;
+  year: number | null;
+  /** Chassis number (telaio). */
+  vin: string | null;
+  fuelType: FuelType | null;
+  color: string | null;
+  notes: string | null;
   createdAt: string;
+}
+
+export const FUEL_TYPES = ["diesel", "petrol", "lpg", "cng", "electric", "hybrid", "other"] as const;
+export type FuelType = (typeof FUEL_TYPES)[number];
+
+/** How a vehicle's current km are known: typed by hand, from the car's own odometer, the GPS count on a typed km, or not yet. */
+export type OdometerSource = "manual" | "obd" | "gps" | "none";
+
+export interface VehicleOdometer {
+  mode: "auto" | "manual";
+  km: number | null;
+  source: OdometerSource;
+  baseKm: number | null;
+  baseAt: string | null;
+  /** All the km the GPS has counted for this vehicle, and since which day (YYYY-MM-DD). */
+  gpsKmTotal: number;
+  gpsCoverageFrom: string | null;
+  /** The GPS km added on top of the typed km. */
+  gpsKmSinceBase: number | null;
+  trackerKm: number | null;
+  offsetKm: number;
+}
+
+export interface VehicleProfile {
+  vehicle: Vehicle;
+  odometer: VehicleOdometer;
+}
+
+export interface VehicleOdometerRow {
+  vehicleId: string;
+  km: number | null;
+  source: OdometerSource;
+  mode: "auto" | "manual";
 }
 
 /** Raw IO elements keyed by AVL ID (as strings, since they come from a JSON object). */

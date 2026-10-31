@@ -1,4 +1,4 @@
-import type { MaintenanceState, PlanStatus } from "./types";
+import type { MaintenancePlan, MaintenanceState, PlanStatus } from "./types";
 
 export const STATE_LABEL: Record<MaintenanceState, string> = {
   ok: "Al día",
@@ -32,6 +32,13 @@ export const STATE_EDGE: Record<MaintenanceState, string> = {
   overdue: "border-l-4 border-l-red-500",
   unknown: "",
 };
+
+const STATE_ORDER: Record<MaintenanceState, number> = { overdue: 0, due: 1, soon: 2, ok: 3, unknown: 4 };
+
+/** The most urgent state among a vehicle's plans ("unknown" when it has none). */
+export function worstState(plans: readonly Pick<MaintenancePlan, "status">[]): MaintenanceState {
+  return plans.reduce<MaintenanceState>((worst, plan) => (STATE_ORDER[plan.status.state] < STATE_ORDER[worst] ? plan.status.state : worst), "unknown");
+}
 
 export const formatKm = (km: number) => `${km.toLocaleString("es-AR")} km`;
 

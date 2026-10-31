@@ -19,13 +19,13 @@ import { DevicesPage } from "./pages/DevicesPage";
 import { DrivingBehaviorPage } from "./pages/DrivingBehaviorPage";
 import { GeofencesPage } from "./pages/GeofencesPage";
 import { HistoryPage } from "./pages/HistoryPage";
-import { MaintenancePage } from "./pages/MaintenancePage";
 import { LoginPage } from "./pages/LoginPage";
 import { RegisterPage } from "./pages/RegisterPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { DriversPage } from "./pages/DriversPage";
 import { SimsPage } from "./pages/SimsPage";
 import { TeamPage } from "./pages/TeamPage";
+import { VehicleProfilePage } from "./pages/VehicleProfilePage";
 import { VehiclesPage } from "./pages/VehiclesPage";
 import { VencimientosPage } from "./pages/VencimientosPage";
 import { WorkspaceLayout } from "./pages/WorkspaceLayout";
@@ -70,7 +70,9 @@ export default function App() {
                   element={<DeviceHealthPage />}
                 />
                 <Route path="/vehiculos" element={<VehiclesPage />} />
-                <Route path="/mantenimiento" element={<MaintenancePage />} />
+                <Route path="/vehiculos/:id" element={<VehicleProfilePage />} />
+                {/* Maintenance now lives inside each vehicle's profile. */}
+                <Route path="/mantenimiento" element={<Navigate to="/vehiculos" replace />} />
                 <Route path="/vencimientos" element={<VencimientosPage />} />
                 <Route path="/dispositivos" element={<DevicesPage />} />
                 <Route
