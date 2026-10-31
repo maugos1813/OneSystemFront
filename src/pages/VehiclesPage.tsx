@@ -446,7 +446,7 @@ export function VehiclesPage() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl p-4 sm:p-6 lg:p-8">
+    <div className="p-4 sm:p-6 lg:p-8">
       <h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t("vehicles.title")}</h1>
       <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">
         {t("vehiclesPage.subtitle")}{!isAdmin && canManage && t("vehiclesPage.adminAssigns")}

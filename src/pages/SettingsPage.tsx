@@ -131,7 +131,7 @@ export function SettingsPage() {
         Empresa, horario laboral y preferencias de alertas.
       </p>
 
-      <div className="max-w-3xl space-y-6">
+      <div className="grid gap-6 xl:grid-cols-2 xl:items-start">
         <Panel title="Empresa">
           <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Nombre</label>
           <input
@@ -274,7 +274,7 @@ export function SettingsPage() {
           </div>
         </Panel>
 
-        <div className="flex items-center gap-3 pb-4">
+        <div className="flex items-center gap-3 pb-4 xl:col-span-2">
           <button
             onClick={handleSave}
             disabled={saving}
