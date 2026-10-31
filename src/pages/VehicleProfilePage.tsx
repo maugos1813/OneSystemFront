@@ -16,6 +16,8 @@ const INPUT =
   "field-input w-full rounded-xl border border-slate-300 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white";
 const LABEL = "mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300";
 
+const REFRESH_MS = 30_000;
+
 const formatDay = (value: string) => {
   // a bare date (YYYY-MM-DD) is a calendar day, not an instant: read it as that day, not as midnight UTC
   const date = /^\d{4}-\d{2}-\d{2}$/.test(value) ? new Date(`${value}T12:00:00`) : new Date(value);
@@ -64,6 +66,17 @@ function ProfileView({ id }: { id: string }) {
   useEffect(() => {
     load();
   }, [load]);
+
+  // The km move while the vehicle drives: the open profile looks again every half minute (a failed look changes nothing).
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (document.visibilityState !== "visible") return;
+      getVehicleProfile(id)
+        .then(setProfile)
+        .catch(() => undefined);
+    }, REFRESH_MS);
+    return () => clearInterval(timer);
+  }, [id]);
 
   const vehicle = profile?.vehicle;
   return (
