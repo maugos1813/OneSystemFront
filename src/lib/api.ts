@@ -14,6 +14,7 @@ import type {
   MaintenanceRecord,
   VehicleDocument,
   FuelType,
+  Tagliando,
   VehicleMaintenance,
   VehicleOdometer,
   VehicleOdometerRow,
@@ -484,6 +485,15 @@ export interface MaintenancePlanInput {
 /** Every vehicle's plans, or only `vehicleId`'s. */
 export function listMaintenance(vehicleId?: string): Promise<VehicleMaintenance[]> {
   return request(vehicleId ? `/maintenance?vehicleId=${vehicleId}` : "/maintenance");
+}
+
+export function getTagliando(vehicleId: string): Promise<Tagliando> {
+  return request(`/maintenance/vehicles/${vehicleId}/tagliando`);
+}
+
+/** Enters a tagliando that was done (`mode: "fix"` corrects the last one instead of adding another). */
+export function saveTagliando(vehicleId: string, input: { km: number; doneAt?: string; mode?: "new" | "fix" }): Promise<Tagliando> {
+  return request(`/maintenance/vehicles/${vehicleId}/tagliando`, { method: "PUT", body: JSON.stringify(input) });
 }
 
 export function createMaintenancePlan(vehicleId: string, input: MaintenancePlanInput): Promise<MaintenancePlan> {

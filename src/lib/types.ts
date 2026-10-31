@@ -404,6 +404,20 @@ export interface VehicleMaintenance {
   plans: MaintenancePlan[];
 }
 
+/** The tagliando of a vehicle: one service every 20 000 km, measured against the vehicle's own current km. */
+export interface Tagliando {
+  intervalKm: number;
+  lastKm: number | null;
+  lastAt: string | null;
+  currentKm: number | null;
+  source: OdometerSource;
+  dueKm: number | null;
+  /** Negative once past the due point. */
+  kmRemaining: number | null;
+  status: PlanStatus;
+  history: { id: string; doneAt: string; km: number | null }[];
+}
+
 export interface MaintenanceRecord {
   id: string;
   planId: string;

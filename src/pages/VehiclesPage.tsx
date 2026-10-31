@@ -8,8 +8,8 @@ import { createVehicle, deleteVehicle, listMaintenance, listVehicleOdometers, up
 import { FleetGroupSelect } from "../components/FleetGroupSelect";
 import { useT } from "../i18n";
 import { trackGlow } from "../lib/glow";
-import { formatKm, STATE_BADGE, STATE_LABEL, worstState } from "../lib/maintenance";
-import type { MaintenanceState, Vehicle, VehicleOdometerRow } from "../lib/types";
+import { formatKm, STATE_BADGE, STATE_LABEL } from "../lib/maintenance";
+import type { MaintenancePlan, Vehicle, VehicleOdometerRow } from "../lib/types";
 import { ModalPortal } from "../components/ModalPortal";
 
 function DeviceSelect({
@@ -71,8 +71,8 @@ function VehicleRow({
   /** Only owner/admin assign the device and the flota; a client only renames their own vehicles. */
   isAdmin: boolean;
   odometer: VehicleOdometerRow | undefined;
-  /** The most urgent maintenance state of its plans, or null when it has none. */
-  maintenance: MaintenanceState | null;
+  /** Its tagliando plan, or null when none has been entered. */
+  maintenance: MaintenancePlan | null;
   showMaintenance: boolean;
   onChanged: () => void;
 }) {
@@ -179,8 +179,15 @@ function VehicleRow({
       </td>
       {showMaintenance && (
         <td className="px-4 py-3">
-          {maintenance && maintenance !== "unknown" ? (
-            <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${STATE_BADGE[maintenance]}`}>{STATE_LABEL[maintenance]}</span>
+          {maintenance && maintenance.status.state !== "unknown" ? (
+            <div>
+              <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${STATE_BADGE[maintenance.status.state]}`}>{STATE_LABEL[maintenance.status.state]}</span>
+              {maintenance.status.kmRemaining !== null && (
+                <p className="mt-0.5 text-xs whitespace-nowrap text-slate-500 dark:text-slate-400">
+                  {maintenance.status.kmRemaining >= 0 ? `Faltan ${formatKm(maintenance.status.kmRemaining)}` : `Pasado ${formatKm(-maintenance.status.kmRemaining)}`}
+                </p>
+              )}
+            </div>
           ) : (
             <span className="text-slate-400 dark:text-slate-500">—</span>
           )}
@@ -312,7 +319,7 @@ export function VehiclesPage() {
   const [params] = useSearchParams();
   const [search, setSearch] = useState(() => params.get("q") ?? "");
   const [odometers, setOdometers] = useState<Map<string, VehicleOdometerRow>>(new Map());
-  const [maintenance, setMaintenance] = useState<Map<string, MaintenanceState>>(new Map());
+  const [maintenance, setMaintenance] = useState<Map<string, MaintenancePlan>>(new Map());
 
   const isAdmin = currentUser?.role === "owner" || currentUser?.role === "admin";
   // A client with the Vehículos section and a flota registers and edits the vehicles of that flota (the admin assigns devices).
@@ -327,7 +334,14 @@ export function VehiclesPage() {
       .catch(() => undefined); // the km are a convenience here: the list works without them
     if (showMaintenance) {
       listMaintenance()
-        .then((rows) => !cancelled && setMaintenance(new Map(rows.filter((r) => r.plans.length > 0).map((r) => [r.vehicleId, worstState(r.plans)]))))
+        .then((rows) => !cancelled && setMaintenance(
+              new Map(
+                rows.flatMap((r) => {
+                  const plan = r.plans.find((p) => p.name.trim().toLowerCase() === "tagliando");
+                  return plan ? [[r.vehicleId, plan] as const] : [];
+                }),
+              ),
+            ))
         .catch(() => undefined);
     }
     return () => {

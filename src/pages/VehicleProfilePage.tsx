@@ -1,7 +1,7 @@
 import { ArrowLeft, Gauge } from "lucide-react";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
-import { MaintenancePanel } from "../components/vehicle/MaintenancePanel";
+import { TagliandoPanel } from "../components/vehicle/TagliandoPanel";
 import { useAuth } from "../context/AuthContext";
 import { useFleet } from "../context/FleetContext";
 import { useT } from "../i18n";
@@ -134,7 +134,7 @@ function ProfileView({ id }: { id: string }) {
               </div>
             </div>
           )}
-          {tab === "mantenimiento" && <MaintenancePanel vehicleId={vehicle.id} />}
+          {tab === "mantenimiento" && <TagliandoPanel vehicleId={vehicle.id} />}
         </>
       )}
     </div>
