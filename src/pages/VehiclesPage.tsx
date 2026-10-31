@@ -537,7 +537,7 @@ export function VehiclesPage() {
       )}
 
       {!loading && shownVehicles.length > 0 && (
-        <div className="float-card hidden overflow-x-auto rounded-2xl border border-white bg-white shadow-lg shadow-slate-200/50 dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40">
+        <div className="float-card hidden overflow-x-auto lg:block rounded-2xl border border-white bg-white shadow-lg shadow-slate-200/50 dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40">
           <table className="w-full min-w-[760px] text-left text-sm">
             <thead className="border-b border-violet-100 bg-violet-50/60 text-xs text-slate-500 uppercase dark:border-white/10 dark:bg-white/5 dark:text-slate-400">
               <tr>
