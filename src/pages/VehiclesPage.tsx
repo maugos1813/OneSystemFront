@@ -308,6 +308,80 @@ function DeleteVehicleDialog({
   );
 }
 
+/** A vehicle of the list on a phone: its km and tagliando at a glance, and clear buttons to its profile and its tagliando. */
+function VehicleCard({
+  vehicle,
+  odometer,
+  maintenance,
+  showMaintenance,
+}: {
+  vehicle: Vehicle;
+  odometer: VehicleOdometerRow | undefined;
+  maintenance: MaintenancePlan | null;
+  showMaintenance: boolean;
+}) {
+  const t = useT();
+  const state = maintenance && maintenance.status.state !== "unknown" ? maintenance.status : null;
+  const BUTTON =
+    "flex-1 rounded-xl border border-slate-200 px-3 py-2 text-center text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5";
+  return (
+    <li className="float-card rounded-2xl border border-white bg-white p-4 shadow-lg shadow-slate-200/50 dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40">
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <p className="truncate font-semibold text-slate-900 dark:text-white">{vehicle.name}</p>
+          {vehicle.plate && vehicle.plate !== vehicle.name && <p className="text-sm text-slate-500 dark:text-slate-400">{vehicle.plate}</p>}
+        </div>
+        {vehicle.fleetGroup && (
+          <span className="shrink-0 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700 dark:bg-blue-500/15 dark:text-blue-400">
+            {vehicle.fleetGroup}
+          </span>
+        )}
+      </div>
+
+      <dl className="mt-3 grid grid-cols-2 gap-3 text-sm">
+        <div>
+          <dt className="text-xs text-slate-400 dark:text-slate-500">{t("vehiclesPage.km")}</dt>
+          <dd className="font-medium text-slate-800 dark:text-slate-200">
+            {odometer?.km != null ? formatKm(odometer.km) : "—"}
+            {odometer?.needsCheck && <span className="ml-1.5 inline-block h-2 w-2 rounded-full bg-amber-500 align-middle" title={t("vehiclesPage.recheck")} />}
+          </dd>
+          {odometer?.needsCheck && <dd className="text-xs text-amber-700 dark:text-amber-300">{t("vehiclesPage.recheck")}</dd>}
+        </div>
+        {showMaintenance && (
+          <div>
+            <dt className="text-xs text-slate-400 dark:text-slate-500">{t("vehiclesPage.maintenance")}</dt>
+            <dd>
+              {state ? (
+                <>
+                  <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${STATE_BADGE[state.state]}`}>{STATE_LABEL[state.state]}</span>
+                  {state.kmRemaining !== null && (
+                    <span className="block text-xs text-slate-500 dark:text-slate-400">
+                      {state.kmRemaining >= 0 ? `Faltan ${formatKm(state.kmRemaining)}` : `Pasado ${formatKm(-state.kmRemaining)}`}
+                    </span>
+                  )}
+                </>
+              ) : (
+                <span className="text-slate-400 dark:text-slate-500">—</span>
+              )}
+            </dd>
+          </div>
+        )}
+      </dl>
+
+      <div className="mt-4 flex gap-2">
+        <Link to={`/vehiculos/${vehicle.id}`} className={BUTTON}>
+          {t("vehicleProfile.tabProfile")}
+        </Link>
+        {showMaintenance && (
+          <Link to={`/vehiculos/${vehicle.id}?tab=mantenimiento`} className={`${BUTTON} !border-blue-200 !text-blue-700 dark:!border-blue-500/30 dark:!text-blue-300`}>
+            {t("vehicleProfile.tabMaintenance")}
+          </Link>
+        )}
+      </div>
+    </li>
+  );
+}
+
 export function VehiclesPage() {
   const t = useT();
   const { currentUser } = useAuth();
@@ -447,8 +521,23 @@ export function VehiclesPage() {
         <p className="text-sm text-slate-500 dark:text-slate-400">«{search}»: {t("vehiclesPage.noMatchFleet").toLowerCase()}</p>
       )}
 
+      {/* On a phone the table does not fit: each vehicle is a card with its km, its tagliando and the two places to go. */}
       {!loading && shownVehicles.length > 0 && (
-        <div className="float-card overflow-x-auto rounded-2xl border border-white bg-white shadow-lg shadow-slate-200/50 dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40">
+        <ul className="space-y-3 lg:hidden">
+          {shownVehicles.map((vehicle) => (
+            <VehicleCard
+              key={vehicle.id}
+              vehicle={vehicle}
+              odometer={odometers.get(vehicle.id)}
+              maintenance={maintenance.get(vehicle.id) ?? null}
+              showMaintenance={showMaintenance}
+            />
+          ))}
+        </ul>
+      )}
+
+      {!loading && shownVehicles.length > 0 && (
+        <div className="float-card hidden overflow-x-auto rounded-2xl border border-white bg-white shadow-lg shadow-slate-200/50 dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40">
           <table className="w-full min-w-[760px] text-left text-sm">
             <thead className="border-b border-violet-100 bg-violet-50/60 text-xs text-slate-500 uppercase dark:border-white/10 dark:bg-white/5 dark:text-slate-400">
               <tr>
