@@ -199,6 +199,7 @@ export const it: Record<MessageKey, string> = {
   "vehicleProfile.modeManual": "Manuale",
   "vehicleProfile.modeAutoHint": "Inserisci una volta i km del cruscotto e il GPS aggiunge da solo quelli percorsi da quel giorno.",
   "vehicleProfile.modeManualHint": "I km sono esattamente quelli che inserisci; non cambiano finché non li modifichi.",
+  "vehicleProfile.vehicleReads": "Il contachilometri del veicolo segna {km} (letto dal tracker). In modalità Automatico si sincronizza da solo.",
   "vehicleProfile.kmInput": "Km del cruscotto",
   "vehicleProfile.kmInvalid": "Indica un numero di km valido.",
   "vehicleProfile.kmSaved": "Chilometraggio salvato.",

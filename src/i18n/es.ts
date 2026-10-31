@@ -200,6 +200,7 @@ export const es = {
   "vehicleProfile.modeManual": "Manual",
   "vehicleProfile.modeAutoHint": "Anotas los km del tablero una vez y el GPS suma solo lo que recorre el vehículo desde ese día.",
   "vehicleProfile.modeManualHint": "Los km son exactamente los que anotes; no cambian hasta que los edites.",
+  "vehicleProfile.vehicleReads": "El odómetro del vehículo marca {km} (lo lee el rastreador). En modo Automático se sincroniza solo.",
   "vehicleProfile.kmInput": "Km del tablero",
   "vehicleProfile.kmInvalid": "Indica un número de km válido.",
   "vehicleProfile.kmSaved": "Kilometraje guardado.",

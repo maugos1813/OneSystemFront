@@ -200,6 +200,11 @@ function OdometerCard({
         {odometer.km !== null ? formatKm(odometer.km) : <span className="text-xl text-slate-400">{t("vehicleProfile.kmUnknown")}</span>}
       </p>
       <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{source}</p>
+      {odometer.mode === "manual" && odometer.trackerKm !== null && (
+        <p className="mt-2 rounded-lg bg-blue-50 px-2.5 py-1.5 text-xs text-blue-800 dark:bg-blue-500/10 dark:text-blue-300">
+          {t("vehicleProfile.vehicleReads", { km: formatKm(Math.max(0, odometer.trackerKm + odometer.offsetKm)) })}
+        </p>
+      )}
       <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
         {odometer.gpsCoverageFrom
           ? t("vehicleProfile.gpsCount", { km: formatKm(odometer.gpsKmTotal), date: formatDay(odometer.gpsCoverageFrom) })
