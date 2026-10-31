@@ -159,6 +159,19 @@ function OdometerCard({
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
 
+  async function goAuto() {
+    setSaving(true);
+    setMessage(null);
+    try {
+      await setVehicleOdometer(vehicleId, { mode: "auto" });
+      onChanged();
+    } catch (err) {
+      setMessage({ ok: false, text: err instanceof Error ? err.message : t("vehicleProfile.saveFailed") });
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function save(e: FormEvent) {
     e.preventDefault();
     const typed = km.trim() === "" ? undefined : parseKm(km);
@@ -206,6 +219,16 @@ function OdometerCard({
         {odometer.km !== null ? formatKm(odometer.km) : <span className="text-xl text-slate-400">{t("vehicleProfile.kmUnknown")}</span>}
       </p>
       <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{source}</p>
+      {odometer.mode === "manual" && odometer.trackerKm === null && odometer.km !== null && (
+        <div className="mt-2 rounded-lg bg-amber-50 px-2.5 py-1.5 text-xs text-amber-800 dark:bg-amber-500/10 dark:text-amber-300">
+          <p>{t("vehicleProfile.manualNoChange")}</p>
+          {canSet && (
+            <button type="button" disabled={saving} onClick={() => void goAuto()} className="mt-1 font-medium underline hover:no-underline disabled:opacity-50">
+              {t("vehicleProfile.goAuto")}
+            </button>
+          )}
+        </div>
+      )}
       {odometer.needsCheck && (
         <p className="mt-2 rounded-lg bg-amber-50 px-2.5 py-1.5 text-xs text-amber-800 dark:bg-amber-500/10 dark:text-amber-300">
           {t("vehicleProfile.recheck", { days: odometer.daysSinceBase ?? 0 })}

@@ -207,6 +207,8 @@ export const es = {
   "vehicleProfile.factorUpdated": "Kilometraje guardado. Corrección del GPS actualizada: ×{factor}.",
   "vehicleProfile.factorOutOfRange": "Kilometraje guardado. La diferencia con lo que contó el GPS es demasiado grande para usarla como corrección: revisa que el km anotado sea el del tablero.",
   "vehiclesPage.recheck": "Conviene volver a anotar los km del tablero",
+  "vehicleProfile.manualNoChange": "Estás en modo Manual: este km no cambia solo. Pasa a Automático y el GPS lo irá actualizando desde estos km.",
+  "vehicleProfile.goAuto": "Pasar a Automático",
   "vehicleProfile.kmInput": "Km del tablero",
   "vehicleProfile.kmInvalid": "Indica un número de km válido.",
   "vehicleProfile.kmSaved": "Kilometraje guardado.",

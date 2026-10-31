@@ -206,6 +206,8 @@ export const it: Record<MessageKey, string> = {
   "vehicleProfile.factorUpdated": "Chilometraggio salvato. Correzione GPS aggiornata: ×{factor}.",
   "vehicleProfile.factorOutOfRange": "Chilometraggio salvato. La differenza con ciò che ha contato il GPS è troppo grande per usarla come correzione: verifica che il km inserito sia quello del cruscotto.",
   "vehiclesPage.recheck": "Conviene inserire di nuovo i km del cruscotto",
+  "vehicleProfile.manualNoChange": "Sei in modalità Manuale: questo km non cambia da solo. Passa ad Automatico e il GPS lo aggiornerà a partire da questi km.",
+  "vehicleProfile.goAuto": "Passa ad Automatico",
   "vehicleProfile.kmInput": "Km del cruscotto",
   "vehicleProfile.kmInvalid": "Indica un numero di km valido.",
   "vehicleProfile.kmSaved": "Chilometraggio salvato.",
