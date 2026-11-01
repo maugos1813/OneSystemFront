@@ -2,12 +2,16 @@ import { Bell, Download } from "lucide-react";
 import { useRef, useState, type CSSProperties } from "react";
 import { Link } from "react-router-dom";
 import { useAppUpdate } from "../context/AppUpdateContext";
+import { useAuth } from "../context/AuthContext";
 import { useFleet } from "../context/FleetContext";
 import { useT } from "../i18n";
 
 export function AlertsPanel() {
   const t = useT();
   const { alerts } = useFleet();
+  const { currentUser } = useAuth();
+  // Without the Alertas section the page of alerts is closed: the list leads to the vehicles instead.
+  const seeAllTo = currentUser?.role === "owner" || currentUser?.role === "admin" || currentUser?.modules.includes("alertas") ? "/alertas" : "/vehiculos";
   const update = useAppUpdate();
   // A newer Android app counts as one more notification, so the bell calls attention to it.
   const count = alerts.length + (update.available ? 1 : 0);
@@ -63,17 +67,22 @@ export function AlertsPanel() {
             {alerts.length === 0 && !update.available && (
               <p className="px-2 py-3 text-sm text-slate-500 dark:text-slate-400">{t("alerts.none")}</p>
             )}
-            {alerts.slice(0, 6).map((alert, i) => (
-              <div
-                key={`${alert.vehicleId}-${alert.type}-${i}`}
-                className="rounded-lg px-2 py-2 text-sm text-slate-700 hover:bg-violet-50 dark:text-slate-300 dark:hover:bg-white/5"
-              >
-                {alert.message}
-              </div>
-            ))}
+            {alerts.slice(0, 6).map((alert, i) => {
+              const CLASS = "block rounded-lg px-2 py-2 text-sm text-slate-700 hover:bg-violet-50 dark:text-slate-300 dark:hover:bg-white/5";
+              const key = `${alert.vehicleId}-${alert.type}-${i}`;
+              return alert.link ? (
+                <Link key={key} to={alert.link} onClick={() => setOpen(false)} className={CLASS}>
+                  {alert.message}
+                </Link>
+              ) : (
+                <div key={key} className={CLASS}>
+                  {alert.message}
+                </div>
+              );
+            })}
             {alerts.length > 0 && (
               <Link
-                to="/alertas"
+                to={seeAllTo}
                 onClick={() => setOpen(false)}
                 className="mt-1 block rounded-lg px-2 py-2 text-center text-xs font-semibold text-violet-600 hover:bg-violet-50 dark:text-violet-400 dark:hover:bg-white/5"
               >

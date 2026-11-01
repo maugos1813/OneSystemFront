@@ -8,6 +8,7 @@ import {
   Settings as SettingsIcon,
   Timer,
   WifiOff,
+  Wrench,
 } from "lucide-react";
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
@@ -25,6 +26,7 @@ const ALERT_META: Record<AlertType, { label: MessageKey; color: string; icon: ty
   excessive_idling: { label: "alertType.idling", color: "#f59e0b", icon: Timer },
   geofence_enter: { label: "alertType.geofenceEnter", color: "#3b82f6", icon: LogIn },
   geofence_exit: { label: "alertType.geofenceExit", color: "#3b82f6", icon: LogOut },
+  tagliando: { label: "alertType.tagliando", color: "#ea580c", icon: Wrench },
 };
 
 function relativeTime(iso: string, t: Translate): string {

@@ -10,7 +10,8 @@ export type AlertType =
   | "speeding"
   | "excessive_idling"
   | "geofence_enter"
-  | "geofence_exit";
+  | "geofence_exit"
+  | "tagliando";
 
 export interface Alert {
   vehicleId: string;
@@ -19,6 +20,8 @@ export interface Alert {
   message: string;
   /** ISO timestamp, for alert types that are momentary events rather than an ongoing state. */
   since?: string;
+  /** Where the notice leads when it is tapped (the vehicle's tagliando). */
+  link?: string;
 }
 
 export function isOffline(lastSeenAt: string | null, thresholdMs = 2 * 60 * 1000): boolean {

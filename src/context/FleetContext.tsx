@@ -3,6 +3,7 @@ import { useAuth } from "./AuthContext";
 import { useAllPositions } from "../hooks/useAllPositions";
 import { useDriverVehicles } from "../hooks/useDriverVehicles";
 import { useLiveAlerts } from "../hooks/useLiveAlerts";
+import { useTagliandoNotices } from "../hooks/useTagliandoNotices";
 import { getSettings, listDevices, listGeofences, listVehicles } from "../lib/api";
 import type { Alert } from "../lib/alerts";
 import { getStoredAreaFilter, setStoredAreaFilter, uniqueFleetGroups, type AreaFilter } from "../lib/areaFilter";
@@ -105,7 +106,17 @@ export function FleetProvider({ children }: { children: ReactNode }) {
   const positions = useAllPositions(vehicles);
   // Only a client with a flota and the map: the organization's own people already see the whole fleet.
   const sharedVehicles = useDriverVehicles(!!currentUser?.allowedArea && !!currentUser.modules.includes("mapa"));
-  const alerts = useLiveAlerts(vehicles, devices, positions, settings, geofences);
+  const liveAlerts = useLiveAlerts(vehicles, devices, positions, settings, geofences);
+  // An account that only sees the vehicles and their tagliando (Recursos humanos) is told only about those: the tagliando
+  // close to its 20 000 km, and the vehicles that lack what the count needs. Everyone else keeps the usual alerts.
+  const tagliandoOnly =
+    !!currentUser &&
+    currentUser.role !== "owner" &&
+    currentUser.role !== "admin" &&
+    currentUser.modules.includes("mantenimiento") &&
+    currentUser.modules.every((module) => module === "vehiculos" || module === "mantenimiento");
+  const tagliandoNotices = useTagliandoNotices(vehicles, tagliandoOnly);
+  const alerts = tagliandoOnly ? tagliandoNotices : liveAlerts;
   const refetch = useCallback(() => setRefetchToken((t) => t + 1), []);
   const refetchSettings = useCallback(() => setSettingsToken((t) => t + 1), []);
   const refetchGeofences = useCallback(() => setGeofencesToken((t) => t + 1), []);
