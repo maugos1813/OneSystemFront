@@ -36,16 +36,19 @@ export const MODULE_INFO: Record<ModuleKey, ModuleInfo> = {
 };
 
 /** Ready-made packages. Cockpit, Conducción and Vencimientos are in none of them. */
-export const MODULE_TEMPLATES: Record<"basico" | "estandar" | "completo", readonly ModuleKey[]> = {
+export const MODULE_TEMPLATES: Record<"basico" | "estandar" | "completo" | "recursosHumanos", readonly ModuleKey[]> = {
   basico: ["mapa", "historial", "alertas"],
   estandar: ["mapa", "historial", "alertas", "analiticas", "vehiculos", "geocercas"],
   completo: ["mapa", "historial", "alertas", "analiticas", "vehiculos", "geocercas", "mantenimiento"],
+  // Recursos humanos: only the vehicles, to follow each one's tagliando (it needs the Manager role to enter them).
+  recursosHumanos: ["vehiculos", "mantenimiento"],
 };
 
 export const TEMPLATE_LABEL: Record<keyof typeof MODULE_TEMPLATES, string> = {
   basico: "Básico",
   estandar: "Estándar",
   completo: "Completo",
+  recursosHumanos: "Recursos humanos",
 };
 
 /** Which template a selection is exactly, or null when it is a custom mix. */

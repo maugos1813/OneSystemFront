@@ -25,7 +25,7 @@ import {
 import { FleetGroupSelect } from "../components/FleetGroupSelect";
 import { useFleetGroups } from "../lib/useFleetGroups";
 import { fileToLogoDataUrl, LOGO_ACCEPT } from "../lib/logoImage";
-import { MODULE_INFO, MODULE_TEMPLATES, type ModuleKey } from "../lib/modules";
+import { MODULE_INFO, MODULE_TEMPLATES, matchingTemplate, type ModuleKey } from "../lib/modules";
 import type { CurrentUser, Product, TeamMember, TeamRole } from "../lib/types";
 
 const ROLE_LABEL: Record<TeamRole, string> = {
@@ -841,6 +841,16 @@ export function TeamPage() {
                     onChange={setNewModules}
                     available={isManager ? currentUser?.modules : undefined}
                   />
+                  {matchingTemplate(newModules) === "recursosHumanos" && (
+                    <p className="mt-2 rounded-lg bg-blue-50 px-2.5 py-1.5 text-xs text-blue-800 dark:bg-blue-500/10 dark:text-blue-300">
+                      Recursos humanos ve solo Vehículos y su Tagliando.{" "}
+                      {effectiveRole === "viewer"
+                        ? "Con el rol Usuario solo puede mirar: para que anote los tagliandos hechos, elige el rol Manager."
+                        : effectiveRole === "manager"
+                          ? "Con el rol Manager puede anotar los tagliandos y los km del tablero."
+                          : ""}
+                    </p>
+                  )}
                 </div>
               )}
 
