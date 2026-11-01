@@ -28,7 +28,7 @@ import { useTheme } from "../context/ThemeContext";
 import { getProductSsoUrl, listProducts } from "../lib/api";
 import { trackGlow } from "../lib/glow";
 import { isOneTrackApp } from "../lib/appFlavor";
-import { firstAllowedPath } from "../lib/oneTrackNav";
+import { allowedNav, firstAllowedPath } from "../lib/oneTrackNav";
 import type { Product } from "../lib/types";
 import { AppUpdateCard } from "../components/AppUpdateCard";
 import { DashboardPage } from "./DashboardPage";
@@ -151,6 +151,11 @@ function Workspace({ products }: { products: Product[] }) {
     if (!hasOneTrack) return <NoOneTrack />;
     if (atHome) return <Navigate to={firstAllowedPath(currentUser) ?? "/gps"} replace />;
   }
+
+  // An account whose only app is OneTrack and that has a single section in it has nothing to choose: it opens straight on
+  // that section. "Contraer" still reaches the workspace (it carries ?app=), for the account menu and the settings.
+  const singleSection = hasOneTrack && products.length === 1 && allowedNav(currentUser).length === 1;
+  if (atHome && singleSection && !params.has("app")) return <Navigate to={firstAllowedPath(currentUser)!} replace />;
 
   // OneTrack's pages need its fleet; an account without it has nothing to show there.
   if (!atHome && !hasOneTrack) return <Navigate to="/" replace />;
