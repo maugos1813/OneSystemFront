@@ -21,6 +21,7 @@ import { Capacitor } from "@capacitor/core";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link, Navigate, Outlet, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { AlertsPanel } from "../components/AlertsPanel";
+import { OneSystecMark } from "../components/OneSystecMark";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage, useT } from "../i18n";
 import { FleetProvider } from "../context/FleetContext";
@@ -297,6 +298,7 @@ function TopBar({ bell, onOpenMenu }: { bell: ReactNode; onOpenMenu: () => void 
 
       <div className="relative flex shrink-0 items-center gap-1">
         <img src="/logo.jpg" alt="OneSystec" title="OneSystec" className="mr-1 h-9 w-9 shrink-0 rounded-xl object-cover shadow-md shadow-blue-200/60" />
+        <OneSystecMark logo={false} className="mr-2 hidden md:flex" />
         {bell}
         <button
           onClick={toggleTheme}
@@ -425,6 +427,7 @@ function MobileMenu({
             <LogOut className="h-5 w-5 shrink-0" />
             {t("workspace.signOut")}
           </button>
+          <OneSystecMark prefix="madeBy" className="flex justify-center pt-1" />
         </div>
       </aside>
     </div>

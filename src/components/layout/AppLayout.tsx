@@ -15,6 +15,7 @@ import { isOneTrackApp } from "../../lib/appFlavor";
 import { trackGlow } from "../../lib/glow";
 import { allowedNav, canOpen, navItemForPath } from "../../lib/oneTrackNav";
 import { AlertsPanel } from "../AlertsPanel";
+import { OneSystecMark } from "../OneSystecMark";
 
 /** Below `lg` there isn't room for the nav rail *and* the vehicle list *and* the map, so it starts collapsed there. */
 function prefersOpenByDefault(): boolean {
@@ -130,6 +131,10 @@ export function AppLayout() {
               </NavLink>
             ))}
           </nav>
+
+          <div className="border-t border-violet-100 px-5 py-3 dark:border-white/5">
+            <OneSystecMark prefix="madeBy" className="flex" />
+          </div>
         </div>
       </aside>
 
@@ -157,10 +162,13 @@ export function AppLayout() {
               <p className="hidden truncate text-xs text-slate-500 sm:block dark:text-slate-400">
                 {currentUser?.email}
               </p>
+              {/* A phone has no room for the email line, so the signature takes it; larger screens show it on the right. */}
+              <OneSystecMark className="flex sm:hidden" />
             </div>
           </div>
 
           <div className="flex shrink-0 items-center gap-2 sm:gap-4">
+            <OneSystecMark className="hidden sm:flex" />
             <button
               onClick={toggleTheme}
               aria-label={theme === "dark" ? t("workspace.themeLight") : t("workspace.themeDark")}

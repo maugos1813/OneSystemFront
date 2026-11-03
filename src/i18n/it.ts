@@ -147,6 +147,7 @@ export const it: Record<MessageKey, string> = {
   "nav.apiKeys": "Chiavi API",
   "nav.settings": "Impostazioni",
   "nav.hideMenu": "Nascondi il menu",
+  "brand.madeBy": "Realizzato da",
   "nav.showMenu": "Mostra il menu",
   "alertMsg.offline": "{name} è offline",
   "alertMsg.lowVoltage": "{name} ha la tensione della batteria bassa",

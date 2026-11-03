@@ -148,6 +148,7 @@ export const es = {
   "nav.apiKeys": "API Keys",
   "nav.settings": "Ajustes",
   "nav.hideMenu": "Ocultar menú",
+  "brand.madeBy": "Hecho por",
   "nav.showMenu": "Mostrar menú",
   "alertMsg.offline": "{name} está desconectado",
   "alertMsg.lowVoltage": "{name} tiene voltaje de batería bajo",
