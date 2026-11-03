@@ -29,6 +29,15 @@ export function isOffline(lastSeenAt: string | null, thresholdMs = 2 * 60 * 1000
   return Date.now() - new Date(lastSeenAt).getTime() > thresholdMs;
 }
 
+/** Whether the last report said the vehicle was parked with the engine off. Many trackers stop reporting then, powered by
+ * the vehicle's battery all the while, so their silence is only worth a notice if the vehicle went quiet while in use. A
+ * report without an ignition reading says nothing, so the silence is still flagged. */
+export function wasParkedWithEngineOff(position: Position | undefined): boolean {
+  if (!position) return false;
+  const ignition = position.ioData[AVL_ID.IGNITION];
+  return (ignition === 0 || ignition === "0") && position.speed === 0;
+}
+
 export function isLowVoltage(position: Position | undefined, thresholdMv = LOW_VOLTAGE_THRESHOLD_MV): boolean {
   if (!position) return false;
   const voltage = Number(position.ioData[AVL_ID.EXTERNAL_VOLTAGE] ?? 0);
@@ -82,13 +91,14 @@ export function computeAlerts(
 
     if (
       settings.alerts.deviceOfflineEnabled &&
-      isOffline(device.lastSeenAt, settings.alerts.deviceOfflineHours * 3_600_000)
+      isOffline(device.lastSeenAt, settings.alerts.deviceOfflineHours * 3_600_000) &&
+      !wasParkedWithEngineOff(position)
     ) {
       alerts.push({
         vehicleId: vehicle.id,
         vehicleName: vehicle.name,
         type: "offline",
-        message: t("alertMsg.offline", { name: vehicle.name }),
+        message: t("alertMsg.offline", { name: vehicle.name, hours: settings.alerts.deviceOfflineHours }),
       });
     }
 

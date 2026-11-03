@@ -22,33 +22,35 @@ interface Camera {
   tilt: number;
 }
 
-/** How far the person has turned the map. A vehicle's arrow is drawn against the screen, not the map, so it has to
- * turn the other way by that much to keep pointing where the vehicle is really going. */
-function useMapHeading(): number {
+/** How far the person has turned and tilted the map. A turn made with the fingers doesn't always fire the heading
+ * event on a vector map, but it always moves the view, so the view's own events are listened to as well. A vehicle's
+ * arrow is drawn against the screen, not the map, so it has to turn the other way by the heading to keep pointing where
+ * the vehicle is really going. */
+function useMapOrientation(): { heading: number; tilt: number } {
   const map = useMap();
-  const [heading, setHeading] = useState(0);
+  const [view, setView] = useState({ heading: 0, tilt: 0 });
   useEffect(() => {
     if (!map) return;
-    setHeading(map.getHeading() ?? 0);
-    const listener = map.addListener("heading_changed", () => setHeading(map.getHeading() ?? 0));
-    return () => listener.remove();
+    const read = () => {
+      const heading = map.getHeading() ?? 0;
+      const tilt = map.getTilt() ?? 0;
+      setView((current) => (current.heading === heading && current.tilt === tilt ? current : { heading, tilt }));
+    };
+    read();
+    const listeners = ["heading_changed", "tilt_changed", "bounds_changed", "idle"].map((event) => map.addListener(event, read));
+    return () => listeners.forEach((l) => l.remove());
   }, [map]);
-  return heading;
+  return view;
 }
+
+const useMapHeading = () => useMapOrientation().heading;
 
 /** Shows once the map is turned or tilted, and one tap puts north back up and the view flat. The needle keeps
  * pointing north whichever way the map is turned. */
 function ResetNorthControl() {
   const t = useT();
   const map = useMap();
-  const [view, setView] = useState({ heading: 0, tilt: 0 });
-  useEffect(() => {
-    if (!map) return;
-    const read = () => setView({ heading: map.getHeading() ?? 0, tilt: map.getTilt() ?? 0 });
-    read();
-    const listeners = [map.addListener("heading_changed", read), map.addListener("tilt_changed", read)];
-    return () => listeners.forEach((l) => l.remove());
-  }, [map]);
+  const view = useMapOrientation();
   if (view.heading === 0 && view.tilt === 0) return null;
   return (
     <MapControl position={ControlPosition.RIGHT_TOP}>

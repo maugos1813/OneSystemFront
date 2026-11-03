@@ -197,7 +197,7 @@ export function SettingsPage() {
               Usa el horario laboral configurado arriba.
             </AlertRow>
             <AlertRow
-              label="Dispositivo desconectado"
+              label="Dispositivo sin señal"
               enabled={form.alerts.deviceOfflineEnabled}
               onToggle={(v) => updateAlert("deviceOfflineEnabled", v)}
             >
