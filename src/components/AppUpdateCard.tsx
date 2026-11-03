@@ -7,9 +7,17 @@ import { trackGlow } from "../lib/glow";
  * "Aplicación Android" in the configuration: inside the app it shows the installed version and looks for a newer one;
  * in a normal browser it offers the app for download.
  */
+/** The rotating map is a vector map, which draws with WebGL 2: a device (or the browser inside an app) without it keeps the
+ * flat map, and there is no turning it. */
+function mapRotationSupport(): { webgl2: boolean; version: string } {
+  const webgl2 = !!document.createElement("canvas").getContext("webgl2");
+  return { webgl2, version: navigator.userAgent.match(/Chrome\/(\d+)/)?.[1] ?? "?" };
+}
+
 export function AppUpdateCard() {
   const t = useT();
   const { isNative, installed, latest, available, checking, error, checkedAt, check, install } = useAppUpdate();
+  const rotation = mapRotationSupport();
   const upToDate = isNative && !!installed && !!latest && !available && !!checkedAt && !error;
 
   return (
@@ -31,6 +39,10 @@ export function AppUpdateCard() {
               {latest ? t("update.downloadWithVersion", { version: latest.versionName }) : t("update.download")}
             </p>
           )}
+
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+            {t("update.mapRotation", { state: t(rotation.webgl2 ? "update.mapRotationOn" : "update.mapRotationOff"), version: rotation.version })}
+          </p>
 
           {available && latest?.notes && <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">{latest.notes}</p>}
           {upToDate && (

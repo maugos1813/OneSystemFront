@@ -291,6 +291,8 @@ export function MapView({
           streetViewControl={false}
           mapId={MAP_ID}
           renderingType={RenderingType.VECTOR}
+          headingInteractionEnabled
+          tiltInteractionEnabled
           colorScheme={theme === "dark" ? ColorScheme.DARK : ColorScheme.LIGHT}
         >
           <ResetNorthControl />
