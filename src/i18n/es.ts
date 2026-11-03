@@ -69,6 +69,7 @@ export const es = {
   "update.checkFailed": "No se pudo buscar la actualización",
   "update.fetchFailed": "No se pudo consultar la última versión",
   "map.vehiclesCount": "Vehículos ({count})",
+  "map.resetNorth": "Volver al norte",
   "map.noDevicesTitle": "Todavía no hay dispositivos en tu flota",
   "map.noVehiclesYet": "Tus vehículos aparecerán en el mapa en cuanto tengas un dispositivo asignado.",
   "map.noDevicesYet": "Tus vehículos ya están registrados. Aparecerán en el mapa cuando tu administrador les asigne un dispositivo.",

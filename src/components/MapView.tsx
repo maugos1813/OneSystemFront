@@ -1,17 +1,74 @@
-import { Map, Marker, Polygon, Polyline, useMap } from "@vis.gl/react-google-maps";
+import { ColorScheme, ControlPosition, Map, MapControl, Marker, Polygon, Polyline, RenderingType, useMap, type MapCameraChangedEvent } from "@vis.gl/react-google-maps";
+import { Compass } from "lucide-react";
 import { MapsProvider } from "./MapsProvider";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useFleet } from "../context/FleetContext";
 import { useTheme } from "../context/ThemeContext";
 import { useT } from "../i18n";
 import { useSmoothedPosition } from "../hooks/useSmoothedPosition";
 import { geofenceZoneColor, isRomeZtl } from "../lib/geo";
-import { DARK_MAP_STYLE } from "../lib/mapStyle";
+import { MAP_ID } from "../lib/mapConfig";
 import { fleetClass, fleetColors, fleetPrefixes, fleetTagCss, GAMONAL_FLEET } from "../lib/fleetBrand";
 import { getVehicleIcon } from "../lib/markerIcon";
 import { AVL_ID, type Geofence, type Position, type SharedVehicle, type Vehicle, type VehicleEta } from "../lib/types";
 
 const FOCUS_ZOOM = 15;
+
+/** What the map shows now (kept across a theme change, which has to build the map again). */
+interface Camera {
+  center: { lat: number; lng: number };
+  zoom: number;
+  heading: number;
+  tilt: number;
+}
+
+/** How far the person has turned the map. A vehicle's arrow is drawn against the screen, not the map, so it has to
+ * turn the other way by that much to keep pointing where the vehicle is really going. */
+function useMapHeading(): number {
+  const map = useMap();
+  const [heading, setHeading] = useState(0);
+  useEffect(() => {
+    if (!map) return;
+    setHeading(map.getHeading() ?? 0);
+    const listener = map.addListener("heading_changed", () => setHeading(map.getHeading() ?? 0));
+    return () => listener.remove();
+  }, [map]);
+  return heading;
+}
+
+/** Shows once the map is turned or tilted, and one tap puts north back up and the view flat. The needle keeps
+ * pointing north whichever way the map is turned. */
+function ResetNorthControl() {
+  const t = useT();
+  const map = useMap();
+  const [view, setView] = useState({ heading: 0, tilt: 0 });
+  useEffect(() => {
+    if (!map) return;
+    const read = () => setView({ heading: map.getHeading() ?? 0, tilt: map.getTilt() ?? 0 });
+    read();
+    const listeners = [map.addListener("heading_changed", read), map.addListener("tilt_changed", read)];
+    return () => listeners.forEach((l) => l.remove());
+  }, [map]);
+  if (view.heading === 0 && view.tilt === 0) return null;
+  return (
+    <MapControl position={ControlPosition.RIGHT_TOP}>
+      <button
+        type="button"
+        onClick={() => {
+          map?.setHeading(0);
+          map?.setTilt(0);
+        }}
+        title={t("map.resetNorth")}
+        aria-label={t("map.resetNorth")}
+        className="m-2.5 flex h-10 w-10 items-center justify-center rounded-sm bg-white text-slate-700 shadow-md hover:bg-slate-50"
+      >
+        <Compass className="h-5 w-5" style={{ transform: `rotate(${-view.heading}deg)` }} />
+      </button>
+    </MapControl>
+  );
+}
+
+const unrotated = (angle: number, heading: number) => (((angle - heading) % 360) + 360) % 360;
 
 /** Pans (and zooms in on) the selected vehicle's position whenever the selection
  * changes, so picking one out of a cluster of markers doesn't require manually hunting
@@ -130,10 +187,11 @@ function SharedVehicleMarker({
   selected: boolean;
   onSelect?: (plate: string) => void;
 }) {
+  const heading = useMapHeading();
   const position = {
     ioData: { [AVL_ID.IGNITION]: vehicle.ignition ? 1 : 0 },
     speed: vehicle.speed ?? 0,
-    angle: vehicle.direction ?? 0,
+    angle: unrotated(vehicle.direction ?? 0, heading),
   } as unknown as Position;
   return (
     <Marker
@@ -150,6 +208,7 @@ function SharedVehicleMarker({
  * so each vehicle's animation is its own hook instance, independent of the others. */
 function AnimatedVehicleMarker({ vehicle, position, selected, onSelect, theme }: AnimatedVehicleMarkerProps) {
   const smoothed = useSmoothedPosition(position);
+  const heading = useMapHeading();
   if (!smoothed) return null;
 
   return (
@@ -157,7 +216,7 @@ function AnimatedVehicleMarker({ vehicle, position, selected, onSelect, theme }:
       position={{ lat: smoothed.lat, lng: smoothed.lng }}
       title={vehicle.name}
       onClick={() => onSelect(vehicle.id)}
-      icon={getVehicleIcon({ ...position, angle: smoothed.angle }, selected ? 1 : 0.75)}
+      icon={getVehicleIcon({ ...position, angle: unrotated(smoothed.angle, heading) }, selected ? 1 : 0.75)}
       label={{
         text: vehicle.plate ?? vehicle.name,
         // The fleet's coloured tag ("DH", "UN"…) is drawn in CSS from this class — see fleetBrand.ts.
@@ -186,6 +245,7 @@ export function MapView({
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
   const { theme } = useTheme();
   const { geofences } = useFleet();
+  const camera = useRef<Camera | null>(null);
   const zonePolygons = geofences.filter((g) => g.type === "polygon" && g.path && !isRomeZtl(g.name));
 
   const knownPositions = vehicles
@@ -210,16 +270,28 @@ export function MapView({
       <style>{fleetTagCss(fleets)}</style>
       <MapsProvider apiKey={apiKey}>
         <Map
+          // The vector map turns and tilts with two fingers; its colours come from the scheme, which is set when the
+          // map is built, so a theme change builds it again — from where the person had left it.
+          key={theme}
           className="h-full"
-          defaultCenter={center ? { lat: center.lat, lng: center.lng } : DEFAULT_CENTER}
-          defaultZoom={center ? 14 : 4}
+          defaultCenter={camera.current?.center ?? (center ? { lat: center.lat, lng: center.lng } : DEFAULT_CENTER)}
+          defaultZoom={camera.current?.zoom ?? (center ? 14 : 4)}
+          defaultHeading={camera.current?.heading ?? 0}
+          defaultTilt={camera.current?.tilt ?? 0}
+          onCameraChanged={(e: MapCameraChangedEvent) => {
+            const { center: c, zoom, heading, tilt } = e.detail;
+            camera.current = { center: c, zoom, heading, tilt };
+          }}
           gestureHandling="greedy"
           disableDefaultUI={false}
           // Map/satellite and the street-view figure are left out: the map is the point, so the centre stays clear.
           mapTypeControl={false}
           streetViewControl={false}
-          styles={theme === "dark" ? DARK_MAP_STYLE : undefined}
+          mapId={MAP_ID}
+          renderingType={RenderingType.VECTOR}
+          colorScheme={theme === "dark" ? ColorScheme.DARK : ColorScheme.LIGHT}
         >
+          <ResetNorthControl />
           <MapCenterOnSelect selectedVehicleId={selectedVehicleId} positions={positions} />
           <MapCenterOnShared vehicle={shared.find((v) => v.plate === selectedSharedPlate) ?? null} />
           {route && <RouteLayer route={route} />}

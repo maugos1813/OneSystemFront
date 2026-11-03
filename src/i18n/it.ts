@@ -68,6 +68,7 @@ export const it: Record<MessageKey, string> = {
   "update.checkFailed": "Impossibile cercare l'aggiornamento",
   "update.fetchFailed": "Impossibile verificare l'ultima versione",
   "map.vehiclesCount": "Veicoli ({count})",
+  "map.resetNorth": "Torna al nord",
   "map.noDevicesTitle": "Non ci sono ancora dispositivi nella tua flotta",
   "map.noVehiclesYet": "I tuoi veicoli compariranno sulla mappa non appena avrai un dispositivo assegnato.",
   "map.noDevicesYet": "I tuoi veicoli sono già registrati. Compariranno sulla mappa quando il tuo amministratore assegnerà loro un dispositivo.",
