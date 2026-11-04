@@ -1,5 +1,5 @@
 /** Models offered in the pickers. The tracker never reports its own model, so a person picks it. */
-export const DEVICE_MODELS = ["FMB204", "FMC003", "FTC920", "FMB920", "FMC130", "FMC150", "Otro"] as const;
+export const DEVICE_MODELS = ["FMB204", "FMC003", "FTC920", "FTC880", "FMB920", "FMC130", "FMC150", "Otro"] as const;
 
 /** The picker options for a device, keeping a model that isn't in the list (legacy rows). */
 export function modelOptions(current: string): string[] {
@@ -110,6 +110,50 @@ const PROFILES: Record<string, ModelProfile> = {
         lines: [
           "Se activa desde esta ficha, en la sección “Conducción”: no hace falta tocar el Configurator.",
           "Para que mida bien, el equipo debe ir fijo, nivelado y con los cables hacia la parte delantera del vehículo.",
+        ],
+      },
+    ],
+  },
+  FTC880: {
+    summary: "Tracker cableado LTE Cat 1 con batería interna y Bluetooth. Solo dos cables (alimentación y masa), sin OBD ni entradas.",
+    obd: false,
+    io: [],
+    output: null,
+    ignitionWire: false,
+    setup: [
+      {
+        title: "1. Instalación (según la etiqueta del equipo)",
+        lines: [
+          "Rojo: +10…30 V (siempre vivo, con fusible).",
+          "Negro: GND (masa del vehículo).",
+          "No tiene cable de contacto: la ignición se deduce por el voltaje de la alimentación.",
+          "Montarlo con la cara marcada “MOUNT THIS SIDE UP” hacia arriba y con vista al cielo.",
+          "SIM con datos (LTE Cat 1): insertarla con el equipo sin alimentación; con el equipo encendido puede no detectarse.",
+        ],
+      },
+      {
+        title: "2. Servidor (pestaña System / GPRS)",
+        lines: [
+          `Domain: ${SERVER_HOST} · Port: ${SERVER_PORT} · Protocol: TCP.`,
+          "APN: vacío con Auto APN activo (igual que el FMC003).",
+          "Codec: Codec 8 Extended (hace falta para la lista de beacons).",
+        ],
+      },
+      {
+        title: "3. Datos que debe enviar (Data Acquisition y I/O)",
+        lines: [
+          "Detenido: guardar y enviar cada 300 s. En movimiento: guardar cada 5 s y enviar cada 30 s.",
+          "Ignition Source: Power Voltage (motor encendido cuando la batería sube por el alternador).",
+          "I/O con envío activo: Ignition (239), Movement (240), GSM Signal (21), GNSS Status (69), External Voltage (66), Battery Voltage/Level (67/113).",
+          "Alarmas: Unplug (252), Jamming (249) y Crash (247).",
+          "No lee el cuentakilómetros del vehículo: los km se cuentan por GPS.",
+        ],
+      },
+      {
+        title: "4. Bluetooth y EYE Beacons",
+        lines: [
+          "Bluetooth activado y detección de beacons en “todos” (Eddystone e iBeacon).",
+          "La lista de beacons se envía como AVL 385 con RSSI: así OneSystec identifica al conductor.",
         ],
       },
     ],
