@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- The notifications Firebase shows by itself (the app in the background) take OneTrack's symbol, in white as Android requires
+         for the small icon, tinted with its blue. OneSystec keeps the default. -->
+    <application>
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_stat_onetrack" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_color"
+            android:resource="@color/onetrack_notification" />
+    </application>
+</manifest>
