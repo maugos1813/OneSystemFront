@@ -1,6 +1,6 @@
 {
-  "versionCode": 1,
-  "versionName": "1.0",
+  "versionCode": 2,
+  "versionName": "1.1",
   "url": "/downloads/OneTrack.apk",
-  "notes": "Primera versión de OneTrack: solo el GPS de la flota."
+  "notes": "OneTrack ahora recibe notificaciones push"
 }
