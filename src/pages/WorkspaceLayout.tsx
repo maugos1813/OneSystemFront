@@ -297,8 +297,7 @@ function TopBar({ bell, onOpenMenu }: { bell: ReactNode; onOpenMenu: () => void 
       </div>
 
       <div className="relative flex shrink-0 items-center gap-1">
-        <img src="/logo.jpg" alt="OneSystec" title="OneSystec" className="mr-1 h-9 w-9 shrink-0 rounded-xl object-cover shadow-md shadow-blue-200/60" />
-        <OneSystecMark logo={false} className="mr-2 hidden md:flex" />
+        <OneSystecMark className="mr-2 flex" />
         {bell}
         <button
           onClick={toggleTheme}

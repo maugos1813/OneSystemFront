@@ -5,6 +5,7 @@ import { HeroMock } from "../components/landing/HeroMock";
 import { LandingNav } from "../components/landing/LandingNav";
 import { trackGlow } from "../lib/glow";
 import { ACCESS_STEPS, CONTACT_EMAIL, LANDING_APPS, ONETRACK_FEATURES } from "../lib/landingContent";
+import { OneSystecLogo } from "../components/OneSystecLogo";
 
 const SECTION = "mx-auto max-w-6xl scroll-mt-20 px-4 py-16 sm:px-6 sm:py-20";
 const CARD =
@@ -193,7 +194,7 @@ function Footer() {
     <footer className="border-t border-violet-100 bg-white px-4 py-8 dark:border-white/5 dark:bg-[#0d1220]">
       <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 text-sm text-slate-500 sm:flex-row dark:text-slate-400">
         <span className="flex items-center gap-2">
-          <img src="/logo.jpg" alt="" className="h-6 w-6 rounded-lg object-cover" />© {new Date().getFullYear()} OneSystec.
+          <OneSystecLogo alt="" className="h-6" />© {new Date().getFullYear()} OneSystec.
           Todos los derechos reservados.
         </span>
         <Link to="/login" className="font-medium hover:text-slate-900 dark:hover:text-white">

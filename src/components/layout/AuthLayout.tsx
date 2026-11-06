@@ -1,6 +1,7 @@
 import { Moon, Sun } from "lucide-react";
 import type { ReactNode } from "react";
 import { useTheme } from "../../context/ThemeContext";
+import { OneSystecLogo } from "../OneSystecLogo";
 
 export function AuthLayout({ children }: { children: ReactNode }) {
   const { theme, toggleTheme } = useTheme();
@@ -18,16 +19,11 @@ export function AuthLayout({ children }: { children: ReactNode }) {
         />
 
         <div className="relative flex items-center gap-2">
-          <img src="/logo.jpg" alt="OneSystec" className="h-9 w-9 rounded-2xl object-cover shadow-lg" />
-          <span className="text-lg font-semibold">OneSystec</span>
+          <OneSystecLogo tile className="h-11" />
         </div>
 
         <div className="relative">
-          <img
-            src="/logo.jpg"
-            alt="OneSystec"
-            className="mb-4 h-20 w-20 rounded-3xl object-cover shadow-xl shadow-black/20"
-          />
+          <OneSystecLogo tile className="mb-4 h-20 shadow-xl shadow-black/20" />
           <h2 className="mb-2 text-2xl font-semibold">Monitoreo de flota en tiempo real</h2>
           <p className="max-w-sm text-sm text-sky-50">
             Ubicación, velocidad y estado de cada vehículo de tu empresa, todo en un solo lugar.
