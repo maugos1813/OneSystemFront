@@ -3,7 +3,6 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useTheme } from "../../context/ThemeContext";
 import { CONTACT_EMAIL } from "../../lib/landingContent";
-import { OneSystecLogo } from "../OneSystecLogo";
 
 const LINKS: Array<{ href: string; label: string }> = [
   { href: "#apps", label: "Apps" },
@@ -20,7 +19,14 @@ export function LandingNav() {
     <header className="sticky top-0 z-40 border-b border-violet-100/70 bg-white/80 backdrop-blur-md dark:border-white/5 dark:bg-[#0a0e1a]/80">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
         <a href="#top" className="flex min-w-0 items-center gap-2" aria-label="OneSystec — inicio">
-          <OneSystecLogo alt="" className="h-10" />
+          <img
+            src="/logo.jpg"
+            alt=""
+            className="h-9 w-9 shrink-0 rounded-2xl object-cover shadow-md shadow-blue-200/60"
+          />
+          <span className="truncate text-lg font-semibold text-slate-900 dark:text-white">
+            One<span className="brand-text-gradient">Systec</span>
+          </span>
         </a>
 
         <nav className="hidden items-center gap-1 md:flex" aria-label="Principal">

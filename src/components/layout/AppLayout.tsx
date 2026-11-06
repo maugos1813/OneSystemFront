@@ -163,7 +163,7 @@ export function AppLayout() {
                 {currentUser?.email}
               </p>
               {/* A phone has no room for the email line, so the signature takes it; larger screens show it on the right. */}
-              <OneSystecMark className="flex sm:hidden" logoClassName="h-7" />
+              <OneSystecMark className="flex sm:hidden" />
             </div>
           </div>
 
