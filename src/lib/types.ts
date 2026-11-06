@@ -214,6 +214,10 @@ export interface AlertPreferences {
   geofenceEnabled: boolean;
   deviceAlarmsEnabled: boolean;
   maintenanceEnabled: boolean;
+  /** The GPS lost its power or went silent while the vehicle was moving: urgent push, repeated until it is back. */
+  gpsDisconnectEnabled: boolean;
+  gpsDisconnectSilenceMinutes: number;
+  gpsDisconnectReminderMinutes: number;
 }
 
 export interface OrgSettings {

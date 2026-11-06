@@ -8,6 +8,8 @@ let listening = false;
 
 /** Android channel the server sends alerts to (see push.service.ts): high importance so it shows up on screen. */
 const CHANNEL_ID = "alerts";
+/** The channel of the urgent notices (the GPS is disconnected): maximum importance, so they ring and show over whatever is on screen. */
+const URGENT_CHANNEL_ID = "alerts-urgent";
 
 /**
  * Asks to show notifications and registers this phone with the server. Only does anything inside the Android app
@@ -45,6 +47,15 @@ export async function enablePush(): Promise<void> {
       importance: 4,
       visibility: 1,
       vibration: true,
+    });
+    await PushNotifications.createChannel({
+      id: URGENT_CHANNEL_ID,
+      name: "Alertas urgentes (GPS desconectado)",
+      description: "Aviso insistente cuando un GPS pierde la corriente o deja de enviar datos",
+      importance: 5,
+      visibility: 1,
+      vibration: true,
+      lights: true,
     });
     await PushNotifications.register();
   } catch (error) {

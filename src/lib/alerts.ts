@@ -6,6 +6,8 @@ export const LOW_VOLTAGE_THRESHOLD_MV = 11500; // ~11.5V: weak car battery
 export type AlertType =
   | "offline"
   | "low_voltage"
+  | "gps_no_power"
+  | "gps_silent"
   | "after_hours"
   | "speeding"
   | "excessive_idling"
@@ -42,6 +44,20 @@ export function isLowVoltage(position: Position | undefined, thresholdMv = LOW_V
   if (!position) return false;
   const voltage = Number(position.ioData[AVL_ID.EXTERNAL_VOLTAGE] ?? 0);
   return voltage > 0 && voltage < thresholdMv;
+}
+
+/** The vehicle moves but the tracker reports 0 V of external power: it runs on its own battery (unplugged, wire cut). A parked
+ * vehicle says nothing: a tracker wired to the ignition reads 0 V all night. */
+export function isRunningWithoutPower(position: Position | undefined): boolean {
+  if (!position || !(position.speed > 0)) return false;
+  const voltage = position.ioData[AVL_ID.EXTERNAL_VOLTAGE];
+  return voltage !== undefined && voltage !== null && Number(voltage) === 0;
+}
+
+/** The last report said "moving" and nothing has arrived since `thresholdMs` ago. */
+export function isSilentWhileMoving(position: Position | undefined, lastSeenAt: string | null, thresholdMs: number): boolean {
+  if (!position || !(position.speed > 0) || !lastSeenAt) return false;
+  return Date.now() - new Date(lastSeenAt).getTime() > thresholdMs;
 }
 
 export function isSpeeding(position: Position | undefined, limitKmh: number): boolean {
@@ -100,6 +116,28 @@ export function computeAlerts(
         type: "offline",
         message: t("alertMsg.offline", { name: vehicle.name, hours: settings.alerts.deviceOfflineHours }),
       });
+    }
+
+    if (settings.alerts.gpsDisconnectEnabled) {
+      if (isRunningWithoutPower(position)) {
+        alerts.push({
+          vehicleId: vehicle.id,
+          vehicleName: vehicle.name,
+          type: "gps_no_power",
+          message: t("alertMsg.gpsNoPower", { name: vehicle.name }),
+        });
+      }
+      if (isSilentWhileMoving(position, device.lastSeenAt, settings.alerts.gpsDisconnectSilenceMinutes * 60_000)) {
+        alerts.push({
+          vehicleId: vehicle.id,
+          vehicleName: vehicle.name,
+          type: "gps_silent",
+          message: t("alertMsg.gpsSilent", {
+            name: vehicle.name,
+            minutes: Math.round((Date.now() - new Date(device.lastSeenAt!).getTime()) / 60_000),
+          }),
+        });
+      }
     }
 
     if (settings.alerts.lowBatteryEnabled && isLowVoltage(position, settings.alerts.lowBatteryVoltage * 1000)) {

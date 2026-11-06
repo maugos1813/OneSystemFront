@@ -258,6 +258,33 @@ export function SettingsPage() {
               Configurá las zonas en la página Geocercas.
             </AlertRow>
             <AlertRow
+              label="GPS desconectado (aviso urgente)"
+              enabled={form.alerts.gpsDisconnectEnabled}
+              onToggle={(v) => updateAlert("gpsDisconnectEnabled", v)}
+            >
+              <div className="flex flex-col gap-2">
+                <p className="max-w-md">
+                  Con el vehículo en marcha: el GPS sin corriente o sin enviar datos. Llega como notificación urgente y se repite hasta que vuelva.
+                </p>
+                <div className="flex flex-wrap gap-x-4 gap-y-2">
+                  <NumberField
+                    value={form.alerts.gpsDisconnectSilenceMinutes}
+                    onChange={(v) => updateAlert("gpsDisconnectSilenceMinutes", v)}
+                    suffix="min sin datos"
+                    min={5}
+                    max={240}
+                  />
+                  <NumberField
+                    value={form.alerts.gpsDisconnectReminderMinutes}
+                    onChange={(v) => updateAlert("gpsDisconnectReminderMinutes", v)}
+                    suffix="min entre recordatorios"
+                    min={5}
+                    max={120}
+                  />
+                </div>
+              </div>
+            </AlertRow>
+            <AlertRow
               label="Alarmas del dispositivo"
               enabled={form.alerts.deviceAlarmsEnabled}
               onToggle={(v) => updateAlert("deviceAlarmsEnabled", v)}

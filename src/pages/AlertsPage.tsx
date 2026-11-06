@@ -7,6 +7,7 @@ import {
   LogOut,
   Settings as SettingsIcon,
   Timer,
+  Unplug,
   WifiOff,
   Wrench,
 } from "lucide-react";
@@ -21,6 +22,8 @@ import { trackGlow } from "../lib/glow";
 const ALERT_META: Record<AlertType, { label: MessageKey; color: string; icon: typeof WifiOff }> = {
   offline: { label: "alertType.offline", color: "#64748b", icon: WifiOff },
   low_voltage: { label: "alertType.lowVoltage", color: "#f97316", icon: BatteryLow },
+  gps_no_power: { label: "alertType.gpsNoPower", color: "#dc2626", icon: Unplug },
+  gps_silent: { label: "alertType.gpsSilent", color: "#dc2626", icon: Unplug },
   after_hours: { label: "alertType.afterHours", color: "#7c3aed", icon: Clock },
   speeding: { label: "alertType.speeding", color: "#dc2626", icon: Gauge },
   excessive_idling: { label: "alertType.idling", color: "#f59e0b", icon: Timer },
