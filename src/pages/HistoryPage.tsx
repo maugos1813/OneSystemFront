@@ -3,10 +3,10 @@ import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { AreaFilterPills } from "../components/AreaFilterPills";
 import { VehicleStatusBadge } from "../components/StatusBadge";
-import { Panel } from "../components/analytics/Panel";
 import { HistoryMapView } from "../components/history/HistoryMapView";
 import { RangeCalendar, addDays, dayOf, type Day } from "../components/history/RangeCalendar";
 import { PlaybackBar } from "../components/history/PlaybackBar";
+import { routeSummary } from "../lib/routeSummary";
 import { SpeedTimelineChart } from "../components/history/SpeedTimelineChart";
 import { useFleet } from "../context/FleetContext";
 import { usePositionHistory } from "../hooks/usePositionHistory";
@@ -134,10 +134,16 @@ function HistoryView({
     );
   }
 
+  const summary = useMemo(() => routeSummary(history), [history]);
+  const time = (iso: string) => new Date(iso).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
+  const dayTime = (iso: string) => new Date(iso).toLocaleString("es-ES", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+
+  // The route fills the screen: a slim header, then the map taking all the room that is left and the controls beside it (laptop) or
+  // right under it (phone), where the page scrolls to the rest. No panels, titles or margins around the map.
   return (
-    <div className="h-full overflow-y-auto bg-[#f5f6fb] p-4 sm:p-6 lg:p-8 dark:bg-[#0a0e1a]">
+    <div className="flex h-full flex-col overflow-y-auto bg-[#f5f6fb] lg:overflow-hidden dark:bg-[#0a0e1a]">
       {/* The vehicle is already chosen: no list of fleets or plates here, just which one it is and a way back to choose another. */}
-      <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2">
+      <div className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-2 px-3 pt-3 sm:px-4 lg:px-5">
         <button
           type="button"
           onClick={onChangeVehicle}
@@ -146,17 +152,12 @@ function HistoryView({
           <ArrowLeft className="h-4 w-4" />
           Vehículos
         </button>
-        <div className="min-w-0">
-          <h1 className="flex flex-wrap items-center gap-2 text-lg leading-tight font-semibold text-slate-900 dark:text-white">
-            {vehicle?.plate ?? vehicle?.name}
-            {vehicle?.fleetGroup && (
-              <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[11px] font-semibold text-blue-700 dark:bg-blue-500/15 dark:text-blue-400">
-                {vehicle.fleetGroup}
-              </span>
-            )}
-          </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400">Historial de recorrido</p>
-        </div>
+        <h1 className="flex min-w-0 flex-wrap items-center gap-2 text-lg leading-tight font-semibold text-slate-900 dark:text-white">
+          {vehicle?.plate ?? vehicle?.name}
+          {vehicle?.fleetGroup && (
+            <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[11px] font-semibold text-blue-700 dark:bg-blue-500/15 dark:text-blue-400">{vehicle.fleetGroup}</span>
+          )}
+        </h1>
         <button
           type="button"
           onClick={onChangeDates}
@@ -168,43 +169,47 @@ function HistoryView({
         </button>
       </div>
 
-      {!vehicle && <p className="text-sm text-slate-500 dark:text-slate-400">Todavía no hay vehículos cargados.</p>}
+      {!vehicle && <p className="px-4 pt-3 text-sm text-slate-500 dark:text-slate-400">Todavía no hay vehículos cargados.</p>}
 
-      {vehicle && historyLoading && (
-        <p className="mb-3 text-sm text-slate-500 dark:text-slate-400">Cargando recorrido...</p>
-      )}
+      {vehicle && historyLoading && history.length < 2 && <p className="px-4 pt-3 text-sm text-slate-500 dark:text-slate-400">Cargando recorrido...</p>}
 
       {vehicle && !historyLoading && history.length < 2 && (
-        <p className="text-sm text-slate-500 dark:text-slate-400">
-          No hay suficientes datos en este rango para reproducir el recorrido.
-        </p>
+        <p className="px-4 pt-3 text-sm text-slate-500 dark:text-slate-400">No hay suficientes datos en este rango para reproducir el recorrido.</p>
       )}
 
       {/* While another route loads, the previous one stays on screen, dimmed: unmounting the map would create a new one
           (a new, billed load) for every change of vehicle or period. */}
       {vehicle && history.length >= 2 && (
-        <div
-          className={`grid grid-cols-1 gap-4 transition-opacity lg:grid-cols-3 ${historyLoading ? "pointer-events-none opacity-50" : ""}`}
-        >
-          <Panel title="Mapa del recorrido" className="lg:col-span-3">
-            <div className="h-80 overflow-hidden rounded-2xl sm:h-[28rem]">
-              <HistoryMapView
-                positions={history}
-                currentPosition={currentPosition}
-                currentIndex={currentIndex}
-                speedLimit={speedLimit}
-              />
-            </div>
-          </Panel>
+        <div className={`flex min-h-0 flex-1 flex-col gap-3 p-3 transition-opacity sm:p-4 lg:flex-row lg:p-5 ${historyLoading ? "pointer-events-none opacity-50" : ""}`}>
+          <div className="h-[56vh] min-h-72 shrink-0 overflow-hidden rounded-3xl shadow-lg shadow-slate-300/40 lg:h-auto lg:min-h-0 lg:flex-1 dark:shadow-black/40">
+            <HistoryMapView positions={history} currentPosition={currentPosition} currentIndex={currentIndex} speedLimit={speedLimit} />
+          </div>
 
-          <Panel title="Velocidad" className="lg:col-span-3">
-            <SpeedTimelineChart
-              positions={history}
-              speedLimit={speedLimit}
-              currentIndex={currentIndex}
-              onSeek={handleSeek}
-            />
-            <div className="mt-4 border-t border-slate-100 pt-4 dark:border-white/10">
+          <aside className="flex shrink-0 flex-col gap-3 lg:w-[23rem] lg:overflow-y-auto xl:w-[26rem]">
+            {summary && (
+              <section className="grid grid-cols-2 gap-x-4 gap-y-3 rounded-3xl bg-white p-4 shadow-lg shadow-slate-200/50 dark:bg-[#111729] dark:shadow-black/40">
+                <div>
+                  <p className="text-[11px] font-medium tracking-wide text-slate-400 uppercase dark:text-slate-500">Inicio</p>
+                  <p className="text-sm font-semibold text-slate-900 dark:text-white">{fromDay === toDay ? time(summary.start) : dayTime(summary.start)}</p>
+                </div>
+                <div>
+                  <p className="text-[11px] font-medium tracking-wide text-slate-400 uppercase dark:text-slate-500">Fin</p>
+                  <p className="text-sm font-semibold text-slate-900 dark:text-white">{fromDay === toDay ? time(summary.end) : dayTime(summary.end)}</p>
+                </div>
+                <div>
+                  <p className="text-[11px] font-medium tracking-wide text-slate-400 uppercase dark:text-slate-500">Distancia</p>
+                  <p className="text-sm font-semibold text-slate-900 tabular-nums dark:text-white">{summary.distanceKm.toFixed(1)} km</p>
+                </div>
+                <div>
+                  <p className="text-[11px] font-medium tracking-wide text-slate-400 uppercase dark:text-slate-500">Velocidad</p>
+                  <p className="text-sm font-semibold text-slate-900 tabular-nums dark:text-white">
+                    máx. {summary.maxSpeed} · media {summary.avgSpeed} <span className="font-normal text-slate-400">km/h</span>
+                  </p>
+                </div>
+              </section>
+            )}
+
+            <section className="rounded-3xl bg-white p-4 shadow-lg shadow-slate-200/50 dark:bg-[#111729] dark:shadow-black/40">
               <PlaybackBar
                 playing={playing}
                 onTogglePlay={togglePlay}
@@ -219,8 +224,13 @@ function HistoryView({
                 onSpeedLimitChange={setSpeedLimit}
                 currentTs={currentPosition?.ts ?? null}
               />
-            </div>
-          </Panel>
+            </section>
+
+            <section className="rounded-3xl bg-white p-4 shadow-lg shadow-slate-200/50 dark:bg-[#111729] dark:shadow-black/40">
+              <h2 className="mb-2 text-sm font-semibold text-slate-700 dark:text-slate-300">Velocidad</h2>
+              <SpeedTimelineChart positions={history} speedLimit={speedLimit} currentIndex={currentIndex} onSeek={handleSeek} />
+            </section>
+          </aside>
         </div>
       )}
     </div>

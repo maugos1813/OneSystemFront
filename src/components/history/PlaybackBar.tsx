@@ -34,7 +34,8 @@ export function PlaybackBar({
   const overLimit = currentSpeed > speedLimit;
 
   return (
-    <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+    // Stacked: the bar lives in a narrow card (beside the map on a laptop, under it on a phone).
+    <div className="flex flex-col gap-3">
       <div className="flex shrink-0 items-center gap-3">
         <button
           onClick={onTogglePlay}
@@ -50,7 +51,7 @@ export function PlaybackBar({
         >
           <Square className="h-4 w-4" />
         </button>
-        <div className="w-24">
+        <div className="min-w-0 flex-1">
           <p
             className={`text-2xl font-bold tabular-nums ${overLimit ? "text-red-600 dark:text-red-400" : "text-slate-900 dark:text-white"}`}
           >
@@ -72,7 +73,7 @@ export function PlaybackBar({
         className="brand-range h-1.5 w-full flex-1 cursor-pointer rounded-full"
       />
 
-      <div className="flex shrink-0 items-center gap-1" role="group" aria-label="Velocidad de reproducción">
+      <div className="flex shrink-0 flex-wrap items-center gap-1" role="group" aria-label="Velocidad de reproducción">
         {PLAYBACK_RATES.map((r) => (
           <button
             key={r}
