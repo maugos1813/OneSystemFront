@@ -109,18 +109,6 @@ export function login(email: string, password: string): Promise<{ token: string 
   return request("/auth/login", { method: "POST", body: JSON.stringify({ email, password }) });
 }
 
-export interface RegisterInput {
-  orgName: string;
-  email: string;
-  password: string;
-  /** Optional logo as a data URL (see logoImage.ts). */
-  logo?: string;
-}
-
-export function register(input: RegisterInput): Promise<{ token: string }> {
-  return request("/auth/register", { method: "POST", body: JSON.stringify(input) });
-}
-
 /** What a role may use when the server doesn't say (an older server that predates the sections). */
 function fallbackModules(role: CurrentUser["role"]): ModuleKey[] {
   return role === "owner" || role === "admin" ? [...MODULE_KEYS] : [...MODULE_TEMPLATES.estandar];

@@ -1,4 +1,3 @@
-import { Capacitor } from "@capacitor/core";
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { AppLayout } from "./components/layout/AppLayout";
 import { ViewingBanner } from "./components/ViewingBanner";
@@ -18,7 +17,6 @@ import { GeofencesPage } from "./pages/GeofencesPage";
 import { HistoryPage } from "./pages/HistoryPage";
 import { LoginPage } from "./pages/LoginPage";
 import { PlatformPage } from "./pages/PlatformPage";
-import { RegisterPage } from "./pages/RegisterPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { SimsPage } from "./pages/SimsPage";
 import { TeamPage } from "./pages/TeamPage";
@@ -53,8 +51,8 @@ export default function App() {
           <ViewingBanner />
           <Routes>
             <Route path="/login" element={<LoginPage />} />
-            {/* Accounts are created by OneSystec: the Android app has no sign-up. */}
-            <Route path="/register" element={Capacitor.isNativePlatform() ? <Navigate to="/login" replace /> : <RegisterPage />} />
+            {/* Accounts are opened by OneSystec (Clientes): there is no public sign-up. */}
+            <Route path="/register" element={<Navigate to="/login" replace />} />
 
             {/* Old address of the clients section. */}
             <Route path="/administracion" element={<Navigate to="/clientes" replace />} />

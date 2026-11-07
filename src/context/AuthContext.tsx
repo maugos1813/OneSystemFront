@@ -1,6 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
-import { getCurrentUser, login as apiLogin, register as apiRegister } from "../lib/api";
-import type { RegisterInput } from "../lib/api";
+import { getCurrentUser, login as apiLogin } from "../lib/api";
 import { clearToken, getToken, setToken } from "../lib/auth";
 import { rememberedLanguage, translate } from "../i18n";
 import { disablePush, enablePush } from "../lib/push";
@@ -12,7 +11,6 @@ interface AuthContextValue {
   loading: boolean;
   error: string | null;
   login: (email: string, password: string) => Promise<boolean>;
-  register: (input: RegisterInput) => Promise<boolean>;
   logout: () => void;
   /** Reads the user and organization again (after changing the company name or logo). */
   refreshUser: () => Promise<void>;
@@ -61,22 +59,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const register = useCallback(async (input: RegisterInput) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const { token } = await apiRegister(input);
-      setToken(token);
-      setIsAuthenticated(true);
-      return true;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : translate(rememberedLanguage(), "auth.registerFailed"));
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
   const logout = useCallback(() => {
     disablePush();
     clearToken();
@@ -86,7 +68,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ isAuthenticated, currentUser, loading, error, login, register, logout, refreshUser: loadCurrentUser }}
+      value={{ isAuthenticated, currentUser, loading, error, login, logout, refreshUser: loadCurrentUser }}
     >
       {children}
     </AuthContext.Provider>
