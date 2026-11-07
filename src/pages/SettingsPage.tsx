@@ -3,6 +3,7 @@ import { Panel } from "../components/analytics/Panel";
 import { LogoUpload } from "../components/LogoUpload";
 import { useAuth } from "../context/AuthContext";
 import { useFleet } from "../context/FleetContext";
+import { HIDDEN_MODULES, MODULE_INFO } from "../lib/modules";
 import { updateSettings } from "../lib/api";
 import type { AlertPreferences, OrgSettings, WeekdayKey, WorkingHoursDay } from "../lib/types";
 
@@ -76,6 +77,68 @@ function NumberField({
   );
 }
 
+const ROLE_LABEL: Record<string, string> = { owner: "Cliente", admin: "Admin", manager: "Manager", viewer: "Usuario" };
+const LANGUAGE_LABEL: Record<string, string> = { es: "Español", it: "Italiano" };
+
+/** Who is signed in: their account and what it can see. Everyone has it, whatever their role. */
+function ProfilePanel() {
+  const { currentUser } = useAuth();
+  if (!currentUser) return null;
+  const photo = currentUser.userLogo ?? currentUser.orgLogo;
+  const name = currentUser.name.trim() || currentUser.orgName;
+  const sections = currentUser.modules.filter((key) => !HIDDEN_MODULES.includes(key));
+  const rows: Array<[string, string]> = [
+    ["Empresa", currentUser.orgName],
+    ["Flota", currentUser.allowedArea ? currentUser.allowedArea : "Todas las flotas"],
+    ["Idioma", LANGUAGE_LABEL[currentUser.language] ?? currentUser.language],
+  ];
+
+  return (
+    <Panel title="Mi perfil">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,22rem)_1fr] lg:items-start">
+        <div className="flex items-center gap-4">
+          <span className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-3xl bg-white p-1 ring-1 ring-slate-200 dark:ring-white/10">
+            {photo ? (
+              <img src={photo} alt={name} className="max-h-full max-w-full object-contain" />
+            ) : (
+              <span className="brand-gradient flex h-full w-full items-center justify-center rounded-2xl text-3xl font-bold text-white">
+                {name.charAt(0).toUpperCase()}
+              </span>
+            )}
+          </span>
+          <div className="min-w-0">
+            <p className="truncate text-lg font-semibold text-slate-900 dark:text-white">{name}</p>
+            <p className="truncate text-sm text-slate-500 dark:text-slate-400">{currentUser.email}</p>
+            <span className="mt-1.5 inline-flex rounded-full bg-violet-100 px-2.5 py-0.5 text-xs font-medium text-violet-700 dark:bg-violet-500/15 dark:text-violet-300">
+              {ROLE_LABEL[currentUser.role] ?? currentUser.role}
+            </span>
+          </div>
+        </div>
+
+        <div className="grid gap-x-8 gap-y-4 sm:grid-cols-2">
+          {rows.map(([label, value]) => (
+            <div key={label}>
+              <p className="text-xs font-medium tracking-wide text-slate-400 uppercase dark:text-slate-500">{label}</p>
+              <p className="text-sm text-slate-900 dark:text-white">{value}</p>
+            </div>
+          ))}
+          <div className="sm:col-span-2">
+            <p className="mb-1.5 text-xs font-medium tracking-wide text-slate-400 uppercase dark:text-slate-500">Secciones de tu cuenta</p>
+            <div className="flex flex-wrap gap-1.5">
+              {sections.length === 0 && <span className="text-sm text-slate-500 dark:text-slate-400">Ninguna</span>}
+              {sections.map((key) => (
+                <span key={key} className="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-700 dark:bg-white/10 dark:text-slate-300">
+                  {MODULE_INFO[key].label}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </Panel>
+  );
+}
+
 export function SettingsPage() {
   const { settings, refetchSettings } = useFleet();
   const { currentUser, refreshUser } = useAuth();
@@ -92,7 +155,11 @@ export function SettingsPage() {
     if (settings && !form) setForm(settings);
   }, [settings, form]);
 
-  if (!form) {
+  // The company's settings (name, logo, hours, alerts) are for owner/admin (and OneSystec may leave them out for a client);
+  // "Mi perfil" is for everyone.
+  const canEditCompany = (currentUser?.role === "owner" || currentUser?.role === "admin") && (currentUser.adminSections?.includes("ajustes") ?? true);
+
+  if (!form && canEditCompany) {
     return (
       <div className="flex h-full items-center justify-center text-slate-500 dark:text-slate-400">Cargando...</div>
     );
@@ -130,10 +197,16 @@ export function SettingsPage() {
     <div className="h-full overflow-y-auto bg-[#f5f6fb] p-4 sm:p-6 lg:p-8 dark:bg-[#0a0e1a]">
       <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Ajustes</h1>
       <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">
-        Empresa, horario laboral y preferencias de alertas.
+        Tu perfil{canEditCompany ? ", la empresa, el horario laboral y las preferencias de alertas" : ""}.
       </p>
 
-      <div className="grid gap-6 xl:grid-cols-2 xl:items-start">
+      <div className="mb-6">
+        <ProfilePanel />
+      </div>
+
+      {form && canEditCompany && (
+      <>
+      <div className="gap-6 xl:columns-2 [&>*]:mb-6 [&>*]:break-inside-avoid">
         <Panel title="Empresa">
           <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Nombre</label>
           <input
@@ -305,22 +378,24 @@ export function SettingsPage() {
               enabled={form.alerts.maintenanceEnabled}
               onToggle={(v) => updateAlert("maintenanceEnabled", v)}
             >
-              Avisa cuando un plan de Mantenimiento o un documento de Vencimientos (seguro, revisión, bollo…) está por cumplirse o ya se pasó.
+              Avisa cuando un plan de Mantenimiento está por cumplirse o ya se pasó.
             </AlertRow>
           </div>
         </Panel>
 
-        <div className="flex items-center gap-3 pb-4 xl:col-span-2">
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="brand-button rounded-xl px-5 py-2.5 text-sm font-medium disabled:opacity-50"
-          >
-            {saving ? "Guardando..." : "Guardar cambios"}
-          </button>
-          {saved && <span className="text-sm font-medium text-emerald-600">Guardado ✓</span>}
-        </div>
       </div>
+      <div className="flex items-center gap-3 pb-4">
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="brand-button rounded-xl px-5 py-2.5 text-sm font-medium disabled:opacity-50"
+        >
+          {saving ? "Guardando..." : "Guardar cambios"}
+        </button>
+        {saved && <span className="text-sm font-medium text-emerald-600">Guardado ✓</span>}
+        </div>
+      </>
+      )}
     </div>
   );
 }

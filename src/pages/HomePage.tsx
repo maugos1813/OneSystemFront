@@ -81,7 +81,7 @@ export function HomePage() {
   ];
 
   return (
-    <div className="mx-auto max-w-3xl space-y-5 p-4 sm:p-6">
+    <div className="mx-auto max-w-7xl space-y-5 p-4 sm:p-6 lg:space-y-6 lg:p-8">
       <header>
         <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">{t("home.greeting", { name })}</h1>
         <p className="text-sm text-slate-500 dark:text-slate-400">{t("home.subtitle")}</p>
@@ -95,21 +95,34 @@ export function HomePage() {
         </div>
       ) : (
         <>
-          <section className="grid grid-cols-2 gap-3">
-            {stats.map(({ to, label, value, sub, Icon, tone }) => (
-              <Link key={label} to={to} onMouseMove={trackGlow} className={`${CARD} block transition active:scale-[0.98]`}>
-                <div className="flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400">
-                  <span className={`flex h-7 w-7 items-center justify-center rounded-full ${tone}`}>
-                    <Icon className="h-4 w-4" />
-                  </span>
-                  {label}
+          <section className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
+            {stats.map(({ to, label, value, sub, Icon, tone }) => {
+              const body = (
+                <>
+                  <div className="flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400">
+                    <span className={`flex h-7 w-7 items-center justify-center rounded-full ${tone}`}>
+                      <Icon className="h-4 w-4" />
+                    </span>
+                    {label}
+                  </div>
+                  <p className="mt-2 text-4xl leading-none font-semibold tracking-tight text-slate-900 tabular-nums lg:text-5xl dark:text-white">{value}</p>
+                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{sub}</p>
+                </>
+              );
+              // With nothing in it (no vehicle without signal, no alert) there is nothing to open: an empty map or list would only confuse.
+              return value > 0 ? (
+                <Link key={label} to={to} onMouseMove={trackGlow} className={`${CARD} block transition active:scale-[0.98] lg:hover:-translate-y-0.5`}>
+                  {body}
+                </Link>
+              ) : (
+                <div key={label} className={`${CARD} cursor-default`}>
+                  {body}
                 </div>
-                <p className="mt-2 text-4xl leading-none font-semibold tracking-tight text-slate-900 tabular-nums dark:text-white">{value}</p>
-                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{sub}</p>
-              </Link>
-            ))}
+              );
+            })}
           </section>
 
+          <div className="grid gap-5 lg:grid-cols-2 lg:gap-6 [&>section]:h-full">
           <section className={CARD}>
             <div className="mb-3 flex items-baseline justify-between">
               <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-300">{t("home.fleetState")}</h2>
@@ -163,12 +176,14 @@ export function HomePage() {
             )}
           </section>
 
+          </div>
+
           {summary.moving.length > 0 && (
             <section className={CARD}>
               <h2 className="mb-2 text-sm font-semibold text-slate-700 dark:text-slate-300">{t("home.movingNow")}</h2>
-              <ul className="divide-y divide-slate-100 dark:divide-white/10">
+              <ul className="divide-y divide-slate-100 md:grid md:grid-cols-3 md:gap-x-8 md:divide-y-0 dark:divide-white/10">
                 {summary.moving.map((vehicle) => (
-                  <li key={vehicle.id} className="flex items-center justify-between py-2 text-sm">
+                  <li key={vehicle.id} className="flex items-center justify-between py-2 text-sm md:border-b md:border-slate-100 md:dark:border-white/10">
                     <span className="font-medium text-slate-900 dark:text-white">{vehicle.name}</span>
                     <span className="flex items-center gap-1 font-semibold text-emerald-600 tabular-nums dark:text-emerald-400">
                       <Gauge className="h-3.5 w-3.5" /> {vehicle.speed} km/h
@@ -185,7 +200,7 @@ export function HomePage() {
         <section>
           <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-300">{t("home.shortcuts")}</h2>
           <p className="mb-3 text-xs text-slate-500 dark:text-slate-400">{t("home.shortcutsHint")}</p>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5 lg:gap-4">
             {shortcuts.map(({ to, label, hint, icon: Icon }) => (
               <Link key={to} to={to} onMouseMove={trackGlow} className={`${CARD} block transition active:scale-[0.98]`}>
                 <span className="brand-gradient-soft flex h-10 w-10 items-center justify-center rounded-2xl text-blue-600 dark:text-blue-400">

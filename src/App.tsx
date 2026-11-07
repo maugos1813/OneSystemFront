@@ -10,7 +10,6 @@ import { LanguageProvider, rememberedLanguage } from "./i18n";
 import { useState, type ReactNode } from "react";
 import { useAuth } from "./context/AuthContext";
 import { AlertsHubPage } from "./pages/AlertsHubPage";
-import { AnalyticsPage } from "./pages/AnalyticsPage";
 import { ApiKeysPage } from "./pages/ApiKeysPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { DevicesHubPage } from "./pages/DevicesHubPage";
@@ -25,7 +24,6 @@ import { SimsPage } from "./pages/SimsPage";
 import { TeamPage } from "./pages/TeamPage";
 import { VehicleProfilePage } from "./pages/VehicleProfilePage";
 import { VehiclesPage } from "./pages/VehiclesPage";
-import { VencimientosPage } from "./pages/VencimientosPage";
 import { WorkspaceLayout } from "./pages/WorkspaceLayout";
 
 /** An old address (a bookmark, an old link) that now lives inside another section: same page, same query, the right tab. */
@@ -78,7 +76,8 @@ export default function App() {
                 <Route path="/gps" element={<DashboardPage />} />
                 {/* Cockpit is hidden for now: its page stays in the code, its address leads to the map. */}
                 <Route path="/cockpit" element={<Navigate to="/gps" replace />} />
-                <Route path="/analiticas" element={<AnalyticsPage />} />
+                {/* Analíticas and Vencimientos are gone from the system: an old address leads to the start. */}
+                <Route path="/analiticas" element={<Navigate to="/inicio" replace />} />
                 <Route path="/historial" element={<HistoryPage />} />
                 <Route path="/alertas" element={<AlertsHubPage />} />
                 <Route path="/conduccion" element={<MovedTo to="/alertas" tab="conduccion" />} />
@@ -88,7 +87,7 @@ export default function App() {
                 <Route path="/vehiculos/:id" element={<VehicleProfilePage />} />
                 {/* Maintenance now lives inside each vehicle's profile. */}
                 <Route path="/mantenimiento" element={<Navigate to="/vehiculos" replace />} />
-                <Route path="/vencimientos" element={<VencimientosPage />} />
+                <Route path="/vencimientos" element={<Navigate to="/inicio" replace />} />
                 <Route path="/dispositivos" element={<DevicesHubPage />} />
                 <Route
                   path="/dispositivos/:id"

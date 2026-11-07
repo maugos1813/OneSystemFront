@@ -5,7 +5,7 @@ import { bottomNav } from "../../lib/oneTrackNav";
 
 /**
  * The phone's navigation: the start and the four sections this account uses most, always under the thumb. Everything else is on the
- * start as shortcuts. On a big screen the side menu does this job instead.
+ * start as shortcuts. On a tablet and up the side menu does this job instead.
  */
 export function BottomNav() {
   const t = useT();
@@ -15,7 +15,7 @@ export function BottomNav() {
   return (
     <nav
       aria-label="OneTrack"
-      className="relative z-10 shrink-0 border-t border-violet-100 bg-white pb-[env(safe-area-inset-bottom)] lg:hidden dark:border-white/5 dark:bg-[#0d1220]"
+      className="relative z-10 shrink-0 border-t border-violet-100 bg-white pb-[env(safe-area-inset-bottom)] md:hidden dark:border-white/5 dark:bg-[#0d1220]"
     >
       <ul className="mx-auto flex max-w-xl items-stretch justify-around px-1">
         {items.map(({ to, label, icon: Icon, end }) => (

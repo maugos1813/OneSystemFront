@@ -76,7 +76,7 @@ export function VehicleDetailPanel({ vehicle, position, onClose, onRoute }: Vehi
     currentUser?.role === "owner" ||
     currentUser?.role === "admin" ||
     !!currentUser?.modules.some((m) => modules.includes(m));
-  const canSeeHistory = hasAccess("historial", "analiticas");
+  const canSeeHistory = hasAccess("historial");
   // Who drove it lately is about people: it needs the Conducción section.
   const canSeeDriver = hasAccess("conduccion");
   // The profile holds the vehicle's data, its km and its maintenance.

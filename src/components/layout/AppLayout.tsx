@@ -77,33 +77,34 @@ export function AppLayout() {
   return (
     <div className="relative flex h-full overflow-hidden bg-[#f5f6fb] dark:bg-[#0a0e1a]">
       <aside
-        // The side menu is for big screens: on a phone the bottom bar and the start take its place.
-        className={`hidden overflow-hidden border-r border-violet-100 bg-white transition-all duration-200 lg:block dark:border-white/5 dark:bg-[#0d1220] ${
-          navOpen ? "w-64" : "w-0 border-transparent"
+        // The side menu is for tablets and up: on a phone the bottom bar and the start take its place. On a tablet it is a slim rail of
+        // icons; on a laptop it is the full menu, which can be folded away.
+        className={`hidden overflow-hidden border-r border-violet-100 bg-white transition-all duration-200 md:block dark:border-white/5 dark:bg-[#0d1220] ${
+          navOpen ? "md:w-[4.75rem] lg:w-64" : "md:w-[4.75rem] lg:w-0 lg:border-transparent"
         }`}
       >
-        <div className="flex h-full w-64 flex-col">
-          <div className="flex items-center justify-between gap-2 border-b border-violet-100 px-5 py-4 dark:border-white/5">
+        <div className="flex h-full w-[4.75rem] flex-col lg:w-64">
+          <div className="flex items-center justify-center gap-2 border-b border-violet-100 px-3 py-4 lg:justify-between lg:px-5 dark:border-white/5">
             <div className="flex min-w-0 items-center gap-2">
               <img
                 src="/logos/onetrack-icon.png"
                 alt="OneTrack"
                 className="h-9 w-9 shrink-0 rounded-2xl object-cover shadow-md shadow-blue-200/60"
               />
-              <span className="truncate text-lg font-semibold text-slate-900 dark:text-white">
+              <span className="hidden truncate text-lg font-semibold text-slate-900 lg:inline dark:text-white">
                 One<span className="brand-text-gradient">Track</span>
               </span>
             </div>
             <button
               onClick={() => setNavOpen(false)}
-              className="shrink-0 rounded-lg p-1.5 text-slate-400 hover:bg-violet-50 hover:text-slate-700 dark:hover:bg-white/5 dark:hover:text-white"
+              className="hidden shrink-0 rounded-lg p-1.5 lg:block text-slate-400 hover:bg-violet-50 hover:text-slate-700 dark:hover:bg-white/5 dark:hover:text-white"
               aria-label={t("nav.hideMenu")}
             >
               <PanelLeftClose className="h-5 w-5" />
             </button>
           </div>
 
-          <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
+          <nav className="flex-1 space-y-1 overflow-y-auto px-2 py-4 lg:px-3">
             {allowedNav(currentUser).map(({ to, label, icon: Icon, end }) => (
               <NavLink
                 key={to}
@@ -112,20 +113,21 @@ export function AppLayout() {
                 onClick={() => setNavOpen(prefersOpenByDefault())}
                 onMouseMove={trackGlow}
                 className={({ isActive }) =>
-                  `glow flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition ${
+                  `glow flex flex-col items-center gap-1 rounded-xl px-1 py-2 text-[10px] leading-tight font-medium transition lg:flex-row lg:gap-3 lg:px-3 lg:text-sm ${
                     isActive
                       ? "brand-button"
                       : "text-slate-600 hover:bg-violet-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/5 dark:hover:text-white"
                   }`
                 }
               >
-                <Icon className="h-4 w-4" />
-                {t(label)}
+                <Icon className="h-5 w-5 shrink-0 lg:h-4 lg:w-4" />
+                {/* Under an icon on a tablet's rail, beside it on a laptop's menu. */}
+                <span className="max-w-full truncate">{t(label)}</span>
               </NavLink>
             ))}
           </nav>
 
-          <div className="border-t border-violet-100 px-5 py-3 dark:border-white/5">
+          <div className="hidden border-t border-violet-100 px-5 py-3 lg:block dark:border-white/5">
             <OneSystecMark prefix="madeBy" className="flex" />
           </div>
         </div>
@@ -135,7 +137,7 @@ export function AppLayout() {
         <header className="flex items-center justify-between gap-3 border-b border-violet-100 bg-white px-4 py-3 sm:px-6 dark:border-white/5 dark:bg-[#0d1220]">
           <div className="flex min-w-0 items-center gap-3">
             {/* On a phone there is no side menu to open: the icon is only the logo. */}
-            <img src="/logos/onetrack-icon.png" alt="OneTrack" className="h-8 w-8 shrink-0 rounded-xl object-cover lg:hidden" />
+            <img src="/logos/onetrack-icon.png" alt="OneTrack" className="h-8 w-8 shrink-0 rounded-xl object-cover md:hidden" />
             {!navOpen && (
               // The OneTrack icon is the menu button, like the client's logo is in the workspace around it: it nudges on a phone.
               <button

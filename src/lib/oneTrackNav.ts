@@ -1,7 +1,5 @@
 import {
-  BarChart3,
   BellRing,
-  FileCheck,
   History,
   Home,
   Map,
@@ -36,18 +34,17 @@ export const ONETRACK_NAV: OneTrackNavItem[] = [
   // The start: how the fleet is doing, and a shortcut to everything else. Everyone has it.
   { to: "/inicio", label: "nav.home", icon: Home, end: true },
   { to: "/gps", hint: "navHint.map", label: "nav.map", icon: Map, end: true, module: "mapa" },
-  { to: "/analiticas", hint: "navHint.analytics", label: "nav.analytics", icon: BarChart3, end: false, module: "analiticas" },
   { to: "/historial", hint: "navHint.history", label: "nav.history", icon: History, end: false, module: "historial" },
   // Alertas also holds Conducción as a tab: the item opens with either section.
   { to: "/alertas", hint: "navHint.alerts", label: "nav.alerts", icon: BellRing, end: false, anyOf: ["alertas", "conduccion"] },
   { to: "/geocercas", hint: "navHint.geofences", label: "nav.geofences", icon: MapPin, end: false, module: "geocercas" },
   { to: "/vehiculos", hint: "navHint.vehicles", label: "nav.vehicles", icon: Truck, end: false, anyOf: ["vehiculos", "mantenimiento"] },
-  { to: "/vencimientos", hint: "navHint.documents", label: "nav.documents", icon: FileCheck, end: false, module: "vencimientos" },
   // Dispositivos holds Salud and EYE BEACON as tabs.
   { to: "/dispositivos", hint: "navHint.devices", label: "nav.devices", icon: Smartphone, end: false, ownerAdminOnly: true, adminSection: "dispositivos" },
   // The OneTrack settings (working hours, alert thresholds). What belongs to OneSystec itself (clients, team, SIMs, API keys) lives in its
   // own configuration in the portal, not in this menu.
-  { to: "/ajustes", hint: "navHint.settings", label: "nav.settings", icon: Settings, end: false, ownerAdminOnly: true, adminSection: "ajustes" },
+  // Open to everyone: it holds "Mi perfil", and the company settings only for owner/admin (the page decides).
+  { to: "/ajustes", hint: "navHint.settings", label: "nav.settings", icon: Settings, end: false },
 ];
 
 /** Whether this user may open the section. Owner and admin may open all of what their organization has (OneSystec may limit it). */
@@ -73,7 +70,7 @@ export function navItemForPath(pathname: string): OneTrackNavItem | undefined {
 }
 
 /** The sections that get a place in the phone's bottom bar, in the order they are preferred: the ones people use all day. */
-const BOTTOM_PRIORITY = ["/gps", "/alertas", "/vehiculos", "/historial", "/analiticas", "/geocercas", "/vencimientos", "/dispositivos", "/ajustes"];
+const BOTTOM_PRIORITY = ["/gps", "/alertas", "/vehiculos", "/historial", "/geocercas", "/dispositivos", "/ajustes"];
 const BOTTOM_SLOTS = 4;
 export const HOME_PATH = "/inicio";
 

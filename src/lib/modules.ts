@@ -6,7 +6,6 @@ export const MODULE_KEYS = [
   "mapa",
   "historial",
   "alertas",
-  "analiticas",
   "vehiculos",
   "geocercas",
   "mantenimiento",
@@ -15,8 +14,8 @@ export const MODULE_KEYS = [
   "vencimientos",
 ] as const;
 
-/** Sections that still exist in the system but are not offered any more (Cockpit is hidden). */
-export const HIDDEN_MODULES: readonly string[] = ["cockpit"];
+/** Sections that still exist in the system but are not offered any more (Cockpit and Vencimientos are hidden). */
+export const HIDDEN_MODULES: readonly string[] = ["cockpit", "vencimientos"];
 
 export type ModuleKey = (typeof MODULE_KEYS)[number];
 
@@ -39,7 +38,6 @@ export const MODULE_INFO: Record<ModuleKey, ModuleInfo> = {
   mapa: { label: "Mapa", hint: "Seguimiento en vivo de sus vehículos" },
   historial: { label: "Historial", hint: "Recorridos de días anteriores" },
   alertas: { label: "Alertas", hint: "Avisos de su flota" },
-  analiticas: { label: "Analíticas", hint: "Informes y tendencias" },
   vehiculos: { label: "Vehículos", hint: "Lista de sus unidades" },
   geocercas: { label: "Geocercas", hint: "Zonas y avisos de entrada y salida" },
   mantenimiento: { label: "Mantenimiento", hint: "Planes y servicios por kilometraje" },
@@ -51,8 +49,8 @@ export const MODULE_INFO: Record<ModuleKey, ModuleInfo> = {
 /** Ready-made packages. Cockpit, Conducción and Vencimientos are in none of them. */
 export const MODULE_TEMPLATES: Record<"basico" | "estandar" | "completo" | "recursosHumanos", readonly ModuleKey[]> = {
   basico: ["mapa", "historial", "alertas"],
-  estandar: ["mapa", "historial", "alertas", "analiticas", "vehiculos", "geocercas"],
-  completo: ["mapa", "historial", "alertas", "analiticas", "vehiculos", "geocercas", "mantenimiento"],
+  estandar: ["mapa", "historial", "alertas", "vehiculos", "geocercas"],
+  completo: ["mapa", "historial", "alertas", "vehiculos", "geocercas", "mantenimiento"],
   // Recursos humanos: only the vehicles, to follow each one's tagliando (it needs the Manager role to enter them).
   recursosHumanos: ["vehiculos", "mantenimiento"],
 };
