@@ -37,6 +37,8 @@ import type {
   TeamMember,
   Vehicle,
   WorkingHours,
+  PlatformOrganization,
+  PlatformOrganizationDetail,
 } from "./types";
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -612,4 +614,18 @@ export function getVehicleDriver(vehicleId: string, range: { from?: Date; to?: D
   if (range.from) params.set("from", range.from.toISOString());
   if (range.to) params.set("to", range.to.toISOString());
   return request(`/vehicles/${vehicleId}/driver?${params}`);
+}
+
+// --- Platform administration (OneSystec only) ---
+
+export function listPlatformOrganizations(): Promise<PlatformOrganization[]> {
+  return request<PlatformOrganization[]>("/platform/organizations");
+}
+
+export function getPlatformOrganization(id: string): Promise<PlatformOrganizationDetail> {
+  return request<PlatformOrganizationDetail>(`/platform/organizations/${id}`);
+}
+
+export function createPlatformOrganization(input: { orgName: string; email: string; password: string }): Promise<{ orgId: string; userId: string }> {
+  return request<{ orgId: string; userId: string }>("/platform/organizations", { method: "POST", body: JSON.stringify(input) });
 }

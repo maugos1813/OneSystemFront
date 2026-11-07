@@ -4,6 +4,7 @@ import {
   Cross,
   ExternalLink,
   Key,
+  Building2,
   LogOut,
   Map as MapIcon,
   Maximize2,
@@ -212,7 +213,7 @@ function Workspace({ products }: { products: Product[] }) {
             <Outlet context={{ collapse }} />
           </div>
 
-          {atHome && showingConfig && <ConfigPanel role={currentUser?.role} />}
+          {atHome && showingConfig && <ConfigPanel role={currentUser?.role} isPlatform={currentUser?.isPlatform === true} />}
           {atHome && !showingConfig && selected?.type === "internal" && (
             <OneTrackHome product={selected} onExpand={expand} hasMap={!!currentUser?.modules.includes("mapa")} hasSections={!!firstAllowedPath(currentUser)} />
           )}
@@ -712,18 +713,19 @@ function ProfileCard() {
   );
 }
 
-function ConfigPanel({ role }: { role: string | undefined }) {
+function ConfigPanel({ role, isPlatform }: { role: string | undefined; isPlatform: boolean }) {
   const t = useT();
   const manageTeam = role !== "viewer";
   const admin = role === "owner" || role === "admin";
   const items = useMemo(
     () =>
       [
+        isPlatform && { to: "/administracion", label: t("config.platform"), hint: t("config.platformHint"), icon: Building2 },
         manageTeam && { to: "/equipo", label: t("config.team"), hint: t("config.teamHint"), icon: Users },
         admin && { to: "/ajustes", label: t("config.oneTrackSettings"), hint: t("config.oneTrackSettingsHint"), icon: Settings },
         admin && { to: "/api-keys", label: t("config.apiKeys"), hint: t("config.apiKeysHint"), icon: Key },
       ].filter(Boolean) as Array<{ to: string; label: string; hint: string; icon: LucideIcon }>,
-    [manageTeam, admin, t],
+    [isPlatform, manageTeam, admin, t],
   );
 
   return (

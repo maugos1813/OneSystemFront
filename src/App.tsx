@@ -20,6 +20,7 @@ import { DrivingBehaviorPage } from "./pages/DrivingBehaviorPage";
 import { GeofencesPage } from "./pages/GeofencesPage";
 import { HistoryPage } from "./pages/HistoryPage";
 import { LoginPage } from "./pages/LoginPage";
+import { PlatformPage } from "./pages/PlatformPage";
 import { RegisterPage } from "./pages/RegisterPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { DriversPage } from "./pages/DriversPage";
@@ -51,6 +52,7 @@ export default function App() {
 
             <Route element={<RequireAuth />}>
               <Route path="/equipo" element={<TeamPage />} />
+              <Route path="/administracion" element={<PlatformPage />} />
             </Route>
 
             {/* "/" is the public site for visitors and the workspace once signed in; OneTrack's pages

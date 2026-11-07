@@ -30,6 +30,8 @@ export const it: Record<MessageKey, string> = {
   "profile.fleet": "Flotta",
   "config.subtitle": "Gestione del tuo spazio di lavoro",
   "config.team": "Team",
+  "config.platform": "Amministrazione generale",
+  "config.platformHint": "Tutti i clienti, i loro utenti e i loro dispositivi (solo OneSystec)",
   "config.teamHint": "Utenti, ruoli e quali applicazioni vede ciascuno",
   "config.oneTrackSettings": "Impostazioni di OneTrack",
   "config.oneTrackSettingsHint": "Avvisi, orari e preferenze della flotta",

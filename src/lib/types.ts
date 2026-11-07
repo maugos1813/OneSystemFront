@@ -153,6 +153,8 @@ export interface CurrentUser {
   modules: ModuleKey[];
   /** The language the app is shown in for this user; chosen by an admin. */
   language: "es" | "it";
+  /** OneSystec's own owner/admin: the only accounts that get the cross-client administration. Decided by the server. */
+  isPlatform?: boolean;
 }
 
 /** A Gamonal vehicle a client sees on the map because the admin of Gamonal Driver switched it on there. Read-only. */
@@ -569,4 +571,22 @@ export interface VehicleBeacons {
   /** The tracker's last beacon report in the period (even one with no beacons); null if it sent none. */
   lastReport: string | null;
   beacons: BeaconInVehicle[];
+}
+
+/** One client organization as the platform administration lists it. */
+export interface PlatformOrganization {
+  id: string;
+  name: string;
+  plan: string;
+  createdAt: string;
+  users: number;
+  vehicles: number;
+  devices: number;
+  lastDeviceSeenAt: string | null;
+  isPlatform: boolean;
+}
+
+export interface PlatformOrganizationDetail extends PlatformOrganization {
+  members: Array<{ id: string; name: string; email: string; role: string; allowedArea: string | null }>;
+  deviceList: Array<{ id: string; imei: string; model: string; status: string; lastSeenAt: string | null }>;
 }

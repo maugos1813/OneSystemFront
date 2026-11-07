@@ -1,7 +1,8 @@
-import { ArrowLeft, Eye, EyeOff, ImagePlus, KeyRound, Pencil, Trash2, X } from "lucide-react";
+import { ArrowLeft, ImagePlus, KeyRound, Pencil, Trash2, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Panel } from "../components/analytics/Panel";
+import { PasswordField } from "../components/PasswordField";
 import { LogoUpload } from "../components/LogoUpload";
 import { LanguageSelect } from "../components/LanguageSelect";
 import { ModulesPicker } from "../components/ModulesPicker";
@@ -47,53 +48,6 @@ const ROLE_HELP: Record<"admin" | "manager" | "viewer", string> = {
 
 /** Mirrors the backend's canManageOther() — deliberately excludes self-service, since
  * a restricted user editing their own área/products would be privilege escalation. */
-/** A password box with the eye that shows what was typed (so a password dictated to someone else isn't typed blind). */
-function PasswordField({
-  value,
-  onChange,
-  placeholder,
-  required,
-  minLength,
-  autoFocus,
-  className = "",
-  inputClassName = "",
-}: {
-  value: string;
-  onChange: (value: string) => void;
-  placeholder: string;
-  required?: boolean;
-  minLength?: number;
-  autoFocus?: boolean;
-  className?: string;
-  inputClassName?: string;
-}) {
-  const [visible, setVisible] = useState(false);
-  return (
-    <div className={`relative ${className}`}>
-      <input
-        type={visible ? "text" : "password"}
-        required={required}
-        minLength={minLength}
-        placeholder={placeholder}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        autoFocus={autoFocus}
-        autoComplete="new-password"
-        className={`field-input w-full border border-slate-300 pr-9 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white ${inputClassName}`}
-      />
-      <button
-        type="button"
-        onClick={() => setVisible((v) => !v)}
-        aria-label={visible ? "Ocultar contraseña" : "Mostrar contraseña"}
-        title={visible ? "Ocultar contraseña" : "Mostrar contraseña"}
-        className="absolute inset-y-0 right-0 flex items-center px-2.5 text-slate-400 hover:text-slate-700 dark:hover:text-white"
-      >
-        {visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-      </button>
-    </div>
-  );
-}
-
 function canManageOther(currentUser: CurrentUser | null, member: TeamMember): boolean {
   if (!currentUser) return false;
   if (currentUser.role === "owner" || currentUser.role === "admin") return member.role !== "owner";

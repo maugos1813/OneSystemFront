@@ -31,6 +31,8 @@ export const es = {
   "profile.fleet": "Flota",
   "config.subtitle": "Administración de tu espacio de trabajo",
   "config.team": "Equipo",
+  "config.platform": "Administración general",
+  "config.platformHint": "Todos los clientes, sus usuarios y sus dispositivos (solo OneSystec)",
   "config.teamHint": "Usuarios, roles y qué aplicaciones ve cada uno",
   "config.oneTrackSettings": "Ajustes de OneTrack",
   "config.oneTrackSettingsHint": "Alertas, horarios y preferencias de la flota",
