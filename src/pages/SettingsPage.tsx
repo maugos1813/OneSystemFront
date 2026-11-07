@@ -3,7 +3,7 @@ import { Panel } from "../components/analytics/Panel";
 import { LogoUpload } from "../components/LogoUpload";
 import { useAuth } from "../context/AuthContext";
 import { useFleet } from "../context/FleetContext";
-import { HIDDEN_MODULES, MODULE_INFO } from "../lib/modules";
+import { MODULE_INFO, visibleModules } from "../lib/modules";
 import { updateSettings } from "../lib/api";
 import type { AlertPreferences, OrgSettings, WeekdayKey, WorkingHoursDay } from "../lib/types";
 
@@ -86,7 +86,7 @@ function ProfilePanel() {
   if (!currentUser) return null;
   const photo = currentUser.userLogo ?? currentUser.orgLogo;
   const name = currentUser.name.trim() || currentUser.orgName;
-  const sections = currentUser.modules.filter((key) => !HIDDEN_MODULES.includes(key));
+  const sections = visibleModules(currentUser.modules);
   const rows: Array<[string, string]> = [
     ["Empresa", currentUser.orgName],
     ["Flota", currentUser.allowedArea ? currentUser.allowedArea : "Todas las flotas"],

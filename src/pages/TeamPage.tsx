@@ -28,7 +28,7 @@ import {
 import { FleetGroupSelect } from "../components/FleetGroupSelect";
 import { useFleetGroups } from "../lib/useFleetGroups";
 import { fileToLogoVariants, LOGO_ACCEPT } from "../lib/logoImage";
-import { HIDDEN_MODULES, MODULE_INFO, MODULE_TEMPLATES, matchingTemplate, type ModuleKey } from "../lib/modules";
+import { MODULE_INFO, MODULE_TEMPLATES, matchingTemplate, visibleModules, type ModuleKey } from "../lib/modules";
 import type { CurrentUser, Product, TeamMember, TeamRole, Vehicle } from "../lib/types";
 
 const ROLE_LABEL: Record<TeamRole, string> = {
@@ -671,7 +671,7 @@ function MemberRow({
           ) : (
             <div className="flex flex-wrap gap-1.5">
               {member.modules.length === 0 && <span className="text-xs text-slate-400 dark:text-slate-500">Ninguna</span>}
-              {member.modules.filter((key) => !HIDDEN_MODULES.includes(key)).map((key) => (
+              {visibleModules(member.modules).map((key) => (
                 <span key={key} className="rounded-full bg-slate-200 px-2 py-0.5 text-xs text-slate-600 dark:bg-white/10 dark:text-slate-300">
                   {MODULE_INFO[key].label}
                 </span>

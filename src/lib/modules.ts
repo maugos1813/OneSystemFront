@@ -29,6 +29,14 @@ export const ADMIN_SECTION_INFO: Record<AdminSectionKey, { label: string; hint: 
   api_keys: { label: "API Keys", hint: "Claves para integrar OneTrack con otros sistemas" },
 };
 
+/**
+ * The sections of a list that this screen knows how to name and shows. The server can know a section the screen does not (Peajes has no
+ * page here) and owner/admin come with all of the server's: those are left out instead of breaking the screen that lists them.
+ */
+export function visibleModules(keys: readonly string[]): ModuleKey[] {
+  return keys.filter((key): key is ModuleKey => key in MODULE_INFO && !HIDDEN_MODULES.includes(key));
+}
+
 export interface ModuleInfo {
   label: string;
   hint: string;
