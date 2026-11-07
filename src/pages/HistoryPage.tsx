@@ -1,6 +1,8 @@
+import { ArrowLeft, Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { AreaFilterPills } from "../components/AreaFilterPills";
-import { VehiclePicker } from "../components/VehiclePicker";
+import { VehicleStatusBadge } from "../components/StatusBadge";
 import { Panel } from "../components/analytics/Panel";
 import { HistoryMapView } from "../components/history/HistoryMapView";
 import { PlaybackBar } from "../components/history/PlaybackBar";
@@ -14,6 +16,7 @@ import { usePlayback } from "../hooks/usePlayback";
 import { useVehicleIncidents } from "../hooks/useVehicleIncidents";
 import { INCIDENT_COLORS, INCIDENT_LABELS, type Incident, type IncidentType } from "../lib/drivingBehavior";
 import { incidentPinUrl } from "../lib/incidentPins";
+import { isIdling, matchesSearch, thresholdsFromSettings, vehicleStatus } from "../lib/vehicleStatus";
 
 const RANGES: Array<{ label: string; hours: number }> = [
   { label: "24h", hours: 24 },
@@ -37,19 +40,82 @@ function formatUsageWindow(u: VehicleUsage): string {
   return `${from} – ${from.slice(0, 5) === to.slice(0, 5) ? to.slice(-5) : to}`;
 }
 
+/** The first step: which vehicle. Everything else on the page is about the one chosen here. */
+function ChooseVehicle({ onSelect }: { onSelect: (vehicleId: string) => void }) {
+  const { filteredVehicles: vehicles, devices, positions, settings } = useFleet();
+  const [search, setSearch] = useState("");
+  const thresholds = thresholdsFromSettings(settings);
+  const seen = new Map(devices.map((d) => [d.id, d.lastSeenAt]));
+  const shown = vehicles
+    .filter((v) => matchesSearch(search, v.plate, v.name, v.fleetGroup))
+    .sort((a, b) => (a.plate ?? a.name).localeCompare(b.plate ?? b.name));
+
+  return (
+    <div className="h-full overflow-y-auto bg-[#f5f6fb] p-4 sm:p-6 lg:p-8 dark:bg-[#0a0e1a]">
+      <div className="mx-auto max-w-6xl">
+        <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Historial de recorrido</h1>
+        <p className="mb-5 text-sm text-slate-500 dark:text-slate-400">Elige el vehículo del que quieres ver el recorrido.</p>
+
+        <div className="mb-4">
+          <AreaFilterPills />
+        </div>
+
+        <div className="relative mb-4 max-w-md">
+          <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar por placa o nombre…"
+            aria-label="Buscar vehículo"
+            className="field-input w-full rounded-xl border border-slate-300 py-2.5 pr-3 pl-9 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
+          />
+        </div>
+
+        {vehicles.length === 0 && <p className="text-sm text-slate-500 dark:text-slate-400">Todavía no hay vehículos.</p>}
+        {vehicles.length > 0 && shown.length === 0 && <p className="text-sm text-slate-500 dark:text-slate-400">Ningún vehículo coincide.</p>}
+
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          {shown.map((v) => {
+            const position = positions[v.id];
+            const status = vehicleStatus(position, v.deviceId ? (seen.get(v.deviceId) ?? null) : null, thresholds);
+            return (
+              <button
+                key={v.id}
+                type="button"
+                onClick={() => onSelect(v.id)}
+                className="flex items-center justify-between gap-3 rounded-2xl border border-white bg-white p-4 text-left shadow-lg shadow-slate-200/50 transition hover:border-blue-300 active:scale-[0.99] dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40"
+              >
+                <span className="min-w-0">
+                  <span className="block truncate text-base font-semibold text-slate-900 dark:text-white">{v.plate ?? v.name}</span>
+                  <span className="mt-0.5 flex items-center gap-1.5">
+                    {v.plate && v.name !== v.plate && <span className="truncate text-xs text-slate-500 dark:text-slate-400">{v.name}</span>}
+                    {v.fleetGroup && (
+                      <span className="shrink-0 rounded-full bg-blue-100 px-1.5 py-0.5 text-[10px] font-semibold text-blue-700 dark:bg-blue-500/15 dark:text-blue-400">
+                        {v.fleetGroup}
+                      </span>
+                    )}
+                  </span>
+                </span>
+                <VehicleStatusBadge status={status} idling={isIdling(position)} />
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function HistoryPage() {
   const { filteredVehicles: vehicles, loading: fleetLoading } = useFleet();
-  // The vehicle panel on the map links here with ?vehicle=<id>.
-  const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(() => new URLSearchParams(window.location.search).get("vehicle"));
+  // The vehicle is chosen first and lives in the address (?vehicle=<id>): the map's vehicle panel links here with it, and the Back
+  // button returns to the list of vehicles.
+  const [params, setParams] = useSearchParams();
+  const wanted = params.get("vehicle");
+  const selectedVehicleId = wanted && vehicles.some((v) => v.id === wanted) ? wanted : null;
+  const selectVehicle = (id: string | null) => setParams(id ? { vehicle: id } : {});
   const [rangeHours, setRangeHours] = useState(24);
   const [speedLimit, setSpeedLimit] = useState(DEFAULT_SPEED_LIMIT_KMH);
-
-  useEffect(() => {
-    if (vehicles.length === 0) return;
-    if (!selectedVehicleId || !vehicles.some((v) => v.id === selectedVehicleId)) {
-      setSelectedVehicleId(vehicles[0]!.id);
-    }
-  }, [selectedVehicleId, vehicles]);
 
   const from = useMemo(() => new Date(Date.now() - rangeHours * 60 * 60 * 1000), [rangeHours]);
   const { history, loading: historyLoading } = usePositionHistory(selectedVehicleId, from);
@@ -127,35 +193,46 @@ export function HistoryPage() {
     );
   }
 
+  if (!selectedVehicleId) return <ChooseVehicle onSelect={selectVehicle} />;
+
   return (
     <div className="h-full overflow-y-auto bg-[#f5f6fb] p-4 sm:p-6 lg:p-8 dark:bg-[#0a0e1a]">
-      <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Historial de recorrido</h1>
-      <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">
-        Reproducí el trayecto y mirá exactamente dónde se superaron los límites de velocidad.
-      </p>
-
-      <div className="mb-4">
-        <AreaFilterPills />
-      </div>
-
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        <VehiclePicker vehicles={vehicles} selectedId={selectedVehicleId} onSelect={setSelectedVehicleId} />
-
-        {vehicles.length > 0 && <span className="mx-1 h-5 w-px bg-slate-200 dark:bg-white/10" />}
-
-        {RANGES.map((r) => (
-          <button
-            key={r.label}
-            onClick={() => setRangeHours(r.hours)}
-            className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${
-              r.hours === rangeHours
-                ? "bg-slate-900 text-white dark:bg-blue-600"
-                : "bg-white text-slate-500 hover:bg-slate-100 dark:bg-[#111729] dark:text-slate-400 dark:hover:bg-white/10"
-            }`}
-          >
-            {r.label}
-          </button>
-        ))}
+      {/* The vehicle is already chosen: no list of fleets or plates here, just which one it is and a way back to choose another. */}
+      <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2">
+        <button
+          type="button"
+          onClick={() => selectVehicle(null)}
+          className="flex shrink-0 items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-100 dark:bg-[#111729] dark:text-slate-200 dark:hover:bg-white/10"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Vehículos
+        </button>
+        <div className="min-w-0">
+          <h1 className="flex flex-wrap items-center gap-2 text-lg leading-tight font-semibold text-slate-900 dark:text-white">
+            {vehicle?.plate ?? vehicle?.name}
+            {vehicle?.fleetGroup && (
+              <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[11px] font-semibold text-blue-700 dark:bg-blue-500/15 dark:text-blue-400">
+                {vehicle.fleetGroup}
+              </span>
+            )}
+          </h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400">Historial de recorrido</p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
+          {RANGES.map((r) => (
+            <button
+              key={r.label}
+              onClick={() => setRangeHours(r.hours)}
+              className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${
+                r.hours === rangeHours
+                  ? "bg-slate-900 text-white dark:bg-blue-600"
+                  : "bg-white text-slate-500 hover:bg-slate-100 dark:bg-[#111729] dark:text-slate-400 dark:hover:bg-white/10"
+              }`}
+            >
+              {r.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {usages.length > 0 && (
