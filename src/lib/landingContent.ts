@@ -34,7 +34,7 @@ export const LANDING_APPS: LandingApp[] = [
     name: "ONE DRIVER SALUTE",
     tagline: "Logística para farmacias",
     description: "Gestión del reparto y la operación logística de farmacias.",
-    logo: "/logos/gamonal-farmacy.png",
+    logo: "/logos/one-driver-salute.png",
   },
   {
     key: "nakamacar",

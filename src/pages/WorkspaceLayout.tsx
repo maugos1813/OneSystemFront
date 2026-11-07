@@ -40,7 +40,7 @@ const CONFIG_KEY = "config";
 const PRODUCT_LOGOS: Record<string, string> = {
   gps: "/logos/onetrack-icon.png",
   driver: "/logos/gamonal-driver.png",
-  farmacy: "/logos/gamonal-farmacy.png",
+  farmacy: "/logos/one-driver-salute.png",
   nakamacar: "/logos/nakamacar.png",
 };
 
