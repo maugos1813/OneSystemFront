@@ -605,28 +605,8 @@ export interface PlatformOrganizationDetail extends PlatformOrganization {
   }>;
 }
 
-/** A fleet (flota) of a client: its name is the same text as a vehicle's `fleetGroup` and an account's `allowedArea`. */
-export interface FleetPicture {
-  name: string;
-  /** The picture (data URL) that opens the plates of this fleet on the map; null falls back to the letters. */
-  logo: string | null;
-}
-
 /** What the map needs of a fleet: its name and the small picture that opens each plate. */
 export interface FleetTag {
   name: string;
   tag: string | null;
-}
-
-export interface FleetDetail extends FleetPicture {
-  vehicles: number;
-  /** The accounts that administer it: those limited to this fleet. */
-  admins: Array<{ id: string; name: string; email: string; role: string }>;
-}
-
-export interface FleetAdminInput {
-  fleet: string;
-  name: string;
-  email: string;
-  password: string;
 }

@@ -1,14 +1,13 @@
 import { ArrowLeft, Building2, ChevronDown, ChevronRight, ImagePlus, Map as MapIcon, Trash2 } from "lucide-react";
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { Panel } from "../components/analytics/Panel";
-import { FleetsManager } from "../components/FleetsManager";
 import { LogoUpload } from "../components/LogoUpload";
 import { PasswordField } from "../components/PasswordField";
 import { useAuth } from "../context/AuthContext";
-import { ApiError, claimDevice, createOrgFleetAdmin, createPlatformOrganization, getPlatformOrganization, listOrgFleets, setOrgFleetLogo, listPlatformOrganizations, setOrganizationLogoAsPlatform, setOrganizationSections, setUserLogoAsPlatform, viewClientToken } from "../lib/api";
+import { ApiError, claimDevice, createPlatformOrganization, getPlatformOrganization, listPlatformOrganizations, setOrganizationLogoAsPlatform, setOrganizationSections, setUserLogoAsPlatform, viewClientToken } from "../lib/api";
 import { startViewing } from "../lib/auth";
-import { fileToLogoDataUrl, LOGO_ACCEPT } from "../lib/logoImage";
+import { fileToLogoVariants, LOGO_ACCEPT } from "../lib/logoImage";
 import { ADMIN_SECTION_INFO, ADMIN_SECTION_KEYS, HIDDEN_MODULES, MODULE_INFO, MODULE_KEYS } from "../lib/modules";
 import { DEVICE_MODELS } from "../lib/deviceModels";
 import type { PlatformOrganization, PlatformOrganizationDetail } from "../lib/types";
@@ -18,19 +17,6 @@ const dateTimeFormat = new Intl.DateTimeFormat("es", { dateStyle: "short", timeS
 
 const INPUT =
   "field-input min-w-0 flex-1 rounded-xl border border-slate-300 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white";
-
-/** The fleets of one client: pictures for their plates and the accounts that administer each. */
-function OrgFleets({ orgId }: { orgId: string }) {
-  const api = useMemo(
-    () => ({
-      list: () => listOrgFleets(orgId),
-      setLogo: (name: string, logo: string | null, tag?: string | null) => setOrgFleetLogo(orgId, name, logo, tag ?? null),
-      createAdmin: (input: Parameters<typeof createOrgFleetAdmin>[1]) => createOrgFleetAdmin(orgId, input),
-    }),
-    [orgId],
-  );
-  return <FleetsManager api={api} />;
-}
 
 /** The whole platform seen from above: every client organization. Only OneSystec's own owner/admin gets here (the server enforces it). */
 export function PlatformPage({ embedded = false }: { embedded?: boolean }) {
@@ -127,7 +113,13 @@ export function PlatformPage({ embedded = false }: { embedded?: boolean }) {
   async function changePhoto(userId: string, orgId: string, file: File | null) {
     setPhotoBusy(userId);
     try {
-      await setUserLogoAsPlatform(userId, file ? await fileToLogoDataUrl(file) : null);
+      if (file) {
+        // The small copy is what the map draws on the plates when this account is a fleet.
+        const { logo, tag } = await fileToLogoVariants(file);
+        await setUserLogoAsPlatform(userId, logo, tag);
+      } else {
+        await setUserLogoAsPlatform(userId, null);
+      }
       setDetail(await getPlatformOrganization(orgId));
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudo cambiar la foto");
@@ -369,13 +361,6 @@ export function PlatformPage({ embedded = false }: { embedded?: boolean }) {
                                 )}
                               </div>
                             </div>
-                            <div className="rounded-xl border border-slate-200 p-3 dark:border-white/10">
-                              <p className="mb-1 font-medium text-slate-700 dark:text-slate-300">Flotas</p>
-                              <p className="mb-3 text-xs text-slate-500 dark:text-slate-400">
-                                La imagen de cada flota abre sus placas en el mapa (si no tiene, salen las letras). Cada flota puede tener su propia cuenta administradora.
-                              </p>
-                              <OrgFleets orgId={detail.id} />
-                            </div>
                             <div>
                               <p className="mb-1 font-medium text-slate-700 dark:text-slate-300">Usuarios</p>
                               <ul className="space-y-2">
@@ -393,7 +378,7 @@ export function PlatformPage({ embedded = false }: { embedded?: boolean }) {
                                     <span className="min-w-0 flex-1">
                                       <span className="block truncate">
                                         {member.name.trim() || "—"} · {member.role === "owner" ? "Cliente" : member.role}
-                                        {member.allowedArea ? ` · ${member.allowedArea}` : ""}
+                                        {member.allowedArea ? ` · flota ${member.allowedArea}` : ""}
                                       </span>
                                       <span className="block truncate text-xs text-slate-500 dark:text-slate-400">{member.email}</span>
                                     </span>

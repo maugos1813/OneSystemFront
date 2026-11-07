@@ -2,7 +2,6 @@ import { ArrowLeft, ImagePlus, KeyRound, Pencil, Trash2, X } from "lucide-react"
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Panel } from "../components/analytics/Panel";
-import { FleetsManager, type FleetsApi } from "../components/FleetsManager";
 import { PasswordField } from "../components/PasswordField";
 import { LogoUpload } from "../components/LogoUpload";
 import { LanguageSelect } from "../components/LanguageSelect";
@@ -23,18 +22,12 @@ import {
   updateTeamMemberPassword,
   updateTeamMemberProducts,
   updateTeamMemberRole,
-  createFleetAdmin,
-  listFleetDetails,
-  setFleetLogo,
 } from "../lib/api";
 import { FleetGroupSelect } from "../components/FleetGroupSelect";
 import { useFleetGroups } from "../lib/useFleetGroups";
-import { fileToLogoDataUrl, LOGO_ACCEPT } from "../lib/logoImage";
+import { fileToLogoVariants, LOGO_ACCEPT } from "../lib/logoImage";
 import { HIDDEN_MODULES, MODULE_INFO, MODULE_TEMPLATES, matchingTemplate, type ModuleKey } from "../lib/modules";
 import type { CurrentUser, Product, TeamMember, TeamRole } from "../lib/types";
-
-/** The fleets of the account itself (a client's owner/admin manages its own). */
-const OWN_FLEETS_API: FleetsApi = { list: listFleetDetails, setLogo: setFleetLogo, createAdmin: createFleetAdmin };
 
 const ROLE_LABEL: Record<TeamRole, string> = {
   // The account holder is the client itself; its people are its team.
@@ -47,7 +40,7 @@ const ROLE_LABEL: Record<TeamRole, string> = {
 /** What each role can do, as the backend enforces it (owner/admin/manager gates on each route). */
 const ROLE_HELP: Record<"admin" | "manager" | "viewer", string> = {
   viewer:
-    "Solo mira. Ve las cards y el área que le des, pero no puede crear ni editar vehículos, dispositivos, geocercas, SIMs, ajustes ni bloquear un vehículo.",
+    "Solo mira. Ve las cards y la flota que le des, pero no puede crear ni editar vehículos, dispositivos, geocercas, SIMs, ajustes ni bloquear un vehículo.",
   manager:
     "Igual que Usuario, y además crea y administra sus propios sub-usuarios (siempre como Usuario, nunca con más acceso del que él tiene) y registra mantenimientos.",
   admin:
@@ -240,7 +233,7 @@ function MemberRow({
       setEditingArea(false);
       onChanged();
     } catch (err) {
-      setAreaError(err instanceof ApiError ? err.message : "No se pudo actualizar el área");
+      setAreaError(err instanceof ApiError ? err.message : "No se pudo actualizar la flota");
     } finally {
       setSavingArea(false);
     }
@@ -289,7 +282,13 @@ function MemberRow({
     setSavingLogo(true);
     setLogoError(null);
     try {
-      await updateTeamMemberLogo(member.id, remove ? null : await fileToLogoDataUrl(file as File));
+      if (remove) {
+        await updateTeamMemberLogo(member.id, null);
+      } else {
+        // The small copy is what the map draws on the plates of this account's fleet.
+        const { logo, tag } = await fileToLogoVariants(file as File);
+        await updateTeamMemberLogo(member.id, logo, tag);
+      }
       onChanged();
     } catch (err) {
       setLogoError(err instanceof Error ? err.message : "No se pudo guardar el logo");
@@ -533,7 +532,7 @@ function MemberRow({
       {showProducts && (
         <div className="mt-3 border-t border-slate-200 pt-3 dark:border-white/10">
           <div className="mb-2 flex items-center justify-between">
-            <p className="text-xs font-medium tracking-wide text-slate-400 uppercase dark:text-slate-500">Área</p>
+            <p className="text-xs font-medium tracking-wide text-slate-400 uppercase dark:text-slate-500">Flota</p>
             {canManageOtherOnly && !editingArea && (
               <button
                 onClick={() => setEditingArea(true)}
@@ -571,7 +570,7 @@ function MemberRow({
               Solo {member.allowedArea}
             </span>
           ) : (
-            <span className="text-xs text-slate-400 dark:text-slate-500">Todas las áreas</span>
+            <span className="text-xs text-slate-400 dark:text-slate-500">Todas las flotas</span>
           )}
         </div>
       )}
@@ -680,6 +679,7 @@ export function TeamPage({ embedded = false }: { embedded?: boolean }) {
   const [role, setRole] = useState<"admin" | "manager" | "viewer">("viewer");
   const [area, setArea] = useState("");
   const [logo, setLogo] = useState<string | null>(null);
+  const [logoTag, setLogoTag] = useState<string | null>(null);
   const [newModules, setNewModules] = useState<ModuleKey[]>([...MODULE_TEMPLATES.estandar]);
   const [newLanguage, setNewLanguage] = useState<"es" | "it">("es");
   const [newMemberProducts, setNewMemberProducts] = useState<string[]>([]);
@@ -717,7 +717,7 @@ export function TeamPage({ embedded = false }: { embedded?: boolean }) {
         password,
         role: effectiveRole,
         allowedArea: area || null,
-        ...(logo ? { logo } : {}),
+        ...(logo ? { logo, logoTag } : {}),
         language: newLanguage,
         ...(showProductsSection ? { modules: newModules } : {}),
         productKeys: showProductsSection ? newMemberProducts : undefined,
@@ -762,7 +762,7 @@ export function TeamPage({ embedded = false }: { embedded?: boolean }) {
         <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Equipo</h1>
         <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">
           {isManager
-            ? "Los sub-usuarios que creaste, y a qué cards/área tiene acceso cada uno."
+            ? "Los sub-usuarios que creaste, y a qué cards y flota tiene acceso cada uno."
             : "Quién puede entrar a tu cuenta de OneSystec, y a qué cards tiene acceso cada uno."}
         </p>
 
@@ -812,7 +812,7 @@ export function TeamPage({ embedded = false }: { embedded?: boolean }) {
 
                 {areaLocked ? (
                   <p className="flex items-center text-sm text-slate-500 dark:text-slate-400">
-                    Área: <span className="ml-1 font-medium text-slate-700 dark:text-slate-300">{area}</span> (la
+                    Flota: <span className="ml-1 font-medium text-slate-700 dark:text-slate-300">{area}</span> (la
                     misma que la tuya)
                   </p>
                 ) : (
@@ -824,15 +824,22 @@ export function TeamPage({ embedded = false }: { embedded?: boolean }) {
                 <strong className="font-semibold text-slate-700 dark:text-slate-300">{ROLE_LABEL[effectiveRole]}:</strong>{" "}
                 {ROLE_HELP[effectiveRole]}
                 {" "}
-                <strong className="font-semibold text-slate-700 dark:text-slate-300">Área:</strong> si eliges DHL o UNIVEX solo ve los
-                vehículos de esa área (lo hace cumplir el servidor).
+                <strong className="font-semibold text-slate-700 dark:text-slate-300">Flota:</strong> si eliges una (por ejemplo ONE DRIVER
+                EXPRESS) solo ve los vehículos de esa flota (lo hace cumplir el servidor). La foto de la cuenta es la imagen de la flota en las placas del mapa.
               </p>
 
               <div>
                 <p className="mb-2 text-xs font-medium tracking-wide text-slate-400 uppercase dark:text-slate-500">
                   Logo del cliente <span className="font-normal normal-case">(opcional, reemplaza al de la empresa en su pantalla)</span>
                 </p>
-                <LogoUpload value={logo} onChange={setLogo} name={name} />
+                <LogoUpload
+                  value={logo}
+                  onChange={(next, tag) => {
+                    setLogo(next);
+                    setLogoTag(tag ?? null);
+                  }}
+                  name={name}
+                />
               </div>
 
               <div>
@@ -911,13 +918,6 @@ export function TeamPage({ embedded = false }: { embedded?: boolean }) {
               </Panel>
             );
           })()}
-
-          {/* Its fleets: a picture for the plates of each, and the account that administers it. */}
-          {(currentUser?.role === "owner" || currentUser?.role === "admin") && !currentUser.allowedArea && !currentUser.viewingAs && !currentUser.isPlatform && (
-            <Panel title="Flotas">
-              <FleetsManager api={OWN_FLEETS_API} />
-            </Panel>
-          )}
         </div>
       </div>
     </div>

@@ -39,8 +39,6 @@ import type {
   WorkingHours,
   PlatformOrganization,
   PlatformOrganizationDetail,
-  FleetAdminInput,
-  FleetDetail,
   FleetTag,
 } from "./types";
 
@@ -422,6 +420,8 @@ export interface CreateTeamMemberInput {
   allowedArea?: string | null;
   /** The member's own logo as a data URL (see logoImage.ts). */
   logo?: string | null;
+  /** The small copy of it for the map's plate tags (the fleet picture, when the member is limited to a fleet). */
+  logoTag?: string | null;
   /** OneTrack sections to give (see modules.ts); omitted means the standard package. */
   modules?: string[];
   /** The member's language; Spanish when omitted. */
@@ -441,8 +441,8 @@ export function updateTeamMemberLanguage(id: string, language: "es" | "it"): Pro
   return request(`/users/${id}/language`, { method: "PATCH", body: JSON.stringify({ language }) });
 }
 
-export function updateTeamMemberLogo(id: string, logo: string | null): Promise<{ id: string; logo: string | null }> {
-  return request(`/users/${id}/logo`, { method: "PATCH", body: JSON.stringify({ logo }) });
+export function updateTeamMemberLogo(id: string, logo: string | null, tag: string | null = null): Promise<{ id: string; logo: string | null }> {
+  return request(`/users/${id}/logo`, { method: "PATCH", body: JSON.stringify({ logo, tag }) });
 }
 
 export function updateTeamMemberRole(id: string, role: "admin" | "manager" | "viewer"): Promise<TeamMember> {
@@ -643,8 +643,8 @@ export function getPlatformFleet(): Promise<{ vehicles: Vehicle[]; devices: Devi
 }
 
 /** OneSystec only: puts or removes the photo of any client's user (null removes it). */
-export function setUserLogoAsPlatform(userId: string, logo: string | null): Promise<{ id: string; logo: string | null }> {
-  return request(`/platform/users/${userId}/logo`, { method: "PATCH", body: JSON.stringify({ logo }) });
+export function setUserLogoAsPlatform(userId: string, logo: string | null, tag: string | null = null): Promise<{ id: string; logo: string | null }> {
+  return request(`/platform/users/${userId}/logo`, { method: "PATCH", body: JSON.stringify({ logo, tag }) });
 }
 
 /** OneSystec only: what a client may have (OneTrack sections and administration pages); null lifts the limit. */
@@ -664,28 +664,3 @@ export function listFleetPictures(): Promise<FleetTag[]> {
   return request("/fleets");
 }
 
-/** Owner/admin of a client: its fleets with their vehicles and administrators. */
-export function listFleetDetails(): Promise<FleetDetail[]> {
-  return request("/fleets/manage");
-}
-
-export function setFleetLogo(name: string, logo: string | null, tag: string | null = null): Promise<unknown> {
-  return request("/fleets/logo", { method: "PUT", body: JSON.stringify({ name, logo, tag }) });
-}
-
-export function createFleetAdmin(input: FleetAdminInput): Promise<unknown> {
-  return request("/fleets/admin", { method: "POST", body: JSON.stringify(input) });
-}
-
-/** OneSystec only: the same, for any client. */
-export function listOrgFleets(orgId: string): Promise<FleetDetail[]> {
-  return request(`/platform/organizations/${orgId}/fleets`);
-}
-
-export function setOrgFleetLogo(orgId: string, name: string, logo: string | null, tag: string | null = null): Promise<unknown> {
-  return request(`/platform/organizations/${orgId}/fleets/logo`, { method: "PUT", body: JSON.stringify({ name, logo, tag }) });
-}
-
-export function createOrgFleetAdmin(orgId: string, input: FleetAdminInput): Promise<unknown> {
-  return request(`/platform/organizations/${orgId}/fleets/admin`, { method: "POST", body: JSON.stringify(input) });
-}
