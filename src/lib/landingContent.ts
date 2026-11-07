@@ -24,14 +24,14 @@ export const LANDING_APPS: LandingApp[] = [
   },
   {
     key: "driver",
-    name: "Gamonal Driver",
+    name: "ONE DRIVER EXPRESS",
     tagline: "Logística",
     description: "Plataforma para gestionar operaciones de transporte y reparto.",
     logo: "/logos/gamonal-driver.png",
   },
   {
     key: "farmacy",
-    name: "Gamonal Farmacy",
+    name: "ONE DRIVER SALUTE",
     tagline: "Logística para farmacias",
     description: "Gestión del reparto y la operación logística de farmacias.",
     logo: "/logos/gamonal-farmacy.png",
