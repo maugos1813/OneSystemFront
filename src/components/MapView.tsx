@@ -1,6 +1,6 @@
 import { ColorScheme, ControlPosition, Map, MapControl, Marker, Polygon, Polyline, RenderingType, useMap, type MapCameraChangedEvent } from "@vis.gl/react-google-maps";
 import { Compass } from "lucide-react";
-import { MapFullscreenControl } from "./MapFullscreenControl";
+import { MapFullscreenButton, MapResizeOnChange } from "./MapFullscreenControl";
 import { MapsProvider } from "./MapsProvider";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFleet } from "../context/FleetContext";
@@ -111,8 +111,8 @@ function ResetNorthControl() {
   const view = useMapOrientation();
   if (view.heading === 0 && view.tilt === 0) return null;
   return (
-    // Bottom left: the top right belongs to the filters button, which this one used to sit under.
-    <MapControl position={ControlPosition.LEFT_BOTTOM}>
+    // Left, midway: the top right belongs to the filters button and the bottom left to the full-screen button.
+    <MapControl position={ControlPosition.LEFT_CENTER}>
       <button
         type="button"
         onClick={() => {
@@ -388,7 +388,7 @@ export function MapView({
           colorScheme={theme === "dark" ? ColorScheme.DARK : ColorScheme.LIGHT}
         >
           <ResetNorthControl />
-          {onToggleFullscreen && <MapFullscreenControl full={fullscreen} onToggle={onToggleFullscreen} />}
+          <MapResizeOnChange trigger={fullscreen} />
           <FitFleet points={fitPoints} signal={fitSignal} auto={frameFleetOnLoad.current === true} />
           <MapCenterOnSelect selectedVehicleId={selectedVehicleId} positions={positions} />
           <MapCenterOnShared vehicle={shared.find((v) => v.plate === selectedSharedPlate) ?? null} />
@@ -438,6 +438,8 @@ export function MapView({
           ))}
         </Map>
       </MapsProvider>
+      {/* Over the map, bottom left above Google's logo (the top right is for the filters). */}
+      {onToggleFullscreen && <MapFullscreenButton full={fullscreen} onToggle={onToggleFullscreen} className="bottom-9 left-2.5" />}
     </div>
   );
 }

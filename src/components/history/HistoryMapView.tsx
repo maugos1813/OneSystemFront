@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { ColorScheme, ControlPosition, InfoWindow, Map, Marker, Polyline, RenderingType, useMap } from "@vis.gl/react-google-maps";
+import { ColorScheme, InfoWindow, Map, Marker, Polyline, RenderingType, useMap } from "@vis.gl/react-google-maps";
 import { Box, Map as MapIcon } from "lucide-react";
-import { MapFullscreenControl } from "../MapFullscreenControl";
+import { MapFullscreenButton, MapResizeOnChange } from "../MapFullscreenControl";
 import { MapsProvider } from "../MapsProvider";
 import { useTheme } from "../../context/ThemeContext";
 import { INCIDENT_LABELS, type Incident } from "../../lib/drivingBehavior";
@@ -260,7 +260,7 @@ export function HistoryMapView({
           renderingType={RenderingType.VECTOR}
           colorScheme={theme === "dark" ? ColorScheme.DARK : ColorScheme.LIGHT}
         >
-          {onToggleFullscreen && <MapFullscreenControl full={fullscreen} onToggle={onToggleFullscreen} position={ControlPosition.RIGHT_TOP} />}
+          <MapResizeOnChange trigger={fullscreen} />
           <MapCamera
             positions={positions}
             currentPosition={currentPosition}
@@ -318,6 +318,7 @@ export function HistoryMapView({
             />
           )}
         </Map>
+        {onToggleFullscreen && <MapFullscreenButton full={fullscreen} onToggle={onToggleFullscreen} className="top-3 right-3" />}
         <div className="absolute top-3 left-3 flex flex-wrap gap-2">
           <button type="button" className={buttonClass(mode === "overview")} onClick={() => chooseMode("overview")}>
             <MapIcon className="h-3.5 w-3.5" />
