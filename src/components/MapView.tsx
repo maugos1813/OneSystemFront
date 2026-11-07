@@ -1,7 +1,7 @@
 import { ColorScheme, ControlPosition, Map, MapControl, Marker, Polygon, Polyline, RenderingType, useMap, type MapCameraChangedEvent } from "@vis.gl/react-google-maps";
-import { Compass } from "lucide-react";
+import { Compass, Maximize } from "lucide-react";
 import { MapsProvider } from "./MapsProvider";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFleet } from "../context/FleetContext";
 import { useTheme } from "../context/ThemeContext";
 import { useT } from "../i18n";
@@ -20,6 +20,70 @@ interface Camera {
   zoom: number;
   heading: number;
   tilt: number;
+}
+
+const CAMERA_KEY = "onesystem.map.camera.v1";
+
+/** Where the person left the map last time on this device (storage can be unavailable: then it just starts fresh). */
+function loadSavedCamera(): Camera | null {
+  try {
+    const raw = localStorage.getItem(CAMERA_KEY);
+    if (!raw) return null;
+    const value = JSON.parse(raw) as Partial<Camera>;
+    const ok =
+      typeof value.center?.lat === "number" && typeof value.center?.lng === "number" && typeof value.zoom === "number" && value.zoom >= 2 && value.zoom <= 22;
+    return ok ? { center: value.center!, zoom: value.zoom!, heading: value.heading ?? 0, tilt: value.tilt ?? 0 } : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveCamera(camera: Camera): void {
+  try {
+    localStorage.setItem(CAMERA_KEY, JSON.stringify(camera));
+  } catch {
+    /* nothing to remember it with: the map still works */
+  }
+}
+
+/** The button that frames every vehicle at once; and, the very first time the map has no remembered view, does it by itself. */
+function FitFleetControl({ points, auto }: { points: Array<{ lat: number; lng: number }>; auto: boolean }) {
+  const t = useT();
+  const map = useMap();
+  const autoDone = useRef(false);
+
+  const fit = useCallback(() => {
+    if (!map || points.length === 0) return;
+    if (points.length === 1) {
+      map.panTo(points[0]!);
+      map.setZoom(14);
+      return;
+    }
+    const bounds = new google.maps.LatLngBounds();
+    for (const point of points) bounds.extend(point);
+    map.fitBounds(bounds, 72);
+  }, [map, points]);
+
+  useEffect(() => {
+    if (!auto || autoDone.current || !map || points.length === 0) return;
+    autoDone.current = true;
+    fit();
+  }, [auto, map, points, fit]);
+
+  if (points.length === 0) return null;
+  return (
+    <MapControl position={ControlPosition.RIGHT_CENTER}>
+      <button
+        type="button"
+        onClick={fit}
+        title={t("map.fitFleet")}
+        aria-label={t("map.fitFleet")}
+        className="m-2.5 flex h-10 w-10 items-center justify-center rounded-sm bg-white text-slate-700 shadow-md hover:bg-slate-50"
+      >
+        <Maximize className="h-5 w-5" />
+      </button>
+    </MapControl>
+  );
 }
 
 /** How far the person has turned and tilted the map. A turn made with the fingers doesn't always fire the heading
@@ -248,11 +312,28 @@ export function MapView({
   const { theme } = useTheme();
   const { geofences } = useFleet();
   const camera = useRef<Camera | null>(null);
+  // Where it was left last time on this device; read once. Without it, the first positions frame the whole fleet.
+  const saved = useRef<Camera | null | undefined>(undefined);
+  if (saved.current === undefined) saved.current = loadSavedCamera();
+  // Decided once, at the start: the map reports its first view at once, which must not count as "already had one".
+  const frameFleetOnLoad = useRef<boolean | undefined>(undefined);
+  if (frameFleetOnLoad.current === undefined) frameFleetOnLoad.current = !saved.current && !camera.current;
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const zonePolygons = geofences.filter((g) => g.type === "polygon" && g.path && !isRomeZtl(g.name));
 
   const knownPositions = vehicles
     .map((v) => positions[v.id])
     .filter((p): p is Position => p !== undefined);
+
+  // What "see my whole fleet" frames: every vehicle drawn with a GPS fix (a tracker without one reports 0/0, a point in the sea).
+  const fitPoints = useMemo(
+    () =>
+      [...(showOwn ? knownPositions : []), ...shared]
+        .filter((p) => p.lat !== 0 || p.lng !== 0)
+        .map((p) => ({ lat: p.lat, lng: p.lng })),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- recomputed when the set of positions changes
+    [showOwn, shared, positions, vehicles],
+  );
 
   const center = (selectedVehicleId && positions[selectedVehicleId]) ?? knownPositions[0] ?? shared[0] ?? null;
 
@@ -276,13 +357,16 @@ export function MapView({
           // map is built, so a theme change builds it again — from where the person had left it.
           key={theme}
           className="h-full"
-          defaultCenter={camera.current?.center ?? (center ? { lat: center.lat, lng: center.lng } : DEFAULT_CENTER)}
-          defaultZoom={camera.current?.zoom ?? (center ? 14 : 4)}
-          defaultHeading={camera.current?.heading ?? 0}
-          defaultTilt={camera.current?.tilt ?? 0}
+          defaultCenter={camera.current?.center ?? saved.current?.center ?? (center ? { lat: center.lat, lng: center.lng } : DEFAULT_CENTER)}
+          defaultZoom={camera.current?.zoom ?? saved.current?.zoom ?? (center ? 14 : 4)}
+          defaultHeading={camera.current?.heading ?? saved.current?.heading ?? 0}
+          defaultTilt={camera.current?.tilt ?? saved.current?.tilt ?? 0}
           onCameraChanged={(e: MapCameraChangedEvent) => {
             const { center: c, zoom, heading, tilt } = e.detail;
             camera.current = { center: c, zoom, heading, tilt };
+            // Remembered once the view settles, not on every frame of a pan.
+            clearTimeout(saveTimer.current);
+            saveTimer.current = setTimeout(() => camera.current && saveCamera(camera.current), 600);
           }}
           gestureHandling="greedy"
           disableDefaultUI={false}
@@ -296,6 +380,7 @@ export function MapView({
           colorScheme={theme === "dark" ? ColorScheme.DARK : ColorScheme.LIGHT}
         >
           <ResetNorthControl />
+          <FitFleetControl points={fitPoints} auto={frameFleetOnLoad.current === true} />
           <MapCenterOnSelect selectedVehicleId={selectedVehicleId} positions={positions} />
           <MapCenterOnShared vehicle={shared.find((v) => v.plate === selectedSharedPlate) ?? null} />
           {route && <RouteLayer route={route} />}

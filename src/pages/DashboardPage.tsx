@@ -1,4 +1,3 @@
-import { List } from "lucide-react";
 import { useMemo, useState } from "react";
 import { MapView } from "../components/MapView";
 import { VehicleDetailPanel } from "../components/VehicleDetailPanel";
@@ -7,14 +6,8 @@ import { VehicleList } from "../components/VehicleList";
 import { useAuth } from "../context/AuthContext";
 import { useFleet } from "../context/FleetContext";
 import { useT } from "../i18n";
-import { trackGlow } from "../lib/glow";
 import { normalizePlate } from "../lib/plate";
 import type { VehicleEta } from "../lib/types";
-
-/** Below `lg` there isn't room for the vehicle list next to the map, so it starts collapsed there. */
-function prefersOpenByDefault(): boolean {
-  return typeof window !== "undefined" && window.matchMedia("(min-width: 1024px)").matches;
-}
 
 /** Which vehicles the map draws: everything, only the Gamonal ones shared through the Driver, or only the client's own flota. */
 type MapSource = "all" | "gamonal" | "own";
@@ -28,7 +21,6 @@ export function DashboardPage() {
   const [selectedSharedPlate, setSelectedSharedPlate] = useState<string | null>(null);
   // The road ahead of the selected vehicle to a destination searched in its panel, drawn on the map.
   const [route, setRoute] = useState<VehicleEta | null>(null);
-  const [listOpen, setListOpen] = useState(prefersOpenByDefault);
 
   // A vehicle shows on the map only once it has a device; until then the client waits for their admin to assign one.
   const hasTrackedVehicle = vehicles.some((v) => v.deviceId);
@@ -66,17 +58,6 @@ export function DashboardPage() {
 
   return (
     <div className="relative flex h-full overflow-hidden">
-      <VehicleList
-        vehicles={showOwn ? vehicles : []}
-        devices={devices}
-        selectedVehicleId={selectedVehicleId}
-        onSelect={selectVehicle}
-        open={listOpen}
-        onClose={() => setListOpen(false)}
-        sharedVehicles={visibleShared}
-        selectedSharedPlate={selectedSharedPlate}
-        onSelectShared={selectShared}
-      />
       <div className="relative flex-1">
         <MapView
           vehicles={vehicles}
@@ -103,22 +84,19 @@ export function DashboardPage() {
           </div>
         )}
 
-        {/* Top-left, clear of Google's full-screen button on the right. */}
-        <div className="pointer-events-none absolute top-2 right-16 left-2 z-10 flex flex-wrap items-center gap-2">
-          {!listOpen && (
-            <button
-              onClick={() => setListOpen(true)}
-              onMouseMove={trackGlow}
-              className="glow float-card pointer-events-auto flex items-center gap-1.5 rounded-full bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-lg shadow-slate-300/40 dark:bg-[#111729] dark:text-slate-200 dark:shadow-black/40"
-            >
-              <List className="h-4 w-4" />
-              {t("map.vehiclesCount", { count: (showOwn ? vehicles.length : 0) + visibleShared.length })}
-            </button>
-          )}
-
-          {/* Only for a client who also sees Gamonal's vehicles: all of them, Gamonal's, or their own flota. */}
+        {/* Only the search sits over the map; the list opens under it when asked for. The pills (only for a client who also sees Gamonal's vehicles) wait under it. */}
+        <VehicleList
+          vehicles={showOwn ? vehicles : []}
+          devices={devices}
+          positions={positions}
+          selectedVehicleId={selectedVehicleId}
+          onSelect={selectVehicle}
+          sharedVehicles={visibleShared}
+          selectedSharedPlate={selectedSharedPlate}
+          onSelectShared={selectShared}
+        >
           {sharedVehicles.length > 0 && (
-            <div role="group" aria-label={t("map.filterLabel")} className="pointer-events-auto flex gap-1.5">
+            <div role="group" aria-label={t("map.filterLabel")} className="pointer-events-auto flex flex-wrap gap-1.5">
               {(
                 [
                   ["all", t("map.filterAll")],
@@ -140,7 +118,7 @@ export function DashboardPage() {
               ))}
             </div>
           )}
-        </div>
+        </VehicleList>
 
         {selectedShared && <SharedVehiclePanel vehicle={selectedShared} onClose={() => setSelectedSharedPlate(null)} />}
 
