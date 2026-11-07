@@ -1,11 +1,12 @@
 import { List, Search, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useFleet } from "../context/FleetContext";
 import { useT } from "../i18n";
 import { trackGlow } from "../lib/glow";
 import { formatRelativeTime } from "../lib/relativeTime";
 import type { Device, Position, SharedVehicle, Vehicle } from "../lib/types";
-import { isIdling, matchesSearch, vehicleStatus, type VehicleStatus } from "../lib/vehicleStatus";
-import { StatusBadge } from "./StatusBadge";
+import { isIdling, matchesSearch, thresholdsFromSettings, vehicleStatus, type VehicleStatus } from "../lib/vehicleStatus";
+import { VehicleStatusBadge } from "./StatusBadge";
 
 interface VehicleListProps {
   vehicles: Vehicle[];
@@ -38,6 +39,8 @@ export function VehicleList({
   trailing,
 }: VehicleListProps) {
   const t = useT();
+  const { settings } = useFleet();
+  const thresholds = thresholdsFromSettings(settings);
   const deviceById = new Map(devices.map((d) => [d.id, d]));
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
@@ -64,7 +67,7 @@ export function VehicleList({
   }, [open]);
 
   const statusOf = (vehicle: Vehicle): VehicleStatus =>
-    vehicleStatus(positions[vehicle.id], vehicle.deviceId ? (deviceById.get(vehicle.deviceId)?.lastSeenAt ?? null) : null);
+    vehicleStatus(positions[vehicle.id], vehicle.deviceId ? (deviceById.get(vehicle.deviceId)?.lastSeenAt ?? null) : null, thresholds);
 
   const filteredVehicles = useMemo(() => vehicles.filter((v) => matchesSearch(search, v.name, v.plate, v.fleetGroup)), [vehicles, search]);
   const filteredShared = useMemo(() => sharedVehicles.filter((v) => matchesSearch(search, v.plate)), [sharedVehicles, search]);
@@ -132,19 +135,11 @@ export function VehicleList({
             )}
 
             {filteredVehicles.map((vehicle) => {
-              const device = vehicle.deviceId ? deviceById.get(vehicle.deviceId) : undefined;
               const selected = vehicle.id === selectedVehicleId;
               const position = positions[vehicle.id];
               const status = statusOf(vehicle);
-              // What it is doing, without opening it: the speed, or how long ago it last said anything.
-              const doing =
-                status === "moving" && position
-                  ? `${Math.round(position.speed)} km/h`
-                  : status === "stopped"
-                    ? isIdling(position)
-                      ? t("vehicles.idling")
-                      : t("vehicles.stopped")
-                    : null;
+              // What it is doing, without opening it: the speed while it moves, and how long ago it last said anything.
+              const doing = status === "moving" && position ? `${Math.round(position.speed)} km/h` : null;
               const lastData = position ? t("vehicles.lastData", { when: formatRelativeTime(position.ts, t) }) : null;
 
               return (
@@ -180,7 +175,7 @@ export function VehicleList({
                     )}
                   </div>
                   <div className="shrink-0">
-                    <StatusBadge lastSeenAt={device?.lastSeenAt ?? null} />
+                    <VehicleStatusBadge status={status} idling={isIdling(position)} />
                   </div>
                 </button>
               );

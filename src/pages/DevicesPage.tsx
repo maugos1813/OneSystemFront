@@ -2,7 +2,8 @@ import { Plus } from "lucide-react";
 import { useMemo, useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { DeviceSourceBadge } from "../components/DeviceSourceBadge";
-import { StatusBadge } from "../components/StatusBadge";
+import { StatusBadge, VehicleStatusBadge } from "../components/StatusBadge";
+import { isIdling, thresholdsFromSettings, vehicleStatus } from "../lib/vehicleStatus";
 import { useAuth } from "../context/AuthContext";
 import { useFleet } from "../context/FleetContext";
 import { ApiError, claimDevice } from "../lib/api";
@@ -41,7 +42,7 @@ function ModelTags({ model }: { model: string }) {
 
 export function DevicesPage() {
   const { currentUser } = useAuth();
-  const { devices, vehicles, loading, refetch } = useFleet();
+  const { devices, vehicles, positions, settings, loading, refetch } = useFleet();
   const vehicleByDeviceId = new Map(vehicles.filter((v) => v.deviceId).map((v) => [v.deviceId, v]));
   // The IMEI is OneSystec's: it adds hardware by IMEI and sees it. A client knows each device by its vehicle.
   const isPlatform = currentUser?.isPlatform === true;
@@ -232,7 +233,15 @@ export function DevicesPage() {
                     <DeviceSourceBadge source={device.source} />
                   </td>
                   <td className="px-4 py-3">
-                    <StatusBadge lastSeenAt={device.lastSeenAt} />
+                    {(() => {
+                      // The same word as on the map: a parked vehicle is "parado"; "sin señal" is the one that raises alerts.
+                      const position = positions[vehicleByDeviceId.get(device.id)?.id ?? device.id];
+                      return position ? (
+                        <VehicleStatusBadge status={vehicleStatus(position, device.lastSeenAt, thresholdsFromSettings(settings))} idling={isIdling(position)} />
+                      ) : (
+                        <StatusBadge lastSeenAt={device.lastSeenAt} />
+                      );
+                    })()}
                   </td>
                   <td className="px-4 py-3 text-slate-500 dark:text-slate-400">{formatDate(device.lastSeenAt)}</td>
                 </tr>

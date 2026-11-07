@@ -9,7 +9,7 @@ import { useFleet } from "../context/FleetContext";
 import { useT } from "../i18n";
 import { normalizePlate } from "../lib/plate";
 import type { VehicleEta } from "../lib/types";
-import { vehicleStatus, type VehicleStatus } from "../lib/vehicleStatus";
+import { thresholdsFromSettings, vehicleStatus, type VehicleStatus } from "../lib/vehicleStatus";
 
 /** Which vehicles the map draws: everything, only the Gamonal ones shared through the Driver, or only the client's own flota. */
 type MapSource = "all" | "gamonal" | "own";
@@ -18,7 +18,7 @@ export function DashboardPage() {
   const t = useT();
   const { currentUser } = useAuth();
   const [source, setSource] = useState<MapSource>("all");
-  const { filteredVehicles: vehicles, devices, positions, loading, error, sharedVehicles, selectedArea, setSelectedArea } = useFleet();
+  const { filteredVehicles: vehicles, devices, positions, loading, error, sharedVehicles, selectedArea, setSelectedArea, settings } = useFleet();
   const [statusFilter, setStatusFilter] = useState<VehicleStatus | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
   // Bumped by "Ver toda la flota": the map frames every vehicle each time it changes.
@@ -36,7 +36,7 @@ export function DashboardPage() {
   // What each state has, counted over the flota in view; and the vehicles that the state filter leaves on the map and in the list.
   const deviceSeen = useMemo(() => new Map(devices.map((d) => [d.id, d.lastSeenAt])), [devices]);
   const stateOf = (v: (typeof vehicles)[number]): VehicleStatus =>
-    vehicleStatus(positions[v.id], v.deviceId ? (deviceSeen.get(v.deviceId) ?? null) : null);
+    vehicleStatus(positions[v.id], v.deviceId ? (deviceSeen.get(v.deviceId) ?? null) : null, thresholdsFromSettings(settings));
   const counts = { all: vehicles.length, moving: 0, stopped: 0, offline: 0 };
   for (const v of vehicles) counts[stateOf(v)] += 1;
   const shownVehicles = statusFilter ? vehicles.filter((v) => stateOf(v) === statusFilter) : vehicles;
