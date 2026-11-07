@@ -2,9 +2,10 @@ import { ArrowLeft, Building2, ChevronDown, ChevronRight, ImagePlus, Map as MapI
 import { useEffect, useState, type FormEvent } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { Panel } from "../components/analytics/Panel";
+import { LogoUpload } from "../components/LogoUpload";
 import { PasswordField } from "../components/PasswordField";
 import { useAuth } from "../context/AuthContext";
-import { ApiError, claimDevice, createPlatformOrganization, getPlatformOrganization, listPlatformOrganizations, setOrganizationSections, setUserLogoAsPlatform, viewClientToken } from "../lib/api";
+import { ApiError, claimDevice, createPlatformOrganization, getPlatformOrganization, listPlatformOrganizations, setOrganizationLogoAsPlatform, setOrganizationSections, setUserLogoAsPlatform, viewClientToken } from "../lib/api";
 import { startViewing } from "../lib/auth";
 import { fileToLogoDataUrl, LOGO_ACCEPT } from "../lib/logoImage";
 import { ADMIN_SECTION_INFO, ADMIN_SECTION_KEYS, HIDDEN_MODULES, MODULE_INFO, MODULE_KEYS } from "../lib/modules";
@@ -90,6 +91,19 @@ export function PlatformPage({ embedded = false }: { embedded?: boolean }) {
       setSectionsMessage({ ok: false, text: err instanceof Error ? err.message : "No se pudo guardar" });
     } finally {
       setSavingSections(false);
+    }
+  }
+
+  const [logoError, setLogoError] = useState<string | null>(null);
+
+  /** The company logo of a client, shown in its top bar (a user's own photo, if it has one, takes its place for that user). */
+  async function changeOrgLogo(orgId: string, logo: string | null) {
+    setLogoError(null);
+    try {
+      await setOrganizationLogoAsPlatform(orgId, logo);
+      setDetail(await getPlatformOrganization(orgId));
+    } catch (err) {
+      setLogoError(err instanceof Error ? err.message : "No se pudo cambiar el logo");
     }
   }
 
@@ -276,6 +290,14 @@ export function PlatformPage({ embedded = false }: { embedded?: boolean }) {
                             <p className="text-xs text-slate-500 dark:text-slate-400">
                               Alta: {dateFormat.format(new Date(detail.createdAt))} · plan {detail.plan} · id {detail.id}
                             </p>
+                            <div className="rounded-xl border border-slate-200 p-3 dark:border-white/10">
+                              <p className="mb-2 font-medium text-slate-700 dark:text-slate-300">Logo del cliente</p>
+                              <LogoUpload value={detail.logo} onChange={(logo) => void changeOrgLogo(detail.id, logo)} name={detail.name} />
+                              {logoError && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{logoError}</p>}
+                              <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                                Es el logo de la empresa en la barra de su app. Si un usuario tiene foto propia, a él se le muestra la suya.
+                              </p>
+                            </div>
                             <div className="rounded-xl border border-slate-200 p-3 dark:border-white/10">
                               <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                                 <p className="font-medium text-slate-700 dark:text-slate-300">Vistas del cliente</p>

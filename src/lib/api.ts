@@ -646,3 +646,8 @@ export function setUserLogoAsPlatform(userId: string, logo: string | null): Prom
 export function setOrganizationSections(orgId: string, sections: string[] | null): Promise<{ sections: string[] | null }> {
   return request(`/platform/organizations/${orgId}/sections`, { method: "PATCH", body: JSON.stringify({ sections }) });
 }
+
+/** OneSystec only: puts or removes a client's company logo (null removes it). */
+export function setOrganizationLogoAsPlatform(orgId: string, logo: string | null): Promise<{ id: string; logo: string | null }> {
+  return request(`/platform/organizations/${orgId}/logo`, { method: "PATCH", body: JSON.stringify({ logo }) });
+}

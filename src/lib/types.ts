@@ -592,6 +592,8 @@ export interface PlatformOrganization {
 export interface PlatformOrganizationDetail extends PlatformOrganization {
   /** The sections this client may have, set by OneSystec (null: all of them). */
   sections: string[] | null;
+  /** The company logo (data URL), or null. */
+  logo: string | null;
   members: Array<{ id: string; name: string; email: string; role: string; allowedArea: string | null; logo: string | null }>;
   deviceList: Array<{
     id: string;
