@@ -16,6 +16,7 @@ import { DashboardPage } from "./pages/DashboardPage";
 import { DevicesHubPage } from "./pages/DevicesHubPage";
 import { DeviceDetailPage } from "./pages/DeviceDetailPage";
 import { GeofencesPage } from "./pages/GeofencesPage";
+import { HomePage } from "./pages/HomePage";
 import { HistoryPage } from "./pages/HistoryPage";
 import { LoginPage } from "./pages/LoginPage";
 import { PlatformPage } from "./pages/PlatformPage";
@@ -73,6 +74,7 @@ export default function App() {
             <Route element={<WorkspaceLayout />}>
               <Route index element={null} />
               <Route element={<AppLayout />}>
+                <Route path="/inicio" element={<HomePage />} />
                 <Route path="/gps" element={<DashboardPage />} />
                 {/* Cockpit is hidden for now: its page stays in the code, its address leads to the map. */}
                 <Route path="/cockpit" element={<Navigate to="/gps" replace />} />

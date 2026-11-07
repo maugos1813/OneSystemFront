@@ -16,6 +16,7 @@ import { trackGlow } from "../../lib/glow";
 import { allowedNav, canOpen, navItemForPath } from "../../lib/oneTrackNav";
 import { AlertsPanel } from "../AlertsPanel";
 import { OneSystecMark } from "../OneSystecMark";
+import { BottomNav } from "./BottomNav";
 
 /** Below `lg` there isn't room for the nav rail *and* the vehicle list *and* the map, so it starts collapsed there. */
 function prefersOpenByDefault(): boolean {
@@ -75,18 +76,10 @@ export function AppLayout() {
 
   return (
     <div className="relative flex h-full overflow-hidden bg-[#f5f6fb] dark:bg-[#0a0e1a]">
-      {navOpen && (
-        <div
-          className="absolute inset-0 z-30 bg-slate-900/30 lg:hidden"
-          onClick={() => setNavOpen(false)}
-        />
-      )}
-
       <aside
-        className={`absolute inset-y-0 left-0 z-40 max-w-[85vw] overflow-hidden border-r border-violet-100 bg-white transition-all duration-200 lg:static lg:z-auto dark:border-white/5 dark:bg-[#0d1220] ${
-          navOpen
-            ? "w-64 translate-x-0"
-            : "w-64 -translate-x-full lg:w-0 lg:translate-x-0 lg:border-transparent"
+        // The side menu is for big screens: on a phone the bottom bar and the start take its place.
+        className={`hidden overflow-hidden border-r border-violet-100 bg-white transition-all duration-200 lg:block dark:border-white/5 dark:bg-[#0d1220] ${
+          navOpen ? "w-64" : "w-0 border-transparent"
         }`}
       >
         <div className="flex h-full w-64 flex-col">
@@ -141,13 +134,15 @@ export function AppLayout() {
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex items-center justify-between gap-3 border-b border-violet-100 bg-white px-4 py-3 sm:px-6 dark:border-white/5 dark:bg-[#0d1220]">
           <div className="flex min-w-0 items-center gap-3">
+            {/* On a phone there is no side menu to open: the icon is only the logo. */}
+            <img src="/logos/onetrack-icon.png" alt="OneTrack" className="h-8 w-8 shrink-0 rounded-xl object-cover lg:hidden" />
             {!navOpen && (
               // The OneTrack icon is the menu button, like the client's logo is in the workspace around it: it nudges on a phone.
               <button
                 type="button"
                 onClick={() => setNavOpen(true)}
                 aria-label={t("nav.showMenu")}
-                className="logo-nudge relative shrink-0 rounded-xl"
+                className="logo-nudge relative hidden shrink-0 rounded-xl lg:block"
               >
                 <img src="/logos/onetrack-icon.png" alt="OneTrack" className="h-8 w-8 rounded-xl object-cover" />
                 <span className="absolute -right-1 -bottom-1 flex h-4 w-4 items-center justify-center rounded-full bg-blue-600 text-white shadow ring-2 ring-white dark:ring-[#0d1220]">
@@ -193,6 +188,7 @@ export function AppLayout() {
         <main className="styled-scrollbar min-h-0 flex-1 overflow-y-auto dark:bg-[#0a0e1a]">
           <Outlet />
         </main>
+        <BottomNav />
       </div>
     </div>
   );

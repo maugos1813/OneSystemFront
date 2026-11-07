@@ -3,6 +3,7 @@ import {
   BellRing,
   FileCheck,
   History,
+  Home,
   Map,
   MapPin,
   Settings,
@@ -17,6 +18,8 @@ import type { CurrentUser } from "./types";
 export interface OneTrackNavItem {
   to: string;
   label: MessageKey;
+  /** One line saying what is in it: shown on the shortcut tile of the home. */
+  hint?: MessageKey;
   icon: LucideIcon;
   end: boolean;
   /** The section an admin can grant; owner/admin always have it. */
@@ -30,19 +33,21 @@ export interface OneTrackNavItem {
 }
 
 export const ONETRACK_NAV: OneTrackNavItem[] = [
-  { to: "/gps", label: "nav.map", icon: Map, end: true, module: "mapa" },
-  { to: "/analiticas", label: "nav.analytics", icon: BarChart3, end: false, module: "analiticas" },
-  { to: "/historial", label: "nav.history", icon: History, end: false, module: "historial" },
+  // The start: how the fleet is doing, and a shortcut to everything else. Everyone has it.
+  { to: "/inicio", label: "nav.home", icon: Home, end: true },
+  { to: "/gps", hint: "navHint.map", label: "nav.map", icon: Map, end: true, module: "mapa" },
+  { to: "/analiticas", hint: "navHint.analytics", label: "nav.analytics", icon: BarChart3, end: false, module: "analiticas" },
+  { to: "/historial", hint: "navHint.history", label: "nav.history", icon: History, end: false, module: "historial" },
   // Alertas also holds Conducción as a tab: the item opens with either section.
-  { to: "/alertas", label: "nav.alerts", icon: BellRing, end: false, anyOf: ["alertas", "conduccion"] },
-  { to: "/geocercas", label: "nav.geofences", icon: MapPin, end: false, module: "geocercas" },
-  { to: "/vehiculos", label: "nav.vehicles", icon: Truck, end: false, anyOf: ["vehiculos", "mantenimiento"] },
-  { to: "/vencimientos", label: "nav.documents", icon: FileCheck, end: false, module: "vencimientos" },
+  { to: "/alertas", hint: "navHint.alerts", label: "nav.alerts", icon: BellRing, end: false, anyOf: ["alertas", "conduccion"] },
+  { to: "/geocercas", hint: "navHint.geofences", label: "nav.geofences", icon: MapPin, end: false, module: "geocercas" },
+  { to: "/vehiculos", hint: "navHint.vehicles", label: "nav.vehicles", icon: Truck, end: false, anyOf: ["vehiculos", "mantenimiento"] },
+  { to: "/vencimientos", hint: "navHint.documents", label: "nav.documents", icon: FileCheck, end: false, module: "vencimientos" },
   // Dispositivos holds Salud and EYE BEACON as tabs.
-  { to: "/dispositivos", label: "nav.devices", icon: Smartphone, end: false, ownerAdminOnly: true, adminSection: "dispositivos" },
+  { to: "/dispositivos", hint: "navHint.devices", label: "nav.devices", icon: Smartphone, end: false, ownerAdminOnly: true, adminSection: "dispositivos" },
   // The OneTrack settings (working hours, alert thresholds). What belongs to OneSystec itself (clients, team, SIMs, API keys) lives in its
   // own configuration in the portal, not in this menu.
-  { to: "/ajustes", label: "nav.settings", icon: Settings, end: false, ownerAdminOnly: true, adminSection: "ajustes" },
+  { to: "/ajustes", hint: "navHint.settings", label: "nav.settings", icon: Settings, end: false, ownerAdminOnly: true, adminSection: "ajustes" },
 ];
 
 /** Whether this user may open the section. Owner and admin may open all of what their organization has (OneSystec may limit it). */
@@ -67,7 +72,31 @@ export function navItemForPath(pathname: string): OneTrackNavItem | undefined {
   return ONETRACK_NAV.find((item) => pathname === item.to || pathname.startsWith(`${item.to}/`));
 }
 
-/** Where "Desplegar" lands: the first section the user is allowed to open. */
+/** The sections that get a place in the phone's bottom bar, in the order they are preferred: the ones people use all day. */
+const BOTTOM_PRIORITY = ["/gps", "/alertas", "/vehiculos", "/historial", "/analiticas", "/geocercas", "/vencimientos", "/dispositivos", "/ajustes"];
+const BOTTOM_SLOTS = 4;
+export const HOME_PATH = "/inicio";
+
+/** The phone's bottom bar: the start, then the four sections this account uses most that it is allowed to open. */
+export function bottomNav(user: CurrentUser | null): OneTrackNavItem[] {
+  const allowed = allowedNav(user).filter((item) => item.to !== HOME_PATH);
+  const ranked = BOTTOM_PRIORITY.map((to) => allowed.find((item) => item.to === to)).filter((item): item is OneTrackNavItem => !!item);
+  const home = ONETRACK_NAV.find((item) => item.to === HOME_PATH)!;
+  return [home, ...ranked.slice(0, BOTTOM_SLOTS)];
+}
+
+/** What does not fit in the bottom bar: it lives on the start, as shortcuts. */
+export function homeShortcuts(user: CurrentUser | null): OneTrackNavItem[] {
+  const inBar = new Set(bottomNav(user).map((item) => item.to));
+  return allowedNav(user).filter((item) => !inBar.has(item.to));
+}
+
+/**
+ * Where OneTrack opens: the start. An account that has a single section has nothing to choose and a dashboard about one thing would
+ * only be in the way, so it opens straight on that section.
+ */
 export function firstAllowedPath(user: CurrentUser | null): string | null {
-  return allowedNav(user)[0]?.to ?? null;
+  const sections = allowedNav(user).filter((item) => item.to !== HOME_PATH);
+  if (sections.length === 0) return user ? HOME_PATH : null;
+  return sections.length === 1 ? sections[0]!.to : HOME_PATH;
 }

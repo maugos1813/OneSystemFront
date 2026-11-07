@@ -154,7 +154,7 @@ function Workspace({ products }: { products: Product[] }) {
 
   // An account whose only app is OneTrack and that has a single section in it has nothing to choose: it opens straight on
   // that section. "Contraer" still reaches the workspace (it carries ?app=), for the account menu and the settings.
-  const singleSection = hasOneTrack && products.length === 1 && allowedNav(currentUser).length === 1;
+  const singleSection = hasOneTrack && products.length === 1 && allowedNav(currentUser).filter((item) => item.to !== "/inicio").length === 1;
   if (atHome && singleSection && !params.has("app")) return <Navigate to={firstAllowedPath(currentUser)!} replace />;
 
   // OneTrack's pages need its fleet; an account without it has nothing to show there.

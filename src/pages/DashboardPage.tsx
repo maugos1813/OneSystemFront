@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { MapFiltersButton, MapFiltersPanel } from "../components/MapFiltersPanel";
 import { MapView } from "../components/MapView";
 import { VehicleDetailPanel } from "../components/VehicleDetailPanel";
@@ -29,7 +30,10 @@ export function DashboardPage() {
     () => (allClients && !showNoPlate ? allVehicles.filter((v) => !!v.plate) : allVehicles),
     [allClients, showNoPlate, allVehicles],
   );
-  const [statusFilter, setStatusFilter] = useState<VehicleStatus | null>(null);
+  // The start links here with a state already chosen (e.g. the ones with no signal): /gps?estado=offline.
+  const [params] = useSearchParams();
+  const wanted = params.get("estado");
+  const [statusFilter, setStatusFilter] = useState<VehicleStatus | null>(wanted === "moving" || wanted === "stopped" || wanted === "offline" ? wanted : null);
   const [filtersOpen, setFiltersOpen] = useState(false);
   // Back closes the filters panel too.
   useBackToClose(filtersOpen, () => setFiltersOpen(false));
