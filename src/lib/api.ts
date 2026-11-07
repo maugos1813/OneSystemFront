@@ -186,25 +186,28 @@ export interface SimInput {
   notes?: string | null;
 }
 
-export function listSims(): Promise<SimCard[]> {
-  return request("/sims");
+/** SIMs are OneSystec's: `orgId` picks the client whose SIMs these are (without it, the caller's own organization). */
+const simQuery = (orgId?: string) => (orgId ? `?orgId=${encodeURIComponent(orgId)}` : "");
+
+export function listSims(orgId?: string): Promise<SimCard[]> {
+  return request(`/sims${simQuery(orgId)}`);
 }
 
-export function createSim(input: SimInput & { iccid: string }): Promise<SimCard> {
-  return request("/sims", { method: "POST", body: JSON.stringify(input) });
+export function createSim(input: SimInput & { iccid: string }, orgId?: string): Promise<SimCard> {
+  return request(`/sims${simQuery(orgId)}`, { method: "POST", body: JSON.stringify(input) });
 }
 
 /** Only the fields sent change; an empty string clears an optional one. */
-export function updateSim(id: string, input: SimInput): Promise<SimCard> {
-  return request(`/sims/${id}`, { method: "PATCH", body: JSON.stringify(input) });
+export function updateSim(id: string, input: SimInput, orgId?: string): Promise<SimCard> {
+  return request(`/sims/${id}${simQuery(orgId)}`, { method: "PATCH", body: JSON.stringify(input) });
 }
 
-export function deleteSim(id: string): Promise<void> {
-  return request(`/sims/${id}`, { method: "DELETE" });
+export function deleteSim(id: string, orgId?: string): Promise<void> {
+  return request(`/sims/${id}${simQuery(orgId)}`, { method: "DELETE" });
 }
 
-export function getSimSecrets(id: string): Promise<SimSecrets> {
-  return request(`/sims/${id}/secrets`);
+export function getSimSecrets(id: string, orgId?: string): Promise<SimSecrets> {
+  return request(`/sims/${id}/secrets${simQuery(orgId)}`);
 }
 
 // --- Vehicles ---

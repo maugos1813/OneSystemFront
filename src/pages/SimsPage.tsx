@@ -1,9 +1,19 @@
 import { Eye, EyeOff, Pencil, Plus, Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
-import { useFleet } from "../context/FleetContext";
-import { ApiError, createSim, deleteSim, getSimSecrets, listSims, updateSim, type SimInput } from "../lib/api";
+import { useAuth } from "../context/AuthContext";
+import {
+  ApiError,
+  createSim,
+  deleteSim,
+  getPlatformOrganization,
+  getSimSecrets,
+  listPlatformOrganizations,
+  listSims,
+  updateSim,
+  type SimInput,
+} from "../lib/api";
 import { trackGlow } from "../lib/glow";
-import type { SimCard, SimSecrets } from "../lib/types";
+import type { PlatformOrganization, SimCard, SimSecrets } from "../lib/types";
 
 const SECRETS_VISIBLE_MS = 15_000;
 
@@ -38,7 +48,11 @@ const INPUT =
 const LABEL = "mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300";
 
 export function SimsPage() {
-  const { devices, vehicles } = useFleet();
+  const { currentUser } = useAuth();
+  // SIMs are OneSystec's: it picks the client they belong to, and that client's devices are the ones it can put them in.
+  const [orgs, setOrgs] = useState<PlatformOrganization[]>([]);
+  const [orgId, setOrgId] = useState<string | null>(null);
+  const [orgDevices, setOrgDevices] = useState<Array<{ id: string; imei: string; plate: string | null }>>([]);
   const [sims, setSims] = useState<SimCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -49,17 +63,32 @@ export function SimsPage() {
   const [revealed, setRevealed] = useState<Record<string, SimSecrets | "loading">>({});
   const hideTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
-  const refetch = useCallback(() => {
-    listSims()
+  useEffect(() => {
+    listPlatformOrganizations()
       .then((rows) => {
+        setOrgs(rows);
+        setOrgId((current) => current ?? (rows.find((o) => o.id === currentUser?.orgId) ?? rows[0])?.id ?? null);
+      })
+      .catch((err: unknown) => setError(err instanceof Error ? err.message : "No se pudieron cargar los clientes"));
+  }, [currentUser?.orgId]);
+
+  const refetch = useCallback(() => {
+    if (!orgId) return;
+    setSims([]);
+    Promise.all([listSims(orgId), getPlatformOrganization(orgId)])
+      .then(([rows, org]) => {
         setSims(rows);
+        setOrgDevices(org.deviceList.map((d) => ({ id: d.id, imei: d.imei, plate: d.vehicle?.plate ?? d.vehicle?.name ?? null })));
         setError(null);
       })
       .catch((err: unknown) => setError(err instanceof Error ? err.message : "No se pudieron cargar las SIMs"))
       .finally(() => setLoading(false));
-  }, []);
+  }, [orgId]);
 
-  useEffect(refetch, [refetch]);
+  useEffect(() => {
+    setEditing(null);
+    refetch();
+  }, [refetch]);
 
   useEffect(() => {
     const timers = hideTimers.current;
@@ -68,15 +97,15 @@ export function SimsPage() {
 
   const plateByDevice = useMemo(() => {
     const map = new Map<string, string>();
-    for (const v of vehicles) if (v.deviceId) map.set(v.deviceId, v.plate ?? v.name);
+    for (const d of orgDevices) if (d.plate) map.set(d.id, d.plate);
     return map;
-  }, [vehicles]);
+  }, [orgDevices]);
 
   // A tracker can hold one SIM: offer the free ones, plus the one this SIM already sits in.
   const availableDevices = useMemo(() => {
     const taken = new Set(sims.filter((s) => s.deviceId && (editing === "new" || editing === null || s.id !== editing.id)).map((s) => s.deviceId));
-    return devices.filter((d) => !taken.has(d.id));
-  }, [devices, sims, editing]);
+    return orgDevices.filter((d) => !taken.has(d.id));
+  }, [orgDevices, sims, editing]);
 
   function startNew() {
     setEditing("new");
@@ -107,10 +136,10 @@ export function SimsPage() {
         notes: form.notes,
       };
       if (editing === "new") {
-        await createSim({ ...base, iccid: form.iccid, pin: form.pin, puk: form.puk });
+        await createSim({ ...base, iccid: form.iccid, pin: form.pin, puk: form.puk }, orgId ?? undefined);
       } else if (editing) {
         // Secrets are only sent when typed, so editing other fields never touches them.
-        await updateSim(editing.id, { ...base, iccid: form.iccid, ...(form.pin ? { pin: form.pin } : {}), ...(form.puk ? { puk: form.puk } : {}) });
+        await updateSim(editing.id, { ...base, iccid: form.iccid, ...(form.pin ? { pin: form.pin } : {}), ...(form.puk ? { puk: form.puk } : {}) }, orgId ?? undefined);
         hideSecrets(editing.id);
       }
       setEditing(null);
@@ -125,7 +154,7 @@ export function SimsPage() {
   async function handleDelete(sim: SimCard) {
     if (!confirm(`¿Eliminar la SIM ${sim.phoneNumber ?? sim.iccid}? Se borran también su PIN y PUK guardados.`)) return;
     try {
-      await deleteSim(sim.id);
+      await deleteSim(sim.id, orgId ?? undefined);
       if (editing && editing !== "new" && editing.id === sim.id) setEditing(null);
       refetch();
     } catch (err) {
@@ -144,7 +173,7 @@ export function SimsPage() {
   async function showSecrets(sim: SimCard) {
     setRevealed((current) => ({ ...current, [sim.id]: "loading" }));
     try {
-      const secrets = await getSimSecrets(sim.id);
+      const secrets = await getSimSecrets(sim.id, orgId ?? undefined);
       setRevealed((current) => ({ ...current, [sim.id]: secrets }));
       hideTimers.current[sim.id] = setTimeout(() => hideSecrets(sim.id), SECRETS_VISIBLE_MS);
     } catch (err) {
@@ -161,8 +190,25 @@ export function SimsPage() {
         <div>
           <h1 className="text-xl font-semibold text-slate-900 dark:text-white">SIMs</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            Las tarjetas SIM de tus trackers: número, ICCID, NMU, PIN y PUK. Solo owner y admin pueden verlas.
+            Las tarjetas SIM de los trackers de cada cliente: número, ICCID, NMU, PIN y PUK. Solo OneSystec las ve y las gestiona.
           </p>
+          <label className="mt-3 flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+            Cliente
+            <select
+              value={orgId ?? ""}
+              onChange={(e) => {
+                setLoading(true);
+                setOrgId(e.target.value);
+              }}
+              className="field-input rounded-xl border border-slate-300 px-3 py-1.5 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
+            >
+              {orgs.map((org) => (
+                <option key={org.id} value={org.id}>
+                  {org.name}
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
         {!editing && (
           <button onClick={startNew} className="brand-button flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-medium">
