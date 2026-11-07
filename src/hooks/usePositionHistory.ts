@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { getPositionHistory } from "../lib/api";
 import type { Position } from "../lib/types";
 
-export function usePositionHistory(vehicleId: string | null, from: Date | null) {
+/** The route of a vehicle from `from` to `to` (now when omitted), spread over at most 5000 points (the speeding peaks stay). */
+export function usePositionHistory(vehicleId: string | null, from: Date | null, to: Date | null = null) {
   const [history, setHistory] = useState<Position[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -15,7 +16,7 @@ export function usePositionHistory(vehicleId: string | null, from: Date | null) 
     let cancelled = false;
     setLoading(true);
 
-    getPositionHistory(vehicleId, { from, maxPoints: 5000 })
+    getPositionHistory(vehicleId, { from, ...(to ? { to } : {}), maxPoints: 5000 })
       .then((rows) => {
         if (!cancelled) setHistory(rows.slice().reverse()); // oldest -> newest, for drawing a route
       })
@@ -29,7 +30,7 @@ export function usePositionHistory(vehicleId: string | null, from: Date | null) 
     return () => {
       cancelled = true;
     };
-  }, [vehicleId, from]);
+  }, [vehicleId, from, to]);
 
   return { history, loading };
 }

@@ -1,4 +1,4 @@
-import { ArrowLeft, Search } from "lucide-react";
+import { ArrowLeft, CalendarDays, Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { AreaFilterPills } from "../components/AreaFilterPills";
@@ -22,9 +22,26 @@ const RANGES: Array<{ label: string; hours: number }> = [
   { label: "24h", hours: 24 },
   { label: "3 días", hours: 24 * 3 },
   { label: "7 días", hours: 24 * 7 },
-  { label: "15 días", hours: 24 * 15 },
   { label: "30 días", hours: 24 * 30 },
+  { label: "3 meses", hours: 24 * 91 },
+  { label: "6 meses", hours: 24 * 182 },
 ];
+
+/** A route is kept for 6 months. */
+const HISTORY_DAYS = 183;
+/** The server works out driving incidents, and who drove, over 31 days at most. */
+const INCIDENT_DAYS = 31;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+type Range = { kind: "preset"; hours: number } | { kind: "custom"; fromDay: string; toDay: string };
+
+/** yyyy-mm-dd of a moment, in the person's own day (what a date field holds). */
+function dayString(date: Date): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
+const SHORT_DAY = new Intl.DateTimeFormat("es-ES", { day: "2-digit", month: "2-digit" });
 
 const INCIDENT_TYPES: IncidentType[] = ["harshBraking", "harshAcceleration", "harshCornering", "speeding"];
 const DEFAULT_SPEED_LIMIT_KMH = 120;
@@ -114,11 +131,24 @@ export function HistoryPage() {
   const wanted = params.get("vehicle");
   const selectedVehicleId = wanted && vehicles.some((v) => v.id === wanted) ? wanted : null;
   const selectVehicle = (id: string | null) => setParams(id ? { vehicle: id } : {});
-  const [rangeHours, setRangeHours] = useState(24);
+  const [range, setRange] = useState<Range>({ kind: "preset", hours: 24 });
+  const [choosingDates, setChoosingDates] = useState(false);
+  const [draftFrom, setDraftFrom] = useState(() => dayString(new Date(Date.now() - DAY_MS)));
+  const [draftTo, setDraftTo] = useState(() => dayString(new Date()));
   const [speedLimit, setSpeedLimit] = useState(DEFAULT_SPEED_LIMIT_KMH);
 
-  const from = useMemo(() => new Date(Date.now() - rangeHours * 60 * 60 * 1000), [rangeHours]);
-  const { history, loading: historyLoading } = usePositionHistory(selectedVehicleId, from);
+  // The period as moments: a preset ends now; chosen days run from the start of the first to the end of the last (never past now).
+  const { from, to, rangeKey } = useMemo(() => {
+    if (range.kind === "preset") {
+      return { from: new Date(Date.now() - range.hours * 60 * 60 * 1000), to: null as Date | null, rangeKey: `p${range.hours}` };
+    }
+    const end = new Date(`${range.toDay}T23:59:59.999`);
+    return { from: new Date(`${range.fromDay}T00:00:00`), to: end.getTime() > Date.now() ? null : end, rangeKey: `c${range.fromDay}_${range.toDay}` };
+  }, [range]);
+  const oldest = dayString(new Date(Date.now() - HISTORY_DAYS * DAY_MS));
+  const today = dayString(new Date());
+  const datesValid = draftFrom !== "" && draftTo !== "" && draftFrom <= draftTo && draftFrom >= oldest && draftTo <= today;
+  const { history, loading: historyLoading } = usePositionHistory(selectedVehicleId, from, to);
 
   // Who drove it in this period (from the drivers' beacons); needs the Conducción section.
   const { currentUser } = useAuth();
@@ -134,16 +164,20 @@ export function HistoryPage() {
     setUsages([]);
     if (!canSeeDriver || !selectedVehicleId) return;
     let cancelled = false;
-    getVehicleDriver(selectedVehicleId, { from })
+    // The server answers who drove over 31 days at most (93 for the services): a longer period asks for its last stretch.
+    const end = to ?? new Date();
+    const driverFrom = new Date(Math.max(from.getTime(), end.getTime() - INCIDENT_DAYS * DAY_MS));
+    const usagesFrom = new Date(Math.max(from.getTime(), end.getTime() - 92 * DAY_MS));
+    getVehicleDriver(selectedVehicleId, { from: driverFrom, to: end })
       .then((d) => !cancelled && setDriver(d))
       .catch(() => undefined);
-    getVehicleUsages(selectedVehicleId, { from, to: new Date() })
+    getVehicleUsages(selectedVehicleId, { from: usagesFrom, to: end })
       .then((r) => !cancelled && setUsages(r.usages))
       .catch(() => undefined);
     return () => {
       cancelled = true;
     };
-  }, [canSeeDriver, selectedVehicleId, from]);
+  }, [canSeeDriver, selectedVehicleId, from, to]);
 
   const {
     playing,
@@ -154,8 +188,19 @@ export function HistoryPage() {
     index: currentIndex,
     position: currentPosition,
     seek: handleSeek,
-  } = usePlayback(history, `${selectedVehicleId}|${rangeHours}`);
-  const incidents = useVehicleIncidents(selectedVehicleId, Math.max(1, Math.round(rangeHours / 24)), speedLimit);
+  } = usePlayback(history, `${selectedVehicleId}|${rangeKey}`);
+  // Driving incidents are worked out by the server over the last 31 days; those of a chosen period are the ones inside it.
+  const incidentDays = Math.min(INCIDENT_DAYS, Math.max(1, Math.ceil((Date.now() - from.getTime()) / DAY_MS)));
+  const allIncidents = useVehicleIncidents(selectedVehicleId, incidentDays, speedLimit);
+  const incidents = useMemo(() => {
+    const start = from.getTime();
+    const end = to ? to.getTime() : Infinity;
+    return allIncidents.filter((i) => {
+      const at = new Date(i.ts).getTime();
+      return at >= start && at <= end;
+    });
+  }, [allIncidents, from, to]);
+  const incidentsCoverPeriod = Date.now() - from.getTime() <= INCIDENT_DAYS * DAY_MS;
   const [hiddenTypes, setHiddenTypes] = useState<ReadonlySet<IncidentType>>(new Set());
   const shownIncidents = useMemo(() => incidents.filter((i) => !hiddenTypes.has(i.type)), [incidents, hiddenTypes]);
   const countByType = useMemo(() => {
@@ -219,21 +264,85 @@ export function HistoryPage() {
           <p className="text-xs text-slate-500 dark:text-slate-400">Historial de recorrido</p>
         </div>
         <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
-          {RANGES.map((r) => (
-            <button
-              key={r.label}
-              onClick={() => setRangeHours(r.hours)}
-              className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${
-                r.hours === rangeHours
-                  ? "bg-slate-900 text-white dark:bg-blue-600"
-                  : "bg-white text-slate-500 hover:bg-slate-100 dark:bg-[#111729] dark:text-slate-400 dark:hover:bg-white/10"
-              }`}
-            >
-              {r.label}
-            </button>
-          ))}
+          {RANGES.map((r) => {
+            const active = range.kind === "preset" && range.hours === r.hours;
+            return (
+              <button
+                key={r.label}
+                onClick={() => {
+                  setRange({ kind: "preset", hours: r.hours });
+                  setChoosingDates(false);
+                }}
+                className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${
+                  active ? "bg-slate-900 text-white dark:bg-blue-600" : "bg-white text-slate-500 hover:bg-slate-100 dark:bg-[#111729] dark:text-slate-400 dark:hover:bg-white/10"
+                }`}
+              >
+                {r.label}
+              </button>
+            );
+          })}
+          <button
+            onClick={() => setChoosingDates((open) => !open)}
+            aria-expanded={choosingDates}
+            className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition ${
+              range.kind === "custom" || choosingDates ? "bg-slate-900 text-white dark:bg-blue-600" : "bg-white text-slate-500 hover:bg-slate-100 dark:bg-[#111729] dark:text-slate-400 dark:hover:bg-white/10"
+            }`}
+          >
+            <CalendarDays className="h-3.5 w-3.5" />
+            {range.kind === "custom"
+              ? range.fromDay === range.toDay
+                ? SHORT_DAY.format(new Date(`${range.fromDay}T12:00:00`))
+                : `${SHORT_DAY.format(new Date(`${range.fromDay}T12:00:00`))} – ${SHORT_DAY.format(new Date(`${range.toDay}T12:00:00`))}`
+              : "Elegir fechas"}
+          </button>
         </div>
       </div>
+
+      {choosingDates && (
+        <div className="mb-4 flex flex-wrap items-end gap-3 rounded-2xl border border-white bg-white p-4 shadow-lg shadow-slate-200/50 dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40">
+          <label className="text-xs font-medium text-slate-600 dark:text-slate-300">
+            Desde
+            <input
+              type="date"
+              value={draftFrom}
+              min={oldest}
+              max={today}
+              onChange={(e) => setDraftFrom(e.target.value)}
+              className="field-input mt-1 block rounded-xl border border-slate-300 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
+            />
+          </label>
+          <label className="text-xs font-medium text-slate-600 dark:text-slate-300">
+            Hasta
+            <input
+              type="date"
+              value={draftTo}
+              min={oldest}
+              max={today}
+              onChange={(e) => setDraftTo(e.target.value)}
+              className="field-input mt-1 block rounded-xl border border-slate-300 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
+            />
+          </label>
+          <button
+            disabled={!datesValid}
+            onClick={() => {
+              setRange({ kind: "custom", fromDay: draftFrom, toDay: draftTo });
+              setChoosingDates(false);
+            }}
+            className="brand-button rounded-xl px-4 py-2 text-sm font-medium disabled:opacity-50"
+          >
+            Ver recorrido
+          </button>
+          <p className="basis-full text-xs text-slate-500 dark:text-slate-400">
+            Los recorridos se guardan 6 meses: puedes elegir cualquier día desde el {SHORT_DAY.format(new Date(`${oldest}T12:00:00`))}. Un mismo día en
+            «Desde» y «Hasta» muestra solo ese día. De un equipo recién instalado hay recorrido desde que empezó a reportar.
+          </p>
+        </div>
+      )}
+      {!incidentsCoverPeriod && (
+        <p className="mb-4 rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:bg-amber-500/10 dark:text-amber-200">
+          Las frenadas, aceleraciones, curvas y excesos de velocidad se marcan en los últimos {INCIDENT_DAYS} días; el recorrido se ve completo.
+        </p>
+      )}
 
       {usages.length > 0 && (
         <div className="mb-4 text-sm text-slate-600 dark:text-slate-300">
