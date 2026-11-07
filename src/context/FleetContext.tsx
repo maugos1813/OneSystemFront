@@ -69,7 +69,7 @@ export function FleetProvider({ children }: { children: ReactNode }) {
           listDevices(),
           // The pictures are only a nicety for the plates: if they cannot be read the map still works, with letters.
           listFleetPictures()
-            .then((pictures) => Object.fromEntries(pictures.filter((f) => f.logo).map((f) => [f.name, f.logo as string])))
+            .then((pictures) => Object.fromEntries(pictures.filter((f) => f.tag).map((f) => [f.name, f.tag as string])))
             .catch((): Record<string, string> => ({})),
         ])
     )

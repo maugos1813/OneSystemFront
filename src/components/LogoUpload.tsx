@@ -1,6 +1,6 @@
 import { ImagePlus, Trash2 } from "lucide-react";
 import { useRef, useState } from "react";
-import { fileToLogoDataUrl, LOGO_ACCEPT } from "../lib/logoImage";
+import { fileToLogoVariants, LOGO_ACCEPT } from "../lib/logoImage";
 
 /** Pick a client's logo: shows the current one, takes a new image and shrinks it for storage. */
 export function LogoUpload({
@@ -9,7 +9,8 @@ export function LogoUpload({
   name,
 }: {
   value: string | null;
-  onChange: (logo: string | null) => void;
+  /** `tag` is the small copy for the map's plate tags (null when removed or when it could not be made). */
+  onChange: (logo: string | null, tag?: string | null) => void;
   /** The company's name, for the placeholder initial. */
   name?: string;
 }) {
@@ -20,7 +21,8 @@ export function LogoUpload({
     if (!file) return;
     setError(null);
     try {
-      onChange(await fileToLogoDataUrl(file));
+      const { logo, tag } = await fileToLogoVariants(file);
+      onChange(logo, tag);
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudo cargar la imagen");
     } finally {
@@ -51,7 +53,7 @@ export function LogoUpload({
           {value && (
             <button
               type="button"
-              onClick={() => onChange(null)}
+              onClick={() => onChange(null, null)}
               className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm text-slate-500 transition hover:bg-red-50 hover:text-red-600 dark:text-slate-400 dark:hover:bg-red-500/10 dark:hover:text-red-400"
             >
               <Trash2 className="h-4 w-4" /> Quitar

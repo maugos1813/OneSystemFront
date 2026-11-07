@@ -55,3 +55,50 @@ export async function fileToLogoDataUrl(file: File): Promise<string> {
   }
   throw new Error("La imagen es demasiado compleja; prueba con una más simple");
 }
+
+/** The small copy kept for the map's plate tags, which are drawn a few dozen pixels wide: a few KB instead of a few hundred. */
+const TAG_SIDES = [64, 48, 32];
+const TAG_MAX_CHARS = 20_000;
+
+async function makeTag(image: HTMLImageElement, svg: boolean): Promise<string | null> {
+  const width = image.naturalWidth || 64;
+  const height = image.naturalHeight || 64;
+  for (const side of TAG_SIDES) {
+    const factor = svg ? side / Math.max(width, height) : Math.min(1, side / Math.max(width, height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(width * factor));
+    canvas.height = Math.max(1, Math.round(height * factor));
+    const context = canvas.getContext("2d");
+    if (!context) return null;
+    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+    const png = canvas.toDataURL("image/png");
+    if (png.length <= TAG_MAX_CHARS) return png;
+    const webp = canvas.toDataURL("image/webp", 0.8);
+    if (webp.startsWith("data:image/webp") && webp.length <= TAG_MAX_CHARS) return webp;
+  }
+  return null;
+}
+
+/**
+ * An uploaded image as the two copies that are kept: the logo itself (see fileToLogoDataUrl) and a small one for the map's plate tags.
+ * If the small copy cannot be made, it is null and the map falls back to the logo.
+ */
+export async function fileToLogoVariants(file: File): Promise<{ logo: string; tag: string | null }> {
+  const logo = await fileToLogoDataUrl(file);
+  try {
+    // The logo is already a raster at most 256 px: shrinking that is quick and gives the same result for any input format.
+    const image = await loadImageFromDataUrl(logo);
+    return { logo, tag: await makeTag(image, false) };
+  } catch {
+    return { logo, tag: null };
+  }
+}
+
+function loadImageFromDataUrl(url: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error("No se pudo leer la imagen"));
+    image.src = url;
+  });
+}

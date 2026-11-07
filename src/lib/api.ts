@@ -41,7 +41,7 @@ import type {
   PlatformOrganizationDetail,
   FleetAdminInput,
   FleetDetail,
-  FleetPicture,
+  FleetTag,
 } from "./types";
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -314,6 +314,8 @@ export interface UpdateSettingsInput {
   orgName?: string;
   /** A data URL sets the logo, null removes it. */
   orgLogo?: string | null;
+  /** The small copy of that logo, for the map's plate tags. */
+  orgLogoTag?: string | null;
   workingHours?: Partial<WorkingHours>;
   alerts?: Partial<AlertPreferences>;
 }
@@ -651,14 +653,14 @@ export function setOrganizationSections(orgId: string, sections: string[] | null
 }
 
 /** OneSystec only: puts or removes a client's company logo (null removes it). */
-export function setOrganizationLogoAsPlatform(orgId: string, logo: string | null): Promise<{ id: string; logo: string | null }> {
-  return request(`/platform/organizations/${orgId}/logo`, { method: "PATCH", body: JSON.stringify({ logo }) });
+export function setOrganizationLogoAsPlatform(orgId: string, logo: string | null, tag: string | null = null): Promise<{ id: string; logo: string | null }> {
+  return request(`/platform/organizations/${orgId}/logo`, { method: "PATCH", body: JSON.stringify({ logo, tag }) });
 }
 
 // --- Fleets (flotas) ---
 
 /** The fleets of the caller's organization and their pictures: what the map needs for the tag of each plate. */
-export function listFleetPictures(): Promise<FleetPicture[]> {
+export function listFleetPictures(): Promise<FleetTag[]> {
   return request("/fleets");
 }
 
@@ -667,8 +669,8 @@ export function listFleetDetails(): Promise<FleetDetail[]> {
   return request("/fleets/manage");
 }
 
-export function setFleetLogo(name: string, logo: string | null): Promise<FleetPicture> {
-  return request("/fleets/logo", { method: "PUT", body: JSON.stringify({ name, logo }) });
+export function setFleetLogo(name: string, logo: string | null, tag: string | null = null): Promise<unknown> {
+  return request("/fleets/logo", { method: "PUT", body: JSON.stringify({ name, logo, tag }) });
 }
 
 export function createFleetAdmin(input: FleetAdminInput): Promise<unknown> {
@@ -680,8 +682,8 @@ export function listOrgFleets(orgId: string): Promise<FleetDetail[]> {
   return request(`/platform/organizations/${orgId}/fleets`);
 }
 
-export function setOrgFleetLogo(orgId: string, name: string, logo: string | null): Promise<FleetPicture> {
-  return request(`/platform/organizations/${orgId}/fleets/logo`, { method: "PUT", body: JSON.stringify({ name, logo }) });
+export function setOrgFleetLogo(orgId: string, name: string, logo: string | null, tag: string | null = null): Promise<unknown> {
+  return request(`/platform/organizations/${orgId}/fleets/logo`, { method: "PUT", body: JSON.stringify({ name, logo, tag }) });
 }
 
 export function createOrgFleetAdmin(orgId: string, input: FleetAdminInput): Promise<unknown> {

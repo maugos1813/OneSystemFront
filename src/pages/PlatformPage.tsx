@@ -24,7 +24,7 @@ function OrgFleets({ orgId }: { orgId: string }) {
   const api = useMemo(
     () => ({
       list: () => listOrgFleets(orgId),
-      setLogo: (name: string, logo: string | null) => setOrgFleetLogo(orgId, name, logo),
+      setLogo: (name: string, logo: string | null, tag?: string | null) => setOrgFleetLogo(orgId, name, logo, tag ?? null),
       createAdmin: (input: Parameters<typeof createOrgFleetAdmin>[1]) => createOrgFleetAdmin(orgId, input),
     }),
     [orgId],
@@ -111,10 +111,10 @@ export function PlatformPage({ embedded = false }: { embedded?: boolean }) {
   const [logoError, setLogoError] = useState<string | null>(null);
 
   /** The company logo of a client, shown in its top bar (a user's own photo, if it has one, takes its place for that user). */
-  async function changeOrgLogo(orgId: string, logo: string | null) {
+  async function changeOrgLogo(orgId: string, logo: string | null, tag: string | null = null) {
     setLogoError(null);
     try {
-      await setOrganizationLogoAsPlatform(orgId, logo);
+      await setOrganizationLogoAsPlatform(orgId, logo, tag);
       setDetail(await getPlatformOrganization(orgId));
     } catch (err) {
       setLogoError(err instanceof Error ? err.message : "No se pudo cambiar el logo");
@@ -306,7 +306,7 @@ export function PlatformPage({ embedded = false }: { embedded?: boolean }) {
                             </p>
                             <div className="rounded-xl border border-slate-200 p-3 dark:border-white/10">
                               <p className="mb-2 font-medium text-slate-700 dark:text-slate-300">Logo del cliente</p>
-                              <LogoUpload value={detail.logo} onChange={(logo) => void changeOrgLogo(detail.id, logo)} name={detail.name} />
+                              <LogoUpload value={detail.logo} onChange={(logo, tag) => void changeOrgLogo(detail.id, logo, tag ?? null)} name={detail.name} />
                               {logoError && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{logoError}</p>}
                               <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
                                 Es el logo de la empresa en la barra de su app. Si un usuario tiene foto propia, a él se le muestra la suya.

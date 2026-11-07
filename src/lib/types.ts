@@ -612,6 +612,12 @@ export interface FleetPicture {
   logo: string | null;
 }
 
+/** What the map needs of a fleet: its name and the small picture that opens each plate. */
+export interface FleetTag {
+  name: string;
+  tag: string | null;
+}
+
 export interface FleetDetail extends FleetPicture {
   vehicles: number;
   /** The accounts that administer it: those limited to this fleet. */

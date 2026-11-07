@@ -7,7 +7,7 @@ import { PasswordField } from "./PasswordField";
 /** Where the fleets come from and go to: the client's own account, or (OneSystec) any client's. */
 export interface FleetsApi {
   list: () => Promise<FleetDetail[]>;
-  setLogo: (name: string, logo: string | null) => Promise<unknown>;
+  setLogo: (name: string, logo: string | null, tag?: string | null) => Promise<unknown>;
   createAdmin: (input: FleetAdminInput) => Promise<unknown>;
 }
 
@@ -83,9 +83,9 @@ export function FleetsManager({ api }: { api: FleetsApi }) {
 
   useEffect(load, [load]);
 
-  async function changeLogo(name: string, logo: string | null) {
+  async function changeLogo(name: string, logo: string | null, tag: string | null = null) {
     try {
-      await api.setLogo(name, logo);
+      await api.setLogo(name, logo, tag);
       load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudo cambiar la imagen");
@@ -115,7 +115,7 @@ export function FleetsManager({ api }: { api: FleetsApi }) {
                 {fleet.vehicles} {fleet.vehicles === 1 ? "vehículo" : "vehículos"}
               </p>
             </div>
-            <LogoUpload value={fleet.logo} onChange={(logo) => void changeLogo(fleet.name, logo)} name={fleet.name} />
+            <LogoUpload value={fleet.logo} onChange={(logo, tag) => void changeLogo(fleet.name, logo, tag ?? null)} name={fleet.name} />
           </div>
 
           <p className="mt-3 text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-500">Administra esta flota</p>
