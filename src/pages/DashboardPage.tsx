@@ -18,7 +18,16 @@ export function DashboardPage() {
   const t = useT();
   const { currentUser } = useAuth();
   const [source, setSource] = useState<MapSource>("all");
-  const { filteredVehicles: vehicles, devices, positions, loading, error, sharedVehicles, selectedArea, setSelectedArea, settings } = useFleet();
+  const { filteredVehicles: allVehicles, devices, positions, loading, error, sharedVehicles, selectedArea, setSelectedArea, settings } = useFleet();
+  // OneSystec's all-clients map lists devices too, many with no plate yet (named by their IMEI, which takes a lot of room): they
+  // stay out of the map until asked for.
+  const allClients = currentUser?.isPlatform === true && !currentUser.viewingAs;
+  const [showNoPlate, setShowNoPlate] = useState(false);
+  const noPlateCount = allVehicles.filter((v) => !v.plate).length;
+  const vehicles = useMemo(
+    () => (allClients && !showNoPlate ? allVehicles.filter((v) => !!v.plate) : allVehicles),
+    [allClients, showNoPlate, allVehicles],
+  );
   const [statusFilter, setStatusFilter] = useState<VehicleStatus | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
   // Bumped by "Ver toda la flota": the map frames every vehicle each time it changes.
@@ -58,6 +67,7 @@ export function DashboardPage() {
     setStatusFilter(null);
     setSource("all");
     setSelectedArea(null);
+    setShowNoPlate(false);
   }
 
   function selectVehicle(vehicleId: string) {
@@ -157,6 +167,7 @@ export function DashboardPage() {
               </div>
             ) : undefined
           }
+          noPlate={allClients && noPlateCount > 0 ? { count: noPlateCount, shown: showNoPlate, onChange: setShowNoPlate } : undefined}
           onFitFleet={() => setFitSignal((n) => n + 1)}
           shownCount={shownCount}
           activeFilters={activeFilters}

@@ -12,6 +12,8 @@ interface MapFiltersPanelProps {
   counts: Record<VehicleStatus, number> & { all: number };
   /** The map's own pills for a client who also sees Gamonal's vehicles. */
   sourcePills?: ReactNode;
+  /** OneSystec's map only: the devices that have no plate, hidden until asked for. */
+  noPlate?: { count: number; shown: boolean; onChange: (shown: boolean) => void };
   onFitFleet: () => void;
   /** How many vehicles the map shows with these filters: it is what the button on a phone says it will show. */
   shownCount: number;
@@ -54,6 +56,7 @@ export function MapFiltersPanel({
   onStatusFilter,
   counts,
   sourcePills,
+  noPlate,
   onFitFleet,
   shownCount,
   activeFilters,
@@ -112,6 +115,24 @@ export function MapFiltersPanel({
           <section className={SECTION}>
             <p className={TITLE}>{t("map.sectionSource")}</p>
             {sourcePills}
+          </section>
+        )}
+
+        {noPlate && (
+          <section className={SECTION}>
+            <p className={TITLE}>{t("map.sectionNoPlate")}</p>
+            <button
+              type="button"
+              aria-pressed={noPlate.shown}
+              onClick={() => noPlate.onChange(!noPlate.shown)}
+              className={`rounded-full px-3 py-1.5 text-sm font-medium transition ${
+                noPlate.shown
+                  ? "brand-button"
+                  : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10"
+              }`}
+            >
+              {noPlate.shown ? t("map.hideNoPlate", { count: noPlate.count }) : t("map.showNoPlate", { count: noPlate.count })}
+            </button>
           </section>
         )}
 
