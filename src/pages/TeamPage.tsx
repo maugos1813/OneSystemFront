@@ -1,4 +1,4 @@
-import { ArrowLeft, ImagePlus, KeyRound, Pencil, Trash2, X } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, ImagePlus, KeyRound, Pencil, Trash2, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Panel } from "../components/analytics/Panel";
@@ -47,6 +47,53 @@ const ROLE_HELP: Record<"admin" | "manager" | "viewer", string> = {
 
 /** Mirrors the backend's canManageOther() — deliberately excludes self-service, since
  * a restricted user editing their own área/products would be privilege escalation. */
+/** A password box with the eye that shows what was typed (so a password dictated to someone else isn't typed blind). */
+function PasswordField({
+  value,
+  onChange,
+  placeholder,
+  required,
+  minLength,
+  autoFocus,
+  className = "",
+  inputClassName = "",
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+  required?: boolean;
+  minLength?: number;
+  autoFocus?: boolean;
+  className?: string;
+  inputClassName?: string;
+}) {
+  const [visible, setVisible] = useState(false);
+  return (
+    <div className={`relative ${className}`}>
+      <input
+        type={visible ? "text" : "password"}
+        required={required}
+        minLength={minLength}
+        placeholder={placeholder}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        autoFocus={autoFocus}
+        autoComplete="new-password"
+        className={`field-input w-full border border-slate-300 pr-9 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white ${inputClassName}`}
+      />
+      <button
+        type="button"
+        onClick={() => setVisible((v) => !v)}
+        aria-label={visible ? "Ocultar contraseña" : "Mostrar contraseña"}
+        title={visible ? "Ocultar contraseña" : "Mostrar contraseña"}
+        className="absolute inset-y-0 right-0 flex items-center px-2.5 text-slate-400 hover:text-slate-700 dark:hover:text-white"
+      >
+        {visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+      </button>
+    </div>
+  );
+}
+
 function canManageOther(currentUser: CurrentUser | null, member: TeamMember): boolean {
   if (!currentUser) return false;
   if (currentUser.role === "owner" || currentUser.role === "admin") return member.role !== "owner";
@@ -486,15 +533,15 @@ function MemberRow({
 
       {editingPassword && (
         <div className="mt-3 flex flex-wrap items-center gap-1.5 border-t border-slate-200 pt-3 dark:border-white/10">
-          <input
-            type="password"
+          <PasswordField
             required
             minLength={8}
             placeholder="Nueva contraseña (mínimo 8 caracteres)"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={setPassword}
             autoFocus
-            className="field-input min-w-0 flex-1 rounded-lg border border-slate-300 px-2 py-1 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
+            className="min-w-0 flex-1"
+            inputClassName="rounded-lg px-2 py-1"
           />
           <button
             onClick={handleSavePassword}
@@ -754,7 +801,7 @@ export function TeamPage() {
             : "Quién puede entrar a tu cuenta de OneSystec, y a qué cards tiene acceso cada uno."}
         </p>
 
-        <div className="max-w-3xl space-y-6">
+        <div className="space-y-6">
           <Panel title={isManager ? "Crear un sub-usuario" : "Invitar a alguien"}>
             <form onSubmit={handleCreate} className="space-y-3">
               <div className="flex flex-col gap-3 sm:flex-row">
@@ -774,14 +821,14 @@ export function TeamPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   className="field-input min-w-0 flex-1 rounded-xl border border-slate-300 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
                 />
-                <input
-                  type="password"
+                <PasswordField
                   required
                   minLength={8}
                   placeholder="Contraseña (mínimo 8 caracteres)"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="field-input min-w-0 flex-1 rounded-xl border border-slate-300 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
+                  onChange={setPassword}
+                  className="min-w-0 flex-1"
+                  inputClassName="rounded-xl px-3 py-2"
                 />
               </div>
 
