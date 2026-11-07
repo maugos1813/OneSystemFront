@@ -7,6 +7,7 @@ import { SharedVehiclePanel } from "../components/SharedVehiclePanel";
 import { VehicleList } from "../components/VehicleList";
 import { useAuth } from "../context/AuthContext";
 import { useBackToClose } from "../hooks/useBackToClose";
+import { useInAppFullscreen } from "../hooks/useInAppFullscreen";
 import { useFleet } from "../context/FleetContext";
 import { useT } from "../i18n";
 import { normalizePlate } from "../lib/plate";
@@ -35,6 +36,7 @@ export function DashboardPage() {
   const wanted = params.get("estado");
   const [statusFilter, setStatusFilter] = useState<VehicleStatus | null>(wanted === "moving" || wanted === "stopped" || wanted === "offline" ? wanted : null);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [mapFull, toggleMapFull] = useInAppFullscreen();
   // Back closes the filters panel too.
   useBackToClose(filtersOpen, () => setFiltersOpen(false));
   // Bumped by "Ver toda la flota": the map frames every vehicle each time it changes.
@@ -99,11 +101,13 @@ export function DashboardPage() {
 
   return (
     // `isolate`: everything over the map (search, filters, panels) stays beneath the app's own bars and the bell's list.
-    <div className="relative isolate flex h-full overflow-hidden">
+    <div className={mapFull ? "fixed inset-0 z-[60] isolate flex overflow-hidden bg-[#f5f6fb] dark:bg-[#0a0e1a]" : "relative isolate flex h-full overflow-hidden"}>
       <div className="relative flex-1">
         <MapView
           vehicles={shownVehicles}
           fitSignal={fitSignal}
+          fullscreen={mapFull}
+          onToggleFullscreen={toggleMapFull}
           positions={positions}
           selectedVehicleId={selectedVehicleId}
           onSelectVehicle={selectVehicle}

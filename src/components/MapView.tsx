@@ -1,5 +1,6 @@
 import { ColorScheme, ControlPosition, Map, MapControl, Marker, Polygon, Polyline, RenderingType, useMap, type MapCameraChangedEvent } from "@vis.gl/react-google-maps";
 import { Compass } from "lucide-react";
+import { MapFullscreenControl } from "./MapFullscreenControl";
 import { MapsProvider } from "./MapsProvider";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFleet } from "../context/FleetContext";
@@ -223,6 +224,9 @@ interface MapViewProps {
   route?: VehicleEta | null;
   /** Changes each time "Ver toda la flota" is pressed: the map frames every vehicle. */
   fitSignal?: number;
+  /** The page's own full screen (see useInAppFullscreen): whether the map covers the screen, and the button that toggles it. */
+  fullscreen?: boolean;
+  onToggleFullscreen?: () => void;
 }
 
 const DEFAULT_CENTER = { lat: 41.9028, lng: 12.4964 }; // Roma, como fallback sin posiciones aún
@@ -303,6 +307,8 @@ export function MapView({
   showOwn = true,
   route = null,
   fitSignal = 0,
+  fullscreen = false,
+  onToggleFullscreen,
 }: MapViewProps) {
   const t = useT();
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
@@ -372,8 +378,9 @@ export function MapView({
           streetViewControl={false}
           // The camera button at the bottom right (pan/zoom arrows) is not used: pinching and dragging already do it.
           cameraControl={false}
-          // Google's full-screen button sits at the bottom left, so the top right stays clear for the filters.
-          fullscreenControlOptions={{ position: ControlPosition.LEFT_BOTTOM }}
+          // Google's own full-screen button needs the browser's Fullscreen API, which a phone does not have: ours (bottom left, so the
+          // top right stays clear for the filters) is the page's.
+          fullscreenControl={false}
           mapId={MAP_ID}
           renderingType={RenderingType.VECTOR}
           headingInteractionEnabled
@@ -381,6 +388,7 @@ export function MapView({
           colorScheme={theme === "dark" ? ColorScheme.DARK : ColorScheme.LIGHT}
         >
           <ResetNorthControl />
+          {onToggleFullscreen && <MapFullscreenControl full={fullscreen} onToggle={onToggleFullscreen} />}
           <FitFleet points={fitPoints} signal={fitSignal} auto={frameFleetOnLoad.current === true} />
           <MapCenterOnSelect selectedVehicleId={selectedVehicleId} positions={positions} />
           <MapCenterOnShared vehicle={shared.find((v) => v.plate === selectedSharedPlate) ?? null} />

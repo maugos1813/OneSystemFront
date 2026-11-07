@@ -91,6 +91,8 @@ export const it: Record<MessageKey, string> = {
   "vehicles.filterOffline": "Senza segnale",
   "vehicles.lastData": "Ultimo dato {when}",
   "map.fitFleet": "Vedi tutta la flotta",
+  "map.fullscreen": "Schermo intero",
+  "map.exitFullscreen": "Esci da schermo intero",
   "map.sectionNoPlate": "Dispositivi senza targa",
   "map.showNoPlate": "Mostra i {count} dispositivi senza targa",
   "map.hideNoPlate": "Nascondi i {count} dispositivi senza targa",

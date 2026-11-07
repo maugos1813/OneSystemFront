@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { ColorScheme, InfoWindow, Map, Marker, Polyline, RenderingType, useMap } from "@vis.gl/react-google-maps";
+import { ColorScheme, ControlPosition, InfoWindow, Map, Marker, Polyline, RenderingType, useMap } from "@vis.gl/react-google-maps";
 import { Box, Map as MapIcon } from "lucide-react";
+import { MapFullscreenControl } from "../MapFullscreenControl";
 import { MapsProvider } from "../MapsProvider";
 import { useTheme } from "../../context/ThemeContext";
 import { INCIDENT_LABELS, type Incident } from "../../lib/drivingBehavior";
@@ -27,6 +28,9 @@ interface HistoryMapViewProps {
   speedLimit: number;
   /** Harsh events and speeding to mark as pins on the route. */
   incidents?: Incident[];
+  /** The page's own full screen (see useInAppFullscreen): whether the map covers the screen, and the button that toggles it. */
+  fullscreen?: boolean;
+  onToggleFullscreen?: () => void;
   /** Called when a pin is opened, so playback can jump to that moment. */
   onIncidentSelect?: (incident: Incident) => void;
 }
@@ -195,6 +199,8 @@ export function HistoryMapView({
   speedLimit,
   incidents = [],
   onIncidentSelect,
+  fullscreen = false,
+  onToggleFullscreen,
 }: HistoryMapViewProps) {
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
   const { theme } = useTheme();
@@ -248,11 +254,13 @@ export function HistoryMapView({
           gestureHandling="greedy"
           disableDefaultUI
           zoomControl
-          fullscreenControl
+          // Google's own full-screen button needs the browser's Fullscreen API, which a phone does not have: ours is the page's.
+          fullscreenControl={false}
           mapId={MAP_ID}
           renderingType={RenderingType.VECTOR}
           colorScheme={theme === "dark" ? ColorScheme.DARK : ColorScheme.LIGHT}
         >
+          {onToggleFullscreen && <MapFullscreenControl full={fullscreen} onToggle={onToggleFullscreen} position={ControlPosition.RIGHT_TOP} />}
           <MapCamera
             positions={positions}
             currentPosition={currentPosition}

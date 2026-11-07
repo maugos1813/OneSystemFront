@@ -7,6 +7,7 @@ import { HistoryMapView } from "../components/history/HistoryMapView";
 import { RangeCalendar, addDays, dayOf, type Day } from "../components/history/RangeCalendar";
 import { PlaybackBar } from "../components/history/PlaybackBar";
 import { routeSummary } from "../lib/routeSummary";
+import { useInAppFullscreen } from "../hooks/useInAppFullscreen";
 import { SpeedTimelineChart } from "../components/history/SpeedTimelineChart";
 import { useFleet } from "../context/FleetContext";
 import { usePositionHistory } from "../hooks/usePositionHistory";
@@ -134,6 +135,7 @@ function HistoryView({
     );
   }
 
+  const [mapFull, toggleMapFull] = useInAppFullscreen();
   const summary = useMemo(() => routeSummary(history), [history]);
   const time = (iso: string) => new Date(iso).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
   const dayTime = (iso: string) => new Date(iso).toLocaleString("es-ES", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
@@ -181,8 +183,21 @@ function HistoryView({
           (a new, billed load) for every change of vehicle or period. */}
       {vehicle && history.length >= 2 && (
         <div className={`flex min-h-0 flex-1 flex-col gap-3 p-3 transition-opacity sm:p-4 lg:flex-row lg:p-5 ${historyLoading ? "pointer-events-none opacity-50" : ""}`}>
-          <div className="h-[56vh] min-h-72 shrink-0 overflow-hidden rounded-3xl shadow-lg shadow-slate-300/40 lg:h-auto lg:min-h-0 lg:flex-1 dark:shadow-black/40">
-            <HistoryMapView positions={history} currentPosition={currentPosition} currentIndex={currentIndex} speedLimit={speedLimit} />
+          <div
+            className={
+              mapFull
+                ? "fixed inset-0 z-[60] overflow-hidden bg-slate-100 dark:bg-[#0a0e1a]"
+                : "h-[56vh] min-h-72 shrink-0 overflow-hidden rounded-3xl shadow-lg shadow-slate-300/40 lg:h-auto lg:min-h-0 lg:flex-1 dark:shadow-black/40"
+            }
+          >
+            <HistoryMapView
+              positions={history}
+              currentPosition={currentPosition}
+              currentIndex={currentIndex}
+              speedLimit={speedLimit}
+              fullscreen={mapFull}
+              onToggleFullscreen={toggleMapFull}
+            />
           </div>
 
           <aside className="flex shrink-0 flex-col gap-3 lg:w-[23rem] lg:overflow-y-auto xl:w-[26rem]">

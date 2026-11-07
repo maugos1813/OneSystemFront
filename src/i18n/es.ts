@@ -92,6 +92,8 @@ export const es = {
   "vehicles.filterOffline": "Sin señal",
   "vehicles.lastData": "Último dato {when}",
   "map.fitFleet": "Ver toda la flota",
+  "map.fullscreen": "Pantalla completa",
+  "map.exitFullscreen": "Salir de pantalla completa",
   "map.sectionNoPlate": "Dispositivos sin placa",
   "map.showNoPlate": "Mostrar los {count} dispositivos sin placa",
   "map.hideNoPlate": "Ocultar los {count} dispositivos sin placa",
