@@ -137,8 +137,12 @@ export function listDevices(): Promise<Device[]> {
   return request("/devices");
 }
 
-export function claimDevice(imei: string, model?: string): Promise<Device> {
-  return request("/devices/claim", { method: "POST", body: JSON.stringify({ imei, ...(model ? { model } : {}) }) });
+/** `orgId` is for OneSystec only: the client the device goes to (without it, the caller's own organization). */
+export function claimDevice(imei: string, model?: string, orgId?: string): Promise<Device> {
+  return request("/devices/claim", {
+    method: "POST",
+    body: JSON.stringify({ imei, ...(model ? { model } : {}), ...(orgId ? { orgId } : {}) }),
+  });
 }
 
 export function getDevice(id: string): Promise<DeviceDetail> {

@@ -1,5 +1,6 @@
 import { AreaFilterPills } from "../components/AreaFilterPills";
 import { DeviceSourceBadge } from "../components/DeviceSourceBadge";
+import { useAuth } from "../context/AuthContext";
 import { useFleet } from "../context/FleetContext";
 import { isLowVoltage, isOffline } from "../lib/alerts";
 import { trackGlow } from "../lib/glow";
@@ -23,6 +24,7 @@ const SEVERITY_COLOR: Record<Severity, string> = {
 };
 
 export function DeviceHealthPage() {
+  const isPlatform = useAuth().currentUser?.isPlatform === true;
   const { devices: allDevices, vehicles, positions, loading, settings, selectedArea } = useFleet();
   const deviceOfflineMs = (settings?.alerts.deviceOfflineHours ?? 2) * 3_600_000;
   const lowBatteryMv = (settings?.alerts.lowBatteryVoltage ?? 11.5) * 1000;
@@ -108,7 +110,7 @@ export function DeviceHealthPage() {
               <tr>
                 <th className="px-4 py-2 font-medium">Estado</th>
                 <th className="px-4 py-2 font-medium">Vehículo</th>
-                <th className="px-4 py-2 font-medium">IMEI</th>
+                {isPlatform && <th className="px-4 py-2 font-medium">IMEI</th>}
                 <th className="px-4 py-2 font-medium">Fuente</th>
                 <th className="px-4 py-2 font-medium">Última conexión</th>
                 <th className="px-4 py-2 text-right font-medium">Batería</th>
@@ -135,7 +137,7 @@ export function DeviceHealthPage() {
                     </span>
                   </td>
                   <td className="px-4 py-3 font-medium text-slate-900 dark:text-white">{row.vehicleName}</td>
-                  <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{row.device.imei}</td>
+                  {isPlatform && <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{row.device.imei}</td>}
                   <td className="px-4 py-3">
                     <DeviceSourceBadge source={row.device.source} />
                   </td>

@@ -43,7 +43,8 @@ export function DevicesPage() {
   const { currentUser } = useAuth();
   const { devices, vehicles, loading, refetch } = useFleet();
   const vehicleByDeviceId = new Map(vehicles.filter((v) => v.deviceId).map((v) => [v.deviceId, v]));
-  const canManage = currentUser?.role === "owner" || currentUser?.role === "admin";
+  // The IMEI is OneSystec's: it adds hardware by IMEI and sees it. A client knows each device by its vehicle.
+  const isPlatform = currentUser?.isPlatform === true;
   const navigate = useNavigate();
   const [imei, setImei] = useState("");
   const [model, setModel] = useState<string>(DEVICE_MODELS[0]);
@@ -102,10 +103,10 @@ export function DevicesPage() {
       <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Dispositivos</h1>
       <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">
         Los trackers GPS vinculados a tu empresa.
-        {canManage && " Para agregar uno nuevo escribe su IMEI: puedes hacerlo antes de que se conecte, no necesita SIM todavía."}
+        {isPlatform && " Para agregar uno nuevo escribe su IMEI: puedes hacerlo antes de que se conecte, no necesita SIM todavía."}
       </p>
 
-      {canManage && (
+      {isPlatform && (
         <>
           <form
             onSubmit={handleClaim}
@@ -182,7 +183,7 @@ export function DevicesPage() {
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar IMEI, modelo o placa…"
+            placeholder={isPlatform ? "Buscar IMEI, modelo o placa…" : "Buscar modelo, vehículo o placa…"}
             className="field-input ml-auto w-full rounded-xl border border-slate-300 px-3 py-1.5 text-sm sm:w-64 dark:border-white/10 dark:bg-white/5 dark:text-white"
           />
         </div>
@@ -197,9 +198,10 @@ export function DevicesPage() {
           <table className="w-full min-w-[640px] text-left text-sm">
             <thead className="border-b border-violet-100 bg-violet-50/60 text-xs text-slate-500 uppercase dark:border-white/10 dark:bg-white/5 dark:text-slate-400">
               <tr>
-                <th className="px-4 py-2 font-medium">IMEI</th>
+                {isPlatform && <th className="px-4 py-2 font-medium">IMEI</th>}
+                {!isPlatform && <th className="px-4 py-2 font-medium">Vehículo</th>}
                 <th className="px-4 py-2 font-medium">Modelo</th>
-                <th className="px-4 py-2 font-medium">Vehículo</th>
+                {isPlatform && <th className="px-4 py-2 font-medium">Vehículo</th>}
                 <th className="px-4 py-2 font-medium">Fuente</th>
                 <th className="px-4 py-2 font-medium">Estado</th>
                 <th className="px-4 py-2 font-medium">Última conexión</th>
@@ -214,16 +216,18 @@ export function DevicesPage() {
                 >
                   <td className="px-4 py-3 font-medium text-slate-900 dark:text-white">
                     <Link to={`/dispositivos/${device.id}`} onClick={(e) => e.stopPropagation()} className="hover:underline">
-                      {device.imei}
+                      {isPlatform ? device.imei : (vehicleByDeviceId.get(device.id)?.name ?? "Sin asignar")}
                     </Link>
                   </td>
                   <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
                     {device.model}
                     <ModelTags model={device.model} />
                   </td>
-                  <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
-                    {vehicleByDeviceId.get(device.id)?.name ?? <span className="text-slate-400">Sin asignar</span>}
-                  </td>
+                  {isPlatform && (
+                    <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
+                      {vehicleByDeviceId.get(device.id)?.name ?? <span className="text-slate-400">Sin asignar</span>}
+                    </td>
+                  )}
                   <td className="px-4 py-3">
                     <DeviceSourceBadge source={device.source} />
                   </td>

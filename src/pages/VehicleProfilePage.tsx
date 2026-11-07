@@ -1,3 +1,4 @@
+import { deviceLabel } from "../lib/deviceLabel";
 import { ArrowLeft, Gauge } from "lucide-react";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
@@ -317,7 +318,8 @@ function DataCard({ profile, canEdit, onSaved }: { profile: VehicleProfile; canE
   const t = useT();
   const { vehicle } = profile;
   const { devices } = useFleet();
-  const imei = vehicle.deviceId ? (devices.find((d) => d.id === vehicle.deviceId)?.imei ?? null) : null;
+  const assigned = vehicle.deviceId ? devices.find((d) => d.id === vehicle.deviceId) : undefined;
+  const imei = assigned ? deviceLabel(assigned) : null;
   const [name, setName] = useState(vehicle.name);
   const [plate, setPlate] = useState(vehicle.plate ?? "");
   const [brand, setBrand] = useState(vehicle.brand ?? "");

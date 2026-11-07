@@ -8,9 +8,9 @@ import { useT } from "../i18n";
 import { useSmoothedPosition } from "../hooks/useSmoothedPosition";
 import { geofenceZoneColor, isRomeZtl } from "../lib/geo";
 import { MAP_ID } from "../lib/mapConfig";
-import { fleetClass, fleetColors, fleetPrefixes, fleetTagCss, GAMONAL_FLEET } from "../lib/fleetBrand";
+import { fleetClass, fleetTagCss, GAMONAL_FLEET } from "../lib/fleetBrand";
 import { getVehicleIcon } from "../lib/markerIcon";
-import { AVL_ID, type Geofence, type Position, type SharedVehicle, type Vehicle, type VehicleEta } from "../lib/types";
+import { AVL_ID, type Position, type SharedVehicle, type Vehicle, type VehicleEta } from "../lib/types";
 
 const FOCUS_ZOOM = 15;
 
@@ -343,69 +343,7 @@ export function MapView({
             />
           ))}
         </Map>
-
-        {/* Just above Google's own logo, which has to stay visible. */}
-        <div className="absolute bottom-6 left-2 z-0">
-          <MapLegend zonePolygons={zonePolygons} showShared={shared.length > 0} fleets={fleets} />
-        </div>
       </MapsProvider>
-    </div>
-  );
-}
-
-function MapLegend({ zonePolygons, showShared, fleets }: { zonePolygons: Geofence[]; showShared: boolean; fleets: string[] }) {
-  const t = useT();
-  const zoneNames = [...new Set(zonePolygons.map((g) => g.name))];
-  const prefixes = fleetPrefixes(fleets);
-
-  return (
-    <div className="flex flex-col gap-1.5 rounded-2xl border border-white bg-white px-2.5 py-2 text-[11px] text-slate-600 shadow-lg shadow-slate-300/40 sm:px-3 sm:text-xs dark:border-white/10 dark:bg-[#111729] dark:text-slate-300 dark:shadow-black/40">
-      <div className="flex items-center gap-2">
-        <span className="h-2.5 w-2.5 rounded-full bg-red-600" />
-        {t("map.legendOff")}
-      </div>
-      <div className="flex items-center gap-2">
-        <span className="h-2.5 w-2.5 rounded-full bg-orange-500" />
-        {t("map.legendIdle")}
-      </div>
-      <div className="flex items-center gap-2">
-        <span className="text-green-600">▲</span>
-        {t("map.legendMoving")}
-      </div>
-      {showShared && (
-        <div className="flex items-center gap-2 border-t border-slate-100 pt-1.5 dark:border-white/10">
-          <span className="h-2.5 w-2.5 rounded-full border-2 border-slate-400 bg-transparent" />
-          {t("map.legendShared")}
-        </div>
-      )}
-      {prefixes.size > 1 && (
-        <div className="flex flex-col gap-1.5 border-t border-slate-100 pt-1.5 dark:border-white/10">
-          {[...prefixes].map(([fleet, prefix]) => {
-            const { bg, fg } = fleetColors(fleet);
-            return (
-              <div key={fleet} className="flex items-center gap-2">
-                <span className="rounded px-1 text-[10px] font-semibold leading-4" style={{ backgroundColor: bg, color: fg }}>
-                  {prefix}
-                </span>
-                {fleet}
-              </div>
-            );
-          })}
-        </div>
-      )}
-      {zoneNames.length > 0 && (
-        <div className="mt-1 flex flex-col gap-1.5 border-t border-slate-100 pt-1.5 dark:border-white/10">
-          {zoneNames.map((name) => (
-            <div key={name} className="flex items-center gap-2">
-              <span
-                className="h-2.5 w-2.5 rounded-sm"
-                style={{ backgroundColor: geofenceZoneColor(name).fill }}
-              />
-              {name}
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   );
 }

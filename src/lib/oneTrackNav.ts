@@ -3,17 +3,13 @@ import {
   BellRing,
   Cpu,
   FileCheck,
-  Gauge,
-  HeartPulse,
   History,
   Key,
   Map,
   MapPin,
   Settings,
-  ShieldCheck,
   Smartphone,
   Truck,
-  UserRound,
   type LucideIcon,
 } from "lucide-react";
 import type { MessageKey } from "../i18n";
@@ -31,23 +27,23 @@ export interface OneTrackNavItem {
   anyOf?: readonly ModuleKey[];
   /** Administration: only owner/admin, and it cannot be granted to anyone else. */
   ownerAdminOnly?: boolean;
+  /** Only OneSystec's own account (hardware: SIMs). A client's owner/admin never sees it. */
+  platformOnly?: boolean;
 }
 
 export const ONETRACK_NAV: OneTrackNavItem[] = [
   { to: "/gps", label: "nav.map", icon: Map, end: true, module: "mapa" },
-  { to: "/cockpit", label: "nav.cockpit", icon: Gauge, end: false, module: "cockpit" },
   { to: "/analiticas", label: "nav.analytics", icon: BarChart3, end: false, module: "analiticas" },
   { to: "/historial", label: "nav.history", icon: History, end: false, module: "historial" },
-  { to: "/conduccion", label: "nav.driving", icon: ShieldCheck, end: false, module: "conduccion" },
-  { to: "/alertas", label: "nav.alerts", icon: BellRing, end: false, module: "alertas" },
+  // Alertas also holds Conducción as a tab: the item opens with either section.
+  { to: "/alertas", label: "nav.alerts", icon: BellRing, end: false, anyOf: ["alertas", "conduccion"] },
   { to: "/geocercas", label: "nav.geofences", icon: MapPin, end: false, module: "geocercas" },
-  { to: "/salud-dispositivos", label: "nav.deviceHealth", icon: HeartPulse, end: false, ownerAdminOnly: true },
   { to: "/vehiculos", label: "nav.vehicles", icon: Truck, end: false, anyOf: ["vehiculos", "mantenimiento"] },
   { to: "/vencimientos", label: "nav.documents", icon: FileCheck, end: false, module: "vencimientos" },
-  { to: "/choferes", label: "nav.drivers", icon: UserRound, end: false, ownerAdminOnly: true },
+  // Dispositivos holds Salud and EYE BEACON as tabs.
   { to: "/dispositivos", label: "nav.devices", icon: Smartphone, end: false, ownerAdminOnly: true },
   // API keys authenticate as full access and org settings affect everyone, so these stay with owner/admin.
-  { to: "/sims", label: "nav.sims", icon: Cpu, end: false, ownerAdminOnly: true },
+  { to: "/sims", label: "nav.sims", icon: Cpu, end: false, ownerAdminOnly: true, platformOnly: true },
   { to: "/api-keys", label: "nav.apiKeys", icon: Key, end: false, ownerAdminOnly: true },
   { to: "/ajustes", label: "nav.settings", icon: Settings, end: false, ownerAdminOnly: true },
 ];
@@ -55,6 +51,7 @@ export const ONETRACK_NAV: OneTrackNavItem[] = [
 /** Whether this user may open the section. Owner and admin may open all of them. */
 export function canOpen(user: CurrentUser | null, item: OneTrackNavItem): boolean {
   if (!user) return false;
+  if (item.platformOnly && !user.isPlatform) return false;
   if (user.role === "owner" || user.role === "admin") return true;
   if (item.ownerAdminOnly) return false;
   if (item.anyOf) return item.anyOf.some((module) => user.modules.includes(module));

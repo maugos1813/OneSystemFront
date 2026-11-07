@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { AreaFilterSelect } from "../components/AreaFilterSelect";
 import { useAuth } from "../context/AuthContext";
+import { deviceLabel } from "../lib/deviceLabel";
 import { useFleet } from "../context/FleetContext";
 import { createVehicle, deleteVehicle, listMaintenance, listVehicleOdometers, updateVehicle } from "../lib/api";
 import { FleetGroupSelect } from "../components/FleetGroupSelect";
@@ -19,7 +20,7 @@ function DeviceSelect({
 }: {
   value: string;
   onChange: (v: string) => void;
-  devices: { id: string; imei: string }[];
+  devices: { id: string; imei: string; model: string }[];
 }) {
   const t = useT();
   return (
@@ -31,7 +32,7 @@ function DeviceSelect({
       <option value="">{t("vehiclesPage.noDevice")}</option>
       {devices.map((d) => (
         <option key={d.id} value={d.id}>
-          {d.imei}
+          {deviceLabel(d)}
         </option>
       ))}
     </select>
@@ -65,7 +66,7 @@ function VehicleRow({
 }: {
   vehicle: Vehicle;
   deviceImei: string | null;
-  devices: { id: string; imei: string }[];
+  devices: { id: string; imei: string; model: string }[];
   groups: readonly string[];
   canManage: boolean;
   /** Only owner/admin assign the device and the flota; a client only renames their own vehicles. */
@@ -558,7 +559,7 @@ export function VehiclesPage() {
                   odometer={odometers.get(vehicle.id)}
                   maintenance={maintenance.get(vehicle.id) ?? null}
                   showMaintenance={showMaintenance}
-                  deviceImei={vehicle.deviceId ? (deviceById.get(vehicle.deviceId)?.imei ?? null) : null}
+                  deviceImei={vehicle.deviceId && deviceById.get(vehicle.deviceId) ? deviceLabel(deviceById.get(vehicle.deviceId)!) : null}
                   devices={vehicle.deviceId ? [...unassignedDevices, deviceById.get(vehicle.deviceId)!] : unassignedDevices}
                   groups={fleetGroups}
                   canManage={canManage}

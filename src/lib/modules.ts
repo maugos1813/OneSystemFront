@@ -15,6 +15,9 @@ export const MODULE_KEYS = [
   "vencimientos",
 ] as const;
 
+/** Sections that still exist in the system but are not offered any more (Cockpit is hidden). */
+export const HIDDEN_MODULES: readonly string[] = ["cockpit"];
+
 export type ModuleKey = (typeof MODULE_KEYS)[number];
 
 export interface ModuleInfo {

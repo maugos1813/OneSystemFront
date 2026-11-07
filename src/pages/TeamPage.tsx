@@ -26,7 +26,7 @@ import {
 import { FleetGroupSelect } from "../components/FleetGroupSelect";
 import { useFleetGroups } from "../lib/useFleetGroups";
 import { fileToLogoDataUrl, LOGO_ACCEPT } from "../lib/logoImage";
-import { MODULE_INFO, MODULE_TEMPLATES, matchingTemplate, type ModuleKey } from "../lib/modules";
+import { HIDDEN_MODULES, MODULE_INFO, MODULE_TEMPLATES, matchingTemplate, type ModuleKey } from "../lib/modules";
 import type { CurrentUser, Product, TeamMember, TeamRole } from "../lib/types";
 
 const ROLE_LABEL: Record<TeamRole, string> = {
@@ -644,7 +644,7 @@ function MemberRow({
           ) : (
             <div className="flex flex-wrap gap-1.5">
               {member.modules.length === 0 && <span className="text-xs text-slate-400 dark:text-slate-500">Ninguna</span>}
-              {member.modules.map((key) => (
+              {member.modules.filter((key) => !HIDDEN_MODULES.includes(key)).map((key) => (
                 <span key={key} className="rounded-full bg-slate-200 px-2 py-0.5 text-xs text-slate-600 dark:bg-white/10 dark:text-slate-300">
                   {MODULE_INFO[key].label}
                 </span>
@@ -835,7 +835,7 @@ export function TeamPage() {
                 <div>
                   <p className="mb-2 text-xs font-medium tracking-wide text-slate-400 uppercase dark:text-slate-500">
                     Secciones de OneTrack{" "}
-                    <span className="font-normal normal-case">(Conducción y Cockpit vienen apagados)</span>
+                    <span className="font-normal normal-case">(Conducción viene apagada)</span>
                   </p>
                   <ModulesPicker
                     selected={newModules}

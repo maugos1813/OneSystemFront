@@ -4,7 +4,8 @@ import { Link, Navigate } from "react-router-dom";
 import { Panel } from "../components/analytics/Panel";
 import { PasswordField } from "../components/PasswordField";
 import { useAuth } from "../context/AuthContext";
-import { createPlatformOrganization, getPlatformOrganization, listPlatformOrganizations } from "../lib/api";
+import { ApiError, claimDevice, createPlatformOrganization, getPlatformOrganization, listPlatformOrganizations } from "../lib/api";
+import { DEVICE_MODELS } from "../lib/deviceModels";
 import type { PlatformOrganization, PlatformOrganizationDetail } from "../lib/types";
 
 const dateFormat = new Intl.DateTimeFormat("es", { dateStyle: "medium" });
@@ -52,10 +53,42 @@ export function PlatformPage() {
     }
     setOpenId(id);
     setDetail(null);
+    setClaimMessage(null);
     try {
       setDetail(await getPlatformOrganization(id));
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudo cargar el cliente");
+    }
+  }
+
+  const [claimImei, setClaimImei] = useState("");
+  const [claimModel, setClaimModel] = useState<string>(DEVICE_MODELS[0]);
+  const [claiming, setClaiming] = useState(false);
+  const [claimMessage, setClaimMessage] = useState<{ ok: boolean; text: string } | null>(null);
+
+  /** Hardware is OneSystec's: it assigns each device to the client that asked for it. */
+  async function handleClaim(e: FormEvent, orgId: string) {
+    e.preventDefault();
+    setClaiming(true);
+    setClaimMessage(null);
+    try {
+      await claimDevice(claimImei.trim(), claimModel, orgId);
+      setClaimImei("");
+      setClaimMessage({ ok: true, text: "Dispositivo agregado." });
+      setDetail(await getPlatformOrganization(orgId));
+      await refetch();
+    } catch (err) {
+      setClaimMessage({
+        ok: false,
+        text:
+          err instanceof ApiError && err.status === 400
+            ? err.message
+            : err instanceof ApiError && err.status === 404
+              ? "Ese IMEI ya está vinculado a otra empresa (o no existe)."
+              : "No se pudo agregar el dispositivo",
+      });
+    } finally {
+      setClaiming(false);
     }
   }
 
@@ -198,6 +231,38 @@ export function PlatformPage() {
                                     </li>
                                   ))}
                                 </ul>
+                              )}
+                              <form onSubmit={(e) => void handleClaim(e, detail.id)} className="mt-3 flex flex-col gap-2 sm:flex-row">
+                                <input
+                                  type="text"
+                                  required
+                                  minLength={10}
+                                  value={claimImei}
+                                  onChange={(e) => setClaimImei(e.target.value)}
+                                  placeholder="IMEI del dispositivo para este cliente"
+                                  aria-label="IMEI del dispositivo"
+                                  className={INPUT}
+                                />
+                                <select
+                                  value={claimModel}
+                                  onChange={(e) => setClaimModel(e.target.value)}
+                                  aria-label="Modelo"
+                                  className="field-input rounded-xl border border-slate-300 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
+                                >
+                                  {DEVICE_MODELS.map((option) => (
+                                    <option key={option} value={option}>
+                                      {option}
+                                    </option>
+                                  ))}
+                                </select>
+                                <button type="submit" disabled={claiming} className="brand-button rounded-xl px-4 py-2 text-sm font-medium disabled:opacity-60">
+                                  {claiming ? "Agregando..." : "Agregar dispositivo"}
+                                </button>
+                              </form>
+                              {claimMessage && (
+                                <p className={`mt-1 text-xs ${claimMessage.ok ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
+                                  {claimMessage.text}
+                                </p>
                               )}
                             </div>
                           </>

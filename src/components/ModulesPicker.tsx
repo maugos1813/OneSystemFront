@@ -1,4 +1,4 @@
-import { MODULE_INFO, MODULE_KEYS, MODULE_TEMPLATES, TEMPLATE_LABEL, matchingTemplate, type ModuleKey } from "../lib/modules";
+import { HIDDEN_MODULES, MODULE_INFO, MODULE_KEYS, MODULE_TEMPLATES, TEMPLATE_LABEL, matchingTemplate, type ModuleKey } from "../lib/modules";
 
 /** Pick which OneTrack sections a client gets: a ready-made package, then fine-tune one by one. */
 export function ModulesPicker({
@@ -44,7 +44,7 @@ export function ModulesPicker({
         )}
       </div>
       <div className="grid gap-x-4 gap-y-1.5 sm:grid-cols-2">
-        {MODULE_KEYS.filter((key) => available.includes(key)).map((key) => (
+        {MODULE_KEYS.filter((key) => available.includes(key) && !HIDDEN_MODULES.includes(key)).map((key) => (
           <label key={key} className="flex items-start gap-1.5 text-sm text-slate-700 dark:text-slate-300">
             <input
               type="checkbox"

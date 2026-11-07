@@ -69,6 +69,8 @@ export function DeviceDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { currentUser } = useAuth();
   const canEdit = (currentUser?.role === "owner" || currentUser?.role === "admin") && !currentUser.allowedArea;
+  // The hardware identity (IMEI, serial, firmware), the SIM and the raw data the tracker sends are OneSystec's.
+  const isPlatform = currentUser?.isPlatform === true;
   const [detail, setDetail] = useState<DeviceDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -102,7 +104,7 @@ export function DeviceDetailPage() {
     return () => clearInterval(timer);
   }, [load]);
 
-  const canSeeSim = canEdit; // the SIMs section follows the same owner/admin, whole-fleet rule
+  const canSeeSim = canEdit && isPlatform; // the SIMs section follows the same owner/admin, whole-fleet rule
   const checklist = useMemo(() => (detail ? buildChecklist(detail, now, canSeeSim) : []), [detail, now, canSeeSim]);
   const io = useMemo(() => {
     const rows = (detail?.io ?? []).map((reading) => ({ reading, ...describeIo(reading.id, reading.value) }));
@@ -147,7 +149,7 @@ export function DeviceDetailPage() {
             {device.model} · {vehicle?.name ?? "Sin vehículo"}
           </h1>
           <p className="mt-1 flex flex-wrap items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-            <span>IMEI {device.imei}</span>
+            {isPlatform && <span>IMEI {device.imei}</span>}
             <StatusBadge lastSeenAt={device.lastSeenAt} />
             <DeviceSourceBadge source={device.source} />
           </p>
@@ -167,7 +169,7 @@ export function DeviceDetailPage() {
         <Section
           title="Identificación"
           action={
-            canEdit && (
+            canEdit && isPlatform && (
               <button
                 type="button"
                 onClick={() => setEditing(true)}
@@ -180,10 +182,10 @@ export function DeviceDetailPage() {
           }
         >
           <dl className="divide-y divide-slate-100 dark:divide-white/10">
-            <Fact label="IMEI">{device.imei}</Fact>
+            {isPlatform && <Fact label="IMEI">{device.imei}</Fact>}
             <Fact label="Modelo">{device.model}</Fact>
-            <Fact label="Número de serie">{device.serialNumber ?? "—"}</Fact>
-            <Fact label="Firmware">{device.firmware ?? "—"}</Fact>
+            {isPlatform && <Fact label="Número de serie">{device.serialNumber ?? "—"}</Fact>}
+            {isPlatform && <Fact label="Firmware">{device.firmware ?? "—"}</Fact>}
             <Fact label="Vehículo">
               {vehicle ? (
                 <Link to="/vehiculos" className="hover:underline">
@@ -334,58 +336,60 @@ export function DeviceDetailPage() {
         )}
       </section>
 
-      <section onMouseMove={trackGlow} className={`${CARD} mt-4`}>
-        <div className="mb-1 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Lo que está enviando el equipo</h2>
-          <input
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-            placeholder="Buscar por nombre o ID"
-            aria-label="Buscar elemento"
-            className={`${INPUT} !w-56`}
-          />
-        </div>
-        <p className="mb-3 text-xs text-slate-500 dark:text-slate-400">
-          El último valor de cada elemento de I/O recibido (se revisan los últimos 100 registros, porque el equipo solo
-          reenvía lo que cambia). Es la forma de comprobar qué activaste en el Configurator.
-          {device.source === "radius_velocity" && " Este equipo viene de Radius Velocity y solo trae posición, velocidad e ignición."}
-        </p>
-        {detail.io.length === 0 ? (
-          <p className="text-sm text-slate-500 dark:text-slate-400">Todavía no se recibió ningún dato de este equipo.</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[460px] text-left text-sm">
-              <thead className="border-b border-violet-100 text-xs text-slate-500 uppercase dark:border-white/10 dark:text-slate-400">
-                <tr>
-                  <th className="px-2 py-2 font-medium">ID</th>
-                  <th className="px-2 py-2 font-medium">Elemento</th>
-                  <th className="px-2 py-2 font-medium">Valor</th>
-                  <th className="px-2 py-2 font-medium">Valor crudo</th>
-                  <th className="px-2 py-2 font-medium">Recibido</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-white/10">
-                {io.map(({ reading, name, display, known }) => (
-                  <tr key={reading.id}>
-                    <td className="px-2 py-2 text-slate-500 tabular-nums dark:text-slate-400">{reading.id}</td>
-                    <td className={`px-2 py-2 ${known ? "text-slate-900 dark:text-white" : "text-slate-400"}`}>{known ? name : "Sin nombre"}</td>
-                    <td className="px-2 py-2 font-medium text-slate-900 dark:text-white">{display}</td>
-                    <td className="px-2 py-2 text-slate-500 tabular-nums dark:text-slate-400">{String(reading.value)}</td>
-                    <td className="px-2 py-2 text-slate-500 dark:text-slate-400">{relativeTime(reading.ts)}</td>
-                  </tr>
-                ))}
-                {io.length === 0 && (
-                  <tr>
-                    <td colSpan={5} className="px-2 py-3 text-slate-500 dark:text-slate-400">
-                      Ningún elemento coincide con la búsqueda.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+      {isPlatform && (
+        <section onMouseMove={trackGlow} className={`${CARD} mt-4`}>
+          <div className="mb-1 flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Lo que está enviando el equipo</h2>
+            <input
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              placeholder="Buscar por nombre o ID"
+              aria-label="Buscar elemento"
+              className={`${INPUT} !w-56`}
+            />
           </div>
-        )}
-      </section>
+          <p className="mb-3 text-xs text-slate-500 dark:text-slate-400">
+            El último valor de cada elemento de I/O recibido (se revisan los últimos 100 registros, porque el equipo solo
+            reenvía lo que cambia). Es la forma de comprobar qué activaste en el Configurator.
+            {device.source === "radius_velocity" && " Este equipo viene de Radius Velocity y solo trae posición, velocidad e ignición."}
+          </p>
+          {detail.io.length === 0 ? (
+            <p className="text-sm text-slate-500 dark:text-slate-400">Todavía no se recibió ningún dato de este equipo.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[460px] text-left text-sm">
+                <thead className="border-b border-violet-100 text-xs text-slate-500 uppercase dark:border-white/10 dark:text-slate-400">
+                  <tr>
+                    <th className="px-2 py-2 font-medium">ID</th>
+                    <th className="px-2 py-2 font-medium">Elemento</th>
+                    <th className="px-2 py-2 font-medium">Valor</th>
+                    <th className="px-2 py-2 font-medium">Valor crudo</th>
+                    <th className="px-2 py-2 font-medium">Recibido</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-white/10">
+                  {io.map(({ reading, name, display, known }) => (
+                    <tr key={reading.id}>
+                      <td className="px-2 py-2 text-slate-500 tabular-nums dark:text-slate-400">{reading.id}</td>
+                      <td className={`px-2 py-2 ${known ? "text-slate-900 dark:text-white" : "text-slate-400"}`}>{known ? name : "Sin nombre"}</td>
+                      <td className="px-2 py-2 font-medium text-slate-900 dark:text-white">{display}</td>
+                      <td className="px-2 py-2 text-slate-500 tabular-nums dark:text-slate-400">{String(reading.value)}</td>
+                      <td className="px-2 py-2 text-slate-500 dark:text-slate-400">{relativeTime(reading.ts)}</td>
+                    </tr>
+                  ))}
+                  {io.length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="px-2 py-3 text-slate-500 dark:text-slate-400">
+                        Ningún elemento coincide con la búsqueda.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+      )}
 
       {editing && (
         <EditDialog

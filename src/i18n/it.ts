@@ -149,7 +149,7 @@ export const it: Record<MessageKey, string> = {
   "nav.documents": "Scadenze",
   "nav.devices": "Dispositivi",
   "nav.sims": "SIM",
-  "nav.drivers": "Autisti",
+  "nav.drivers": "EYE BEACON",
   "nav.apiKeys": "Chiavi API",
   "nav.settings": "Impostazioni",
   "nav.hideMenu": "Nascondi il menu",

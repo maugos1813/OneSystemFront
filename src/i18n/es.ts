@@ -150,7 +150,7 @@ export const es = {
   "nav.documents": "Vencimientos",
   "nav.devices": "Dispositivos",
   "nav.sims": "SIMs",
-  "nav.drivers": "Choferes",
+  "nav.drivers": "EYE BEACON",
   "nav.apiKeys": "API Keys",
   "nav.settings": "Ajustes",
   "nav.hideMenu": "Ocultar menú",

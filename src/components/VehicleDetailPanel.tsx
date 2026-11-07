@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { getVehicleDriver } from "../lib/api";
 import { EtaInput, EtaResult } from "./VehicleEta";
-import { History, IdCard, Map as MapIcon, Navigation, Phone, X, type LucideIcon } from "lucide-react";
+import { History, IdCard, Navigation, Phone, X, type LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { useT } from "../i18n";
@@ -79,7 +79,6 @@ export function VehicleDetailPanel({ vehicle, position, onClose, onRoute }: Vehi
   const canSeeHistory = hasAccess("historial", "analiticas");
   // Who drove it lately is about people: it needs the Conducción section.
   const canSeeDriver = hasAccess("conduccion");
-  const canSeeCockpit = hasAccess("cockpit");
   // The profile holds the vehicle's data, its km and its maintenance.
   const canSeeProfile = hasAccess("vehiculos", "mantenimiento");
   const [driver, setDriver] = useState<VehicleDriver | null>(null);
@@ -164,7 +163,6 @@ export function VehicleDetailPanel({ vehicle, position, onClose, onRoute }: Vehi
           {canSeeHistory && (
             <Action icon={History} label={t("detail.tripHistory")} to={`/historial?vehicle=${vehicle.id}`} />
           )}
-          {canSeeCockpit && <Action icon={MapIcon} label={t("detail.mapView")} to={`/cockpit?vehicle=${vehicle.id}`} />}
           {canSeeDriver && (
             <Action
               icon={Phone}
@@ -192,7 +190,7 @@ export function VehicleDetailPanel({ vehicle, position, onClose, onRoute }: Vehi
               vehicleId={vehicle.id}
               // The actions fill the grid two by two: with an even number the box gets a row of its own.
               wide={
-                [canSeeHistory, canSeeCockpit, canSeeDriver, canSeeProfile, true].filter(Boolean).length % 2 === 0
+                [canSeeHistory, canSeeDriver, canSeeProfile, true].filter(Boolean).length % 2 === 0
               }
               onResult={showResult}
             />
