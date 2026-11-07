@@ -2,6 +2,7 @@ import { ArrowLeft, ImagePlus, KeyRound, Pencil, Trash2, X } from "lucide-react"
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Panel } from "../components/analytics/Panel";
+import { FleetsManager, type FleetsApi } from "../components/FleetsManager";
 import { PasswordField } from "../components/PasswordField";
 import { LogoUpload } from "../components/LogoUpload";
 import { LanguageSelect } from "../components/LanguageSelect";
@@ -22,12 +23,18 @@ import {
   updateTeamMemberPassword,
   updateTeamMemberProducts,
   updateTeamMemberRole,
+  createFleetAdmin,
+  listFleetDetails,
+  setFleetLogo,
 } from "../lib/api";
 import { FleetGroupSelect } from "../components/FleetGroupSelect";
 import { useFleetGroups } from "../lib/useFleetGroups";
 import { fileToLogoDataUrl, LOGO_ACCEPT } from "../lib/logoImage";
 import { HIDDEN_MODULES, MODULE_INFO, MODULE_TEMPLATES, matchingTemplate, type ModuleKey } from "../lib/modules";
 import type { CurrentUser, Product, TeamMember, TeamRole } from "../lib/types";
+
+/** The fleets of the account itself (a client's owner/admin manages its own). */
+const OWN_FLEETS_API: FleetsApi = { list: listFleetDetails, setLogo: setFleetLogo, createAdmin: createFleetAdmin };
 
 const ROLE_LABEL: Record<TeamRole, string> = {
   // The account holder is the client itself; its people are its team.
@@ -904,6 +911,13 @@ export function TeamPage({ embedded = false }: { embedded?: boolean }) {
               </Panel>
             );
           })()}
+
+          {/* Its fleets: a picture for the plates of each, and the account that administers it. */}
+          {(currentUser?.role === "owner" || currentUser?.role === "admin") && !currentUser.allowedArea && !currentUser.viewingAs && !currentUser.isPlatform && (
+            <Panel title="Flotas">
+              <FleetsManager api={OWN_FLEETS_API} />
+            </Panel>
+          )}
         </div>
       </div>
     </div>

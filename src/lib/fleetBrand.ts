@@ -72,12 +72,23 @@ export function fleetClass(fleet: string): string {
   return `plate-fleet-${letters(fleet).toLowerCase() || "x"}`;
 }
 
-/** CSS for the tags of these fleets: one rule per fleet, setting the letters and colours the shared `.vehicle-plate-label` ::before uses. */
-export function fleetTagCss(fleets: ReadonlyArray<string>): string {
+/** Only a plain image data URL is ever put into CSS (nothing that could close the rule or load something else). */
+const SAFE_IMAGE = /^data:image\/(?:png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/;
+
+/**
+ * CSS for the tags of these fleets: one rule per fleet, setting what the shared `.vehicle-plate-label` ::before draws. A fleet with a
+ * picture (`logos`, by fleet name) shows the picture; one without keeps its letters in its colours.
+ */
+export function fleetTagCss(fleets: ReadonlyArray<string>, logos: Readonly<Record<string, string>> = {}): string {
   const prefixes = fleetPrefixes(fleets);
+  const picture = new Map(Object.entries(logos).map(([name, logo]) => [key(name), logo]));
   return [...prefixes]
     .map(([fleet, prefix]) => {
       const { bg, fg } = fleetColors(fleet);
+      const logo = picture.get(key(fleet));
+      if (logo && SAFE_IMAGE.test(logo)) {
+        return `.${fleetClass(fleet)}{--fleet-tag:"";--fleet-bg:#fff url("${logo}") center/contain no-repeat;--fleet-fg:${fg};--fleet-w:24px;--fleet-h:15px;--fleet-pad:0;--fleet-align:middle}`;
+      }
       return `.${fleetClass(fleet)}{--fleet-tag:"${prefix}";--fleet-bg:${bg};--fleet-fg:${fg}}`;
     })
     .join("\n");

@@ -4,7 +4,7 @@ import { useAllPositions } from "../hooks/useAllPositions";
 import { useDriverVehicles } from "../hooks/useDriverVehicles";
 import { useLiveAlerts } from "../hooks/useLiveAlerts";
 import { useTagliandoNotices } from "../hooks/useTagliandoNotices";
-import { getPlatformFleet, getSettings, listDevices, listGeofences, listVehicles } from "../lib/api";
+import { getPlatformFleet, getSettings, listDevices, listFleetPictures, listGeofences, listVehicles } from "../lib/api";
 import type { Alert } from "../lib/alerts";
 import { getStoredAreaFilter, setStoredAreaFilter, uniqueFleetGroups, type AreaFilter } from "../lib/areaFilter";
 import type { Device, Geofence, OrgSettings, Position, SharedVehicle, Vehicle } from "../lib/types";
@@ -21,6 +21,8 @@ interface FleetContextValue {
   fleetGroups: string[];
   setSelectedArea: (area: AreaFilter) => void;
   devices: Device[];
+  /** The picture of each fleet by name (OneSystec's map: each client's logo by its name): what opens the plates on the map. */
+  fleetLogos: Record<string, string>;
   positions: Record<string, Position>;
   settings: OrgSettings | null;
   geofences: Geofence[];
@@ -43,6 +45,7 @@ export function FleetProvider({ children }: { children: ReactNode }) {
   const { currentUser } = useAuth();
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [devices, setDevices] = useState<Device[]>([]);
+  const [fleetLogos, setFleetLogos] = useState<Record<string, string>>({});
   const [settings, setSettings] = useState<OrgSettings | null>(null);
   const [geofences, setGeofences] = useState<Geofence[]>([]);
   const [loading, setLoading] = useState(true);
@@ -60,13 +63,21 @@ export function FleetProvider({ children }: { children: ReactNode }) {
     setLoading(true);
 
     (allClients
-      ? getPlatformFleet().then((fleet) => [fleet.vehicles, fleet.devices] as const)
-      : Promise.all([listVehicles(), listDevices()])
+      ? getPlatformFleet().then((fleet) => [fleet.vehicles, fleet.devices, fleet.logos] as const)
+      : Promise.all([
+          listVehicles(),
+          listDevices(),
+          // The pictures are only a nicety for the plates: if they cannot be read the map still works, with letters.
+          listFleetPictures()
+            .then((pictures) => Object.fromEntries(pictures.filter((f) => f.logo).map((f) => [f.name, f.logo as string])))
+            .catch((): Record<string, string> => ({})),
+        ])
     )
-      .then(([v, d]) => {
+      .then(([v, d, logos]) => {
         if (cancelled) return;
         setVehicles(v);
         setDevices(d);
+        setFleetLogos(logos);
         setError(null);
       })
       .catch(() => {
@@ -155,6 +166,7 @@ export function FleetProvider({ children }: { children: ReactNode }) {
         fleetGroups,
         setSelectedArea,
         devices,
+        fleetLogos,
         positions,
         settings,
         geofences,

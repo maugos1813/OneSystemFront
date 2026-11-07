@@ -248,8 +248,12 @@ body {
     background: var(--fleet-bg);
     color: var(--fleet-fg);
     margin: -1px 5px -1px -6px;
-    padding: 1px 5px;
+    padding: var(--fleet-pad, 1px 5px);
     border-radius: 6px 0 0 6px;
+    /* A fleet with a picture: the tag is a small box filled with it instead of letters. */
+    width: var(--fleet-w, auto);
+    height: var(--fleet-h, auto);
+    vertical-align: var(--fleet-align, baseline);
   }
   .dark .vehicle-plate-label {
     /* color is set inline per-marker in MapView.tsx (inline style always beats a class),

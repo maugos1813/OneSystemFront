@@ -307,7 +307,7 @@ export function MapView({
   const t = useT();
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
   const { theme } = useTheme();
-  const { geofences } = useFleet();
+  const { geofences, fleetLogos } = useFleet();
   const camera = useRef<Camera | null>(null);
   // Where it was left last time on this device; read once. Without it, the first positions frame the whole fleet.
   const saved = useRef<Camera | null | undefined>(undefined);
@@ -347,7 +347,7 @@ export function MapView({
 
   return (
     <div className="relative h-full flex-1">
-      <style>{fleetTagCss(fleets)}</style>
+      <style>{fleetTagCss(fleets, fleetLogos)}</style>
       <MapsProvider apiKey={apiKey}>
         <Map
           // The vector map turns and tilts with two fingers; its colours come from the scheme, which is set when the

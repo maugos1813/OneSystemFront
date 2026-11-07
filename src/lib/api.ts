@@ -39,6 +39,9 @@ import type {
   WorkingHours,
   PlatformOrganization,
   PlatformOrganizationDetail,
+  FleetAdminInput,
+  FleetDetail,
+  FleetPicture,
 } from "./types";
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -633,7 +636,7 @@ export function viewClientToken(orgId: string): Promise<{ token: string; orgId: 
 }
 
 /** OneSystec's own map: every vehicle and device of every client (a device without a vehicle gets a stand-in), with positions. */
-export function getPlatformFleet(): Promise<{ vehicles: Vehicle[]; devices: Device[]; positions: Record<string, Position> }> {
+export function getPlatformFleet(): Promise<{ vehicles: Vehicle[]; devices: Device[]; positions: Record<string, Position>; logos: Record<string, string> }> {
   return request("/platform/fleet");
 }
 
@@ -650,4 +653,37 @@ export function setOrganizationSections(orgId: string, sections: string[] | null
 /** OneSystec only: puts or removes a client's company logo (null removes it). */
 export function setOrganizationLogoAsPlatform(orgId: string, logo: string | null): Promise<{ id: string; logo: string | null }> {
   return request(`/platform/organizations/${orgId}/logo`, { method: "PATCH", body: JSON.stringify({ logo }) });
+}
+
+// --- Fleets (flotas) ---
+
+/** The fleets of the caller's organization and their pictures: what the map needs for the tag of each plate. */
+export function listFleetPictures(): Promise<FleetPicture[]> {
+  return request("/fleets");
+}
+
+/** Owner/admin of a client: its fleets with their vehicles and administrators. */
+export function listFleetDetails(): Promise<FleetDetail[]> {
+  return request("/fleets/manage");
+}
+
+export function setFleetLogo(name: string, logo: string | null): Promise<FleetPicture> {
+  return request("/fleets/logo", { method: "PUT", body: JSON.stringify({ name, logo }) });
+}
+
+export function createFleetAdmin(input: FleetAdminInput): Promise<unknown> {
+  return request("/fleets/admin", { method: "POST", body: JSON.stringify(input) });
+}
+
+/** OneSystec only: the same, for any client. */
+export function listOrgFleets(orgId: string): Promise<FleetDetail[]> {
+  return request(`/platform/organizations/${orgId}/fleets`);
+}
+
+export function setOrgFleetLogo(orgId: string, name: string, logo: string | null): Promise<FleetPicture> {
+  return request(`/platform/organizations/${orgId}/fleets/logo`, { method: "PUT", body: JSON.stringify({ name, logo }) });
+}
+
+export function createOrgFleetAdmin(orgId: string, input: FleetAdminInput): Promise<unknown> {
+  return request(`/platform/organizations/${orgId}/fleets/admin`, { method: "POST", body: JSON.stringify(input) });
 }
