@@ -1,5 +1,5 @@
 import { ColorScheme, ControlPosition, Map, MapControl, Marker, Polygon, Polyline, RenderingType, useMap, type MapCameraChangedEvent } from "@vis.gl/react-google-maps";
-import { Compass, Maximize } from "lucide-react";
+import { Compass } from "lucide-react";
 import { MapsProvider } from "./MapsProvider";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFleet } from "../context/FleetContext";
@@ -46,11 +46,12 @@ function saveCamera(camera: Camera): void {
   }
 }
 
-/** The button that frames every vehicle at once; and, the very first time the map has no remembered view, does it by itself. */
-function FitFleetControl({ points, auto }: { points: Array<{ lat: number; lng: number }>; auto: boolean }) {
-  const t = useT();
+/** Frames every vehicle at once: when "Ver toda la flota" is pressed (`signal` changes) and, the very first time the map has no
+ * remembered view, by itself. */
+function FitFleet({ points, signal, auto }: { points: Array<{ lat: number; lng: number }>; signal: number; auto: boolean }) {
   const map = useMap();
   const autoDone = useRef(false);
+  const lastSignal = useRef(signal);
 
   const fit = useCallback(() => {
     if (!map || points.length === 0) return;
@@ -65,25 +66,17 @@ function FitFleetControl({ points, auto }: { points: Array<{ lat: number; lng: n
   }, [map, points]);
 
   useEffect(() => {
+    if (signal !== lastSignal.current) {
+      lastSignal.current = signal;
+      fit();
+      return;
+    }
     if (!auto || autoDone.current || !map || points.length === 0) return;
     autoDone.current = true;
     fit();
-  }, [auto, map, points, fit]);
+  }, [signal, auto, map, points, fit]);
 
-  if (points.length === 0) return null;
-  return (
-    <MapControl position={ControlPosition.RIGHT_CENTER}>
-      <button
-        type="button"
-        onClick={fit}
-        title={t("map.fitFleet")}
-        aria-label={t("map.fitFleet")}
-        className="m-2.5 flex h-10 w-10 items-center justify-center rounded-sm bg-white text-slate-700 shadow-md hover:bg-slate-50"
-      >
-        <Maximize className="h-5 w-5" />
-      </button>
-    </MapControl>
-  );
+  return null;
 }
 
 /** How far the person has turned and tilted the map. A turn made with the fingers doesn't always fire the heading
@@ -227,6 +220,8 @@ interface MapViewProps {
   showOwn?: boolean;
   /** The road ahead of the selected vehicle to a searched destination: drawn and framed whole. */
   route?: VehicleEta | null;
+  /** Changes each time "Ver toda la flota" is pressed: the map frames every vehicle. */
+  fitSignal?: number;
 }
 
 const DEFAULT_CENTER = { lat: 41.9028, lng: 12.4964 }; // Roma, como fallback sin posiciones aún
@@ -306,6 +301,7 @@ export function MapView({
   onSelectShared,
   showOwn = true,
   route = null,
+  fitSignal = 0,
 }: MapViewProps) {
   const t = useT();
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
@@ -373,6 +369,8 @@ export function MapView({
           // Map/satellite and the street-view figure are left out: the map is the point, so the centre stays clear.
           mapTypeControl={false}
           streetViewControl={false}
+          // Google's full-screen button sits at the bottom left, so the top right stays clear for the filters.
+          fullscreenControlOptions={{ position: ControlPosition.LEFT_BOTTOM }}
           mapId={MAP_ID}
           renderingType={RenderingType.VECTOR}
           headingInteractionEnabled
@@ -380,7 +378,7 @@ export function MapView({
           colorScheme={theme === "dark" ? ColorScheme.DARK : ColorScheme.LIGHT}
         >
           <ResetNorthControl />
-          <FitFleetControl points={fitPoints} auto={frameFleetOnLoad.current === true} />
+          <FitFleet points={fitPoints} signal={fitSignal} auto={frameFleetOnLoad.current === true} />
           <MapCenterOnSelect selectedVehicleId={selectedVehicleId} positions={positions} />
           <MapCenterOnShared vehicle={shared.find((v) => v.plate === selectedSharedPlate) ?? null} />
           {route && <RouteLayer route={route} />}

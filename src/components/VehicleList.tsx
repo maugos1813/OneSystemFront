@@ -18,8 +18,8 @@ interface VehicleListProps {
   sharedVehicles?: SharedVehicle[];
   selectedSharedPlate?: string | null;
   onSelectShared?: (plate: string) => void;
-  /** What sits under the search box when the list is closed (the map's pills). */
-  children?: ReactNode;
+  /** What sits to the right of the search box (the button of the filters panel). */
+  trailing?: ReactNode;
 }
 
 /**
@@ -35,13 +35,12 @@ export function VehicleList({
   sharedVehicles = [],
   selectedSharedPlate = null,
   onSelectShared,
-  children,
+  trailing,
 }: VehicleListProps) {
   const t = useT();
   const deviceById = new Map(devices.map((d) => [d.id, d]));
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
-  const [statusFilter, setStatusFilter] = useState<VehicleStatus | null>(null);
   const box = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLInputElement>(null);
 
@@ -67,28 +66,8 @@ export function VehicleList({
   const statusOf = (vehicle: Vehicle): VehicleStatus =>
     vehicleStatus(positions[vehicle.id], vehicle.deviceId ? (deviceById.get(vehicle.deviceId)?.lastSeenAt ?? null) : null);
 
-  // How many vehicles are in each state (the search aside): the filters say it before they are touched.
-  const counts = useMemo(() => {
-    const byDevice = new Map(devices.map((d) => [d.id, d]));
-    const total: Record<VehicleStatus, number> = { moving: 0, stopped: 0, offline: 0 };
-    for (const v of vehicles) total[vehicleStatus(positions[v.id], v.deviceId ? (byDevice.get(v.deviceId)?.lastSeenAt ?? null) : null)] += 1;
-    return total;
-  }, [vehicles, devices, positions]);
-
-  const filteredVehicles = useMemo(() => {
-    const byDevice = new Map(devices.map((d) => [d.id, d]));
-    return vehicles.filter((v) => {
-      if (!matchesSearch(search, v.name, v.plate, v.fleetGroup)) return false;
-      if (!statusFilter) return true;
-      return vehicleStatus(positions[v.id], v.deviceId ? (byDevice.get(v.deviceId)?.lastSeenAt ?? null) : null) === statusFilter;
-    });
-  }, [vehicles, devices, positions, search, statusFilter]);
-
-  // A Gamonal vehicle has no status of its own here: a state filter leaves them out, the search keeps them.
-  const filteredShared = useMemo(
-    () => (statusFilter ? [] : sharedVehicles.filter((v) => matchesSearch(search, v.plate))),
-    [sharedVehicles, search, statusFilter],
-  );
+  const filteredVehicles = useMemo(() => vehicles.filter((v) => matchesSearch(search, v.name, v.plate, v.fleetGroup)), [vehicles, search]);
+  const filteredShared = useMemo(() => sharedVehicles.filter((v) => matchesSearch(search, v.plate)), [sharedVehicles, search]);
 
   const total = vehicles.length + sharedVehicles.length;
 
@@ -100,8 +79,8 @@ export function VehicleList({
 
   return (
     // Top-left, clear of Google's full-screen button on the right.
-    <div ref={box} className="pointer-events-none absolute top-2 right-16 left-2 z-20 flex max-w-sm flex-col gap-2">
-      <div className="pointer-events-auto relative">
+    <div ref={box} className="pointer-events-none absolute top-2 right-2 left-2 z-20 flex max-w-md items-start gap-2">
+      <div className="pointer-events-auto relative min-w-0 flex-1">
         <div className="flex items-center gap-1 rounded-2xl border border-white bg-white shadow-lg shadow-slate-300/40 dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40">
           <Search className="pointer-events-none ml-3 h-4 w-4 shrink-0 text-slate-400 dark:text-slate-500" />
           <input
@@ -146,31 +125,6 @@ export function VehicleList({
 
         {open && (
           <div className="styled-scrollbar absolute top-full right-0 left-0 mt-2 max-h-[min(60vh,28rem)] overflow-y-auto rounded-2xl border border-white bg-white shadow-xl shadow-slate-300/40 dark:border-white/10 dark:bg-[#0d1220] dark:shadow-black/50">
-            <div className="flex flex-wrap gap-1.5 border-b border-slate-100 px-3 py-2.5 dark:border-white/5">
-              {(
-                [
-                  [null, t("vehicles.filterAll"), vehicles.length],
-                  ["moving", t("vehicles.filterMoving"), counts.moving],
-                  ["stopped", t("vehicles.filterStopped"), counts.stopped],
-                  ["offline", t("vehicles.filterOffline"), counts.offline],
-                ] as Array<[VehicleStatus | null, string, number]>
-              ).map(([value, label, count]) => (
-                <button
-                  key={label}
-                  type="button"
-                  aria-pressed={statusFilter === value}
-                  onClick={() => setStatusFilter(statusFilter === value ? null : value)}
-                  className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${
-                    statusFilter === value
-                      ? "brand-button"
-                      : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10"
-                  }`}
-                >
-                  {label} <span className="opacity-70">{count}</span>
-                </button>
-              ))}
-            </div>
-
             {filteredVehicles.length === 0 && filteredShared.length === 0 && (
               <p className="p-4 text-sm text-slate-500 dark:text-slate-400">
                 {vehicles.length === 0 && sharedVehicles.length === 0 ? t("vehicles.noneYet") : t("vehicles.noMatch")}
@@ -265,7 +219,7 @@ export function VehicleList({
         )}
       </div>
 
-      {children}
+      {trailing && <div className="pointer-events-auto shrink-0">{trailing}</div>}
     </div>
   );
 }

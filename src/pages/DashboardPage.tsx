@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { MapFiltersButton, MapFiltersPanel } from "../components/MapFiltersPanel";
 import { MapView } from "../components/MapView";
 import { VehicleDetailPanel } from "../components/VehicleDetailPanel";
 import { SharedVehiclePanel } from "../components/SharedVehiclePanel";
@@ -8,6 +9,7 @@ import { useFleet } from "../context/FleetContext";
 import { useT } from "../i18n";
 import { normalizePlate } from "../lib/plate";
 import type { VehicleEta } from "../lib/types";
+import { vehicleStatus, type VehicleStatus } from "../lib/vehicleStatus";
 
 /** Which vehicles the map draws: everything, only the Gamonal ones shared through the Driver, or only the client's own flota. */
 type MapSource = "all" | "gamonal" | "own";
@@ -16,7 +18,11 @@ export function DashboardPage() {
   const t = useT();
   const { currentUser } = useAuth();
   const [source, setSource] = useState<MapSource>("all");
-  const { filteredVehicles: vehicles, devices, positions, loading, error, sharedVehicles } = useFleet();
+  const { filteredVehicles: vehicles, devices, positions, loading, error, sharedVehicles, selectedArea, setSelectedArea } = useFleet();
+  const [statusFilter, setStatusFilter] = useState<VehicleStatus | null>(null);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  // Bumped by "Ver toda la flota": the map frames every vehicle each time it changes.
+  const [fitSignal, setFitSignal] = useState(0);
   const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
   const [selectedSharedPlate, setSelectedSharedPlate] = useState<string | null>(null);
   // The road ahead of the selected vehicle to a destination searched in its panel, drawn on the map.
@@ -27,14 +33,32 @@ export function DashboardPage() {
 
   const selectedVehicle = vehicles.find((v) => v.id === selectedVehicleId) ?? null;
 
+  // What each state has, counted over the flota in view; and the vehicles that the state filter leaves on the map and in the list.
+  const deviceSeen = useMemo(() => new Map(devices.map((d) => [d.id, d.lastSeenAt])), [devices]);
+  const stateOf = (v: (typeof vehicles)[number]): VehicleStatus =>
+    vehicleStatus(positions[v.id], v.deviceId ? (deviceSeen.get(v.deviceId) ?? null) : null);
+  const counts = { all: vehicles.length, moving: 0, stopped: 0, offline: 0 };
+  for (const v of vehicles) counts[stateOf(v)] += 1;
+  const shownVehicles = statusFilter ? vehicles.filter((v) => stateOf(v) === statusFilter) : vehicles;
+
   // What the pills ask for. A Gamonal vehicle the client also has of their own is shown once, as theirs.
   const showOwn = source !== "gamonal";
   const visibleShared = useMemo(() => {
-    if (source === "own") return [];
+    // A Gamonal vehicle has no state of its own here, so a state filter leaves them out.
+    if (source === "own" || statusFilter) return [];
     const ownPlates = new Set(vehicles.map((v) => normalizePlate(v.plate)));
     return sharedVehicles.filter((v) => !(showOwn && ownPlates.has(v.plate)));
-  }, [source, showOwn, vehicles, sharedVehicles]);
+  }, [source, statusFilter, showOwn, vehicles, sharedVehicles]);
   const selectedShared = visibleShared.find((v) => v.plate === selectedSharedPlate) ?? null;
+
+  const activeFilters = (statusFilter ? 1 : 0) + (source !== "all" ? 1 : 0) + (selectedArea ? 1 : 0);
+  const shownCount = (showOwn ? shownVehicles.length : 0) + visibleShared.length;
+
+  function clearFilters() {
+    setStatusFilter(null);
+    setSource("all");
+    setSelectedArea(null);
+  }
 
   function selectVehicle(vehicleId: string) {
     setSelectedVehicleId(vehicleId);
@@ -60,7 +84,8 @@ export function DashboardPage() {
     <div className="relative flex h-full overflow-hidden">
       <div className="relative flex-1">
         <MapView
-          vehicles={vehicles}
+          vehicles={shownVehicles}
+          fitSignal={fitSignal}
           positions={positions}
           selectedVehicleId={selectedVehicleId}
           onSelectVehicle={selectVehicle}
@@ -84,9 +109,9 @@ export function DashboardPage() {
           </div>
         )}
 
-        {/* Only the search sits over the map; the list opens under it when asked for. The pills (only for a client who also sees Gamonal's vehicles) wait under it. */}
+        {/* Only the search sits over the map, with the button of the filters beside it; the list opens under the search when asked for. */}
         <VehicleList
-          vehicles={showOwn ? vehicles : []}
+          vehicles={showOwn ? shownVehicles : []}
           devices={devices}
           positions={positions}
           selectedVehicleId={selectedVehicleId}
@@ -94,31 +119,48 @@ export function DashboardPage() {
           sharedVehicles={visibleShared}
           selectedSharedPlate={selectedSharedPlate}
           onSelectShared={selectShared}
-        >
-          {sharedVehicles.length > 0 && (
-            <div role="group" aria-label={t("map.filterLabel")} className="pointer-events-auto flex flex-wrap gap-1.5">
-              {(
-                [
-                  ["all", t("map.filterAll")],
-                  ["gamonal", t("map.filterGamonal")],
-                  ["own", currentUser?.allowedArea ?? t("common.fleet")],
-                ] as Array<[MapSource, string]>
-              ).map(([value, label]) => (
-                <button
-                  key={value}
-                  type="button"
-                  aria-pressed={source === value}
-                  onClick={() => setSource(value)}
-                  className={`rounded-full px-3 py-2 text-xs font-semibold tracking-wide uppercase shadow-lg shadow-slate-300/40 transition dark:shadow-black/40 ${
-                    source === value ? "brand-button" : "bg-white text-slate-600 dark:bg-[#111729] dark:text-slate-300"
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          )}
-        </VehicleList>
+          trailing={<MapFiltersButton onClick={() => setFiltersOpen(true)} active={activeFilters} />}
+        />
+
+        <MapFiltersPanel
+          open={filtersOpen}
+          onClose={() => setFiltersOpen(false)}
+          statusFilter={statusFilter}
+          onStatusFilter={(status) => setStatusFilter(statusFilter === status ? null : status)}
+          counts={counts}
+          sourcePills={
+            // Only for a client who also sees Gamonal's vehicles: all of them, Gamonal's, or their own flota.
+            sharedVehicles.length > 0 ? (
+              <div role="group" aria-label={t("map.filterLabel")} className="flex flex-wrap gap-2">
+                {(
+                  [
+                    ["all", t("map.filterAll")],
+                    ["gamonal", t("map.filterGamonal")],
+                    ["own", currentUser?.allowedArea ?? t("common.fleet")],
+                  ] as Array<[MapSource, string]>
+                ).map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    aria-pressed={source === value}
+                    onClick={() => setSource(value)}
+                    className={`rounded-full px-3 py-1.5 text-sm font-medium transition ${
+                      source === value
+                        ? "brand-button"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            ) : undefined
+          }
+          onFitFleet={() => setFitSignal((n) => n + 1)}
+          shownCount={shownCount}
+          activeFilters={activeFilters}
+          onClear={clearFilters}
+        />
 
         {selectedShared && <SharedVehiclePanel vehicle={selectedShared} onClose={() => setSelectedSharedPlate(null)} />}
 
