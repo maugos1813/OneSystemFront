@@ -12,7 +12,11 @@ const RECONNECT_DELAYS_MS = [1000, 2000, 5000, 10000, 30000];
  * A REST snapshot is only fetched once up front and again on every (re)connect, to
  * seed state and to catch anything missed while the socket was down.
  */
-export function useAllPositions(vehicles: Vehicle[]) {
+export function useAllPositions(
+  vehicles: Vehicle[],
+  /** OneSystec's all-clients map: listens to every client's devices and takes its snapshot from one call instead of one per vehicle. */
+  allClients?: { snapshot: () => Promise<Record<string, Position>> },
+) {
   const [positions, setPositions] = useState<Record<string, Position>>({});
   const vehiclesRef = useRef(vehicles);
   vehiclesRef.current = vehicles;
@@ -26,6 +30,12 @@ export function useAllPositions(vehicles: Vehicle[]) {
     let reconnectTimer: ReturnType<typeof setTimeout> | undefined;
 
     async function fetchSnapshot() {
+      if (allClients) {
+        const all = await allClients.snapshot().catch(() => null);
+        if (cancelled || !all) return;
+        setPositions((prev) => ({ ...prev, ...all }));
+        return;
+      }
       const list = vehiclesRef.current;
       const results = await Promise.all(list.map(async (v) => [v.id, await getLatestPosition(v.id)] as const));
       if (cancelled) return;
@@ -49,7 +59,7 @@ export function useAllPositions(vehicles: Vehicle[]) {
       const token = getToken();
       if (!token || cancelled) return;
 
-      socket = new WebSocket(realtimePositionsUrl(token));
+      socket = new WebSocket(realtimePositionsUrl(token, !!allClients));
 
       socket.onopen = () => {
         reconnectAttempt = 0;
@@ -105,7 +115,7 @@ export function useAllPositions(vehicles: Vehicle[]) {
       socket?.close();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- re-run only when the set of vehicle ids changes
-  }, [vehicles.map((v) => v.id).join(",")]);
+  }, [vehicles.map((v) => v.id).join(","), !!allClients]);
 
   return positions;
 }

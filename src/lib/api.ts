@@ -45,11 +45,13 @@ const API_URL = import.meta.env.VITE_API_URL;
 
 /** wss://.../realtime/positions?token=... — the JWT travels as a query param because a
  * browser WebSocket can't set an Authorization header on the handshake. */
-export function realtimePositionsUrl(token: string): string {
+export function realtimePositionsUrl(token: string, allClients = false): string {
   const url = new URL(API_URL);
   url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
   url.pathname = "/realtime/positions";
   url.searchParams.set("token", token);
+  // OneSystec's own map: every device of every client (the server only allows it to OneSystec).
+  if (allClients) url.searchParams.set("scope", "all");
   return url.toString();
 }
 
@@ -628,4 +630,9 @@ export function createPlatformOrganization(input: { orgName: string; email: stri
 /** A read-only token to look at a client's account (OneSystec only). */
 export function viewClientToken(orgId: string): Promise<{ token: string; orgId: string; orgName: string }> {
   return request(`/platform/organizations/${orgId}/view`, { method: "POST" });
+}
+
+/** OneSystec's own map: every vehicle and device of every client (a device without a vehicle gets a stand-in), with positions. */
+export function getPlatformFleet(): Promise<{ vehicles: Vehicle[]; devices: Device[]; positions: Record<string, Position> }> {
+  return request("/platform/fleet");
 }

@@ -4,7 +4,7 @@ import { useAllPositions } from "../hooks/useAllPositions";
 import { useDriverVehicles } from "../hooks/useDriverVehicles";
 import { useLiveAlerts } from "../hooks/useLiveAlerts";
 import { useTagliandoNotices } from "../hooks/useTagliandoNotices";
-import { getSettings, listDevices, listGeofences, listVehicles } from "../lib/api";
+import { getPlatformFleet, getSettings, listDevices, listGeofences, listVehicles } from "../lib/api";
 import type { Alert } from "../lib/alerts";
 import { getStoredAreaFilter, setStoredAreaFilter, uniqueFleetGroups, type AreaFilter } from "../lib/areaFilter";
 import type { Device, Geofence, OrgSettings, Position, SharedVehicle, Vehicle } from "../lib/types";
@@ -52,11 +52,17 @@ export function FleetProvider({ children }: { children: ReactNode }) {
   const [geofencesToken, setGeofencesToken] = useState(0);
   const [selectedArea, setSelectedAreaState] = useState<AreaFilter>(getStoredAreaFilter);
 
+  // OneSystec (not looking at one client) sees every device of every client: that is how it follows what it hands out.
+  const allClients = currentUser?.isPlatform === true && !currentUser.viewingAs;
+
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
 
-    Promise.all([listVehicles(), listDevices()])
+    (allClients
+      ? getPlatformFleet().then((fleet) => [fleet.vehicles, fleet.devices] as const)
+      : Promise.all([listVehicles(), listDevices()])
+    )
       .then(([v, d]) => {
         if (cancelled) return;
         setVehicles(v);
@@ -73,7 +79,7 @@ export function FleetProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [refetchToken]);
+  }, [refetchToken, allClients]);
 
   useEffect(() => {
     let cancelled = false;
@@ -103,7 +109,11 @@ export function FleetProvider({ children }: { children: ReactNode }) {
     };
   }, [geofencesToken]);
 
-  const positions = useAllPositions(vehicles);
+  const allClientsSnapshot = useMemo(
+    () => (allClients ? { snapshot: async () => (await getPlatformFleet()).positions } : undefined),
+    [allClients],
+  );
+  const positions = useAllPositions(vehicles, allClientsSnapshot);
   // Only a client with a flota and the map: the organization's own people already see the whole fleet.
   const sharedVehicles = useDriverVehicles(!!currentUser?.allowedArea && !!currentUser.modules.includes("mapa"));
   const liveAlerts = useLiveAlerts(vehicles, devices, positions, settings, geofences);
@@ -116,7 +126,8 @@ export function FleetProvider({ children }: { children: ReactNode }) {
     currentUser.modules.includes("mantenimiento") &&
     currentUser.modules.every((module) => module === "vehiculos" || module === "mantenimiento");
   const tagliandoNotices = useTagliandoNotices(vehicles, tagliandoOnly);
-  const alerts = tagliandoOnly ? tagliandoNotices : liveAlerts;
+  // Each client's alerts use that client's own thresholds: OneSystec reads them inside the client's account ("Ver mapa").
+  const alerts = allClients ? [] : tagliandoOnly ? tagliandoNotices : liveAlerts;
   const refetch = useCallback(() => setRefetchToken((t) => t + 1), []);
   const refetchSettings = useCallback(() => setSettingsToken((t) => t + 1), []);
   const refetchGeofences = useCallback(() => setGeofencesToken((t) => t + 1), []);
