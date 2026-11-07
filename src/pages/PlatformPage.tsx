@@ -1,11 +1,12 @@
-import { ArrowLeft, Building2, ChevronDown, ChevronRight, Map as MapIcon } from "lucide-react";
+import { ArrowLeft, Building2, ChevronDown, ChevronRight, ImagePlus, Map as MapIcon, Trash2 } from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { Panel } from "../components/analytics/Panel";
 import { PasswordField } from "../components/PasswordField";
 import { useAuth } from "../context/AuthContext";
-import { ApiError, claimDevice, createPlatformOrganization, getPlatformOrganization, listPlatformOrganizations, viewClientToken } from "../lib/api";
+import { ApiError, claimDevice, createPlatformOrganization, getPlatformOrganization, listPlatformOrganizations, setUserLogoAsPlatform, viewClientToken } from "../lib/api";
 import { startViewing } from "../lib/auth";
+import { fileToLogoDataUrl, LOGO_ACCEPT } from "../lib/logoImage";
 import { DEVICE_MODELS } from "../lib/deviceModels";
 import type { PlatformOrganization, PlatformOrganizationDetail } from "../lib/types";
 
@@ -68,6 +69,21 @@ export function PlatformPage({ embedded = false }: { embedded?: boolean }) {
   const [claimMessage, setClaimMessage] = useState<{ ok: boolean; text: string } | null>(null);
 
   /** Hardware is OneSystec's: it assigns each device to the client that asked for it. */
+  const [photoBusy, setPhotoBusy] = useState<string | null>(null);
+
+  /** The photo of one of a client's users (the account holder's above all): OneSystec gives each client its identity. */
+  async function changePhoto(userId: string, orgId: string, file: File | null) {
+    setPhotoBusy(userId);
+    try {
+      await setUserLogoAsPlatform(userId, file ? await fileToLogoDataUrl(file) : null);
+      setDetail(await getPlatformOrganization(orgId));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No se pudo cambiar la foto");
+    } finally {
+      setPhotoBusy(null);
+    }
+  }
+
   const [openingId, setOpeningId] = useState<string | null>(null);
 
   /** One click to the client's map: a read-only token for that organization, then the app reloads on it. */
@@ -238,11 +254,54 @@ export function PlatformPage({ embedded = false }: { embedded?: boolean }) {
                             </p>
                             <div>
                               <p className="mb-1 font-medium text-slate-700 dark:text-slate-300">Usuarios</p>
-                              <ul className="space-y-0.5">
+                              <ul className="space-y-2">
                                 {detail.members.map((member) => (
-                                  <li key={member.id} className="text-slate-700 dark:text-slate-300">
-                                    {member.name.trim() || "—"} · {member.email} · {member.role}
-                                    {member.allowedArea ? ` · ${member.allowedArea}` : ""}
+                                  <li key={member.id} className="flex items-center gap-3 text-slate-700 dark:text-slate-300">
+                                    <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white p-0.5 ring-1 ring-slate-200 dark:ring-white/10">
+                                      {member.logo ? (
+                                        <img src={member.logo} alt="" className="max-h-full max-w-full object-contain" />
+                                      ) : (
+                                        <span className="brand-gradient flex h-full w-full items-center justify-center rounded-lg text-sm font-bold text-white">
+                                          {(member.name || member.email).trim().charAt(0).toUpperCase()}
+                                        </span>
+                                      )}
+                                    </span>
+                                    <span className="min-w-0 flex-1">
+                                      <span className="block truncate">
+                                        {member.name.trim() || "—"} · {member.role === "owner" ? "Cliente" : member.role}
+                                        {member.allowedArea ? ` · ${member.allowedArea}` : ""}
+                                      </span>
+                                      <span className="block truncate text-xs text-slate-500 dark:text-slate-400">{member.email}</span>
+                                    </span>
+                                    <span className="flex shrink-0 gap-1">
+                                      <label
+                                        className={`flex cursor-pointer items-center gap-1 rounded-lg border border-slate-300 px-2 py-1 text-xs hover:bg-slate-100 dark:border-white/10 dark:hover:bg-white/10 ${photoBusy === member.id ? "pointer-events-none opacity-50" : ""}`}
+                                      >
+                                        <ImagePlus className="h-3.5 w-3.5" />
+                                        {member.logo ? "Cambiar foto" : "Subir foto"}
+                                        <input
+                                          type="file"
+                                          accept={LOGO_ACCEPT}
+                                          className="hidden"
+                                          onChange={(e) => {
+                                            void changePhoto(member.id, detail.id, e.target.files?.[0] ?? null);
+                                            e.target.value = "";
+                                          }}
+                                        />
+                                      </label>
+                                      {member.logo && (
+                                        <button
+                                          type="button"
+                                          disabled={photoBusy === member.id}
+                                          onClick={() => void changePhoto(member.id, detail.id, null)}
+                                          aria-label="Quitar foto"
+                                          title="Quitar foto"
+                                          className="rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-50 dark:hover:bg-red-500/10"
+                                        >
+                                          <Trash2 className="h-3.5 w-3.5" />
+                                        </button>
+                                      )}
+                                    </span>
                                   </li>
                                 ))}
                               </ul>

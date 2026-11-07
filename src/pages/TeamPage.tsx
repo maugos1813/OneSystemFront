@@ -30,7 +30,8 @@ import { HIDDEN_MODULES, MODULE_INFO, MODULE_TEMPLATES, matchingTemplate, type M
 import type { CurrentUser, Product, TeamMember, TeamRole } from "../lib/types";
 
 const ROLE_LABEL: Record<TeamRole, string> = {
-  owner: "Owner",
+  // The account holder is the client itself; its people are its team.
+  owner: "Cliente",
   admin: "Admin",
   manager: "Manager",
   viewer: "Usuario",
@@ -879,13 +880,30 @@ export function TeamPage({ embedded = false }: { embedded?: boolean }) {
             </form>
           </Panel>
 
-          <Panel title={`Miembros (${members.length})`}>
-            <div className="space-y-2">
-              {members.map((member) => (
-                <MemberRow key={member.id} member={member} products={products} onChanged={refetch} />
-              ))}
-            </div>
-          </Panel>
+          {(() => {
+            // The account holder is the client; the rest are its team, shown under it.
+            const owners = members.filter((m) => m.role === "owner");
+            const team = members.filter((m) => m.role !== "owner");
+            const row = (member: TeamMember) => <MemberRow key={member.id} member={member} products={products} onChanged={refetch} />;
+            if (owners.length === 0) {
+              return (
+                <Panel title={`Miembros (${members.length})`}>
+                  <div className="space-y-2">{members.map(row)}</div>
+                </Panel>
+              );
+            }
+            return (
+              <Panel title={`Cliente y su equipo (${team.length})`}>
+                <div className="space-y-2">{owners.slice(0, 1).map(row)}</div>
+                <p className="mt-4 mb-2 text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-500">Equipo</p>
+                {team.length === 0 ? (
+                  <p className="text-sm text-slate-500 dark:text-slate-400">Todavía no hay nadie en el equipo.</p>
+                ) : (
+                  <div className="space-y-2 border-l-2 border-violet-100 pl-3 dark:border-white/10">{[...owners.slice(1), ...team].map(row)}</div>
+                )}
+              </Panel>
+            );
+          })()}
         </div>
       </div>
     </div>

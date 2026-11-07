@@ -588,7 +588,7 @@ export interface PlatformOrganization {
 }
 
 export interface PlatformOrganizationDetail extends PlatformOrganization {
-  members: Array<{ id: string; name: string; email: string; role: string; allowedArea: string | null }>;
+  members: Array<{ id: string; name: string; email: string; role: string; allowedArea: string | null; logo: string | null }>;
   deviceList: Array<{
     id: string;
     imei: string;

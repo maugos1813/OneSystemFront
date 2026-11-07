@@ -636,3 +636,8 @@ export function viewClientToken(orgId: string): Promise<{ token: string; orgId: 
 export function getPlatformFleet(): Promise<{ vehicles: Vehicle[]; devices: Device[]; positions: Record<string, Position> }> {
   return request("/platform/fleet");
 }
+
+/** OneSystec only: puts or removes the photo of any client's user (null removes it). */
+export function setUserLogoAsPlatform(userId: string, logo: string | null): Promise<{ id: string; logo: string | null }> {
+  return request(`/platform/users/${userId}/logo`, { method: "PATCH", body: JSON.stringify({ logo }) });
+}
