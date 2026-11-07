@@ -5,6 +5,7 @@ import { VehicleDetailPanel } from "../components/VehicleDetailPanel";
 import { SharedVehiclePanel } from "../components/SharedVehiclePanel";
 import { VehicleList } from "../components/VehicleList";
 import { useAuth } from "../context/AuthContext";
+import { useBackToClose } from "../hooks/useBackToClose";
 import { useFleet } from "../context/FleetContext";
 import { useT } from "../i18n";
 import { normalizePlate } from "../lib/plate";
@@ -30,6 +31,8 @@ export function DashboardPage() {
   );
   const [statusFilter, setStatusFilter] = useState<VehicleStatus | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  // Back closes the filters panel too.
+  useBackToClose(filtersOpen, () => setFiltersOpen(false));
   // Bumped by "Ver toda la flota": the map frames every vehicle each time it changes.
   const [fitSignal, setFitSignal] = useState(0);
   const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);

@@ -1,6 +1,7 @@
 import { List, Search, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useFleet } from "../context/FleetContext";
+import { useBackToClose } from "../hooks/useBackToClose";
 import { useT } from "../i18n";
 import { trackGlow } from "../lib/glow";
 import { formatRelativeTime } from "../lib/relativeTime";
@@ -45,6 +46,11 @@ export function VehicleList({
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLDivElement>(null);
+  // The phone's Back button closes the list instead of leaving the map.
+  useBackToClose(open, () => {
+    setOpen(false);
+    input.current?.blur();
+  });
   const input = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
