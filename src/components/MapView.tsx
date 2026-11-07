@@ -110,7 +110,8 @@ function ResetNorthControl() {
   const view = useMapOrientation();
   if (view.heading === 0 && view.tilt === 0) return null;
   return (
-    <MapControl position={ControlPosition.RIGHT_TOP}>
+    // Bottom left: the top right belongs to the filters button, which this one used to sit under.
+    <MapControl position={ControlPosition.LEFT_BOTTOM}>
       <button
         type="button"
         onClick={() => {
@@ -369,6 +370,8 @@ export function MapView({
           // Map/satellite and the street-view figure are left out: the map is the point, so the centre stays clear.
           mapTypeControl={false}
           streetViewControl={false}
+          // The camera button at the bottom right (pan/zoom arrows) is not used: pinching and dragging already do it.
+          cameraControl={false}
           // Google's full-screen button sits at the bottom left, so the top right stays clear for the filters.
           fullscreenControlOptions={{ position: ControlPosition.LEFT_BOTTOM }}
           mapId={MAP_ID}
