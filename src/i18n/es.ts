@@ -320,6 +320,7 @@ export const es = {
   "api.sectionDisabled": "Esta sección no está habilitada para tu cuenta",
   "api.forbidden": "No tienes permiso para hacer esto",
   "api.vehicleNotFound": "Vehículo no encontrado",
+  "api.emailTaken": "Ese correo ya está registrado en otra cuenta",
   "api.invalidCredentials": "Email o contraseña incorrectos",
   "api.tooManyAttempts": "Demasiados intentos. Espera unos minutos e inténtalo de nuevo.",
   "api.deviceAssigned": "Este vehículo tiene un dispositivo asignado. Confirma que quieres eliminarlo.",

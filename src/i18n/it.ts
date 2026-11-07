@@ -319,6 +319,7 @@ export const it: Record<MessageKey, string> = {
   "api.sectionDisabled": "Questa sezione non è abilitata per il tuo account",
   "api.forbidden": "Non hai il permesso di eseguire questa operazione",
   "api.vehicleNotFound": "Veicolo non trovato",
+  "api.emailTaken": "Questa email è già registrata su un altro account",
   "api.invalidCredentials": "E-mail o password errati",
   "api.tooManyAttempts": "Troppi tentativi. Attendi qualche minuto e riprova.",
   "api.deviceAssigned": "Questo veicolo ha un dispositivo assegnato. Conferma di volerlo eliminare.",

@@ -2,6 +2,7 @@ import { ArrowLeft, ImagePlus, KeyRound, Pencil, Trash2, X } from "lucide-react"
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Panel } from "../components/analytics/Panel";
+import { FleetVehiclesDialog } from "../components/FleetVehiclesDialog";
 import { PasswordField } from "../components/PasswordField";
 import { LogoUpload } from "../components/LogoUpload";
 import { LanguageSelect } from "../components/LanguageSelect";
@@ -22,12 +23,13 @@ import {
   updateTeamMemberPassword,
   updateTeamMemberProducts,
   updateTeamMemberRole,
+  listVehicles,
 } from "../lib/api";
 import { FleetGroupSelect } from "../components/FleetGroupSelect";
 import { useFleetGroups } from "../lib/useFleetGroups";
 import { fileToLogoVariants, LOGO_ACCEPT } from "../lib/logoImage";
 import { HIDDEN_MODULES, MODULE_INFO, MODULE_TEMPLATES, matchingTemplate, type ModuleKey } from "../lib/modules";
-import type { CurrentUser, Product, TeamMember, TeamRole } from "../lib/types";
+import type { CurrentUser, Product, TeamMember, TeamRole, Vehicle } from "../lib/types";
 
 const ROLE_LABEL: Record<TeamRole, string> = {
   // The account holder is the client itself; its people are its team.
@@ -102,17 +104,23 @@ function AreaSelect({ value, onChange }: { value: string; onChange: (v: string) 
 function MemberRow({
   member,
   products,
+  vehicles,
   onChanged,
+  onVehiclesChanged,
 }: {
   member: TeamMember;
   products: Product[];
+  /** The account's vehicles (only loaded for owner/admin): what a fleet's vehicles are chosen from. */
+  vehicles: Vehicle[];
   onChanged: () => void;
+  onVehiclesChanged: () => void;
 }) {
   const { currentUser } = useAuth();
   const [productKeys, setProductKeys] = useState(member.productKeys);
   const [savingProducts, setSavingProducts] = useState(false);
   const [savedProducts, setSavedProducts] = useState(false);
   const [savingRole, setSavingRole] = useState(false);
+  const [choosingVehicles, setChoosingVehicles] = useState(false);
 
   const [editingName, setEditingName] = useState(false);
   const [name, setName] = useState(member.name);
@@ -566,9 +574,21 @@ function MemberRow({
               {areaError && <p className="w-full text-xs text-red-600 dark:text-red-400">{areaError}</p>}
             </div>
           ) : member.allowedArea ? (
-            <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700 dark:bg-blue-500/15 dark:text-blue-400">
-              Solo {member.allowedArea}
-            </span>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700 dark:bg-blue-500/15 dark:text-blue-400">
+                Solo {member.allowedArea}
+              </span>
+              {canManageOtherOnly && vehicles.length > 0 && (
+                <>
+                  <span className="text-xs text-slate-500 dark:text-slate-400">
+                    {vehicles.filter((v) => v.fleetGroup === member.allowedArea).length} vehículos
+                  </span>
+                  <button onClick={() => setChoosingVehicles(true)} className="brand-button rounded-lg px-2.5 py-1 text-xs font-medium">
+                    Elegir vehículos
+                  </button>
+                </>
+              )}
+            </div>
           ) : (
             <span className="text-xs text-slate-400 dark:text-slate-500">Todas las flotas</span>
           )}
@@ -660,6 +680,14 @@ function MemberRow({
           )}
         </div>
       )}
+      {choosingVehicles && member.allowedArea && (
+        <FleetVehiclesDialog
+          fleet={member.allowedArea}
+          vehicles={vehicles}
+          onClose={() => setChoosingVehicles(false)}
+          onSaved={onVehiclesChanged}
+        />
+      )}
     </div>
   );
 }
@@ -669,6 +697,8 @@ export function TeamPage({ embedded = false }: { embedded?: boolean }) {
   const { currentUser } = useAuth();
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  // The account's vehicles, for owner/admin to choose which ones each fleet has.
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [loading, setLoading] = useState(true);
 
   const isManager = currentUser?.role === "manager";
@@ -687,9 +717,15 @@ export function TeamPage({ embedded = false }: { embedded?: boolean }) {
   const [createError, setCreateError] = useState<string | null>(null);
 
   async function refetch() {
-    const [membersList, productsList] = await Promise.all([listTeamMembers(), listProducts()]);
+    const canChoose = (currentUser?.role === "owner" || currentUser?.role === "admin") && !currentUser.allowedArea && !currentUser.viewingAs;
+    const [membersList, productsList, vehiclesList] = await Promise.all([
+      listTeamMembers(),
+      listProducts(),
+      canChoose ? listVehicles().catch(() => [] as Vehicle[]) : Promise.resolve([] as Vehicle[]),
+    ]);
     setMembers(membersList);
     setProducts(productsList);
+    setVehicles(vehiclesList);
     setNewMemberProducts((current) => (current.length === 0 ? productsList.map((p) => p.key) : current));
   }
 
@@ -898,7 +934,9 @@ export function TeamPage({ embedded = false }: { embedded?: boolean }) {
             // The account holder is the client; the rest are its team, shown under it.
             const owners = members.filter((m) => m.role === "owner");
             const team = members.filter((m) => m.role !== "owner");
-            const row = (member: TeamMember) => <MemberRow key={member.id} member={member} products={products} onChanged={refetch} />;
+            const row = (member: TeamMember) => (
+              <MemberRow key={member.id} member={member} products={products} vehicles={vehicles} onChanged={refetch} onVehiclesChanged={refetch} />
+            );
             if (owners.length === 0) {
               return (
                 <Panel title={`Miembros (${members.length})`}>

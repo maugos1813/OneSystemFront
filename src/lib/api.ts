@@ -61,6 +61,7 @@ const SERVER_MESSAGES: Record<string, MessageKey> = {
   "Esta sección no está habilitada para tu cuenta": "api.sectionDisabled",
   Forbidden: "api.forbidden",
   "Vehicle not found": "api.vehicleNotFound",
+  "Email already registered": "api.emailTaken",
   "Invalid credentials": "api.invalidCredentials",
   "Too many attempts. Try again later.": "api.tooManyAttempts",
   "Este vehículo tiene un dispositivo asignado. Confirma que quieres eliminarlo.": "api.deviceAssigned",
@@ -658,6 +659,11 @@ export function setOrganizationLogoAsPlatform(orgId: string, logo: string | null
 }
 
 // --- Fleets (flotas) ---
+
+/** Owner/admin: exactly which vehicles a fleet has (the ones it had that are not listed are left without a fleet). */
+export function setFleetVehicles(fleet: string, vehicleIds: string[]): Promise<{ inFleet: number; released: number }> {
+  return request("/fleets/vehicles", { method: "PUT", body: JSON.stringify({ fleet, vehicleIds }) });
+}
 
 /** The fleets of the caller's organization and their pictures: what the map needs for the tag of each plate. */
 export function listFleetPictures(): Promise<FleetTag[]> {
