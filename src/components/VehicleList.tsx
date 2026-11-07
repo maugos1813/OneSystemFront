@@ -81,8 +81,10 @@ export function VehicleList({
   }
 
   return (
-    // Top-left, clear of Google's full-screen button on the right.
-    <div ref={box} className="pointer-events-none absolute top-2 right-2 left-2 z-20 flex max-w-md items-start gap-2">
+    // Covers the map without catching its touches; the search sits top-left and the list opens under it: on a phone it takes all
+    // the room down to the bottom of the map, on a big screen it stays a panel the width of the search.
+    <div ref={box} className="pointer-events-none absolute inset-0 z-30">
+      <div className="absolute top-2 right-2 left-2 flex max-w-md items-start gap-2">
       <div className="pointer-events-auto relative min-w-0 flex-1">
         <div className="flex items-center gap-1 rounded-2xl border border-white bg-white shadow-lg shadow-slate-300/40 dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40">
           <Search className="pointer-events-none ml-3 h-4 w-4 shrink-0 text-slate-400 dark:text-slate-500" />
@@ -125,96 +127,97 @@ export function VehicleList({
             {total}
           </button>
         </div>
-
-        {open && (
-          <div className="styled-scrollbar absolute top-full right-0 left-0 mt-2 max-h-[min(60vh,28rem)] overflow-y-auto rounded-2xl border border-white bg-white shadow-xl shadow-slate-300/40 dark:border-white/10 dark:bg-[#0d1220] dark:shadow-black/50">
-            {filteredVehicles.length === 0 && filteredShared.length === 0 && (
-              <p className="p-4 text-sm text-slate-500 dark:text-slate-400">
-                {vehicles.length === 0 && sharedVehicles.length === 0 ? t("vehicles.noneYet") : t("vehicles.noMatch")}
-              </p>
-            )}
-
-            {filteredVehicles.map((vehicle) => {
-              const selected = vehicle.id === selectedVehicleId;
-              const position = positions[vehicle.id];
-              const status = statusOf(vehicle);
-              // What it is doing, without opening it: the speed while it moves, and how long ago it last said anything.
-              const doing = status === "moving" && position ? `${Math.round(position.speed)} km/h` : null;
-              const lastData = position ? t("vehicles.lastData", { when: formatRelativeTime(position.ts, t) }) : null;
-
-              return (
-                <button
-                  key={vehicle.id}
-                  onClick={() => {
-                    onSelect(vehicle.id);
-                    done();
-                  }}
-                  onMouseMove={trackGlow}
-                  className={`glow flex w-full items-center justify-between gap-2 border-b border-slate-100 px-4 py-3 text-left transition last:border-b-0 dark:border-white/5 ${
-                    selected ? "brand-gradient-soft dark:bg-blue-500/15" : "hover:bg-slate-50 dark:hover:bg-white/5"
-                  }`}
-                >
-                  <div className="flex min-w-0 flex-col gap-1">
-                    <div className="flex min-w-0 items-center gap-1.5">
-                      <span className="truncate font-medium text-slate-900 dark:text-white">{vehicle.name}</span>
-                      {vehicle.fleetGroup && (
-                        <span className="inline-flex shrink-0 items-center rounded-full bg-blue-100 px-1.5 py-0.5 text-[10px] font-semibold text-blue-700 dark:bg-blue-500/15 dark:text-blue-400">
-                          {vehicle.fleetGroup}
-                        </span>
-                      )}
-                    </div>
-                    {vehicle.plate && <span className="truncate text-xs text-slate-500 dark:text-slate-400">{vehicle.plate}</span>}
-                    {(doing || lastData) && (
-                      <span className="truncate text-xs text-slate-400 dark:text-slate-500">
-                        {doing && (
-                          <span className={status === "moving" ? "font-semibold text-emerald-600 dark:text-emerald-400" : ""}>{doing}</span>
-                        )}
-                        {doing && lastData && " · "}
-                        {lastData}
-                      </span>
-                    )}
-                  </div>
-                  <div className="shrink-0">
-                    <VehicleStatusBadge status={status} idling={isIdling(position)} />
-                  </div>
-                </button>
-              );
-            })}
-
-            {filteredShared.map((vehicle) => {
-              const moving = (vehicle.speed ?? 0) > 0;
-              const dot = moving ? "bg-green-600" : vehicle.ignition ? "bg-orange-500" : "bg-red-600";
-              const label = moving ? t("map.legendMoving") : vehicle.ignition ? t("map.legendIdle") : t("map.legendOff");
-              return (
-                <button
-                  key={vehicle.plate}
-                  onClick={() => {
-                    onSelectShared?.(vehicle.plate);
-                    done();
-                  }}
-                  onMouseMove={trackGlow}
-                  className={`glow flex w-full items-center justify-between gap-2 border-b border-slate-100 px-4 py-3 text-left transition last:border-b-0 dark:border-white/5 ${
-                    selectedSharedPlate === vehicle.plate ? "brand-gradient-soft dark:bg-blue-500/15" : "hover:bg-slate-50 dark:hover:bg-white/5"
-                  }`}
-                >
-                  <div className="flex min-w-0 items-center gap-1.5">
-                    <span className="truncate font-medium text-slate-900 dark:text-white">{vehicle.plate}</span>
-                    <span className="inline-flex shrink-0 items-center rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600 uppercase dark:bg-white/10 dark:text-slate-300">
-                      {t("map.filterGamonal")}
-                    </span>
-                  </div>
-                  <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600 dark:bg-white/5 dark:text-slate-300">
-                    <span className={`h-1.5 w-1.5 rounded-full ${dot}`} />
-                    {label}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        )}
       </div>
 
       {trailing && <div className="pointer-events-auto shrink-0">{trailing}</div>}
+      </div>
+
+    {open && (
+      <div className="styled-scrollbar pointer-events-auto absolute top-[58px] right-2 bottom-2 left-2 overflow-y-auto rounded-2xl sm:right-auto sm:bottom-auto sm:max-h-[min(60vh,28rem)] sm:w-[398px] border border-white bg-white shadow-xl shadow-slate-300/40 dark:border-white/10 dark:bg-[#0d1220] dark:shadow-black/50">
+        {filteredVehicles.length === 0 && filteredShared.length === 0 && (
+          <p className="p-4 text-sm text-slate-500 dark:text-slate-400">
+            {vehicles.length === 0 && sharedVehicles.length === 0 ? t("vehicles.noneYet") : t("vehicles.noMatch")}
+          </p>
+        )}
+
+        {filteredVehicles.map((vehicle) => {
+          const selected = vehicle.id === selectedVehicleId;
+          const position = positions[vehicle.id];
+          const status = statusOf(vehicle);
+          // What it is doing, without opening it: the speed while it moves, and how long ago it last said anything.
+          const doing = status === "moving" && position ? `${Math.round(position.speed)} km/h` : null;
+          const lastData = position ? t("vehicles.lastData", { when: formatRelativeTime(position.ts, t) }) : null;
+
+          return (
+            <button
+              key={vehicle.id}
+              onClick={() => {
+                onSelect(vehicle.id);
+                done();
+              }}
+              onMouseMove={trackGlow}
+              className={`glow flex w-full items-center justify-between gap-2 border-b border-slate-100 px-4 py-3 text-left transition last:border-b-0 dark:border-white/5 ${
+                selected ? "brand-gradient-soft dark:bg-blue-500/15" : "hover:bg-slate-50 dark:hover:bg-white/5"
+              }`}
+            >
+              <div className="flex min-w-0 flex-col gap-1">
+                <div className="flex min-w-0 items-center gap-1.5">
+                  <span className="truncate font-medium text-slate-900 dark:text-white">{vehicle.name}</span>
+                  {vehicle.fleetGroup && (
+                    <span className="inline-flex shrink-0 items-center rounded-full bg-blue-100 px-1.5 py-0.5 text-[10px] font-semibold text-blue-700 dark:bg-blue-500/15 dark:text-blue-400">
+                      {vehicle.fleetGroup}
+                    </span>
+                  )}
+                </div>
+                {vehicle.plate && <span className="truncate text-xs text-slate-500 dark:text-slate-400">{vehicle.plate}</span>}
+                {(doing || lastData) && (
+                  <span className="truncate text-xs text-slate-400 dark:text-slate-500">
+                    {doing && (
+                      <span className={status === "moving" ? "font-semibold text-emerald-600 dark:text-emerald-400" : ""}>{doing}</span>
+                    )}
+                    {doing && lastData && " · "}
+                    {lastData}
+                  </span>
+                )}
+              </div>
+              <div className="shrink-0">
+                <VehicleStatusBadge status={status} idling={isIdling(position)} />
+              </div>
+            </button>
+          );
+        })}
+
+        {filteredShared.map((vehicle) => {
+          const moving = (vehicle.speed ?? 0) > 0;
+          const dot = moving ? "bg-green-600" : vehicle.ignition ? "bg-orange-500" : "bg-red-600";
+          const label = moving ? t("map.legendMoving") : vehicle.ignition ? t("map.legendIdle") : t("map.legendOff");
+          return (
+            <button
+              key={vehicle.plate}
+              onClick={() => {
+                onSelectShared?.(vehicle.plate);
+                done();
+              }}
+              onMouseMove={trackGlow}
+              className={`glow flex w-full items-center justify-between gap-2 border-b border-slate-100 px-4 py-3 text-left transition last:border-b-0 dark:border-white/5 ${
+                selectedSharedPlate === vehicle.plate ? "brand-gradient-soft dark:bg-blue-500/15" : "hover:bg-slate-50 dark:hover:bg-white/5"
+              }`}
+            >
+              <div className="flex min-w-0 items-center gap-1.5">
+                <span className="truncate font-medium text-slate-900 dark:text-white">{vehicle.plate}</span>
+                <span className="inline-flex shrink-0 items-center rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600 uppercase dark:bg-white/10 dark:text-slate-300">
+                  {t("map.filterGamonal")}
+                </span>
+              </div>
+              <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600 dark:bg-white/5 dark:text-slate-300">
+                <span className={`h-1.5 w-1.5 rounded-full ${dot}`} />
+                {label}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    )}
     </div>
   );
 }
