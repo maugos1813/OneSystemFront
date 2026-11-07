@@ -86,7 +86,8 @@ export function SimsPage() {
   }, [orgId]);
 
   useEffect(() => {
-    setEditing(null);
+    // Picking the client from inside the new-SIM form must not close that form.
+    setEditing((current) => (current === "new" ? current : null));
     refetch();
   }, [refetch]);
 
@@ -239,6 +240,29 @@ export function SimsPage() {
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="sm:col-span-2 lg:col-span-3">
+              <label className={LABEL} htmlFor="sim-client">
+                Cliente al que pertenece esta SIM
+              </label>
+              {/* A SIM belongs to one client. Changing it here switches the whole page to that client (and its devices). */}
+              <select
+                id="sim-client"
+                value={orgId ?? ""}
+                disabled={!!editingSim}
+                onChange={(e) => {
+                  set("deviceId", "");
+                  setLoading(true);
+                  setOrgId(e.target.value);
+                }}
+                className={`${INPUT} disabled:opacity-60`}
+              >
+                {orgs.map((org) => (
+                  <option key={org.id} value={org.id}>
+                    {org.name}
+                  </option>
+                ))}
+              </select>
+            </div>
             <div className="lg:col-span-2">
               <label className={LABEL} htmlFor="sim-device">
                 Dispositivo (tracker)

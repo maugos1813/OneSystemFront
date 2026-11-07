@@ -657,7 +657,8 @@ function MemberRow({
   );
 }
 
-export function TeamPage() {
+/** `embedded`: inside the OneTrack layout, which has its own bars (no "back to the portal" header). */
+export function TeamPage({ embedded = false }: { embedded?: boolean }) {
   const { currentUser } = useAuth();
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -737,15 +738,17 @@ export function TeamPage() {
 
   return (
     <div className="h-full overflow-y-auto bg-[#f5f6fb] dark:bg-[#0a0e1a]">
-      <header className="border-b border-violet-100 bg-white px-4 py-4 sm:px-8 dark:border-white/5 dark:bg-[#0d1220]">
-        <Link
-          to="/"
-          className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Volver al portal
-        </Link>
-      </header>
+      {!embedded && (
+        <header className="border-b border-violet-100 bg-white px-4 py-4 sm:px-8 dark:border-white/5 dark:bg-[#0d1220]">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Volver al portal
+          </Link>
+        </header>
+      )}
 
       <div className="p-4 sm:p-6 lg:p-8">
         <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Equipo</h1>

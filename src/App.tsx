@@ -1,7 +1,7 @@
 import { Capacitor } from "@capacitor/core";
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { AppLayout } from "./components/layout/AppLayout";
-import { RequireAuth } from "./components/layout/RequireAuth";
+import { ViewingBanner } from "./components/ViewingBanner";
 import { AppUpdateProvider } from "./context/AppUpdateContext";
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
@@ -50,15 +50,14 @@ export default function App() {
       <AppLanguage>
       <AppUpdateProvider>
         <BrowserRouter>
+          <ViewingBanner />
           <Routes>
             <Route path="/login" element={<LoginPage />} />
             {/* Accounts are created by OneSystec: the Android app has no sign-up. */}
             <Route path="/register" element={Capacitor.isNativePlatform() ? <Navigate to="/login" replace /> : <RegisterPage />} />
 
-            <Route element={<RequireAuth />}>
-              <Route path="/equipo" element={<TeamPage />} />
-              <Route path="/administracion" element={<PlatformPage />} />
-            </Route>
+            {/* Old address of the clients section. */}
+            <Route path="/administracion" element={<Navigate to="/clientes" replace />} />
 
             {/* "/" is the public site for visitors and the workspace once signed in; OneTrack's pages
                 live inside that same shell, so opening OneTrack just folds its bars away. */}
@@ -85,6 +84,8 @@ export default function App() {
                   element={<DeviceDetailPage />}
                 />
                 <Route path="/choferes" element={<MovedTo to="/dispositivos" tab="eye-beacon" />} />
+                <Route path="/equipo" element={<TeamPage embedded />} />
+                <Route path="/clientes" element={<PlatformPage embedded />} />
                 <Route path="/sims" element={<SimsPage />} />
                 <Route path="/api-keys" element={<ApiKeysPage />} />
                 <Route path="/ajustes" element={<SettingsPage />} />

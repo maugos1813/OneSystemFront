@@ -1,6 +1,7 @@
 import {
   BarChart3,
   BellRing,
+  Building2,
   Cpu,
   FileCheck,
   History,
@@ -10,6 +11,7 @@ import {
   Settings,
   Smartphone,
   Truck,
+  Users,
   type LucideIcon,
 } from "lucide-react";
 import type { MessageKey } from "../i18n";
@@ -29,6 +31,8 @@ export interface OneTrackNavItem {
   ownerAdminOnly?: boolean;
   /** Only OneSystec's own account (hardware: SIMs). A client's owner/admin never sees it. */
   platformOnly?: boolean;
+  /** Anyone who can manage people: owner, admin and manager (a viewer cannot). */
+  notViewer?: boolean;
 }
 
 export const ONETRACK_NAV: OneTrackNavItem[] = [
@@ -44,6 +48,9 @@ export const ONETRACK_NAV: OneTrackNavItem[] = [
   { to: "/dispositivos", label: "nav.devices", icon: Smartphone, end: false, ownerAdminOnly: true },
   // API keys authenticate as full access and org settings affect everyone, so these stay with owner/admin.
   { to: "/sims", label: "nav.sims", icon: Cpu, end: false, ownerAdminOnly: true, platformOnly: true },
+  // Each organization manages its own people; OneSystec alone sees every client.
+  { to: "/equipo", label: "nav.team", icon: Users, end: false, notViewer: true },
+  { to: "/clientes", label: "nav.clients", icon: Building2, end: false, platformOnly: true },
   { to: "/api-keys", label: "nav.apiKeys", icon: Key, end: false, ownerAdminOnly: true },
   { to: "/ajustes", label: "nav.settings", icon: Settings, end: false, ownerAdminOnly: true },
 ];
@@ -52,6 +59,7 @@ export const ONETRACK_NAV: OneTrackNavItem[] = [
 export function canOpen(user: CurrentUser | null, item: OneTrackNavItem): boolean {
   if (!user) return false;
   if (item.platformOnly && !user.isPlatform) return false;
+  if (item.notViewer && user.role === "viewer") return false;
   if (user.role === "owner" || user.role === "admin") return true;
   if (item.ownerAdminOnly) return false;
   if (item.anyOf) return item.anyOf.some((module) => user.modules.includes(module));

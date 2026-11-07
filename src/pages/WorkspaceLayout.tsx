@@ -720,7 +720,7 @@ function ConfigPanel({ role, isPlatform }: { role: string | undefined; isPlatfor
   const items = useMemo(
     () =>
       [
-        isPlatform && { to: "/administracion", label: t("config.platform"), hint: t("config.platformHint"), icon: Building2 },
+        isPlatform && { to: "/clientes", label: t("config.platform"), hint: t("config.platformHint"), icon: Building2 },
         manageTeam && { to: "/equipo", label: t("config.team"), hint: t("config.teamHint"), icon: Users },
         admin && { to: "/ajustes", label: t("config.oneTrackSettings"), hint: t("config.oneTrackSettingsHint"), icon: Settings },
         admin && { to: "/api-keys", label: t("config.apiKeys"), hint: t("config.apiKeysHint"), icon: Key },

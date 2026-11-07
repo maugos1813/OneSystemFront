@@ -636,3 +636,8 @@ export function getPlatformOrganization(id: string): Promise<PlatformOrganizatio
 export function createPlatformOrganization(input: { orgName: string; email: string; password: string }): Promise<{ orgId: string; userId: string }> {
   return request<{ orgId: string; userId: string }>("/platform/organizations", { method: "POST", body: JSON.stringify(input) });
 }
+
+/** A read-only token to look at a client's account (OneSystec only). */
+export function viewClientToken(orgId: string): Promise<{ token: string; orgId: string; orgName: string }> {
+  return request(`/platform/organizations/${orgId}/view`, { method: "POST" });
+}

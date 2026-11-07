@@ -1,10 +1,11 @@
-import { ArrowLeft, Building2, ChevronDown, ChevronRight } from "lucide-react";
+import { ArrowLeft, Building2, ChevronDown, ChevronRight, Map as MapIcon } from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { Panel } from "../components/analytics/Panel";
 import { PasswordField } from "../components/PasswordField";
 import { useAuth } from "../context/AuthContext";
-import { ApiError, claimDevice, createPlatformOrganization, getPlatformOrganization, listPlatformOrganizations } from "../lib/api";
+import { ApiError, claimDevice, createPlatformOrganization, getPlatformOrganization, listPlatformOrganizations, viewClientToken } from "../lib/api";
+import { startViewing } from "../lib/auth";
 import { DEVICE_MODELS } from "../lib/deviceModels";
 import type { PlatformOrganization, PlatformOrganizationDetail } from "../lib/types";
 
@@ -15,7 +16,7 @@ const INPUT =
   "field-input min-w-0 flex-1 rounded-xl border border-slate-300 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white";
 
 /** The whole platform seen from above: every client organization. Only OneSystec's own owner/admin gets here (the server enforces it). */
-export function PlatformPage() {
+export function PlatformPage({ embedded = false }: { embedded?: boolean }) {
   const { currentUser } = useAuth();
   const [orgs, setOrgs] = useState<PlatformOrganization[]>([]);
   const [loading, setLoading] = useState(true);
@@ -67,6 +68,21 @@ export function PlatformPage() {
   const [claimMessage, setClaimMessage] = useState<{ ok: boolean; text: string } | null>(null);
 
   /** Hardware is OneSystec's: it assigns each device to the client that asked for it. */
+  const [openingId, setOpeningId] = useState<string | null>(null);
+
+  /** One click to the client's map: a read-only token for that organization, then the app reloads on it. */
+  async function viewMap(id: string) {
+    setOpeningId(id);
+    try {
+      const { token } = await viewClientToken(id);
+      startViewing(token);
+      window.location.assign("/gps");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No se pudo abrir la cuenta del cliente");
+      setOpeningId(null);
+    }
+  }
+
   async function handleClaim(e: FormEvent, orgId: string) {
     e.preventDefault();
     setClaiming(true);
@@ -116,20 +132,22 @@ export function PlatformPage() {
 
   return (
     <div className="h-full overflow-y-auto bg-[#f5f6fb] dark:bg-[#0a0e1a]">
-      <header className="border-b border-violet-100 bg-white px-4 py-4 sm:px-8 dark:border-white/5 dark:bg-[#0d1220]">
-        <Link
-          to="/"
-          className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Volver al portal
-        </Link>
-      </header>
+      {!embedded && (
+        <header className="border-b border-violet-100 bg-white px-4 py-4 sm:px-8 dark:border-white/5 dark:bg-[#0d1220]">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Volver al portal
+          </Link>
+        </header>
+      )}
 
       <div className="p-4 sm:p-6 lg:p-8">
-        <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Administración general</h1>
+        <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Clientes</h1>
         <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">
-          Todos los clientes de la plataforma. Solo OneSystec ve esta página; cada cliente solo ve lo suyo.
+          Todos los clientes de la plataforma: crea los que necesites y gestiona sus dispositivos. Solo OneSystec ve esta sección; cada cliente administra su propio Equipo y solo ve lo suyo.
         </p>
 
         <div className="space-y-6">
@@ -180,10 +198,11 @@ export function PlatformPage() {
               <ul className="divide-y divide-slate-200 dark:divide-white/10">
                 {orgs.map((org) => (
                   <li key={org.id}>
+                    <div className="flex items-center gap-2">
                     <button
                       type="button"
                       onClick={() => void toggle(org.id)}
-                      className="flex w-full flex-wrap items-center gap-x-4 gap-y-1 py-3 text-left"
+                      className="flex min-w-0 flex-1 flex-wrap items-center gap-x-4 gap-y-1 py-3 text-left"
                     >
                       {openId === org.id ? <ChevronDown className="h-4 w-4 shrink-0" /> : <ChevronRight className="h-4 w-4 shrink-0" />}
                       <Building2 className="h-4 w-4 shrink-0 text-blue-600 dark:text-blue-400" />
@@ -197,6 +216,16 @@ export function PlatformPage() {
                         {org.lastDeviceSeenAt ? `Último dato: ${dateTimeFormat.format(new Date(org.lastDeviceSeenAt))}` : "Sin datos"}
                       </span>
                     </button>
+                    <button
+                      type="button"
+                      onClick={() => void viewMap(org.id)}
+                      disabled={openingId === org.id}
+                      className="brand-button flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-medium disabled:opacity-60"
+                    >
+                      <MapIcon className="h-3.5 w-3.5" />
+                      {openingId === org.id ? "Abriendo..." : "Ver mapa"}
+                    </button>
+                    </div>
 
                     {openId === org.id && (
                       <div className="mb-3 ml-8 space-y-3 rounded-2xl bg-slate-50 p-3 text-sm dark:bg-white/5">

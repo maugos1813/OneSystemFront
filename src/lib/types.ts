@@ -155,6 +155,8 @@ export interface CurrentUser {
   language: "es" | "it";
   /** OneSystec's own account(s): the only ones that get the cross-client administration. Decided by the server. */
   isPlatform?: boolean;
+  /** Set while OneSystec is looking at a client's account (read-only): whose it is. */
+  viewingAs?: { orgId: string; orgName: string };
 }
 
 /** A Gamonal vehicle a client sees on the map because the admin of Gamonal Driver switched it on there. Read-only. */
