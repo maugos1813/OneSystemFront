@@ -641,3 +641,8 @@ export function getPlatformFleet(): Promise<{ vehicles: Vehicle[]; devices: Devi
 export function setUserLogoAsPlatform(userId: string, logo: string | null): Promise<{ id: string; logo: string | null }> {
   return request(`/platform/users/${userId}/logo`, { method: "PATCH", body: JSON.stringify({ logo }) });
 }
+
+/** OneSystec only: what a client may have (OneTrack sections and administration pages); null lifts the limit. */
+export function setOrganizationSections(orgId: string, sections: string[] | null): Promise<{ sections: string[] | null }> {
+  return request(`/platform/organizations/${orgId}/sections`, { method: "PATCH", body: JSON.stringify({ sections }) });
+}

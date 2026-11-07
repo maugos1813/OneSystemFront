@@ -20,6 +20,16 @@ export const HIDDEN_MODULES: readonly string[] = ["cockpit"];
 
 export type ModuleKey = (typeof MODULE_KEYS)[number];
 
+/** The administration pages of a client's own account that OneSystec can also leave out for it. */
+export const ADMIN_SECTION_KEYS = ["dispositivos", "ajustes", "api_keys"] as const;
+export type AdminSectionKey = (typeof ADMIN_SECTION_KEYS)[number];
+
+export const ADMIN_SECTION_INFO: Record<AdminSectionKey, { label: string; hint: string }> = {
+  dispositivos: { label: "Dispositivos", hint: "Sus dispositivos, su salud y las balizas EYE BEACON" },
+  ajustes: { label: "Ajustes de OneTrack", hint: "Horarios y umbrales de las alertas" },
+  api_keys: { label: "API Keys", hint: "Claves para integrar OneTrack con otros sistemas" },
+};
+
 export interface ModuleInfo {
   label: string;
   hint: string;

@@ -1,6 +1,8 @@
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { AppLayout } from "./components/layout/AppLayout";
 import { ViewingBanner } from "./components/ViewingBanner";
+import { OneSystecConfigShell } from "./components/layout/OneSystecConfigShell";
+import { RequireAuth } from "./components/layout/RequireAuth";
 import { AppUpdateProvider } from "./context/AppUpdateContext";
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
@@ -54,6 +56,15 @@ export default function App() {
             {/* Accounts are opened by OneSystec (Clientes): there is no public sign-up. */}
             <Route path="/register" element={<Navigate to="/login" replace />} />
 
+            {/* OneSystec's own configuration (clients, team, SIMs, API keys) is not part of OneTrack: it opens from the portal. */}
+            <Route element={<RequireAuth />}>
+              <Route element={<OneSystecConfigShell />}>
+                <Route path="/clientes" element={<PlatformPage embedded />} />
+                <Route path="/equipo" element={<TeamPage embedded />} />
+                <Route path="/sims" element={<SimsPage />} />
+                <Route path="/api-keys" element={<ApiKeysPage />} />
+              </Route>
+            </Route>
             {/* Old address of the clients section. */}
             <Route path="/administracion" element={<Navigate to="/clientes" replace />} />
 
@@ -82,10 +93,6 @@ export default function App() {
                   element={<DeviceDetailPage />}
                 />
                 <Route path="/choferes" element={<MovedTo to="/dispositivos" tab="eye-beacon" />} />
-                <Route path="/equipo" element={<TeamPage embedded />} />
-                <Route path="/clientes" element={<PlatformPage embedded />} />
-                <Route path="/sims" element={<SimsPage />} />
-                <Route path="/api-keys" element={<ApiKeysPage />} />
                 <Route path="/ajustes" element={<SettingsPage />} />
               </Route>
             </Route>

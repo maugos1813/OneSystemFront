@@ -33,6 +33,7 @@ export const es = {
   "config.team": "Equipo",
   "config.platform": "Clientes",
   "config.platformHint": "Todos los clientes, sus usuarios y sus dispositivos (solo OneSystec)",
+  "config.simsHint": "Las tarjetas SIM de los trackers de cada cliente",
   "config.teamHint": "Usuarios, roles y qué aplicaciones ve cada uno",
   "config.oneTrackSettings": "Ajustes de OneTrack",
   "config.oneTrackSettingsHint": "Alertas, horarios y preferencias de la flota",

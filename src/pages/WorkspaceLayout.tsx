@@ -3,8 +3,6 @@ import {
   CircleUser,
   Cross,
   ExternalLink,
-  Key,
-  Building2,
   LogOut,
   Map as MapIcon,
   Maximize2,
@@ -14,7 +12,6 @@ import {
   Settings,
   Sun,
   Truck,
-  Users,
   X,
   type LucideIcon,
 } from "lucide-react";
@@ -28,6 +25,7 @@ import { useLanguage, useT } from "../i18n";
 import { FleetProvider } from "../context/FleetContext";
 import { useTheme } from "../context/ThemeContext";
 import { getProductSsoUrl, listProducts } from "../lib/api";
+import { allowedConfig } from "../lib/oneSystecConfig";
 import { trackGlow } from "../lib/glow";
 import { isOneTrackApp } from "../lib/appFlavor";
 import { allowedNav, firstAllowedPath } from "../lib/oneTrackNav";
@@ -213,7 +211,7 @@ function Workspace({ products }: { products: Product[] }) {
             <Outlet context={{ collapse }} />
           </div>
 
-          {atHome && showingConfig && <ConfigPanel role={currentUser?.role} isPlatform={currentUser?.isPlatform === true} />}
+          {atHome && showingConfig && <ConfigPanel />}
           {atHome && !showingConfig && selected?.type === "internal" && (
             <OneTrackHome product={selected} onExpand={expand} hasMap={!!currentUser?.modules.includes("mapa")} hasSections={!!firstAllowedPath(currentUser)} />
           )}
@@ -713,20 +711,11 @@ function ProfileCard() {
   );
 }
 
-function ConfigPanel({ role, isPlatform }: { role: string | undefined; isPlatform: boolean }) {
+function ConfigPanel() {
   const t = useT();
-  const manageTeam = role !== "viewer";
-  const admin = role === "owner" || role === "admin";
-  const items = useMemo(
-    () =>
-      [
-        isPlatform && { to: "/clientes", label: t("config.platform"), hint: t("config.platformHint"), icon: Building2 },
-        manageTeam && { to: "/equipo", label: t("config.team"), hint: t("config.teamHint"), icon: Users },
-        admin && { to: "/ajustes", label: t("config.oneTrackSettings"), hint: t("config.oneTrackSettingsHint"), icon: Settings },
-        admin && { to: "/api-keys", label: t("config.apiKeys"), hint: t("config.apiKeysHint"), icon: Key },
-      ].filter(Boolean) as Array<{ to: string; label: string; hint: string; icon: LucideIcon }>,
-    [isPlatform, manageTeam, admin, t],
-  );
+  const { currentUser } = useAuth();
+  // OneSystec's own configuration (clients, team, SIMs, API keys). OneTrack's settings are inside OneTrack, not here.
+  const items = useMemo(() => allowedConfig(currentUser), [currentUser]);
 
   return (
     <div className="min-h-0 flex-1 overflow-auto">
@@ -744,8 +733,8 @@ function ConfigPanel({ role, isPlatform }: { role: string | undefined; isPlatfor
             >
               <Icon className="mt-0.5 h-5 w-5 shrink-0 text-blue-600 dark:text-blue-400" />
               <span>
-                <span className="block text-[15px] font-medium text-slate-900 dark:text-white">{label}</span>
-                <span className="block text-xs text-slate-500 dark:text-slate-400">{hint}</span>
+                <span className="block text-[15px] font-medium text-slate-900 dark:text-white">{t(label)}</span>
+                <span className="block text-xs text-slate-500 dark:text-slate-400">{t(hint)}</span>
               </span>
             </Link>
         ))}

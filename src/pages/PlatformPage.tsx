@@ -4,9 +4,10 @@ import { Link, Navigate } from "react-router-dom";
 import { Panel } from "../components/analytics/Panel";
 import { PasswordField } from "../components/PasswordField";
 import { useAuth } from "../context/AuthContext";
-import { ApiError, claimDevice, createPlatformOrganization, getPlatformOrganization, listPlatformOrganizations, setUserLogoAsPlatform, viewClientToken } from "../lib/api";
+import { ApiError, claimDevice, createPlatformOrganization, getPlatformOrganization, listPlatformOrganizations, setOrganizationSections, setUserLogoAsPlatform, viewClientToken } from "../lib/api";
 import { startViewing } from "../lib/auth";
 import { fileToLogoDataUrl, LOGO_ACCEPT } from "../lib/logoImage";
+import { ADMIN_SECTION_INFO, ADMIN_SECTION_KEYS, HIDDEN_MODULES, MODULE_INFO, MODULE_KEYS } from "../lib/modules";
 import { DEVICE_MODELS } from "../lib/deviceModels";
 import type { PlatformOrganization, PlatformOrganizationDetail } from "../lib/types";
 
@@ -57,7 +58,10 @@ export function PlatformPage({ embedded = false }: { embedded?: boolean }) {
     setDetail(null);
     setClaimMessage(null);
     try {
-      setDetail(await getPlatformOrganization(id));
+      const loaded = await getPlatformOrganization(id);
+      setDetail(loaded);
+      setAllowed(loaded.sections);
+      setSectionsMessage(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudo cargar el cliente");
     }
@@ -69,6 +73,26 @@ export function PlatformPage({ embedded = false }: { embedded?: boolean }) {
   const [claimMessage, setClaimMessage] = useState<{ ok: boolean; text: string } | null>(null);
 
   /** Hardware is OneSystec's: it assigns each device to the client that asked for it. */
+  // What this client may have, as being edited: null = no limit (everything).
+  const [allowed, setAllowed] = useState<string[] | null>(null);
+  const [savingSections, setSavingSections] = useState(false);
+  const [sectionsMessage, setSectionsMessage] = useState<{ ok: boolean; text: string } | null>(null);
+
+  async function saveSections(orgId: string) {
+    setSavingSections(true);
+    setSectionsMessage(null);
+    try {
+      const saved = await setOrganizationSections(orgId, allowed);
+      setAllowed(saved.sections);
+      setDetail(await getPlatformOrganization(orgId));
+      setSectionsMessage({ ok: true, text: "Guardado. Se aplica al instante." });
+    } catch (err) {
+      setSectionsMessage({ ok: false, text: err instanceof Error ? err.message : "No se pudo guardar" });
+    } finally {
+      setSavingSections(false);
+    }
+  }
+
   const [photoBusy, setPhotoBusy] = useState<string | null>(null);
 
   /** The photo of one of a client's users (the account holder's above all): OneSystec gives each client its identity. */
@@ -252,6 +276,63 @@ export function PlatformPage({ embedded = false }: { embedded?: boolean }) {
                             <p className="text-xs text-slate-500 dark:text-slate-400">
                               Alta: {dateFormat.format(new Date(detail.createdAt))} · plan {detail.plan} · id {detail.id}
                             </p>
+                            <div className="rounded-xl border border-slate-200 p-3 dark:border-white/10">
+                              <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                                <p className="font-medium text-slate-700 dark:text-slate-300">Vistas del cliente</p>
+                                <label className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
+                                  <input
+                                    type="checkbox"
+                                    checked={allowed === null}
+                                    onChange={(e) =>
+                                      setAllowed(e.target.checked ? null : [...MODULE_KEYS.filter((k) => !HIDDEN_MODULES.includes(k)), ...ADMIN_SECTION_KEYS])
+                                    }
+                                  />
+                                  Sin límite (todas)
+                                </label>
+                              </div>
+                              <p className="mb-2 text-xs text-slate-500 dark:text-slate-400">
+                                Lo máximo que su titular y sus administradores pueden ver. Sus usuarios ven lo que se les asigne dentro de esto. Equipo es siempre suyo.
+                              </p>
+                              <div className={`grid gap-x-4 gap-y-1 sm:grid-cols-2 ${allowed === null ? "pointer-events-none opacity-50" : ""}`}>
+                                {[
+                                  ...MODULE_KEYS.filter((k) => !HIDDEN_MODULES.includes(k)).map((k) => [k, MODULE_INFO[k].label, MODULE_INFO[k].hint] as const),
+                                  ...ADMIN_SECTION_KEYS.map((k) => [k, ADMIN_SECTION_INFO[k].label, ADMIN_SECTION_INFO[k].hint] as const),
+                                ].map(([key, label, hint]) => (
+                                  <label key={key} className="flex items-start gap-2 py-0.5">
+                                    <input
+                                      type="checkbox"
+                                      className="mt-1"
+                                      checked={allowed === null || allowed.includes(key)}
+                                      onChange={(e) =>
+                                        setAllowed((current) => {
+                                          const base = current ?? [];
+                                          return e.target.checked ? [...base, key] : base.filter((k) => k !== key);
+                                        })
+                                      }
+                                    />
+                                    <span>
+                                      <span className="block text-slate-700 dark:text-slate-300">{label}</span>
+                                      <span className="block text-xs text-slate-500 dark:text-slate-400">{hint}</span>
+                                    </span>
+                                  </label>
+                                ))}
+                              </div>
+                              <div className="mt-3 flex items-center gap-3">
+                                <button
+                                  type="button"
+                                  onClick={() => void saveSections(detail.id)}
+                                  disabled={savingSections || JSON.stringify(allowed === null ? null : [...allowed].sort()) === JSON.stringify(detail.sections === null ? null : [...detail.sections].sort())}
+                                  className="brand-button rounded-xl px-4 py-1.5 text-xs font-medium disabled:opacity-50"
+                                >
+                                  {savingSections ? "Guardando..." : "Guardar vistas"}
+                                </button>
+                                {sectionsMessage && (
+                                  <span className={`text-xs ${sectionsMessage.ok ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
+                                    {sectionsMessage.text}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
                             <div>
                               <p className="mb-1 font-medium text-slate-700 dark:text-slate-300">Usuarios</p>
                               <ul className="space-y-2">

@@ -32,6 +32,7 @@ export const it: Record<MessageKey, string> = {
   "config.team": "Team",
   "config.platform": "Clienti",
   "config.platformHint": "Tutti i clienti, i loro utenti e i loro dispositivi (solo OneSystec)",
+  "config.simsHint": "Le SIM dei tracker di ogni cliente",
   "config.teamHint": "Utenti, ruoli e quali applicazioni vede ciascuno",
   "config.oneTrackSettings": "Impostazioni di OneTrack",
   "config.oneTrackSettingsHint": "Avvisi, orari e preferenze della flotta",

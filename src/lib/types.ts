@@ -151,6 +151,8 @@ export interface CurrentUser {
   userLogo: string | null;
   /** The OneTrack sections this user may use (everything for owner/admin). */
   modules: ModuleKey[];
+  /** The administration pages of its own account that this user has (owner/admin only; OneSystec may leave some out). */
+  adminSections?: Array<"dispositivos" | "ajustes" | "api_keys">;
   /** The language the app is shown in for this user; chosen by an admin. */
   language: "es" | "it";
   /** OneSystec's own account(s): the only ones that get the cross-client administration. Decided by the server. */
@@ -588,6 +590,8 @@ export interface PlatformOrganization {
 }
 
 export interface PlatformOrganizationDetail extends PlatformOrganization {
+  /** The sections this client may have, set by OneSystec (null: all of them). */
+  sections: string[] | null;
   members: Array<{ id: string; name: string; email: string; role: string; allowedArea: string | null; logo: string | null }>;
   deviceList: Array<{
     id: string;
