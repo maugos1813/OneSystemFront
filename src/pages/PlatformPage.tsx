@@ -156,11 +156,6 @@ export function PlatformPage() {
                       <Building2 className="h-4 w-4 shrink-0 text-blue-600 dark:text-blue-400" />
                       <span className="min-w-0 flex-1 truncate font-medium text-slate-900 dark:text-white">
                         {org.name}
-                        {org.isPlatform && (
-                          <span className="ml-2 rounded-full bg-blue-100 px-2 py-0.5 text-[11px] font-semibold text-blue-700 dark:bg-blue-500/20 dark:text-blue-300">
-                            OneSystec
-                          </span>
-                        )}
                       </span>
                       <span className="text-xs text-slate-500 dark:text-slate-400">
                         {org.users} usuarios · {org.vehicles} vehículos · {org.devices} dispositivos

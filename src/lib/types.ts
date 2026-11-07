@@ -153,7 +153,7 @@ export interface CurrentUser {
   modules: ModuleKey[];
   /** The language the app is shown in for this user; chosen by an admin. */
   language: "es" | "it";
-  /** OneSystec's own owner/admin: the only accounts that get the cross-client administration. Decided by the server. */
+  /** OneSystec's own account(s): the only ones that get the cross-client administration. Decided by the server. */
   isPlatform?: boolean;
 }
 
@@ -583,7 +583,6 @@ export interface PlatformOrganization {
   vehicles: number;
   devices: number;
   lastDeviceSeenAt: string | null;
-  isPlatform: boolean;
 }
 
 export interface PlatformOrganizationDetail extends PlatformOrganization {
