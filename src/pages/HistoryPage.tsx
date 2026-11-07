@@ -1,5 +1,5 @@
 import { ArrowLeft, CalendarDays, Search } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { AreaFilterPills } from "../components/AreaFilterPills";
 import { VehicleStatusBadge } from "../components/StatusBadge";
@@ -8,21 +8,13 @@ import { HistoryMapView } from "../components/history/HistoryMapView";
 import { RangeCalendar, addDays, dayOf, type Day } from "../components/history/RangeCalendar";
 import { PlaybackBar } from "../components/history/PlaybackBar";
 import { SpeedTimelineChart } from "../components/history/SpeedTimelineChart";
-import { useAuth } from "../context/AuthContext";
 import { useFleet } from "../context/FleetContext";
-import { getVehicleDriver, getVehicleUsages } from "../lib/api";
-import type { VehicleDriver, VehicleUsage } from "../lib/types";
 import { usePositionHistory } from "../hooks/usePositionHistory";
 import { usePlayback } from "../hooks/usePlayback";
-import { useVehicleIncidents } from "../hooks/useVehicleIncidents";
-import { INCIDENT_COLORS, INCIDENT_LABELS, type Incident, type IncidentType } from "../lib/drivingBehavior";
-import { incidentPinUrl } from "../lib/incidentPins";
 import { isIdling, matchesSearch, thresholdsFromSettings, vehicleStatus } from "../lib/vehicleStatus";
 
 /** A route is kept for 6 months. */
 const HISTORY_DAYS = 183;
-/** The server works out driving incidents, and who drove, over 31 days at most. */
-const INCIDENT_DAYS = 31;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 const SHORT_DAY = new Intl.DateTimeFormat("es-ES", { day: "2-digit", month: "2-digit" });
@@ -32,19 +24,7 @@ const isDay = (value: string | null): value is Day => !!value && /^\d{4}-\d{2}-\
 const dayLabel = (fromDay: Day, toDay: Day) =>
   fromDay === toDay ? LONG_DAY.format(new Date(`${fromDay}T12:00:00`)) : `${SHORT_DAY.format(new Date(`${fromDay}T12:00:00`))} – ${SHORT_DAY.format(new Date(`${toDay}T12:00:00`))}`;
 
-const INCIDENT_TYPES: IncidentType[] = ["harshBraking", "harshAcceleration", "harshCornering", "speeding"];
 const DEFAULT_SPEED_LIMIT_KMH = 120;
-
-const USAGE_TIME = new Intl.DateTimeFormat("es-ES", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
-
-/** "28/10 06:00 – 13:10", or "desde 28/10 06:00" when the Driver has no end time. */
-function formatUsageWindow(u: VehicleUsage): string {
-  const from = USAGE_TIME.format(new Date(u.from));
-  if (!u.to) return `desde ${from}`;
-  const to = USAGE_TIME.format(new Date(u.to));
-  // Same day: show the end time only.
-  return `${from} – ${from.slice(0, 5) === to.slice(0, 5) ? to.slice(-5) : to}`;
-}
 
 /** The first step: which vehicle. Everything else on the page is about the one chosen here. */
 function ChooseVehicle({ onSelect }: { onSelect: (vehicleId: string) => void }) {
@@ -136,35 +116,6 @@ function HistoryView({
   }, [fromDay, toDay]);
   const { history, loading: historyLoading } = usePositionHistory(selectedVehicleId, from, to);
 
-  // Who drove it in this period (from the drivers' beacons); needs the Conducción section.
-  const { currentUser } = useAuth();
-  const canSeeDriver =
-    currentUser?.role === "owner" ||
-    currentUser?.role === "admin" ||
-    !!currentUser?.modules.some((m) => m === "conduccion");
-  const [driver, setDriver] = useState<VehicleDriver | null>(null);
-  // Who Gamonal Driver gave the vehicle to in the period: several drivers can have used it, and this is the exact record.
-  const [usages, setUsages] = useState<VehicleUsage[]>([]);
-  useEffect(() => {
-    setDriver(null);
-    setUsages([]);
-    if (!canSeeDriver || !selectedVehicleId) return;
-    let cancelled = false;
-    // The server answers who drove over 31 days at most (93 for the services): a longer period asks for its last stretch.
-    const end = to ?? new Date();
-    const driverFrom = new Date(Math.max(from.getTime(), end.getTime() - INCIDENT_DAYS * DAY_MS));
-    const usagesFrom = new Date(Math.max(from.getTime(), end.getTime() - 92 * DAY_MS));
-    getVehicleDriver(selectedVehicleId, { from: driverFrom, to: end })
-      .then((d) => !cancelled && setDriver(d))
-      .catch(() => undefined);
-    getVehicleUsages(selectedVehicleId, { from: usagesFrom, to: end })
-      .then((r) => !cancelled && setUsages(r.usages))
-      .catch(() => undefined);
-    return () => {
-      cancelled = true;
-    };
-  }, [canSeeDriver, selectedVehicleId, from, to]);
-
   const {
     playing,
     togglePlay,
@@ -175,47 +126,6 @@ function HistoryView({
     position: currentPosition,
     seek: handleSeek,
   } = usePlayback(history, `${selectedVehicleId}|${rangeKey}`);
-  // Driving incidents are worked out by the server over the last 31 days; those of a chosen period are the ones inside it.
-  const incidentDays = Math.min(INCIDENT_DAYS, Math.max(1, Math.ceil((Date.now() - from.getTime()) / DAY_MS)));
-  const allIncidents = useVehicleIncidents(selectedVehicleId, incidentDays, speedLimit);
-  const incidents = useMemo(() => {
-    const start = from.getTime();
-    const end = to ? to.getTime() : Infinity;
-    return allIncidents.filter((i) => {
-      const at = new Date(i.ts).getTime();
-      return at >= start && at <= end;
-    });
-  }, [allIncidents, from, to]);
-  const incidentsCoverPeriod = Date.now() - from.getTime() <= INCIDENT_DAYS * DAY_MS;
-  const [hiddenTypes, setHiddenTypes] = useState<ReadonlySet<IncidentType>>(new Set());
-  const shownIncidents = useMemo(() => incidents.filter((i) => !hiddenTypes.has(i.type)), [incidents, hiddenTypes]);
-  const countByType = useMemo(() => {
-    const counts: Record<IncidentType, number> = {
-      harshBraking: 0,
-      harshAcceleration: 0,
-      harshCornering: 0,
-      speeding: 0,
-    };
-    for (const i of incidents) counts[i.type] += 1;
-    return counts;
-  }, [incidents]);
-
-  function toggleType(type: IncidentType) {
-    setHiddenTypes((current) => {
-      const next = new Set(current);
-      if (!next.delete(type)) next.add(type);
-      return next;
-    });
-  }
-
-  /** Playback jumps to the first report at or after the moment of the event. */
-  function handleIncidentSelect(incident: Incident) {
-    const at = new Date(incident.ts).getTime();
-    const index = history.findIndex((p) => new Date(p.ts).getTime() >= at);
-    if (playing) togglePlay();
-    handleSeek(index === -1 ? history.length - 1 : index);
-  }
-
   const vehicle = vehicles.find((v) => v.id === selectedVehicleId) ?? null;
 
   if (fleetLoading) {
@@ -258,43 +168,6 @@ function HistoryView({
         </button>
       </div>
 
-      {!incidentsCoverPeriod && (
-        <p className="mb-4 rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:bg-amber-500/10 dark:text-amber-200">
-          Las frenadas, aceleraciones, curvas y excesos de velocidad se marcan en los últimos {INCIDENT_DAYS} días; el recorrido se ve completo.
-        </p>
-      )}
-
-      {usages.length > 0 && (
-        <div className="mb-4 text-sm text-slate-600 dark:text-slate-300">
-          <p className="mb-1 font-medium text-slate-800 dark:text-slate-100">
-            Quién lo usó <span className="text-xs font-normal text-slate-400">(servicios de Gamonal Driver)</span>
-          </p>
-          <ul className="max-h-40 space-y-0.5 overflow-y-auto">
-            {usages.map((u, i) => (
-              <li key={`${u.from}:${i}`}>
-                <strong>{u.driver.name}</strong>
-                <span className="text-slate-400">
-                  {" · "}
-                  {formatUsageWindow(u)}
-                  {!u.declared && " (horario estimado)"}
-                  {u.switched && " · cambió de furgón"}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {usages.length === 0 && driver?.driver && (
-        <p className="mb-4 text-sm text-slate-600 dark:text-slate-300">
-          Conductor: <strong>{driver.driver.name}</strong>
-          {driver.confidence === "low" && " (probable)"}
-          {driver.others.length > 0 && (
-            <span className="text-slate-400"> · también en cabina: {driver.others.map((o) => o.name).join(", ")}</span>
-          )}
-        </p>
-      )}
-
       {!vehicle && <p className="text-sm text-slate-500 dark:text-slate-400">Todavía no hay vehículos cargados.</p>}
 
       {vehicle && historyLoading && (
@@ -314,37 +187,12 @@ function HistoryView({
           className={`grid grid-cols-1 gap-4 transition-opacity lg:grid-cols-3 ${historyLoading ? "pointer-events-none opacity-50" : ""}`}
         >
           <Panel title="Mapa del recorrido" className="lg:col-span-3">
-            <div className="mb-3 flex flex-wrap gap-2">
-              {INCIDENT_TYPES.map((type) => {
-                const hidden = hiddenTypes.has(type);
-                return (
-                  <button
-                    key={type}
-                    type="button"
-                    onClick={() => toggleType(type)}
-                    aria-pressed={!hidden}
-                    className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition ${
-                      hidden
-                        ? "border-slate-200 bg-transparent text-slate-400 line-through dark:border-white/10 dark:text-slate-500"
-                        : "border-slate-200 bg-white text-slate-700 dark:border-white/10 dark:bg-white/5 dark:text-slate-200"
-                    }`}
-                    style={hidden ? undefined : { borderColor: `${INCIDENT_COLORS[type]}66` }}
-                  >
-                    <img src={incidentPinUrl(type)} alt="" className={`h-5 w-4 ${hidden ? "opacity-40" : ""}`} />
-                    {INCIDENT_LABELS[type]}
-                    <span className="tabular-nums opacity-70">{countByType[type]}</span>
-                  </button>
-                );
-              })}
-            </div>
             <div className="h-80 overflow-hidden rounded-2xl sm:h-[28rem]">
               <HistoryMapView
                 positions={history}
                 currentPosition={currentPosition}
                 currentIndex={currentIndex}
                 speedLimit={speedLimit}
-                incidents={shownIncidents}
-                onIncidentSelect={handleIncidentSelect}
               />
             </div>
           </Panel>

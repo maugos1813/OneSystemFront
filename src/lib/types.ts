@@ -540,18 +540,6 @@ export interface VehicleEta {
 }
 
 /** One service of Gamonal Driver on a vehicle. */
-export interface VehicleUsage {
-  driver: { name: string; phone: string | null; active: boolean };
-  from: string;
-  /** Null when the Driver has no end time for it. */
-  to: string | null;
-  /** The hours the driver declared, or only an estimate from departure and ETA. */
-  declared: boolean;
-  /** The service started on another van and ended on this one, or the other way round: the switch time is unknown. */
-  switched: boolean;
-  status: string;
-}
-
 /** A beacon one tracker heard, with the driver it belongs to if it is registered. */
 export interface BeaconInVehicle {
   beaconId: string;

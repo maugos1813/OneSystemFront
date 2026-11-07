@@ -31,7 +31,6 @@ import type {
   VehicleBeacons,
   VehicleDriver,
   VehicleEta,
-  VehicleUsage,
   SimSecrets,
   Product,
   TeamMember,
@@ -607,11 +606,6 @@ export function getVehicleEta(vehicleId: string, to: string): Promise<VehicleEta
 }
 
 /** Every driver Gamonal Driver gave the vehicle to between `from` and `to`. */
-export function getVehicleUsages(vehicleId: string, range: { from: Date; to: Date }): Promise<{ usages: VehicleUsage[] }> {
-  const params = new URLSearchParams({ from: range.from.toISOString(), to: range.to.toISOString() });
-  return request(`/vehicles/${vehicleId}/usage?${params}`);
-}
-
 export function getVehicleDriver(vehicleId: string, range: { from?: Date; to?: Date } = {}): Promise<VehicleDriver> {
   const params = new URLSearchParams();
   if (range.from) params.set("from", range.from.toISOString());
