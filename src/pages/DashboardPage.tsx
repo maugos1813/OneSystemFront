@@ -81,7 +81,8 @@ export function DashboardPage() {
   }
 
   return (
-    <div className="relative flex h-full overflow-hidden">
+    // `isolate`: everything over the map (search, filters, panels) stays beneath the app's own bars and the bell's list.
+    <div className="relative isolate flex h-full overflow-hidden">
       <div className="relative flex-1">
         <MapView
           vehicles={shownVehicles}
