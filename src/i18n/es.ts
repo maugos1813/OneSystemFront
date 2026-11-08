@@ -452,6 +452,15 @@ export const es = {
   "security.openDirect": "Probar abrir directo en mi app",
   "security.openDirectNote": "El celular decide qué app se abre; si no es la tuya, usa la clave.",
   "security.otherDevice": "O escanea el QR desde otro dispositivo",
+  "login.emailHeading": "Revisa tu correo",
+  "login.emailHint": "Enviamos un código de 6 dígitos a {email}. Escríbelo aquí.",
+  "login.emailSpam": "¿No llega? Revisa la carpeta de spam.",
+  "login.resend": "Reenviar el código",
+  "login.resendIn": "Reenviar en {seconds} s",
+  "login.resent": "Código enviado de nuevo",
+  "login.resendFailed": "No se pudo reenviar el código",
+  "login.useAuthenticator": "Usar mi app de autenticación",
+  "api.emailFailed": "No se pudo enviar el correo. Inténtalo de nuevo.",
   // @@END
 } as const satisfies Record<string, string>;
 

@@ -5,6 +5,8 @@ import {
   getCurrentUser,
   login as apiLogin,
   loginSecondStep,
+  loginWithEmailCode,
+  resendLoginEmailCode,
   logoutRequest,
   startLoginTotpSetup,
   type TotpSetup,
@@ -19,6 +21,8 @@ export type LoginOutcome =
   | { kind: "done" }
   /** The account has an authenticator app: its code is what's missing. */
   | { kind: "code"; mfaToken: string }
+  /** A phone sign-in: the code was sent to the account's email. */
+  | { kind: "email"; mfaToken: string; emailHint: string; alternativeMfaToken?: string }
   /** An admin account that has no authenticator yet: it must set one up before getting in. */
   | { kind: "setup"; mfaToken: string }
   | { kind: "failed" };
@@ -31,6 +35,10 @@ interface AuthContextValue {
   login: (email: string, password: string) => Promise<LoginOutcome>;
   /** The second step: a code from the authenticator app, or a recovery code. */
   submitSecondStep: (mfaToken: string, input: { code: string } | { recoveryCode: string }) => Promise<{ ok: boolean; recoveryCodesLeft?: number; usedRecoveryCode?: boolean }>;
+  /** The second step on a phone: the 6-digit code that arrived by email. */
+  submitEmailCode: (mfaToken: string, code: string) => Promise<boolean>;
+  /** Sends the email code again. */
+  resendEmailCode: (mfaToken: string) => Promise<boolean>;
   /** An admin's first sign-in: the key and QR address of the authenticator to add. */
   beginAuthenticatorSetup: (mfaToken: string) => Promise<TotpSetup | null>;
   /** Confirms the authenticator with its first code. The session starts only when `finish` is called (after the recovery codes were saved). */
@@ -97,13 +105,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setError(null);
       try {
         const answer = await apiLogin(email, password);
+        if (answer.mfaRequired && answer.method === "email") {
+          return { kind: "email", mfaToken: answer.mfaToken, emailHint: answer.emailHint ?? "", alternativeMfaToken: answer.alternativeMfaToken };
+        }
         if (answer.mfaRequired) return { kind: "code", mfaToken: answer.mfaToken };
         if (answer.mfaSetupRequired) return { kind: "setup", mfaToken: answer.mfaToken };
         begin(answer);
         return { kind: "done" };
       } catch (err) {
         // A wrong password says so; a "too many attempts" says that (and for how long to wait is in the server's message).
-        setError(err instanceof ApiError && err.status === 429 ? err.message : translate(language(), "auth.badCredentials"));
+        setError(err instanceof ApiError && (err.status === 429 || err.status === 503) ? err.message : translate(language(), "auth.badCredentials"));
         return { kind: "failed" };
       } finally {
         setLoading(false);
@@ -128,6 +139,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     },
     [begin, failure],
+  );
+
+  const submitEmailCode = useCallback<AuthContextValue["submitEmailCode"]>(
+    async (mfaToken, code) => {
+      setLoading(true);
+      setError(null);
+      try {
+        begin(await loginWithEmailCode(mfaToken, code));
+        return true;
+      } catch (err) {
+        failure(err, "login.invalidCode");
+        return false;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [begin, failure],
+  );
+
+  const resendEmailCode = useCallback<AuthContextValue["resendEmailCode"]>(
+    async (mfaToken) => {
+      setError(null);
+      try {
+        await resendLoginEmailCode(mfaToken);
+        return true;
+      } catch (err) {
+        failure(err, "login.resendFailed");
+        return false;
+      }
+    },
+    [failure],
   );
 
   const beginAuthenticatorSetup = useCallback(async (mfaToken: string) => {
@@ -179,6 +221,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         error,
         login,
         submitSecondStep,
+        submitEmailCode,
+        resendEmailCode,
         beginAuthenticatorSetup,
         confirmAuthenticatorSetup,
         clearError: () => setError(null),

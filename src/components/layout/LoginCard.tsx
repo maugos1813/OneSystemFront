@@ -1,5 +1,5 @@
-import { ArrowLeft, ArrowRight, Eye, EyeOff, Headset, KeyRound, Lock, Mail, ShieldCheck, UserRound } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import { ArrowLeft, ArrowRight, Eye, EyeOff, Headset, KeyRound, Lock, Mail, MailCheck, ShieldCheck, UserRound } from "lucide-react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useT } from "../../i18n";
 import type { TotpSetup } from "../../lib/api";
@@ -14,6 +14,7 @@ export const SUPPORT_EMAIL = "onesystecsrl@gmail.com";
 type Step =
   | { kind: "credentials" }
   | { kind: "code"; mfaToken: string; recovery: boolean }
+  | { kind: "email"; mfaToken: string; emailHint: string; alternativeMfaToken?: string }
   | { kind: "setup"; mfaToken: string; setup: TotpSetup }
   | { kind: "saveCodes"; recoveryCodes: string[]; finish: () => void };
 
@@ -26,7 +27,7 @@ const CARD_CLASS = "rounded-3xl border border-sky-300/30 bg-[#0a2260]/55 p-4 tex
 /** The sign-in both apps share: a glass card meant to float over a dark picture. It goes on by itself to the second step when the account needs it. */
 export function LoginCard() {
   const t = useT();
-  const { login, submitSecondStep, beginAuthenticatorSetup, confirmAuthenticatorSetup, loading, error, clearError } = useAuth();
+  const { login, submitSecondStep, submitEmailCode, resendEmailCode, beginAuthenticatorSetup, confirmAuthenticatorSetup, loading, error, clearError } = useAuth();
   const [step, setStep] = useState<Step>({ kind: "credentials" });
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -34,6 +35,21 @@ export function LoginCard() {
   const [code, setCode] = useState("");
   const [recoveryCode, setRecoveryCode] = useState("");
   const [saved, setSaved] = useState(false);
+  // After the email code is sent, asking for another waits a little (the server enforces it too).
+  const [resendWait, setResendWait] = useState(0);
+  const [resent, setResent] = useState(false);
+
+  const emailStep = step.kind === "email";
+  useEffect(() => {
+    if (!emailStep) return;
+    setResendWait(30);
+    setResent(false);
+  }, [emailStep]);
+  useEffect(() => {
+    if (resendWait <= 0) return;
+    const timer = setTimeout(() => setResendWait((seconds) => seconds - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [resendWait]);
 
   function backToStart() {
     clearError();
@@ -48,6 +64,8 @@ export function LoginCard() {
     const outcome = await login(email, password);
     if (outcome.kind === "code") {
       setStep({ kind: "code", mfaToken: outcome.mfaToken, recovery: false });
+    } else if (outcome.kind === "email") {
+      setStep({ kind: "email", mfaToken: outcome.mfaToken, emailHint: outcome.emailHint, alternativeMfaToken: outcome.alternativeMfaToken });
     } else if (outcome.kind === "setup") {
       const setup = await beginAuthenticatorSetup(outcome.mfaToken);
       if (setup) setStep({ kind: "setup", mfaToken: outcome.mfaToken, setup });
@@ -75,6 +93,63 @@ export function LoginCard() {
       <ArrowLeft className="h-4 w-4" /> {t("login.back")}
     </button>
   );
+
+  if (step.kind === "email") {
+    const { mfaToken, emailHint, alternativeMfaToken } = step;
+    const send = async (typed: string) => {
+      const ok = await submitEmailCode(mfaToken, typed);
+      if (!ok) setCode("");
+    };
+    return (
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          void send(code);
+        }}
+        className={CARD_CLASS}
+      >
+        {title(<MailCheck className="h-8 w-8 shrink-0 sm:h-10 sm:w-10" strokeWidth={1.5} />, t("login.emailHeading"), t("login.emailHint", { email: emailHint }))}
+        <div className="mb-4">
+          <CodeInput id="code" value={code} onChange={setCode} tone="glass" autoFocus onComplete={(typed) => void send(typed)} />
+        </div>
+        {errorBox}
+        <button type="submit" disabled={loading || code.length !== 6} className={PRIMARY_BUTTON}>
+          {loading ? t("login.verifying") : t("login.verify")}
+          {!loading && <ArrowRight className="h-5 w-5" />}
+        </button>
+        <p className="mt-4 text-center text-xs text-sky-100/80">{t("login.emailSpam")}</p>
+        <button
+          type="button"
+          disabled={resendWait > 0}
+          onClick={async () => {
+            setResent(false);
+            const ok = await resendEmailCode(mfaToken);
+            setResendWait(30);
+            setCode("");
+            setResent(ok);
+          }}
+          className="mt-2 w-full text-center text-sm text-sky-100/90 underline-offset-2 hover:text-white hover:underline disabled:no-underline disabled:opacity-60"
+        >
+          {resendWait > 0 ? t("login.resendIn", { seconds: resendWait }) : t("login.resend")}
+        </button>
+        {resent && resendWait > 0 && <p className="mt-1 text-center text-xs text-emerald-200">{t("login.resent")}</p>}
+        {alternativeMfaToken && (
+          <button
+            type="button"
+            onClick={() => {
+              clearError();
+              setCode("");
+              setStep({ kind: "code", mfaToken: alternativeMfaToken, recovery: false });
+            }}
+            className="mt-3 w-full text-center text-sm text-sky-100/90 underline-offset-2 hover:text-white hover:underline"
+          >
+            {t("login.useAuthenticator")}
+          </button>
+        )}
+        {backButton}
+      </form>
+    );
+  }
 
   if (step.kind === "code") {
     const { mfaToken, recovery } = step;

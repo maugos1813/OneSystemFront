@@ -14,3 +14,8 @@ export const pushUnavailable = isOneTrackApp && navigator.userAgent.includes("No
 export function isNativeApp(): boolean {
   return Capacitor.isNativePlatform();
 }
+
+/** On a phone (one of the apps, or a phone's browser): there nobody can scan a QR shown on the very screen they hold. */
+export function isPhone(): boolean {
+  return Capacitor.isNativePlatform() || /Android|iPhone|iPod|Mobile/i.test(navigator.userAgent);
+}

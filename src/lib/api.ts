@@ -1,5 +1,5 @@
 import { rememberedLanguage, translate, type MessageKey } from "../i18n";
-import { isNativeApp } from "./appFlavor";
+import { isNativeApp, isPhone } from "./appFlavor";
 import { getRefreshToken, getToken } from "./auth";
 import { endSession, getFreshToken, renewSession } from "./session";
 import { MODULE_KEYS, MODULE_TEMPLATES, type ModuleKey } from "./modules";
@@ -65,6 +65,7 @@ const SERVER_MESSAGES: Record<string, MessageKey> = {
   "Email already registered": "api.emailTaken",
   "Invalid credentials": "api.invalidCredentials",
   "Invalid code": "api.invalidCode",
+  "Could not send the email": "api.emailFailed",
   "Invalid password or code": "api.invalidPasswordOrCode",
   "Sign-in expired, start again": "api.signInExpired",
   "Authenticator already set up": "api.totpAlreadySet",
@@ -143,7 +144,17 @@ async function publicRequest<T>(path: string, body: unknown): Promise<T> {
 /** What the sign-in answers: a session, or the next step (the code from the authenticator app, or setting that app up first). */
 export type LoginAnswer =
   | { mfaRequired?: undefined; mfaSetupRequired?: undefined; token: string; refreshToken?: string }
-  | { mfaRequired: true; mfaSetupRequired?: undefined; mfaToken: string }
+  | {
+      mfaRequired: true;
+      mfaSetupRequired?: undefined;
+      /** "email": the code was sent to the account's mailbox (phones); otherwise it is the authenticator app's. */
+      method?: "email";
+      mfaToken: string;
+      /** The mailbox it went to, partly hidden ("a•••@gmail.com"). */
+      emailHint?: string;
+      /** For an account that also has the authenticator: the step to use it instead. */
+      alternativeMfaToken?: string;
+    }
   | { mfaSetupRequired: true; mfaRequired?: undefined; mfaToken: string };
 
 export interface SessionTokens {
@@ -155,7 +166,15 @@ export interface SessionTokens {
 const CLIENT_KIND = isNativeApp() ? "app" : "web";
 
 export function login(email: string, password: string): Promise<LoginAnswer> {
-  return publicRequest("/auth/login", { email, password, client: CLIENT_KIND });
+  return publicRequest("/auth/login", { email, password, client: CLIENT_KIND, channel: isPhone() ? "phone" : "web" });
+}
+
+export function loginWithEmailCode(mfaToken: string, code: string): Promise<SessionTokens> {
+  return publicRequest("/auth/login/email", { mfaToken, code });
+}
+
+export async function resendLoginEmailCode(mfaToken: string): Promise<void> {
+  await publicRequest("/auth/login/email/resend", { mfaToken });
 }
 
 export function loginSecondStep(mfaToken: string, input: { code: string } | { recoveryCode: string }): Promise<SessionTokens & { usedRecoveryCode: boolean; recoveryCodesLeft: number }> {

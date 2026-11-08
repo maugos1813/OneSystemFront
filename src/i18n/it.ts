@@ -451,5 +451,14 @@ export const it: Record<MessageKey, string> = {
   "security.openDirect": "Prova ad aprire direttamente nella mia app",
   "security.openDirectNote": "Il telefono decide quale app aprire; se non è la tua, usa la chiave.",
   "security.otherDevice": "Oppure inquadra il QR da un altro dispositivo",
+  "login.emailHeading": "Controlla la tua e-mail",
+  "login.emailHint": "Abbiamo inviato un codice a 6 cifre a {email}. Scrivilo qui.",
+  "login.emailSpam": "Non arriva? Controlla la cartella spam.",
+  "login.resend": "Invia di nuovo il codice",
+  "login.resendIn": "Invia di nuovo tra {seconds} s",
+  "login.resent": "Codice inviato di nuovo",
+  "login.resendFailed": "Impossibile inviare di nuovo il codice",
+  "login.useAuthenticator": "Usa la mia app di autenticazione",
+  "api.emailFailed": "Impossibile inviare l'e-mail. Riprova.",
   // @@END
 };
