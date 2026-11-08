@@ -162,13 +162,15 @@ function Workspace({ products }: { products: Product[] }) {
       // OneTrack opens as the app itself (its map, its bottom bar), not as the small panel of the laptop's workspace.
       const first = firstAllowedPath(currentUser);
       if (first) return navigate(first);
-      return setParams({ app: key });
+      return navigate({ pathname: "/", search: `?app=${key}` });
     }
+    // Always to the workspace itself ("/"): from inside OneTrack (/inicio, /gps...) only the address's query would change and
+    // OneTrack's page would stay in front of the app that was picked.
     if (products.some((p) => p.key === key && p.type === "external")) {
       setVisited((current) => (current.includes(key) ? current : [...current, key]));
-      return setParams({ app: key, full: "1" });
+      return navigate({ pathname: "/", search: `?app=${key}&full=1` });
     }
-    setParams({ app: key });
+    navigate({ pathname: "/", search: `?app=${key}` });
   };
   const expand = () => {
     if (selected?.type === "external") return setParams({ app: selectedKey, full: "1" });
@@ -281,9 +283,9 @@ function Workspace({ products }: { products: Product[] }) {
         open={menuOpen}
         onClose={() => setMenuOpen(false)}
         products={products}
-        selectedKey={selectedKey}
+        selectedKey={atHome ? selectedKey : "gps"}
         showDashboard={showDashboard}
-        showingConfig={showingConfig}
+        showingConfig={atHome && showingConfig}
         onHome={goHome}
         onSelect={openCard}
       />
