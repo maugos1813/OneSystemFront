@@ -178,7 +178,8 @@ export function AppLayout() {
             <button
               onClick={toggleTheme}
               aria-label={theme === "dark" ? t("workspace.themeLight") : t("workspace.themeDark")}
-              className="flex items-center rounded-xl p-2 text-slate-500 transition hover:bg-violet-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/5 dark:hover:text-white"
+              // On a phone the workspace's side menu (opened by the logo) has the switch; the OneTrack app has no such menu, so it keeps it.
+              className={`${isOneTrackApp ? "flex" : "hidden md:flex"} items-center rounded-xl p-2 text-slate-500 transition hover:bg-violet-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/5 dark:hover:text-white`}
             >
               {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </button>

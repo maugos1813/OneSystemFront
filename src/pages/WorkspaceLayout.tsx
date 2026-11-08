@@ -348,7 +348,8 @@ function TopBar({ bell, onOpenMenu }: { bell: ReactNode; onOpenMenu: () => void 
         <button
           onClick={toggleTheme}
           aria-label={theme === "dark" ? t("workspace.themeLight") : t("workspace.themeDark")}
-          className="rounded-xl p-2 text-slate-500 transition hover:bg-violet-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/5 dark:hover:text-white"
+          // Below lg the side menu has the switch, so the bar does not repeat it.
+          className="hidden rounded-xl p-2 text-slate-500 transition lg:block hover:bg-violet-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/5 dark:hover:text-white"
         >
           {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
         </button>
