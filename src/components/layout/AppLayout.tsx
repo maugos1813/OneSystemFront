@@ -60,7 +60,7 @@ function useOneTrackTabIdentity() {
 
 export function AppLayout() {
   const t = useT();
-  const { collapse } = useOutletContext<{ collapse: () => void }>();
+  const { collapse, openMenu } = useOutletContext<{ collapse: () => void; openMenu: () => void }>();
   const { currentUser, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { pathname } = useLocation();
@@ -136,8 +136,17 @@ export function AppLayout() {
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex items-center justify-between gap-3 border-b border-violet-100 bg-white px-4 py-3 sm:px-6 dark:border-white/5 dark:bg-[#0d1220]">
           <div className="flex min-w-0 items-center gap-3">
-            {/* On a phone there is no side menu to open: the icon is only the logo. */}
-            <img src="/logos/onetrack-icon.png" alt="OneTrack" className="h-8 w-8 shrink-0 rounded-xl object-cover md:hidden" />
+            {/* On a phone the OneTrack icon opens the apps menu of the workspace (the OneTrack app has no other apps: it is only the logo). */}
+            {isOneTrackApp ? (
+              <img src="/logos/onetrack-icon.png" alt="OneTrack" className="h-8 w-8 shrink-0 rounded-xl object-cover md:hidden" />
+            ) : (
+              <button type="button" onClick={openMenu} aria-label={t("workspace.openMenu")} className="relative shrink-0 rounded-xl md:hidden">
+                <img src="/logos/onetrack-icon.png" alt="OneTrack" className="h-8 w-8 rounded-xl object-cover" />
+                <span className="absolute -right-1 -bottom-1 flex h-4 w-4 items-center justify-center rounded-full bg-blue-600 text-white shadow ring-2 ring-white dark:ring-[#0d1220]">
+                  <Menu className="h-2.5 w-2.5" />
+                </span>
+              </button>
+            )}
             {!navOpen && (
               // The OneTrack icon is the menu button, like the client's logo is in the workspace around it: it nudges on a phone.
               <button

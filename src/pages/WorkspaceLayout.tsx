@@ -3,6 +3,8 @@ import {
   CircleUser,
   Cross,
   ExternalLink,
+  Headset,
+  LayoutGrid,
   LogOut,
   Map as MapIcon,
   Maximize2,
@@ -31,6 +33,7 @@ import { isOneTrackApp } from "../lib/appFlavor";
 import { allowedNav, firstAllowedPath } from "../lib/oneTrackNav";
 import type { Product } from "../lib/types";
 import { AppUpdateCard } from "../components/AppUpdateCard";
+import { SUPPORT_EMAIL } from "../components/layout/LoginCard";
 import { DashboardPage } from "./DashboardPage";
 
 const CONFIG_KEY = "config";
@@ -107,6 +110,19 @@ function SignedInWorkspace() {
   return products.some((p) => p.key === "gps") ? <FleetProvider>{shell}</FleetProvider> : shell;
 }
 
+/** A phone or a tablet held tall: below the width where the side menu fits. There the apps are a dashboard of cards, not a menu. */
+function useIsDesktop(): boolean {
+  const query = "(min-width: 1024px)";
+  const [matches, setMatches] = useState(() => window.matchMedia(query).matches);
+  useEffect(() => {
+    const media = window.matchMedia(query);
+    const onChange = () => setMatches(media.matches);
+    media.addEventListener("change", onChange);
+    return () => media.removeEventListener("change", onChange);
+  }, []);
+  return matches;
+}
+
 function Workspace({ products }: { products: Product[] }) {
   const t = useT();
   const { currentUser } = useAuth();
@@ -118,11 +134,14 @@ function Workspace({ products }: { products: Product[] }) {
   const selectedKey = params.get("app") ?? products[0]?.key ?? CONFIG_KEY;
   const selected = products.find((p) => p.key === selectedKey) ?? null;
   const showingConfig = selectedKey === CONFIG_KEY;
+  const isDesktop = useIsDesktop();
+  // The apps menu on a phone: it slides in from the left when the client taps their logo.
+  const [menuOpen, setMenuOpen] = useState(false);
+  // On a phone the start is the dashboard of cards: it shows until an app (or the settings) is picked, which puts it in the address.
+  const showDashboard = !isDesktop && atHome && !params.has("app");
   const [visited, setVisited] = useState<string[]>([]);
   // The external app (by key) whose map is showing full screen: the whole window is for it, with no bars around.
   const [immersive, setImmersive] = useState<string | null>(null);
-  // The apps menu on a phone: it slides in from the left when the client taps their logo.
-  const [menuOpen, setMenuOpen] = useState(false);
 
   // Away from "/" OneTrack's own pages are showing; for an external app the flag is in the address.
   const expanded = !atHome || (params.get("full") === "1" && selected?.type === "external") || immersive !== null;
@@ -136,13 +155,36 @@ function Workspace({ products }: { products: Product[] }) {
     setMenuOpen(false);
     setParams({ app: key }, { replace: true });
   };
+  // A card of the phone's dashboard. It pushes a history entry, so the phone's Back button returns to the dashboard.
+  const openCard = (key: string) => {
+    setMenuOpen(false);
+    if (key === "gps") {
+      // OneTrack opens as the app itself (its map, its bottom bar), not as the small panel of the laptop's workspace.
+      const first = firstAllowedPath(currentUser);
+      if (first) return navigate(first);
+      return setParams({ app: key });
+    }
+    if (products.some((p) => p.key === key && p.type === "external")) {
+      setVisited((current) => (current.includes(key) ? current : [...current, key]));
+      return setParams({ app: key, full: "1" });
+    }
+    setParams({ app: key });
+  };
   const expand = () => {
     if (selected?.type === "external") return setParams({ app: selectedKey, full: "1" });
     // OneTrack opens on the first section this account may use (Mapa for most).
     const first = firstAllowedPath(currentUser);
     if (first) navigate(first);
   };
-  const collapse = () => (atHome ? setParams({ app: selectedKey }) : navigate("/?app=gps"));
+  const goHome = () => {
+    setMenuOpen(false);
+    setImmersive(null);
+    navigate("/");
+  };
+  const collapse = () => {
+    if (!isDesktop) return goHome();
+    return atHome ? setParams({ app: selectedKey }) : navigate("/?app=gps");
+  };
 
   // The OneTrack app is only the GPS: "/" (the workspace and its other apps) is never shown, it opens on its first section.
   if (isOneTrackApp) {
@@ -206,28 +248,30 @@ function Workspace({ products }: { products: Product[] }) {
         >
           {/* OneTrack's own pages (map, history, vehicles...) — their layout fills this panel. */}
           <div className={atHome ? "hidden" : "min-h-0 flex-1"}>
-            <Outlet context={{ collapse }} />
+            <Outlet context={{ collapse, openMenu: () => setMenuOpen(true) }} />
           </div>
 
-          {atHome && showingConfig && <ConfigPanel />}
-          {atHome && !showingConfig && selected?.type === "internal" && (
+          {showDashboard && <AppsDashboard products={products} onOpen={openCard} />}
+          {atHome && !showDashboard && showingConfig && <ConfigPanel />}
+          {atHome && !showDashboard && !showingConfig && selected?.type === "internal" && (
             <OneTrackHome product={selected} onExpand={expand} hasMap={!!currentUser?.modules.includes("mapa")} hasSections={!!firstAllowedPath(currentUser)} />
           )}
-          {atHome && !showingConfig && !selected && (
+          {atHome && !showDashboard && !showingConfig && !selected && (
             <p className="text-sm text-slate-500 dark:text-slate-400">{t("workspace.noApps")}</p>
           )}
 
           {products
-            .filter((p) => p.type === "external" && (visited.includes(p.key) || (atHome && p.key === selectedKey)))
+            .filter((p) => p.type === "external" && (visited.includes(p.key) || (atHome && !showDashboard && p.key === selectedKey)))
             .map((product) => (
               <ExternalPanel
                 key={product.key}
                 product={product}
-                visible={atHome && product.key === selectedKey && !showingConfig}
+                visible={atHome && !showDashboard && product.key === selectedKey && !showingConfig}
                 expanded={expanded}
                 immersive={immersive === product.key}
                 onImmersive={(on) => setImmersive(on ? product.key : null)}
                 onToggle={expanded ? collapse : expand}
+                onOpenMenu={() => setMenuOpen(true)}
               />
             ))}
         </main>
@@ -238,8 +282,10 @@ function Workspace({ products }: { products: Product[] }) {
         onClose={() => setMenuOpen(false)}
         products={products}
         selectedKey={selectedKey}
+        showDashboard={showDashboard}
         showingConfig={showingConfig}
-        onSelect={select}
+        onHome={goHome}
+        onSelect={openCard}
       />
     </div>
   );
@@ -275,7 +321,7 @@ function TopBar({ bell, onOpenMenu }: { bell: ReactNode; onOpenMenu: () => void 
     <header className={`${PANEL} flex items-center justify-between gap-3 px-4 py-3 sm:px-5`}>
       {/* The client using the app: their logo (or an initial until they upload one) and name. */}
       <div className="flex min-w-0 items-center gap-3">
-        {/* On a phone the logo opens the apps menu, and it nudges now and then so people find out. */}
+        {/* On a phone the logo opens the side menu, and it nudges now and then so people find out. */}
         <button
           type="button"
           onClick={onOpenMenu}
@@ -350,24 +396,78 @@ function ClientLogo({ logo, title }: { logo: string | null; title: string }) {
   );
 }
 
-/** The apps menu for a phone: the apps on top, and the system's settings and sign out at the bottom. */
+/** The start on a phone: one big card per app (and the settings), so choosing is a single tap. */
+function AppsDashboard({ products, onOpen }: { products: Product[]; onOpen: (key: string) => void }) {
+  const t = useT();
+  return (
+    <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+      <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">{t("workspace.dashboardTitle")}</h1>
+      <p className="mt-1 mb-4 text-sm text-slate-500 dark:text-slate-400">{t("workspace.dashboardHint")}</p>
+
+      <div className="grid grid-cols-2 gap-3">
+        {products.map((product) => (
+          <AppCard key={product.key} label={product.name} onClick={() => onOpen(product.key)}>
+            {PRODUCT_LOGOS[product.key] ? (
+              <ProductLogo product={product} size="xl" />
+            ) : (
+              <span className="flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-2xl bg-slate-100 text-3xl font-bold text-slate-500 dark:bg-white/10 dark:text-slate-300">
+                {product.name.charAt(0)}
+              </span>
+            )}
+          </AppCard>
+        ))}
+        <AppCard label={t("workspace.settings")} onClick={() => onOpen(CONFIG_KEY)}>
+          <span className="flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-2xl bg-slate-100 dark:bg-white/10">
+            <Settings className="h-9 w-9 text-slate-500 dark:text-slate-300" />
+          </span>
+        </AppCard>
+      </div>
+
+      <OneSystecMark prefix="madeBy" className="mt-auto flex justify-center pt-6" />
+    </div>
+  );
+}
+
+function AppCard({ label, onClick, children }: { label: string; onClick: () => void; children: ReactNode }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      onMouseMove={trackGlow}
+      className="glow flex min-h-36 flex-col items-center justify-center gap-2.5 rounded-3xl border border-slate-200 bg-white p-3 text-center shadow-sm transition active:scale-[0.97] dark:border-white/10 dark:bg-white/5"
+    >
+      {children}
+      <span className="text-[15px] leading-tight font-semibold text-slate-800 dark:text-white">{label}</span>
+    </button>
+  );
+}
+
+/**
+ * The side menu of a phone. On top who is signed in. Inside an app it lists the way back to the dashboard and the other apps
+ * (the dashboard already shows them, so there it does not); then the settings; at the foot support, the light/dark switch and sign out.
+ */
 function MobileMenu({
   open,
   onClose,
   products,
   selectedKey,
+  showDashboard,
   showingConfig,
+  onHome,
   onSelect,
 }: {
   open: boolean;
   onClose: () => void;
   products: Product[];
   selectedKey: string;
+  showDashboard: boolean;
   showingConfig: boolean;
+  onHome: () => void;
   onSelect: (key: string) => void;
 }) {
   const t = useT();
   const { currentUser, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const logo = currentUser?.userLogo ?? currentUser?.orgLogo ?? null;
   const title = currentUser?.name.trim() || currentUser?.orgName || "...";
 
@@ -388,9 +488,17 @@ function MobileMenu({
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="mb-3 flex items-center gap-3 px-1 pt-1">
+        <div className="mb-3 flex items-start gap-3 px-1 pt-1">
           <ClientLogo logo={logo} title={title} />
-          <p className="min-w-0 flex-1 truncate text-base font-semibold text-slate-900 dark:text-white">{title}</p>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-base font-semibold text-slate-900 dark:text-white">{title}</p>
+            <p className="truncate text-xs text-slate-500 dark:text-slate-400">{currentUser?.email}</p>
+            {currentUser?.allowedArea && (
+              <span className="mt-1 inline-block max-w-full truncate rounded-full bg-blue-100 px-2 py-0.5 text-[11px] font-medium text-blue-800 dark:bg-blue-500/20 dark:text-blue-200">
+                {currentUser.allowedArea}
+              </span>
+            )}
+          </div>
           <button
             type="button"
             onClick={onClose}
@@ -401,20 +509,43 @@ function MobileMenu({
           </button>
         </div>
 
-        <p className="px-2 pb-2 text-xs font-semibold tracking-wide text-slate-500 uppercase dark:text-slate-400">{t("workspace.apps")}</p>
-        <nav className="flex flex-col gap-1">
-          {products.map((product) => (
-            <SidebarItem key={product.key} active={product.key === selectedKey && !showingConfig} onClick={() => onSelect(product.key)} full>
-              <ProductIcon product={product} />
-              {product.name}
+        {/* On the dashboard the apps are right there as cards, so the menu does not repeat them; inside an app it is the quick way to another. */}
+        {!showDashboard && (
+          <>
+            <SidebarItem active={false} onClick={onHome} full>
+              <LayoutGrid className="h-5 w-5 shrink-0 text-slate-400" />
+              {t("workspace.start")}
             </SidebarItem>
-          ))}
-        </nav>
+
+            <p className="px-2 pt-4 pb-2 text-xs font-semibold tracking-wide text-slate-500 uppercase dark:text-slate-400">{t("workspace.apps")}</p>
+            <nav className="flex flex-col gap-1 overflow-y-auto">
+              {products.map((product) => (
+                <SidebarItem key={product.key} active={product.key === selectedKey && !showingConfig} onClick={() => onSelect(product.key)} full>
+                  <ProductIcon product={product} />
+                  {product.name}
+                </SidebarItem>
+              ))}
+            </nav>
+            <div className="my-3 border-t border-slate-200 dark:border-white/10" />
+          </>
+        )}
+
+        <SidebarItem active={!showDashboard && showingConfig} onClick={() => onSelect(CONFIG_KEY)} full>
+          <Settings className="h-5 w-5 shrink-0 text-slate-400" />
+          {t("workspace.settings")}
+        </SidebarItem>
 
         <div className="mt-auto flex flex-col gap-1 border-t border-slate-200 pt-3 dark:border-white/10">
-          <SidebarItem active={showingConfig} onClick={() => onSelect(CONFIG_KEY)} full>
-            <Settings className="h-5 w-5 shrink-0 text-slate-400" />
-            {t("workspace.settings")}
+          <a
+            href={`mailto:${SUPPORT_EMAIL}`}
+            className="flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left text-[15px] font-medium text-slate-600 transition hover:bg-violet-50 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white"
+          >
+            <Headset className="h-5 w-5 shrink-0 text-slate-400" />
+            {t("workspace.support")}
+          </a>
+          <SidebarItem active={false} onClick={toggleTheme} full>
+            {theme === "dark" ? <Sun className="h-5 w-5 shrink-0 text-slate-400" /> : <Moon className="h-5 w-5 shrink-0 text-slate-400" />}
+            {theme === "dark" ? t("workspace.themeLight") : t("workspace.themeDark")}
           </SidebarItem>
           <button
             type="button"
@@ -448,11 +579,11 @@ function SidebarItem({ active, onClick, children, full = false }: { active: bool
 }
 
 /** A logo on a white tile, so logos with a transparent background read in dark mode too. */
-function ProductLogo({ product, size }: { product: Product; size: "sm" | "lg" }) {
+function ProductLogo({ product, size }: { product: Product; size: "sm" | "lg" | "xl" }) {
   return (
     <span
       className={`flex shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-200 dark:ring-white/10 ${
-        size === "sm" ? "h-8 w-8 p-0.5" : "h-14 w-14 p-1"
+        size === "sm" ? "h-8 w-8 p-0.5" : size === "lg" ? "h-14 w-14 p-1" : "h-[4.5rem] w-[4.5rem] rounded-2xl p-1.5"
       }`}
     >
       <img src={PRODUCT_LOGOS[product.key]} alt="" className="max-h-full max-w-full object-contain" />
@@ -493,18 +624,31 @@ function PanelHeader({
   onToggle,
   hideToggle = false,
   action,
+  onMenu,
 }: {
   product: Product;
   expanded?: boolean;
   onToggle: () => void;
   hideToggle?: boolean;
   action?: ReactNode;
+  /** Phone only, and only while the panel is full screen: opens the side menu. */
+  onMenu?: () => void;
 }) {
   const t = useT();
   // Logo and name on the left, the buttons always on the right — also on a phone, where nothing wraps below.
   return (
     <div className={`flex items-start justify-between gap-3 ${expanded ? "px-4 py-2" : "mb-4"}`}>
       <div className="flex min-w-0 flex-1 items-center gap-3">
+        {expanded && onMenu && (
+          <button
+            type="button"
+            onClick={onMenu}
+            aria-label={t("workspace.openMenu")}
+            className="-ml-1 shrink-0 rounded-xl p-1.5 text-slate-500 hover:bg-slate-100 lg:hidden dark:text-slate-300 dark:hover:bg-white/10"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+        )}
         {PRODUCT_LOGOS[product.key] && <ProductLogo product={product} size={expanded ? "sm" : "lg"} />}
         <div className="min-w-0">
           <h1 className={`truncate font-semibold text-slate-900 dark:text-white ${expanded ? "text-lg" : "text-2xl"}`}>{product.name}</h1>
@@ -568,6 +712,7 @@ function ExternalPanel({
   immersive,
   onImmersive,
   onToggle,
+  onOpenMenu,
 }: {
   product: Product;
   visible: boolean;
@@ -576,6 +721,8 @@ function ExternalPanel({
   immersive: boolean;
   onImmersive: (on: boolean) => void;
   onToggle: () => void;
+  /** On a phone, the full-screen header carries the button that opens the side menu (the bars around it are folded away). */
+  onOpenMenu: () => void;
 }) {
   const t = useT();
   const { language } = useLanguage();
@@ -635,6 +782,7 @@ function ExternalPanel({
         product={product}
         expanded={expanded}
         onToggle={onToggle}
+        onMenu={onOpenMenu}
         action={
           // Inside the Android app, and on a phone, everything opens in place: a second tab has no place there.
           !canOpenInNewTab ? undefined : (

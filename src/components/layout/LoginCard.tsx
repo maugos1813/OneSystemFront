@@ -4,7 +4,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useT } from "../../i18n";
 
 /** Where "contact support" writes to: the platform's own mailbox. */
-const SUPPORT_EMAIL = "onesystecsrl@gmail.com";
+export const SUPPORT_EMAIL = "onesystecsrl@gmail.com";
 
 /** The sign-in form both apps share: a glass card meant to float over a dark picture. */
 export function LoginCard({ onSubmit }: { onSubmit: (email: string, password: string) => Promise<void> }) {
