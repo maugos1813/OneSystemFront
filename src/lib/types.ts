@@ -284,6 +284,8 @@ export interface TeamMember {
   modules: ModuleKey[];
   /** The language the member sees the app, the alerts and the emails in. */
   language: "es" | "it";
+  /** Signs in with an authenticator app (a code after the password). */
+  totpEnabled: boolean;
   createdAt: string;
   /** Only meaningful for role "viewer"/"manager" — owner/admin always see every product the org has. */
   productKeys: string[];
@@ -582,7 +584,7 @@ export interface PlatformOrganizationDetail extends PlatformOrganization {
   sections: string[] | null;
   /** The company logo (data URL), or null. */
   logo: string | null;
-  members: Array<{ id: string; name: string; email: string; role: string; allowedArea: string | null; logo: string | null }>;
+  members: Array<{ id: string; name: string; email: string; role: string; allowedArea: string | null; logo: string | null; totpEnabled: boolean }>;
   deviceList: Array<{
     id: string;
     imei: string;

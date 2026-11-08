@@ -33,6 +33,7 @@ import { isOneTrackApp } from "../lib/appFlavor";
 import { allowedNav, firstAllowedPath } from "../lib/oneTrackNav";
 import type { Product } from "../lib/types";
 import { AppUpdateCard } from "../components/AppUpdateCard";
+import { SecurityPanel } from "../components/security/SecurityPanel";
 import { SUPPORT_EMAIL } from "../components/layout/LoginCard";
 import { DashboardPage } from "./DashboardPage";
 
@@ -887,6 +888,10 @@ function ConfigPanel() {
               </span>
             </Link>
         ))}
+        {/* How the account is protected: the authenticator and the devices that have it open. Everyone has it, whatever their role. */}
+        <div className="sm:col-span-2">
+          <SecurityPanel />
+        </div>
       </div>
     </div>
   );

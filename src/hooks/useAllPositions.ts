@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { getLatestPosition, realtimePositionsUrl } from "../lib/api";
-import { getToken } from "../lib/auth";
+import { getFreshToken } from "../lib/session";
 import type { Position, Vehicle } from "../lib/types";
 
 const RECONNECT_DELAYS_MS = [1000, 2000, 5000, 10000, 30000];
@@ -55,8 +55,9 @@ export function useAllPositions(
       reconnectTimer = setTimeout(connect, delay);
     }
 
-    function connect() {
-      const token = getToken();
+    async function connect() {
+      // The login token is short-lived and the server closes the connection when it runs out: each (re)connection starts from a fresh one.
+      const token = await getFreshToken();
       if (!token || cancelled) return;
 
       socket = new WebSocket(realtimePositionsUrl(token, !!allClients));

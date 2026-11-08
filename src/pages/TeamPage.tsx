@@ -1,4 +1,4 @@
-import { ArrowLeft, ImagePlus, KeyRound, Pencil, Trash2, X } from "lucide-react";
+import { ArrowLeft, ImagePlus, KeyRound, Pencil, ShieldCheck, ShieldOff, Trash2, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Panel } from "../components/analytics/Panel";
@@ -10,6 +10,7 @@ import { ModulesPicker } from "../components/ModulesPicker";
 import { useAuth } from "../context/AuthContext";
 import {
   ApiError,
+  resetMemberTotp,
   createTeamMember,
   deleteTeamMember,
   listProducts,
@@ -305,6 +306,23 @@ function MemberRow({
     }
   }
 
+  // A lost phone: whoever manages this member removes their authenticator (the owner for an admin; nobody for the owner, OneSystec does).
+  const canResetTotp = member.totpEnabled && canManageOtherOnly && !isSelf && (member.role !== "admin" || currentUser?.role === "owner");
+  const [resettingTotp, setResettingTotp] = useState(false);
+
+  async function handleResetTotp() {
+    if (!confirm(`¿Quitar la verificación en dos pasos de "${member.name || member.email}"? Se le cerrará la sesión en todos sus dispositivos y tendrá que configurarla de nuevo al entrar.`)) return;
+    setResettingTotp(true);
+    try {
+      await resetMemberTotp(member.id);
+      onChanged();
+    } catch (err) {
+      alert(err instanceof ApiError ? err.message : "No se pudo restablecer la verificación");
+    } finally {
+      setResettingTotp(false);
+    }
+  }
+
   async function handleDelete() {
     if (!confirm(`¿Eliminar a "${member.name || member.email}" del equipo? No va a poder volver a entrar.`)) return;
     setDeleting(true);
@@ -473,6 +491,24 @@ function MemberRow({
             <span className="rounded-full bg-violet-100 px-2.5 py-1 text-xs font-medium text-violet-700 dark:bg-violet-500/15 dark:text-violet-300">
               {ROLE_LABEL[member.role]}
             </span>
+          )}
+
+          {member.totpEnabled && (
+            <span title="Verificación en dos pasos activada" className="text-emerald-600 dark:text-emerald-400">
+              <ShieldCheck className="h-4 w-4" aria-label="Verificación en dos pasos activada" />
+            </span>
+          )}
+
+          {canResetTotp && (
+            <button
+              onClick={handleResetTotp}
+              disabled={resettingTotp}
+              className="rounded-lg p-1.5 text-slate-400 hover:bg-amber-50 hover:text-amber-600 disabled:opacity-50 dark:text-slate-500 dark:hover:bg-amber-500/10 dark:hover:text-amber-400"
+              aria-label="Restablecer la verificación en dos pasos"
+              title="Restablecer la verificación en dos pasos (teléfono perdido)"
+            >
+              <ShieldOff className="h-4 w-4" />
+            </button>
           )}
 
           {canManageAccount && (

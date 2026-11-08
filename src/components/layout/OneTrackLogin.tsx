@@ -8,7 +8,7 @@ const DOTS = "radial-gradient(circle, rgba(125, 211, 252, 0.28) 1px, transparent
  * The OneTrack app's sign-in: OneTrack's own symbol and name above the form (a glass card over a deep-blue night with a radar
  * glow behind the logo) and the signature of who made it at the foot.
  */
-export function OneTrackLogin({ onSubmit }: { onSubmit: (email: string, password: string) => Promise<void> }) {
+export function OneTrackLogin() {
   const t = useT();
   return (
     <main className="relative flex min-h-dvh flex-col items-center overflow-hidden overflow-y-auto bg-[#050d2e] px-[8%] pt-[max(env(safe-area-inset-top),2rem)] pb-[max(env(safe-area-inset-bottom),1.25rem)] sm:px-6">
@@ -47,7 +47,7 @@ export function OneTrackLogin({ onSubmit }: { onSubmit: (email: string, password
 
       <div className="relative flex w-full max-w-md flex-1 items-center py-6 sm:py-8">
         <div className="w-full">
-          <LoginCard onSubmit={onSubmit} />
+          <LoginCard />
         </div>
       </div>
 

@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Panel } from "../components/analytics/Panel";
 import { LogoUpload } from "../components/LogoUpload";
+import { SecurityPanel } from "../components/security/SecurityPanel";
 import { useAuth } from "../context/AuthContext";
 import { useFleet } from "../context/FleetContext";
 import { MODULE_INFO, visibleModules } from "../lib/modules";
@@ -202,6 +203,10 @@ export function SettingsPage() {
 
       <div className="mb-6">
         <ProfilePanel />
+      </div>
+
+      <div className="mb-6">
+        <SecurityPanel />
       </div>
 
       {form && canEditCompany && (

@@ -1,5 +1,7 @@
 import { rememberedLanguage, translate, type MessageKey } from "../i18n";
-import { clearToken, getToken } from "./auth";
+import { isNativeApp } from "./appFlavor";
+import { getRefreshToken, getToken } from "./auth";
+import { endSession, getFreshToken, renewSession } from "./session";
 import { MODULE_KEYS, MODULE_TEMPLATES, type ModuleKey } from "./modules";
 import type {
   AlertPreferences,
@@ -62,6 +64,11 @@ const SERVER_MESSAGES: Record<string, MessageKey> = {
   "Vehicle not found": "api.vehicleNotFound",
   "Email already registered": "api.emailTaken",
   "Invalid credentials": "api.invalidCredentials",
+  "Invalid code": "api.invalidCode",
+  "Invalid password or code": "api.invalidPasswordOrCode",
+  "Sign-in expired, start again": "api.signInExpired",
+  "Authenticator already set up": "api.totpAlreadySet",
+  "El autenticador es obligatorio para tu rol": "api.totpRequiredForRole",
   "Too many attempts. Try again later.": "api.tooManyAttempts",
   "Este vehículo tiene un dispositivo asignado. Confirma que quieres eliminarlo.": "api.deviceAssigned",
 };
@@ -80,9 +87,8 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const token = getToken();
-  const res = await fetch(`${API_URL}${path}`, {
+function send(path: string, init: RequestInit, token: string | null): Promise<Response> {
+  return fetch(`${API_URL}${path}`, {
     ...init,
     headers: {
       // Fastify refuses a JSON content type with an empty body (DELETE, and POSTs without a payload).
@@ -91,26 +97,127 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
       ...init.headers,
     },
   });
+}
 
-  if (res.status === 401) {
-    clearToken();
-    throw new ApiError(401, translate(rememberedLanguage(), "api.sessionExpired"));
-  }
-
+async function readAnswer<T>(res: Response): Promise<T> {
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     throw new ApiError(res.status, body.error ? localizeServerMessage(body.error.toString()) : translate(rememberedLanguage(), "api.error", { status: res.status }));
   }
-
   if (res.status === 204) return undefined as T;
   return res.json() as Promise<T>;
 }
 
+/**
+ * A call as the signed-in user. The login token is short, so it is renewed (with the refresh token) before it runs out, and a
+ * 401 gets one renewal and a second try; only if the server refuses to renew is the session over.
+ */
+async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+  let token = await getFreshToken();
+  let res = await send(path, init, token);
+
+  if (res.status === 401 && token) {
+    const outcome = await renewSession();
+    if (outcome === "ok") {
+      token = getToken();
+      res = await send(path, init, token);
+    } else if (outcome === "unreachable") {
+      throw new ApiError(0, translate(rememberedLanguage(), "api.unreachable"));
+    }
+  }
+
+  if (res.status === 401) {
+    endSession();
+    throw new ApiError(401, translate(rememberedLanguage(), "api.sessionExpired"));
+  }
+  return readAnswer<T>(res);
+}
+
+/** A call with no session behind it (signing in): a 401 here is a wrong password or code, not an ended session. */
+async function publicRequest<T>(path: string, body: unknown): Promise<T> {
+  return readAnswer<T>(await send(path, { method: "POST", body: JSON.stringify(body) }, null));
+}
+
 // --- Auth ---
 
-export function login(email: string, password: string): Promise<{ token: string }> {
-  return request("/auth/login", { method: "POST", body: JSON.stringify({ email, password }) });
+/** What the sign-in answers: a session, or the next step (the code from the authenticator app, or setting that app up first). */
+export type LoginAnswer =
+  | { mfaRequired?: undefined; mfaSetupRequired?: undefined; token: string; refreshToken?: string }
+  | { mfaRequired: true; mfaSetupRequired?: undefined; mfaToken: string }
+  | { mfaSetupRequired: true; mfaRequired?: undefined; mfaToken: string };
+
+export interface SessionTokens {
+  token: string;
+  refreshToken?: string;
 }
+
+/** The Android apps keep a session for a month, a browser for a working day: the server needs to know which this is. */
+const CLIENT_KIND = isNativeApp() ? "app" : "web";
+
+export function login(email: string, password: string): Promise<LoginAnswer> {
+  return publicRequest("/auth/login", { email, password, client: CLIENT_KIND });
+}
+
+export function loginSecondStep(mfaToken: string, input: { code: string } | { recoveryCode: string }): Promise<SessionTokens & { usedRecoveryCode: boolean; recoveryCodesLeft: number }> {
+  return publicRequest("/auth/login/totp", { mfaToken, ...input });
+}
+
+export interface TotpSetup {
+  /** The key as text, for typing it into the authenticator app when the QR can't be scanned. */
+  secret: string;
+  /** The otpauth:// address the QR code carries. */
+  uri: string;
+}
+
+export function startLoginTotpSetup(mfaToken: string): Promise<TotpSetup> {
+  return publicRequest("/auth/login/totp/setup", { mfaToken });
+}
+
+export function enableLoginTotp(mfaToken: string, code: string): Promise<SessionTokens & { recoveryCodes: string[] }> {
+  return publicRequest("/auth/login/totp/enable", { mfaToken, code });
+}
+
+/** Ends this session on the server (best effort: the device forgets it either way). */
+export async function logoutRequest(): Promise<void> {
+  const refreshToken = getRefreshToken();
+  const token = getToken();
+  try {
+    await send("/auth/logout", { method: "POST", body: JSON.stringify(refreshToken ? { refreshToken } : {}) }, token);
+  } catch {
+    // Offline: the session simply runs out on its own.
+  }
+}
+
+export interface SecurityStatus {
+  enabled: boolean;
+  required: boolean;
+  recoveryCodesLeft: number;
+}
+
+export interface SessionInfo {
+  id: string;
+  device: string;
+  client: "web" | "app";
+  ip: string | null;
+  mfa: boolean;
+  createdAt: string;
+  lastUsedAt: string;
+  current: boolean;
+}
+
+export const getSecurity = (): Promise<SecurityStatus> => request("/auth/security");
+export const startTotpSetup = (): Promise<TotpSetup> => request("/auth/totp/setup", { method: "POST" });
+export const enableTotp = (code: string): Promise<{ recoveryCodes: string[] }> => request("/auth/totp/enable", { method: "POST", body: JSON.stringify({ code }) });
+export const disableTotp = (password: string, input: { code: string } | { recoveryCode: string }): Promise<void> =>
+  request("/auth/totp/disable", { method: "POST", body: JSON.stringify({ password, ...input }) });
+export const regenerateRecoveryCodes = (password: string, code: string): Promise<{ recoveryCodes: string[] }> =>
+  request("/auth/totp/recovery-codes", { method: "POST", body: JSON.stringify({ password, code }) });
+export const listSessions = (): Promise<SessionInfo[]> => request("/auth/sessions");
+export const revokeSession = (id: string): Promise<void> => request(`/auth/sessions/${id}`, { method: "DELETE" });
+export const revokeOtherSessions = (): Promise<{ revoked: number }> => request("/auth/sessions/revoke-others", { method: "POST" });
+/** A member lost their phone: their authenticator is removed (and they are signed out everywhere). */
+export const resetMemberTotp = (userId: string): Promise<void> => request(`/users/${userId}/totp/reset`, { method: "POST" });
+export const resetPlatformUserTotp = (userId: string): Promise<void> => request(`/platform/users/${userId}/totp/reset`, { method: "POST" });
 
 /** What a role may use when the server doesn't say (an older server that predates the sections). */
 function fallbackModules(role: CurrentUser["role"]): ModuleKey[] {

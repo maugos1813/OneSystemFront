@@ -1,11 +1,11 @@
-import { ArrowLeft, Building2, ChevronDown, ChevronRight, ImagePlus, Map as MapIcon, Trash2 } from "lucide-react";
+import { ArrowLeft, Building2, ChevronDown, ChevronRight, ImagePlus, Map as MapIcon, ShieldCheck, ShieldOff, Trash2 } from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { Panel } from "../components/analytics/Panel";
 import { LogoUpload } from "../components/LogoUpload";
 import { PasswordField } from "../components/PasswordField";
 import { useAuth } from "../context/AuthContext";
-import { ApiError, claimDevice, createPlatformOrganization, getPlatformOrganization, listPlatformOrganizations, setOrganizationLogoAsPlatform, setOrganizationSections, setUserLogoAsPlatform, viewClientToken } from "../lib/api";
+import { ApiError, claimDevice, createPlatformOrganization, getPlatformOrganization, listPlatformOrganizations, resetPlatformUserTotp, setOrganizationLogoAsPlatform, setOrganizationSections, setUserLogoAsPlatform, viewClientToken } from "../lib/api";
 import { startViewing } from "../lib/auth";
 import { fileToLogoVariants, LOGO_ACCEPT } from "../lib/logoImage";
 import { ADMIN_SECTION_INFO, ADMIN_SECTION_KEYS, HIDDEN_MODULES, MODULE_INFO, MODULE_KEYS } from "../lib/modules";
@@ -123,6 +123,20 @@ export function PlatformPage({ embedded = false }: { embedded?: boolean }) {
       setDetail(await getPlatformOrganization(orgId));
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudo cambiar la foto");
+    } finally {
+      setPhotoBusy(null);
+    }
+  }
+
+  /** A person lost their phone (and their recovery codes): their authenticator is removed and they are signed out everywhere. */
+  async function resetTotp(userId: string, orgId: string, who: string) {
+    if (!confirm(`¿Quitar la verificación en dos pasos de ${who}? Se le cierra la sesión en todos sus dispositivos y la configura de nuevo al entrar.`)) return;
+    setPhotoBusy(userId);
+    try {
+      await resetPlatformUserTotp(userId);
+      setDetail(await getPlatformOrganization(orgId));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No se pudo restablecer la verificación");
     } finally {
       setPhotoBusy(null);
     }
@@ -379,6 +393,7 @@ export function PlatformPage({ embedded = false }: { embedded?: boolean }) {
                                       <span className="block truncate">
                                         {member.name.trim() || "—"} · {member.role === "owner" ? "Cliente" : member.role}
                                         {member.allowedArea ? ` · flota ${member.allowedArea}` : ""}
+                                        {member.totpEnabled && <ShieldCheck className="ml-1.5 inline h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" aria-label="Verificación en dos pasos activada" />}
                                       </span>
                                       <span className="block truncate text-xs text-slate-500 dark:text-slate-400">{member.email}</span>
                                     </span>
@@ -398,6 +413,18 @@ export function PlatformPage({ embedded = false }: { embedded?: boolean }) {
                                           }}
                                         />
                                       </label>
+                                      {member.totpEnabled && (
+                                        <button
+                                          type="button"
+                                          disabled={photoBusy === member.id}
+                                          onClick={() => void resetTotp(member.id, detail.id, member.name.trim() || member.email)}
+                                          aria-label="Quitar la verificación en dos pasos"
+                                          title="Quitar la verificación en dos pasos (teléfono perdido)"
+                                          className="rounded-lg p-1.5 text-slate-400 hover:bg-amber-50 hover:text-amber-600 disabled:opacity-50 dark:hover:bg-amber-500/10"
+                                        >
+                                          <ShieldOff className="h-3.5 w-3.5" />
+                                        </button>
+                                      )}
                                       {member.logo && (
                                         <button
                                           type="button"
