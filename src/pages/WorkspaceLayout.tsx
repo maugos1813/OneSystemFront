@@ -32,7 +32,6 @@ import { allowedNav, firstAllowedPath } from "../lib/oneTrackNav";
 import type { Product } from "../lib/types";
 import { AppUpdateCard } from "../components/AppUpdateCard";
 import { DashboardPage } from "./DashboardPage";
-import { LandingPage } from "./LandingPage";
 
 const CONFIG_KEY = "config";
 
@@ -79,10 +78,9 @@ async function openInNewTab(product: Product): Promise<void> {
  */
 export function WorkspaceLayout() {
   const { isAuthenticated } = useAuth();
-  const { pathname } = useLocation();
 
-  // The public site is for visitors on the web; the Android app opens straight on the sign-in form, also after signing out.
-  if (!isAuthenticated) return pathname === "/" && !Capacitor.isNativePlatform() ? <LandingPage /> : <Navigate to="/login" replace />;
+  // There is no public site: whoever is not signed in goes straight to the sign-in form.
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
   return <SignedInWorkspace />;
 }
 
