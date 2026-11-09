@@ -460,5 +460,7 @@ export const it: Record<MessageKey, string> = {
   "login.resendFailed": "Impossibile inviare di nuovo il codice",
   "login.useAuthenticator": "Usa la mia app di autenticazione",
   "api.emailFailed": "Impossibile inviare l'e-mail. Riprova.",
+  "security.authenticatorApp": "App di autenticazione (facoltativa)",
+  "security.emailCodesNote": "All'accesso ti inviamo un codice a 6 cifre per e-mail. L'app di autenticazione è facoltativa: usala se preferisci non dipendere dall'e-mail.",
   // @@END
 };

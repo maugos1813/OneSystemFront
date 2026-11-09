@@ -1,5 +1,5 @@
 import { rememberedLanguage, translate, type MessageKey } from "../i18n";
-import { isNativeApp, isPhone } from "./appFlavor";
+import { isNativeApp } from "./appFlavor";
 import { getRefreshToken, getToken } from "./auth";
 import { endSession, getFreshToken, renewSession } from "./session";
 import { MODULE_KEYS, MODULE_TEMPLATES, type ModuleKey } from "./modules";
@@ -166,7 +166,7 @@ export interface SessionTokens {
 const CLIENT_KIND = isNativeApp() ? "app" : "web";
 
 export function login(email: string, password: string): Promise<LoginAnswer> {
-  return publicRequest("/auth/login", { email, password, client: CLIENT_KIND, channel: isPhone() ? "phone" : "web" });
+  return publicRequest("/auth/login", { email, password, client: CLIENT_KIND });
 }
 
 export function loginWithEmailCode(mfaToken: string, code: string): Promise<SessionTokens> {
@@ -208,8 +208,14 @@ export async function logoutRequest(): Promise<void> {
 }
 
 export interface SecurityStatus {
+  /** The authenticator app is set up (offered at every sign-in). */
   enabled: boolean;
+  /** This account may not be without the authenticator (no email codes to stand in for it). */
   required: boolean;
+  /** Every sign-in asks for a second step. */
+  secondStepRequired: boolean;
+  /** The second step is a code sent by email (the app, if set up, is an alternative). */
+  emailCodes: boolean;
   recoveryCodesLeft: number;
 }
 

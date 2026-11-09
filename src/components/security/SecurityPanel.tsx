@@ -198,7 +198,7 @@ export function SecurityPanel() {
         <section>
           <div className="mb-1 flex items-center gap-2">
             {status?.enabled ? <ShieldCheck className="h-5 w-5 text-emerald-600 dark:text-emerald-400" /> : <ShieldAlert className="h-5 w-5 text-amber-500" />}
-            <h3 className="text-sm font-semibold text-slate-900 dark:text-white">{t("security.twoStep")}</h3>
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-white">{t(status?.emailCodes ? "security.authenticatorApp" : "security.twoStep")}</h3>
             {status && (
               <span
                 className={`rounded-full px-2 py-0.5 text-xs font-medium ${
@@ -209,7 +209,7 @@ export function SecurityPanel() {
               </span>
             )}
           </div>
-          <p className="text-sm text-slate-500 dark:text-slate-400">{t("security.twoStepBody")}</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">{t(status?.emailCodes ? "security.emailCodesNote" : "security.twoStepBody")}</p>
           {status?.required && <p className="mt-1 text-sm font-medium text-slate-700 dark:text-slate-300">{t("security.requiredRole")}</p>}
 
           {status?.enabled && (

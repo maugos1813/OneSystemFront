@@ -461,6 +461,8 @@ export const es = {
   "login.resendFailed": "No se pudo reenviar el código",
   "login.useAuthenticator": "Usar mi app de autenticación",
   "api.emailFailed": "No se pudo enviar el correo. Inténtalo de nuevo.",
+  "security.authenticatorApp": "App de autenticación (opcional)",
+  "security.emailCodesNote": "Al iniciar sesión te enviamos un código de 6 dígitos por correo. La app de autenticación es opcional: úsala si prefieres no depender del correo.",
   // @@END
 } as const satisfies Record<string, string>;
 
