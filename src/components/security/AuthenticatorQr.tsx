@@ -3,7 +3,7 @@ import { useMemo } from "react";
 import { useT } from "../../i18n";
 
 /** The QR code of an otpauth:// address, drawn as an SVG (always dark on white, whatever the theme: scanners need the contrast). */
-export function AuthenticatorQr({ uri, size = 176 }: { uri: string; size?: number }) {
+export function AuthenticatorQr({ uri, size = 176, label }: { uri: string; size?: number; label?: string }) {
   const t = useT();
   const { cells, count } = useMemo(() => {
     const qr = qrcode(0, "M");
@@ -20,7 +20,7 @@ export function AuthenticatorQr({ uri, size = 176 }: { uri: string; size?: numbe
   return (
     <svg
       role="img"
-      aria-label={t("security.qrAlt")}
+      aria-label={label ?? t("security.qrAlt")}
       viewBox={`0 0 ${box} ${box}`}
       width={size}
       height={size}

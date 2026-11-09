@@ -1,11 +1,13 @@
-import { ArrowLeft, ArrowRight, Eye, EyeOff, Headset, KeyRound, Lock, Mail, MailCheck, ShieldCheck, UserRound } from "lucide-react";
+import { ArrowLeft, ArrowRight, Eye, EyeOff, Headset, KeyRound, Lock, Mail, MailCheck, QrCode, ShieldCheck, Smartphone, UserRound } from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useT } from "../../i18n";
 import type { TotpSetup } from "../../lib/api";
 import { AuthenticatorEnroll } from "../security/AuthenticatorEnroll";
 import { CodeInput } from "../security/CodeInput";
+import { QrLoginPanel } from "../security/QrLoginPanel";
 import { RecoveryCodes } from "../security/RecoveryCodes";
+import { isMobileDevice } from "../../lib/appFlavor";
 
 /** Where "contact support" writes to: the platform's own mailbox. */
 export const SUPPORT_EMAIL = "onesystecsrl@gmail.com";
@@ -13,6 +15,7 @@ export const SUPPORT_EMAIL = "onesystecsrl@gmail.com";
 /** Where the sign-in is: the password, the code of the authenticator app, or (admins, the first time) setting that app up. */
 type Step =
   | { kind: "credentials" }
+  | { kind: "qr" }
   | { kind: "code"; mfaToken: string; recovery: boolean }
   | { kind: "email"; mfaToken: string; emailHint: string; alternativeMfaToken?: string }
   | { kind: "setup"; mfaToken: string; setup: TotpSetup }
@@ -93,6 +96,16 @@ export function LoginCard() {
       <ArrowLeft className="h-4 w-4" /> {t("login.back")}
     </button>
   );
+
+  if (step.kind === "qr") {
+    return (
+      <div className={CARD_CLASS}>
+        {title(<Smartphone className="h-8 w-8 shrink-0 sm:h-10 sm:w-10" strokeWidth={1.5} />, t("login.qrHeading"), "")}
+        <QrLoginPanel />
+        {backButton}
+      </div>
+    );
+  }
 
   if (step.kind === "email") {
     const { mfaToken, emailHint, alternativeMfaToken } = step;
@@ -303,6 +316,20 @@ export function LoginCard() {
         {t("login.or")}
         <span className="h-px flex-1 bg-white/30" />
       </div>
+
+      {/* On a computer: the QR a phone that is already signed in can scan to open this screen, like WhatsApp Web. */}
+      {!isMobileDevice() && (
+        <button
+          type="button"
+          onClick={() => {
+            clearError();
+            setStep({ kind: "qr" });
+          }}
+          className="mb-3 flex w-full items-center justify-center gap-2 rounded-xl border border-white/60 px-4 py-2 text-sm font-medium transition hover:bg-white/10 sm:py-3"
+        >
+          <QrCode className="h-5 w-5" /> {t("login.withPhone")}
+        </button>
+      )}
 
       <a
         href={`mailto:${SUPPORT_EMAIL}`}

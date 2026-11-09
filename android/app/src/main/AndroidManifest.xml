@@ -24,6 +24,9 @@
 
         </activity>
 
+        <!-- The QR scanner for "Entrar en la web" is Google's (Play Services); this asks for its module to be downloaded with the app. -->
+        <meta-data android:name="com.google.mlkit.vision.DEPENDENCIES" android:value="barcode_ui" />
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"

@@ -17,6 +17,7 @@ import { DeviceDetailPage } from "./pages/DeviceDetailPage";
 import { GeofencesPage } from "./pages/GeofencesPage";
 import { HomePage } from "./pages/HomePage";
 import { HistoryPage } from "./pages/HistoryPage";
+import { LinkInfoPage } from "./pages/LinkInfoPage";
 import { LoginPage } from "./pages/LoginPage";
 import { PlatformPage } from "./pages/PlatformPage";
 import { SettingsPage } from "./pages/SettingsPage";
@@ -52,6 +53,7 @@ export default function App() {
           <ViewingBanner />
           <Routes>
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/vincular" element={<LinkInfoPage />} />
             {/* Accounts are opened by OneSystec (Clientes): there is no public sign-up. */}
             <Route path="/register" element={<Navigate to="/login" replace />} />
 

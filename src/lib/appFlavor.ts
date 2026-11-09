@@ -14,3 +14,8 @@ export const pushUnavailable = isOneTrackApp && navigator.userAgent.includes("No
 export function isNativeApp(): boolean {
   return Capacitor.isNativePlatform();
 }
+
+/** A phone (one of the apps, or a phone's browser): it is the one that scans the QR of the web's login, so it doesn't show one itself. */
+export function isMobileDevice(): boolean {
+  return Capacitor.isNativePlatform() || /Android|iPhone|iPod|Mobile/i.test(navigator.userAgent);
+}

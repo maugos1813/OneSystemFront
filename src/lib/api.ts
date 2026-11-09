@@ -65,6 +65,9 @@ const SERVER_MESSAGES: Record<string, MessageKey> = {
   "Email already registered": "api.emailTaken",
   "Invalid credentials": "api.invalidCredentials",
   "Invalid code": "api.invalidCode",
+  "QR expired or not valid": "api.qrInvalid",
+  "Solo la app del celular puede autorizar un acceso": "api.qrAppOnly",
+  "Vuelve a iniciar sesión en la app para poder autorizar": "api.qrReloginNeeded",
   "Could not send the email": "api.emailFailed",
   "Invalid password or code": "api.invalidPasswordOrCode",
   "Sign-in expired, start again": "api.signInExpired",
@@ -206,6 +209,20 @@ export async function logoutRequest(): Promise<void> {
     // Offline: the session simply runs out on its own.
   }
 }
+
+/** "Enter with the phone": the computer asks for a QR; a phone that is signed in authorizes it. */
+export const qrStart = (): Promise<{ code: string; expiresAt: string; expiresInSec: number }> => publicRequest("/auth/qr/start", {});
+export const qrPoll = (code: string): Promise<{ status: "pending" | "denied" | "expired" } | ({ status: "approved" } & SessionTokens)> =>
+  publicRequest("/auth/qr/poll", { code });
+export interface QrRequestInfo {
+  device: string;
+  ip: string | null;
+  createdAt: string;
+  expiresAt: string;
+}
+export const qrInspect = (code: string): Promise<QrRequestInfo> => request("/auth/qr/inspect", { method: "POST", body: JSON.stringify({ code }) });
+export const qrApprove = (code: string): Promise<void> => request("/auth/qr/approve", { method: "POST", body: JSON.stringify({ code }) });
+export const qrDeny = (code: string): Promise<void> => request("/auth/qr/deny", { method: "POST", body: JSON.stringify({ code }) });
 
 export interface SecurityStatus {
   /** The authenticator app is set up (offered at every sign-in). */

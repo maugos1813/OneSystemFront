@@ -43,6 +43,8 @@ interface AuthContextValue {
   beginAuthenticatorSetup: (mfaToken: string) => Promise<TotpSetup | null>;
   /** Confirms the authenticator with its first code. The session starts only when `finish` is called (after the recovery codes were saved). */
   confirmAuthenticatorSetup: (mfaToken: string, code: string) => Promise<{ recoveryCodes: string[]; finish: () => void } | null>;
+  /** Starts the session with tokens already issued (the web's "enter with the phone" receives them once the phone authorizes). */
+  signInWithTokens: (tokens: { token: string; refreshToken?: string }) => void;
   clearError: () => void;
   logout: () => void;
   /** Reads the user and organization again (after changing the company name or logo). */
@@ -225,6 +227,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         resendEmailCode,
         beginAuthenticatorSetup,
         confirmAuthenticatorSetup,
+        signInWithTokens: begin,
         clearError: () => setError(null),
         logout,
         refreshUser: loadCurrentUser,

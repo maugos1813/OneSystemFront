@@ -1,5 +1,5 @@
-import { Check, KeyRound, Monitor, ShieldAlert, ShieldCheck, Smartphone, X } from "lucide-react";
-import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from "react";
+import { Check, KeyRound, Monitor, ShieldAlert, ShieldCheck, Smartphone } from "lucide-react";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { useLanguage } from "../../i18n";
 import {
   ApiError,
@@ -16,7 +16,9 @@ import {
   type TotpSetup,
 } from "../../lib/api";
 import { Panel } from "../analytics/Panel";
-import { ModalPortal } from "../ModalPortal";
+import { SecurityModal as Modal } from "./SecurityModal";
+import { LinkWebCard } from "./LinkWebCard";
+import { isNativeApp } from "../../lib/appFlavor";
 import { AuthenticatorEnroll } from "./AuthenticatorEnroll";
 import { CodeInput } from "./CodeInput";
 import { RecoveryCodes } from "./RecoveryCodes";
@@ -33,24 +35,6 @@ const BUTTON = "rounded-xl px-4 py-2 text-sm font-medium transition disabled:opa
 const PRIMARY = `${BUTTON} brand-button`;
 const SECONDARY = `${BUTTON} border border-slate-300 text-slate-700 hover:bg-slate-50 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5`;
 const DANGER = `${BUTTON} border border-red-300 text-red-700 hover:bg-red-50 dark:border-red-400/30 dark:text-red-300 dark:hover:bg-red-500/10`;
-
-function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
-  return (
-    <ModalPortal>
-      <div role="dialog" aria-modal="true" aria-label={title} className="fixed inset-0 z-[2000] flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm">
-        <div className="max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-3xl bg-white p-5 shadow-2xl sm:p-6 dark:bg-[#111729] dark:text-white">
-          <div className="mb-4 flex items-start justify-between gap-3">
-            <h2 className="text-base font-semibold text-slate-900 dark:text-white">{title}</h2>
-            <button type="button" onClick={onClose} aria-label="×" className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-white/10">
-              <X className="h-5 w-5" />
-            </button>
-          </div>
-          {children}
-        </div>
-      </div>
-    </ModalPortal>
-  );
-}
 
 /** Password plus a code from the app: what is asked again before touching the second step itself. */
 function ConfirmWithCode({
@@ -193,6 +177,9 @@ export function SecurityPanel() {
   return (
     <Panel title={t("security.title")}>
       {error && <p className="mb-4 rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-200">{error}</p>}
+
+      {/* Only the phone apps have a camera scanner: they authorize the web's "Entrar con el celular". */}
+      {isNativeApp() && <LinkWebCard />}
 
       <div className="grid gap-6 lg:grid-cols-2">
         <section>
