@@ -83,7 +83,7 @@ function ProfileView({ id }: { id: string }) {
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       <Link
-        to="/vehiculos"
+        to="/vehiculos?tab=flotta"
         className="mb-3 inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
       >
         <ArrowLeft className="h-4 w-4" />

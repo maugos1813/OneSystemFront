@@ -119,7 +119,7 @@ export function DeviceDetailPage() {
   if (error) {
     return (
       <div className="mx-auto max-w-5xl p-4 sm:p-6 lg:p-8">
-        <Link to="/dispositivos" className="mb-4 inline-flex items-center gap-1 text-sm text-slate-500 hover:underline">
+        <Link to="/dispositivos?tab=dispositivos" className="mb-4 inline-flex items-center gap-1 text-sm text-slate-500 hover:underline">
           <ArrowLeft className="h-4 w-4" /> {t("dd.devices")}
         </Link>
         <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
@@ -141,7 +141,7 @@ export function DeviceDetailPage() {
 
   return (
     <div className="mx-auto max-w-5xl p-4 sm:p-6 lg:p-8">
-      <Link to="/dispositivos" className="mb-3 inline-flex items-center gap-1 text-sm text-slate-500 hover:underline dark:text-slate-400">
+      <Link to="/dispositivos?tab=dispositivos" className="mb-3 inline-flex items-center gap-1 text-sm text-slate-500 hover:underline dark:text-slate-400">
         <ArrowLeft className="h-4 w-4" /> {t("dd.devices")}
       </Link>
 
@@ -190,7 +190,7 @@ export function DeviceDetailPage() {
             {isPlatform && <Fact label="Firmware">{device.firmware ?? "—"}</Fact>}
             <Fact label={t("dd.vehicle")}>
               {vehicle ? (
-                <Link to="/vehiculos" className="hover:underline">
+                <Link to="/vehiculos?tab=flotta" className="hover:underline">
                   {vehicle.name}
                   {vehicle.plate ? ` · ${vehicle.plate}` : ""}
                 </Link>

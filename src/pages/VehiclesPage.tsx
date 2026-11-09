@@ -1,4 +1,4 @@
-import { AlertTriangle, IdCard, Pencil, Plus, Trash2 } from "lucide-react";
+import { AlertTriangle, IdCard, Pencil, Plus, Trash2, X } from "lucide-react";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { AreaFilterSelect } from "../components/AreaFilterSelect";
@@ -8,7 +8,6 @@ import { useFleet } from "../context/FleetContext";
 import { createVehicle, deleteVehicle, listMaintenance, listVehicleOdometers, updateVehicle } from "../lib/api";
 import { FleetGroupSelect } from "../components/FleetGroupSelect";
 import { useT } from "../i18n";
-import { trackGlow } from "../lib/glow";
 import { formatKm, STATE_BADGE, STATE_LABEL } from "../lib/maintenance";
 import type { MaintenancePlan, Vehicle, VehicleOdometerRow } from "../lib/types";
 import { ModalPortal } from "../components/ModalPortal";
@@ -383,6 +382,90 @@ function VehicleCard({
   );
 }
 
+/** The form of a new vehicle, in a dialog that a "+" opens (so the list is not pushed down by a form that is rarely used). */
+function NewVehicleDialog({
+  name,
+  plate,
+  deviceId,
+  isAdmin,
+  devices,
+  submitting,
+  error,
+  onName,
+  onPlate,
+  onDevice,
+  onSubmit,
+  onClose,
+}: {
+  name: string;
+  plate: string;
+  deviceId: string;
+  isAdmin: boolean;
+  devices: { id: string; imei: string; model: string }[];
+  submitting: boolean;
+  error: string | null;
+  onName: (v: string) => void;
+  onPlate: (v: string) => void;
+  onDevice: (v: string) => void;
+  onSubmit: (e: FormEvent) => void;
+  onClose: () => void;
+}) {
+  const t = useT();
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+  const label = "mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300";
+  const input = "field-input w-full rounded-xl border border-slate-300 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white";
+  return (
+    <ModalPortal>
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 text-left whitespace-normal"
+        role="dialog"
+        aria-modal="true"
+        aria-label={t("vehiclesPage.newVehicle")}
+        onMouseDown={(e) => e.target === e.currentTarget && onClose()}
+      >
+        <form onSubmit={onSubmit} className="w-full max-w-md rounded-2xl border border-white bg-white p-5 shadow-xl dark:border-white/10 dark:bg-[#111729]">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <h2 className="text-base font-semibold text-slate-900 dark:text-white">{t("vehiclesPage.newVehicle")}</h2>
+            <button type="button" onClick={onClose} aria-label={t("common.cancel")} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-white/10 dark:hover:text-white">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+          <div className="space-y-3">
+            <div>
+              <label className={label}>{t("common.name")}</label>
+              <input required autoFocus value={name} onChange={(e) => onName(e.target.value)} placeholder={t("vehiclesPage.namePlaceholder")} className={input} />
+            </div>
+            <div>
+              <label className={label}>{t("common.plate")}</label>
+              <input value={plate} onChange={(e) => onPlate(e.target.value)} className={input} />
+            </div>
+            {isAdmin && (
+              <div>
+                <label className={label}>{t("common.device")}</label>
+                <DeviceSelect value={deviceId} onChange={onDevice} devices={devices} />
+              </div>
+            )}
+          </div>
+          {error && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{error}</p>}
+          <div className="mt-5 flex justify-end gap-2">
+            <button type="button" onClick={onClose} className="rounded-xl px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-white/10">
+              {t("common.cancel")}
+            </button>
+            <button type="submit" disabled={submitting} className="brand-button flex items-center justify-center gap-1.5 rounded-xl px-4 py-2 text-sm font-medium disabled:opacity-50">
+              <Plus className="h-4 w-4" />
+              {t("common.create")}
+            </button>
+          </div>
+        </form>
+      </div>
+    </ModalPortal>
+  );
+}
+
 export function VehiclesPage() {
   const t = useT();
   const { currentUser } = useAuth();
@@ -391,6 +474,8 @@ export function VehiclesPage() {
   const [plate, setPlate] = useState("");
   const [deviceId, setDeviceId] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
   const [params] = useSearchParams();
   const [search, setSearch] = useState(() => params.get("q") ?? "");
   const [odometers, setOdometers] = useState<Map<string, VehicleOdometerRow>>(new Map());
@@ -435,12 +520,16 @@ export function VehiclesPage() {
   async function handleCreate(e: FormEvent) {
     e.preventDefault();
     setSubmitting(true);
+    setCreateError(null);
     try {
       await createVehicle({ name, plate: plate || undefined, ...(isAdmin && deviceId ? { deviceId } : {}) });
       setName("");
       setPlate("");
       setDeviceId("");
+      setCreating(false);
       refetch();
+    } catch (err) {
+      setCreateError(err instanceof Error ? err.message : t("vehiclesPage.createFailed"));
     } finally {
       setSubmitting(false);
     }
@@ -448,50 +537,44 @@ export function VehiclesPage() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
-      <h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t("vehicles.title")}</h1>
-      <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">
-        {t("vehiclesPage.subtitle")}{!isAdmin && canManage && t("vehiclesPage.adminAssigns")}
-      </p>
-
-      {canManage && (
-        <form
-          onSubmit={handleCreate}
-          onMouseMove={trackGlow}
-          className="glow float-card mb-6 flex flex-col gap-3 rounded-2xl border border-white bg-white p-4 shadow-lg shadow-slate-200/50 sm:flex-row sm:items-end dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40"
-        >
-          <div className="flex-1">
-            <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">{t("common.name")}</label>
-            <input
-              required
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder={t("vehiclesPage.namePlaceholder")}
-              className="field-input w-full rounded-xl border border-slate-300 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
-            />
-          </div>
-          <div className="w-full sm:w-32">
-            <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">{t("common.plate")}</label>
-            <input
-              value={plate}
-              onChange={(e) => setPlate(e.target.value)}
-              className="field-input w-full rounded-xl border border-slate-300 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
-            />
-          </div>
-          {isAdmin && (
-            <div className="w-full sm:w-48">
-              <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">{t("common.device")}</label>
-              <DeviceSelect value={deviceId} onChange={setDeviceId} devices={unassignedDevices} />
-            </div>
-          )}
+      <div className="mb-6 flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t("vehicles.title")}</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            {t("vehiclesPage.subtitle")}{!isAdmin && canManage && t("vehiclesPage.adminAssigns")}
+          </p>
+        </div>
+        {canManage && (
           <button
-            type="submit"
-            disabled={submitting}
-            className="brand-button flex items-center justify-center gap-1.5 rounded-xl px-4 py-2 text-sm font-medium disabled:opacity-50"
+            type="button"
+            onClick={() => {
+              setCreateError(null);
+              setCreating(true);
+            }}
+            aria-label={t("vehiclesPage.newVehicle")}
+            title={t("vehiclesPage.newVehicle")}
+            className="brand-button flex h-11 w-11 shrink-0 items-center justify-center rounded-full"
           >
-            <Plus className="h-4 w-4" />
-            {t("common.create")}
+            <Plus className="h-5 w-5" />
           </button>
-        </form>
+        )}
+      </div>
+
+      {creating && (
+        <NewVehicleDialog
+          name={name}
+          plate={plate}
+          deviceId={deviceId}
+          isAdmin={isAdmin}
+          devices={unassignedDevices}
+          submitting={submitting}
+          error={createError}
+          onName={setName}
+          onPlate={setPlate}
+          onDevice={setDeviceId}
+          onSubmit={handleCreate}
+          onClose={() => setCreating(false)}
+        />
       )}
 
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
