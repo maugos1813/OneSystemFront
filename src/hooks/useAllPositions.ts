@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { getLatestPosition, realtimePositionsUrl } from "../lib/api";
+import { ApiError, getLatestPosition, listLatestPositions, realtimePositionsUrl } from "../lib/api";
 import { getFreshToken } from "../lib/session";
 import type { Position, Vehicle } from "../lib/types";
 
@@ -34,6 +34,19 @@ export function useAllPositions(
         const all = await allClients.snapshot().catch(() => null);
         if (cancelled || !all) return;
         setPositions((prev) => ({ ...prev, ...all }));
+        return;
+      }
+      // One request for the whole fleet. (A server that predates it answers 404: then it is one request per vehicle, as it used to be.)
+      let all: Record<string, Position> | null = null;
+      try {
+        all = await listLatestPositions();
+      } catch (err) {
+        if (!(err instanceof ApiError && err.status === 404)) return;
+      }
+      if (all) {
+        const latest = all;
+        if (cancelled) return;
+        setPositions((prev) => ({ ...prev, ...latest }));
         return;
       }
       const list = vehiclesRef.current;

@@ -403,6 +403,11 @@ export function deleteVehicle(id: string, options: { confirmDevice?: boolean } =
 
 // --- Positions & events ---
 
+/** The last position of every vehicle this person may see, by vehicle id, in ONE request (the live map's starting point). */
+export function listLatestPositions(): Promise<Record<string, Position>> {
+  return request("/positions/latest");
+}
+
 export function getLatestPosition(vehicleId: string): Promise<Position | null> {
   return request<Position>(`/vehicles/${vehicleId}/positions/latest`).catch((err) => {
     if (err instanceof ApiError && err.status === 404) return null;
