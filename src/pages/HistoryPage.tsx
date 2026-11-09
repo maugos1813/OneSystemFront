@@ -365,7 +365,10 @@ function ChooseDates({
 export function HistoryPage() {
   const { t } = useLanguage();
   const { filteredVehicles: vehicles, loading } = useFleet();
-  const [params, setParams] = useSearchParams();
+  const [params, setSearchParams] = useSearchParams();
+  // The step is in the address, but so is the view of the Veicoli hub this page sits in (?tab=storico): keep it, or the next step lands back on the hub's cards.
+  const hubTab = params.get("tab");
+  const setParams = (next: Record<string, string>) => setSearchParams(hubTab ? { tab: hubTab, ...next } : next);
 
   if (loading) return <div className="flex h-full items-center justify-center text-slate-500 dark:text-slate-400">{t("common.loading")}</div>;
 
