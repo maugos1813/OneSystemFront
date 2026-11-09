@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { AreaFilterPills } from "../components/AreaFilterPills";
-import { VehiclePicker } from "../components/VehiclePicker";
+import { useSearchParams } from "react-router-dom";
+import { VehicleChooser } from "../components/VehicleChooser";
 import { Panel } from "../components/analytics/Panel";
 import { FleetScoreTable, type FleetRow } from "../components/driving/FleetScoreTable";
 import { IncidentList } from "../components/driving/IncidentList";
@@ -42,7 +42,12 @@ function totalIncidents(vehicle: VehicleDrivingStyle): number {
 export function DrivingBehaviorPage() {
   const { t, locale } = useLanguage();
   const { filteredVehicles: vehicles, loading: fleetLoading } = useFleet();
-  const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
+  // The vehicle is the first step and lives in the address (so Back returns to the list of vehicles); the view of the Avvisi hub this page sits in (?tab=) is kept.
+  const [params, setSearchParams] = useSearchParams();
+  const hubTab = params.get("tab");
+  const wantedVehicle = params.get("vehicle");
+  const selectedVehicleId = wantedVehicle && vehicles.some((v) => v.id === wantedVehicle) ? wantedVehicle : null;
+  const setSelectedVehicleId = (id: string | null) => setSearchParams({ ...(hubTab ? { tab: hubTab } : {}), ...(id ? { vehicle: id } : {}) });
   const [rangeDays, setRangeDays] = useState(7);
   const [speedLimitInput, setSpeedLimitInput] = useState(DEFAULT_SPEED_LIMIT_KMH);
   const [speedLimit, setSpeedLimit] = useState(DEFAULT_SPEED_LIMIT_KMH);
@@ -60,13 +65,6 @@ export function DrivingBehaviorPage() {
   }, [speedLimitInput]);
 
   useEffect(() => {
-    if (vehicles.length === 0) return;
-    if (!selectedVehicleId || !vehicles.some((v) => v.id === selectedVehicleId)) {
-      setSelectedVehicleId(vehicles[0]!.id);
-    }
-  }, [selectedVehicleId, vehicles]);
-
-  useEffect(() => {
     setSelection("overall");
     setActiveIncidentIndex(null);
   }, [selectedVehicleId, rangeDays]);
@@ -75,7 +73,9 @@ export function DrivingBehaviorPage() {
     setActiveIncidentIndex(null);
   }, [selection, speedLimit]);
 
+  const hasVehicle = selectedVehicleId !== null;
   useEffect(() => {
+    if (!hasVehicle) return; // nothing is calculated until a vehicle is chosen
     let cancelled = false;
     setStyle(null);
     setError(null);
@@ -89,7 +89,7 @@ export function DrivingBehaviorPage() {
     return () => {
       cancelled = true;
     };
-  }, [rangeDays, speedLimit]);
+  }, [hasVehicle, rangeDays, speedLimit]);
 
   useEffect(() => {
     if (!selectedVehicleId) return;
@@ -147,19 +147,31 @@ export function DrivingBehaviorPage() {
     current.quality !== "no_data";
   const byDevice = !!current && current.eventSource === "device";
 
+  if (fleetLoading) {
+    return <div className="flex h-full items-center justify-center text-slate-500 dark:text-slate-400">{t("common.loading")}</div>;
+  }
+  if (!selectedVehicleId) {
+    return <VehicleChooser title={t("driving.title")} subtitle={t("driving.chooseVehicle")} onSelect={setSelectedVehicleId} />;
+  }
+  const chosen = vehicles.find((v) => v.id === selectedVehicleId);
+
   return (
     <div className="h-full overflow-y-auto bg-[#f5f6fb] p-4 sm:p-6 lg:p-8 dark:bg-[#0a0e1a]">
-      <h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t("driving.title")}</h1>
-      <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">
-        {t("driving.intro")}
-      </p>
-
-      <div className="mb-4">
-        <AreaFilterPills />
-      </div>
-
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        <VehiclePicker vehicles={vehicles} selectedId={selectedVehicleId} onSelect={setSelectedVehicleId} />
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t("driving.title")}</h1>
+          <p className="truncate text-sm text-slate-500 dark:text-slate-400">
+            {chosen?.plate ?? chosen?.name}
+            {chosen?.fleetGroup ? ` · ${chosen.fleetGroup}` : ""}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setSelectedVehicleId(null)}
+          className="shrink-0 rounded-xl bg-white px-3 py-2 text-sm font-medium text-slate-600 shadow-sm transition hover:bg-slate-50 dark:bg-[#111729] dark:text-slate-300 dark:hover:bg-white/10"
+        >
+          {t("driving.changeVehicle")}
+        </button>
       </div>
 
       <div className="mb-6 flex flex-wrap items-center gap-2">
@@ -194,10 +206,6 @@ export function DrivingBehaviorPage() {
           km/h
         </label>
       </div>
-
-      {!fleetLoading && vehicles.length === 0 && (
-        <p className="text-sm text-slate-500 dark:text-slate-400">{t("driving.noVehicles")}</p>
-      )}
 
       {error && <p className="mb-4 text-sm text-red-600 dark:text-red-400">{error}</p>}
 
