@@ -220,7 +220,7 @@ function Workspace({ products }: { products: Product[] }) {
 
       <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
         <aside
-          className={`${PANEL} hidden shrink-0 overflow-hidden transition-all duration-300 lg:block lg:w-72 ${
+          className={`${PANEL} hidden shrink-0 overflow-hidden transition-all duration-300 lg:flex lg:w-72 lg:flex-col ${
             expanded
               ? "mb-0 max-h-0 max-w-0 border-0 p-0 opacity-0 lg:mr-0"
               : "mb-3 max-h-96 p-3 sm:mb-4 lg:mr-4 lg:mb-0 lg:max-h-none lg:max-w-72"
@@ -242,6 +242,9 @@ function Workspace({ products }: { products: Product[] }) {
             <Settings className="h-5 w-5 shrink-0 text-slate-400" />
             {t("workspace.settings")}
           </SidebarItem>
+
+          {/* At the foot, like the phone's menu: the light/dark switch and signing out. */}
+          <DesktopSidebarFooter />
         </aside>
 
         <main
@@ -313,9 +316,7 @@ function NoOneTrack() {
 
 function TopBar({ bell, onOpenMenu }: { bell: ReactNode; onOpenMenu: () => void }) {
   const t = useT();
-  const { currentUser, logout } = useAuth();
-  const { theme, toggleTheme } = useTheme();
-  const [open, setOpen] = useState(false);
+  const { currentUser } = useAuth();
   // Always the person (or client) who signed in, e.g. "Piazza Spedizioni"; the organization's name is only the fallback.
   const logo = currentUser?.userLogo ?? currentUser?.orgLogo ?? null;
   const title = currentUser?.name.trim() || currentUser?.orgName || "...";
@@ -346,40 +347,6 @@ function TopBar({ bell, onOpenMenu }: { bell: ReactNode; onOpenMenu: () => void 
         <img src="/logo.jpg" alt="OneSystec" title="OneSystec" className="mr-1 h-9 w-9 shrink-0 rounded-xl object-cover shadow-md shadow-blue-200/60" />
         <OneSystecMark logo={false} className="mr-2 hidden md:flex" />
         {bell}
-        <button
-          onClick={toggleTheme}
-          aria-label={theme === "dark" ? t("workspace.themeLight") : t("workspace.themeDark")}
-          // Below lg the side menu has the switch, so the bar does not repeat it.
-          className="hidden rounded-xl p-2 text-slate-500 transition lg:block hover:bg-violet-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/5 dark:hover:text-white"
-        >
-          {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-        </button>
-        {/* On a phone sign out lives in the apps menu and the profile in Configuración, so this menu is for larger screens. */}
-        <button
-          onClick={() => setOpen((o) => !o)}
-          aria-label={t("workspace.myAccount")}
-          className="hidden rounded-xl p-2 lg:block text-slate-500 transition hover:bg-violet-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/5 dark:hover:text-white"
-        >
-          <CircleUser className="h-6 w-6" />
-        </button>
-        {open && (
-          <>
-            <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-            <div className="absolute top-full right-0 z-20 mt-2 w-64 rounded-2xl border border-violet-100 bg-white p-2 shadow-lg shadow-violet-100 dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40">
-              <div className="px-3 py-2">
-                <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">{currentUser?.name}</p>
-                <p className="truncate text-xs text-slate-500 dark:text-slate-400">{currentUser?.email}</p>
-                <p className="truncate text-xs text-slate-500 dark:text-slate-400">{currentUser?.orgName}</p>
-              </div>
-              <button
-                onClick={logout}
-                className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-slate-600 transition hover:bg-red-50 hover:text-red-600 dark:text-slate-300 dark:hover:bg-red-500/10 dark:hover:text-red-400"
-              >
-                <LogOut className="h-4 w-4" /> {t("workspace.signOutShort")}
-              </button>
-            </div>
-          </>
-        )}
       </div>
     </header>
   );
@@ -562,6 +529,32 @@ function MobileMenu({
           <OneSystecMark prefix="madeBy" className="flex justify-center pt-1" />
         </div>
       </aside>
+    </div>
+  );
+}
+
+/** The foot of the laptop's side menu: who is signed in, the light/dark switch and sign out (what the phone's menu has at its foot too). */
+function DesktopSidebarFooter() {
+  const t = useT();
+  const { currentUser, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
+  return (
+    <div className="mt-auto hidden flex-col gap-1 border-t border-slate-200 pt-3 lg:flex dark:border-white/10">
+      <p className="truncate px-3 pb-1 text-xs text-slate-500 dark:text-slate-400" title={currentUser?.email}>
+        {currentUser?.email}
+      </p>
+      <SidebarItem active={false} onClick={toggleTheme}>
+        {theme === "dark" ? <Sun className="h-5 w-5 shrink-0 text-slate-400" /> : <Moon className="h-5 w-5 shrink-0 text-slate-400" />}
+        {theme === "dark" ? t("workspace.themeLight") : t("workspace.themeDark")}
+      </SidebarItem>
+      <button
+        type="button"
+        onClick={logout}
+        className="flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left text-[15px] font-medium text-slate-600 transition hover:bg-red-50 hover:text-red-600 dark:text-slate-300 dark:hover:bg-red-500/10 dark:hover:text-red-400"
+      >
+        <LogOut className="h-5 w-5 shrink-0" />
+        {t("workspace.signOut")}
+      </button>
     </div>
   );
 }
