@@ -94,7 +94,8 @@ export function DevicesPage() {
     return { severity, offline, batteryVoltage: volts(AVL_ID.BATTERY_VOLTAGE), externalVoltage: volts(AVL_ID.EXTERNAL_VOLTAGE), satellites, gsmSignal };
   };
   // The IMEI is OneSystec's: it adds hardware by IMEI and sees it. A client knows each device by its vehicle.
-  const isPlatform = currentUser?.isPlatform === true;
+  // OneSystec's own view only: looking at a client's account (read-only) it sees what the client sees, with no IMEIs, makes or claim form.
+  const isPlatform = currentUser?.isPlatform === true && !currentUser.viewingAs;
   const navigate = useNavigate();
   const [imei, setImei] = useState("");
   const [model, setModel] = useState<string>(DEVICE_MODELS[0]);

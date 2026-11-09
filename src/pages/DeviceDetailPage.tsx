@@ -72,7 +72,8 @@ export function DeviceDetailPage() {
   const { currentUser } = useAuth();
   const canEdit = (currentUser?.role === "owner" || currentUser?.role === "admin") && !currentUser.allowedArea;
   // The hardware identity (IMEI, serial, firmware), the SIM and the raw data the tracker sends are OneSystec's.
-  const isPlatform = currentUser?.isPlatform === true;
+  // OneSystec's own view only: looking at a client's account (read-only) it sees what the client sees, with no IMEIs, makes or claim form.
+  const isPlatform = currentUser?.isPlatform === true && !currentUser.viewingAs;
   const [detail, setDetail] = useState<DeviceDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
