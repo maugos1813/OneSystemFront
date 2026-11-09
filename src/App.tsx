@@ -16,7 +16,7 @@ import { DevicesHubPage } from "./pages/DevicesHubPage";
 import { DeviceDetailPage } from "./pages/DeviceDetailPage";
 import { GeofencesPage } from "./pages/GeofencesPage";
 import { HomePage } from "./pages/HomePage";
-import { HistoryPage } from "./pages/HistoryPage";
+import { VehiclesHubPage } from "./pages/VehiclesHubPage";
 import { LinkInfoPage } from "./pages/LinkInfoPage";
 import { LoginPage } from "./pages/LoginPage";
 import { PlatformPage } from "./pages/PlatformPage";
@@ -24,7 +24,6 @@ import { SettingsPage } from "./pages/SettingsPage";
 import { SimsPage } from "./pages/SimsPage";
 import { TeamPage } from "./pages/TeamPage";
 import { VehicleProfilePage } from "./pages/VehicleProfilePage";
-import { VehiclesPage } from "./pages/VehiclesPage";
 import { WorkspaceLayout } from "./pages/WorkspaceLayout";
 
 /** An old address (a bookmark, an old link) that now lives inside another section: same page, same query, the right tab. */
@@ -80,12 +79,13 @@ export default function App() {
                 <Route path="/cockpit" element={<Navigate to="/gps" replace />} />
                 {/* Analíticas and Vencimientos are gone from the system: an old address leads to the start. */}
                 <Route path="/analiticas" element={<Navigate to="/inicio" replace />} />
-                <Route path="/historial" element={<HistoryPage />} />
+                {/* The route history is now a tab of Vehículos; its old address (and the links to one vehicle) lead there. */}
+                <Route path="/historial" element={<MovedTo to="/vehiculos" tab="storico" />} />
                 <Route path="/alertas" element={<AlertsHubPage />} />
                 <Route path="/conduccion" element={<MovedTo to="/alertas" tab="conduccion" />} />
                 <Route path="/geocercas" element={<GeofencesPage />} />
                 <Route path="/salud-dispositivos" element={<MovedTo to="/dispositivos" tab="salud" />} />
-                <Route path="/vehiculos" element={<VehiclesPage />} />
+                <Route path="/vehiculos" element={<VehiclesHubPage />} />
                 <Route path="/vehiculos/:id" element={<VehicleProfilePage />} />
                 {/* Maintenance now lives inside each vehicle's profile. */}
                 <Route path="/mantenimiento" element={<Navigate to="/vehiculos" replace />} />

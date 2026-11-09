@@ -194,7 +194,7 @@ export const es = {
   "navHint.history": "Recorridos de días anteriores",
   "navHint.alerts": "Avisos y conducción",
   "navHint.geofences": "Zonas y avisos de entrada y salida",
-  "navHint.vehicles": "Tus unidades y su mantenimiento",
+  "navHint.vehicles": "Recorridos, tus unidades y su mantenimiento",
   "navHint.devices": "Estado de tus equipos",
   "navHint.settings": "Horarios y alertas",
   "home.greeting": "Hola, {name}",
@@ -1108,6 +1108,7 @@ export const es = {
   "dd.cancel": "Cancelar",
   "dd.save": "Guardar",
   "dd.simUnregistered": "Sin registrar",
+  "hub.fleet": "Flota",
   // @@END
 } as const satisfies Record<string, string>;
 

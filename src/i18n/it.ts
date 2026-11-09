@@ -193,7 +193,7 @@ export const it: Record<MessageKey, string> = {
   "navHint.history": "Percorsi dei giorni scorsi",
   "navHint.alerts": "Avvisi e stile di guida",
   "navHint.geofences": "Zone e avvisi di entrata e uscita",
-  "navHint.vehicles": "I tuoi mezzi e la manutenzione",
+  "navHint.vehicles": "Percorsi, i tuoi mezzi e la manutenzione",
   "navHint.devices": "Stato dei tuoi dispositivi",
   "navHint.settings": "Orari e avvisi",
   "home.greeting": "Ciao, {name}",
@@ -1107,5 +1107,6 @@ export const it: Record<MessageKey, string> = {
   "dd.cancel": "Annulla",
   "dd.save": "Salva",
   "dd.simUnregistered": "Non registrata",
+  "hub.fleet": "Flotta",
   // @@END
 };

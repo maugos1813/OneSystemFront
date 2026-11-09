@@ -1,14 +1,13 @@
 import {
   BellRing,
-  History,
   Home,
   Map,
   MapPin,
   Settings,
-  Smartphone,
   Truck,
   type LucideIcon,
 } from "lucide-react";
+import { TrackerIcon } from "./trackerIcon";
 import type { MessageKey } from "../i18n";
 import type { AdminSectionKey, ModuleKey } from "./modules";
 import type { CurrentUser } from "./types";
@@ -34,13 +33,13 @@ export const ONETRACK_NAV: OneTrackNavItem[] = [
   // The start: how the fleet is doing, and a shortcut to everything else. Everyone has it.
   { to: "/inicio", label: "nav.home", icon: Home, end: true },
   { to: "/gps", hint: "navHint.map", label: "nav.map", icon: Map, end: true, module: "mapa" },
-  { to: "/historial", hint: "navHint.history", label: "nav.history", icon: History, end: false, module: "historial" },
   // Alertas also holds Conducción as a tab: the item opens with either section.
   { to: "/alertas", hint: "navHint.alerts", label: "nav.alerts", icon: BellRing, end: false, anyOf: ["alertas", "conduccion"] },
   { to: "/geocercas", hint: "navHint.geofences", label: "nav.geofences", icon: MapPin, end: false, module: "geocercas" },
-  { to: "/vehiculos", hint: "navHint.vehicles", label: "nav.vehicles", icon: Truck, end: false, anyOf: ["vehiculos", "mantenimiento"] },
+  // Vehículos holds the route history (Storico) and the fleet's list (Flotta) as tabs: the item opens with any of their sections.
+  { to: "/vehiculos", hint: "navHint.vehicles", label: "nav.vehicles", icon: Truck, end: false, anyOf: ["vehiculos", "mantenimiento", "historial"] },
   // Dispositivos holds Salud and EYE BEACON as tabs.
-  { to: "/dispositivos", hint: "navHint.devices", label: "nav.devices", icon: Smartphone, end: false, ownerAdminOnly: true, adminSection: "dispositivos" },
+  { to: "/dispositivos", hint: "navHint.devices", label: "nav.devices", icon: TrackerIcon, end: false, ownerAdminOnly: true, adminSection: "dispositivos" },
   // The OneTrack settings (working hours, alert thresholds). What belongs to OneSystec itself (clients, team, SIMs, API keys) lives in its
   // own configuration in the portal, not in this menu.
   // Open to everyone: it holds "Mi perfil", and the company settings only for owner/admin (the page decides).
@@ -70,7 +69,7 @@ export function navItemForPath(pathname: string): OneTrackNavItem | undefined {
 }
 
 /** The sections that get a place in the phone's bottom bar, in the order they are preferred: the ones people use all day. */
-const BOTTOM_PRIORITY = ["/gps", "/alertas", "/vehiculos", "/historial", "/geocercas", "/dispositivos", "/ajustes"];
+const BOTTOM_PRIORITY = ["/gps", "/alertas", "/vehiculos", "/dispositivos", "/geocercas", "/ajustes"];
 const BOTTOM_SLOTS = 4;
 export const HOME_PATH = "/inicio";
 

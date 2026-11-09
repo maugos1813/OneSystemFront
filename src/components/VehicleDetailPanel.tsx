@@ -161,7 +161,7 @@ export function VehicleDetailPanel({ vehicle, position, onClose, onRoute }: Vehi
         </p>
         <div className="grid grid-cols-2 gap-2">
           {canSeeHistory && (
-            <Action icon={History} label={t("detail.tripHistory")} to={`/historial?vehicle=${vehicle.id}`} />
+            <Action icon={History} label={t("detail.tripHistory")} to={`/vehiculos?tab=storico&vehicle=${vehicle.id}`} />
           )}
           {canSeeDriver && (
             <Action
