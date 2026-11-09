@@ -1,9 +1,10 @@
-import { ChevronDown, ChevronRight, Trash2 } from "lucide-react";
+import { Bluetooth, Check, ChevronDown, ChevronRight, Mail, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { SUPPORT_EMAIL } from "../components/layout/LoginCard";
+import { useAuth } from "../context/AuthContext";
 import { useT, type MessageKey } from "../i18n";
 import {
   assignDriverBeacon,
-  assignDriverBeaconByMac,
   listBeaconsByVehicle,
   listDriverBeacons,
   removeDriverBeacon,
@@ -109,69 +110,6 @@ function NameCell({ row, onSaved }: { row: Row; onSaved: () => void }) {
   );
 }
 
-/** Registers a beacon before any tracker has heard it, from the MAC on its label. */
-function AddByMacForm({ onAdded }: { onAdded: () => void }) {
-  const t = useT();
-  const [mac, setMac] = useState("");
-  const [name, setName] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  async function submit(e: FormEvent) {
-    e.preventDefault();
-    setSaving(true);
-    setError(null);
-    try {
-      await assignDriverBeaconByMac(mac, name);
-      setMac("");
-      setName("");
-      onAdded();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t("beacons.saveFailed"));
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  return (
-    <form
-      onSubmit={submit}
-      onMouseMove={trackGlow}
-      className="glow float-card rounded-2xl border border-white bg-white p-4 shadow-lg shadow-slate-200/50 dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40"
-    >
-      <p className="mb-1 text-sm font-semibold text-slate-900 dark:text-white">{t("beacons.assignByMac")}</p>
-      <p className="mb-3 text-xs text-slate-500 dark:text-slate-400">
-        {t("beacons.assignByMacHint")}
-      </p>
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-start">
-        <input
-          required
-          value={mac}
-          onChange={(e) => setMac(e.target.value)}
-          placeholder="7C:D9:F4:0B:39:E3"
-          maxLength={17}
-          className="field-input w-full rounded-xl border border-slate-300 px-3 py-2 font-mono text-sm sm:w-56 dark:border-white/10 dark:bg-white/5 dark:text-white"
-        />
-        <input
-          required
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder={t("beacons.driverName")}
-          maxLength={100}
-          className="field-input w-full flex-1 rounded-xl border border-slate-300 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
-        />
-        <button
-          type="submit"
-          disabled={saving}
-          className="brand-button rounded-xl px-4 py-2 text-sm font-medium disabled:opacity-50"
-        >
-          {t("beacons.assignButton")}
-        </button>
-      </div>
-      {error && <p className="mt-2 text-xs text-red-500">{error}</p>}
-    </form>
-  );
-}
 
 function BeaconLine({
   beacon,
@@ -306,6 +244,46 @@ function VehicleCard({
   );
 }
 
+/** What a client without EYE Beacons sees: the service offered, with a button that opens an email to OneSystec asking for information. */
+function BeaconOffer() {
+  const t = useT();
+  const { currentUser } = useAuth();
+  const mail = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(t("beacons.mailSubject"))}&body=${encodeURIComponent(
+    t("beacons.mailBody", { company: currentUser?.orgName ?? "" }),
+  )}`;
+  const bullets = ["beacons.promoBullet1", "beacons.promoBullet2", "beacons.promoBullet3"] as const;
+  return (
+    <div className="p-4 sm:p-6 lg:p-8">
+      <h1 className="mb-4 text-xl font-semibold text-slate-900 dark:text-white">{t("nav.drivers")}</h1>
+      <div
+        onMouseMove={trackGlow}
+        className="glow float-card max-w-2xl rounded-2xl border border-violet-200 bg-violet-50/60 p-5 text-sm text-slate-600 dark:border-violet-400/20 dark:bg-violet-500/10 dark:text-slate-300"
+      >
+        <div className="flex items-start gap-3">
+          <Bluetooth className="mt-0.5 h-5 w-5 shrink-0 text-violet-600 dark:text-violet-300" />
+          <div>
+            <p className="text-base font-semibold text-slate-900 dark:text-white">{t("beacons.promoTitle")}</p>
+            <p className="mt-1">{t("beacons.promoLead")}</p>
+            <ul className="mt-3 space-y-1.5">
+              {bullets.map((key) => (
+                <li key={key} className="flex items-start gap-2">
+                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />
+                  <span>{t(key)}</span>
+                </li>
+              ))}
+            </ul>
+            <a href={mail} className="brand-button mt-4 inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium">
+              <Mail className="h-4 w-4" />
+              {t("beacons.promoButton")}
+            </a>
+            <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">{t("beacons.promoHint")}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function DriversPage() {
   const t = useT();
   const [hours, setHours] = useState(PERIODS[0]!.hours);
@@ -344,6 +322,9 @@ export function DriversPage() {
     refetch();
   }
 
+  // A client with no EYE Beacon handed out yet gets the offer, not the tool: nothing to configure, a way to ask for it.
+  if (!loading && !error && registered.length === 0) return <BeaconOffer />;
+
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       <h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t("nav.drivers")}</h1>
@@ -351,19 +332,15 @@ export function DriversPage() {
         {t("beacons.intro")}
       </p>
 
-      <div className="mb-6 grid gap-6 lg:grid-cols-2">
-        <div
-          onMouseMove={trackGlow}
-          className="glow float-card rounded-2xl border border-white bg-white p-4 text-sm text-slate-600 shadow-lg shadow-slate-200/50 dark:border-white/10 dark:bg-[#111729] dark:text-slate-300 dark:shadow-black/40"
-        >
-          <p className="mb-1 font-semibold text-slate-900 dark:text-white">{t("beacons.howTitle")}</p>
-          <ol className="list-decimal space-y-1 pl-5">
-            <li>{t("beacons.how1")}</li>
-            <li>{t("beacons.how2")}</li>
-            <li>{t("beacons.how3")}</li>
-          </ol>
-        </div>
-        <AddByMacForm onAdded={refetch} />
+      <div
+        onMouseMove={trackGlow}
+        className="glow float-card mb-6 rounded-2xl border border-white bg-white p-4 text-sm text-slate-600 shadow-lg shadow-slate-200/50 dark:border-white/10 dark:bg-[#111729] dark:text-slate-300 dark:shadow-black/40"
+      >
+        <p className="mb-1 font-semibold text-slate-900 dark:text-white">{t("beacons.howTitle")}</p>
+        <ol className="list-decimal space-y-1 pl-5">
+          <li>{t("beacons.how2")}</li>
+          <li>{t("beacons.how3")}</li>
+        </ol>
       </div>
 
       <div className="mb-4 flex flex-wrap items-center gap-2">

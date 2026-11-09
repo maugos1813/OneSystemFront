@@ -153,7 +153,7 @@ export function DeviceDetailPage() {
           <p className="mt-1 flex flex-wrap items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
             {isPlatform && <span>IMEI {device.imei}</span>}
             <StatusBadge lastSeenAt={device.lastSeenAt} />
-            <DeviceSourceBadge source={device.source} />
+            {isPlatform && <DeviceSourceBadge source={device.source} />}
           </p>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{profile.summary}</p>
         </div>

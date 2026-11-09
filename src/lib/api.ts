@@ -745,6 +745,19 @@ export function assignDriverBeaconByMac(mac: string, driverName: string): Promis
   return request("/driver-beacons", { method: "POST", body: JSON.stringify({ mac, driverName }) });
 }
 
+/** OneSystec hands an EYE Beacon (by the MAC on its label) to a client. */
+export function assignBeaconToClient(orgId: string, mac: string, driverName: string): Promise<DriverBeacon> {
+  return request(`/platform/organizations/${orgId}/driver-beacons`, { method: "POST", body: JSON.stringify({ mac, driverName }) });
+}
+
+export function listClientBeacons(orgId: string): Promise<DriverBeacon[]> {
+  return request(`/platform/organizations/${orgId}/driver-beacons`);
+}
+
+export function removeClientBeacon(orgId: string, beaconId: string): Promise<void> {
+  return request(`/platform/organizations/${orgId}/driver-beacons/${beaconId}`, { method: "DELETE" });
+}
+
 /** Changes the driver's name and/or phone; a phone of "" removes it. */
 export function updateDriverBeacon(id: string, changes: { driverName?: string; phone?: string }): Promise<DriverBeacon> {
   return request(`/driver-beacons/${id}`, { method: "PATCH", body: JSON.stringify(changes) });

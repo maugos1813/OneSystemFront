@@ -254,7 +254,8 @@ export function DevicesPage() {
 
       {!loading && devices.length > 0 && (
         <div className="mb-4 flex flex-wrap items-center gap-2">
-          {SOURCE_FILTERS.map(({ key, label }) => (
+          {/* The make of a tracker (Teltonika, Velocity…) is for OneSystec only; a client sees one list of devices. */}
+          {isPlatform && SOURCE_FILTERS.map(({ key, label }) => (
             <button
               key={key}
               onClick={() => setSourceFilter(key)}
@@ -322,9 +323,11 @@ export function DevicesPage() {
                         {device.model}
                         <ModelTags model={device.model} />
                       </span>
-                      <div className="mt-1">
-                        <DeviceSourceBadge source={device.source} />
-                      </div>
+                      {isPlatform && (
+                        <div className="mt-1">
+                          <DeviceSourceBadge source={device.source} />
+                        </div>
+                      )}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex flex-col items-start gap-1">
@@ -382,7 +385,7 @@ export function DevicesPage() {
                     {device.model}
                     <ModelTags model={device.model} />
                   </span>
-                  <DeviceSourceBadge source={device.source} />
+                  {isPlatform && <DeviceSourceBadge source={device.source} />}
                   <HealthChip health={health} t={t} />
                 </div>
 
