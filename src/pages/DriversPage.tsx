@@ -1,5 +1,5 @@
 import { Bluetooth, Check, ChevronDown, ChevronRight, Mail, Trash2 } from "lucide-react";
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { SUPPORT_EMAIL } from "../components/layout/LoginCard";
 import { useAuth } from "../context/AuthContext";
 import { useT, type MessageKey } from "../i18n";
