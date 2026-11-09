@@ -1,4 +1,4 @@
-import { AlertTriangle, IdCard, Pencil, Plus, Trash2, X } from "lucide-react";
+import { AlertTriangle, ChevronRight, IdCard, Pencil, Plus, Trash2, Truck, UsersRound, X } from "lucide-react";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { AreaFilterSelect } from "../components/AreaFilterSelect";
@@ -11,6 +11,7 @@ import { useT } from "../i18n";
 import { formatKm, STATE_BADGE, STATE_LABEL } from "../lib/maintenance";
 import type { MaintenancePlan, Vehicle, VehicleOdometerRow } from "../lib/types";
 import { ModalPortal } from "../components/ModalPortal";
+import { NewFleetDialog } from "../components/NewFleetDialog";
 
 function DeviceSelect({
   value,
@@ -382,6 +383,59 @@ function VehicleCard({
   );
 }
 
+/** What the "+" offers: a vehicle, or (for the main client) a whole new fleet. */
+function AddChoiceDialog({ onVehicle, onFleet, onClose }: { onVehicle: () => void; onFleet: () => void; onClose: () => void }) {
+  const t = useT();
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+  const options = [
+    { key: "vehicle", icon: Truck, title: t("vehiclesPage.newVehicle"), description: t("vehiclesPage.addVehicleDesc"), onClick: onVehicle },
+    { key: "fleet", icon: UsersRound, title: t("vehiclesPage.newFleet"), description: t("vehiclesPage.newFleetDesc"), onClick: onFleet },
+  ];
+  return (
+    <ModalPortal>
+      <div
+        className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 text-left whitespace-normal sm:items-center sm:p-4"
+        role="dialog"
+        aria-modal="true"
+        aria-label={t("vehiclesPage.add")}
+        onMouseDown={(e) => e.target === e.currentTarget && onClose()}
+      >
+        <div className="w-full max-w-md rounded-t-2xl border border-white bg-white p-5 shadow-xl sm:rounded-2xl dark:border-white/10 dark:bg-[#111729]">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <h2 className="text-base font-semibold text-slate-900 dark:text-white">{t("vehiclesPage.add")}</h2>
+            <button type="button" onClick={onClose} aria-label={t("common.cancel")} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-white/10 dark:hover:text-white">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+          <div className="space-y-3">
+            {options.map(({ key, icon: Icon, title, description, onClick }) => (
+              <button
+                key={key}
+                type="button"
+                onClick={onClick}
+                className="flex w-full items-center gap-4 rounded-2xl border border-slate-200 p-4 text-left transition hover:border-violet-300 hover:bg-violet-50/50 active:scale-[0.99] dark:border-white/10 dark:hover:bg-white/5"
+              >
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-violet-100 text-violet-600 dark:bg-violet-500/15 dark:text-violet-300">
+                  <Icon className="h-6 w-6" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-base font-semibold text-slate-900 dark:text-white">{title}</span>
+                  <span className="mt-0.5 block text-sm text-slate-500 dark:text-slate-400">{description}</span>
+                </span>
+                <ChevronRight className="h-5 w-5 shrink-0 text-slate-400" />
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    </ModalPortal>
+  );
+}
+
 /** The form of a new vehicle, in a dialog that a "+" opens (so the list is not pushed down by a form that is rarely used). */
 function NewVehicleDialog({
   name,
@@ -474,18 +528,23 @@ export function VehiclesPage() {
   const [plate, setPlate] = useState("");
   const [deviceId, setDeviceId] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [creating, setCreating] = useState(false);
+  const [dialog, setDialog] = useState<"choose" | "vehicle" | "fleet" | null>(null);
   const [createError, setCreateError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<{ ok: boolean; text: string } | null>(null);
   const [params] = useSearchParams();
   const [search, setSearch] = useState(() => params.get("q") ?? "");
   const [odometers, setOdometers] = useState<Map<string, VehicleOdometerRow>>(new Map());
   const [maintenance, setMaintenance] = useState<Map<string, MaintenancePlan>>(new Map());
 
-  const isAdmin = currentUser?.role === "owner" || currentUser?.role === "admin";
+  const isOrgAdmin = currentUser?.role === "owner" || currentUser?.role === "admin";
+  // Devices and the fleet of each vehicle are the main client's to assign: an account limited to one fleet cannot move them (the server refuses it).
+  const isAdmin = isOrgAdmin && !currentUser?.allowedArea;
+  // A new fleet is created by the main client (never by a fleet's own account, nor while looking at a client's account read-only).
+  const canCreateFleet = isAdmin && !currentUser?.viewingAs;
   // A client with the Vehículos section and a flota registers and edits the vehicles of that flota (the admin assigns devices).
-  const canManage = isAdmin || (!!currentUser?.allowedArea && !!currentUser.modules.includes("vehiculos"));
+  const canManage = isOrgAdmin || (!!currentUser?.allowedArea && !!currentUser.modules.includes("vehiculos"));
   // Maintenance is shown for those who have it; its state comes from the plans of each vehicle.
-  const showMaintenance = isAdmin || !!currentUser?.modules.includes("mantenimiento");
+  const showMaintenance = isOrgAdmin || !!currentUser?.modules.includes("mantenimiento");
   const vehicleCount = vehicles.length;
   useEffect(() => {
     let cancelled = false;
@@ -526,7 +585,7 @@ export function VehiclesPage() {
       setName("");
       setPlate("");
       setDeviceId("");
-      setCreating(false);
+      setDialog(null);
       refetch();
     } catch (err) {
       setCreateError(err instanceof Error ? err.message : t("vehiclesPage.createFailed"));
@@ -549,10 +608,11 @@ export function VehiclesPage() {
             type="button"
             onClick={() => {
               setCreateError(null);
-              setCreating(true);
+              // Only the main client has a choice (vehicle or fleet); anyone else goes straight to the vehicle.
+              setDialog(canCreateFleet ? "choose" : "vehicle");
             }}
-            aria-label={t("vehiclesPage.newVehicle")}
-            title={t("vehiclesPage.newVehicle")}
+            aria-label={canCreateFleet ? t("vehiclesPage.add") : t("vehiclesPage.newVehicle")}
+            title={canCreateFleet ? t("vehiclesPage.add") : t("vehiclesPage.newVehicle")}
             className="brand-button flex h-11 w-11 shrink-0 items-center justify-center rounded-full"
           >
             <Plus className="h-5 w-5" />
@@ -560,7 +620,19 @@ export function VehiclesPage() {
         )}
       </div>
 
-      {creating && (
+      {dialog === "choose" && <AddChoiceDialog onVehicle={() => setDialog("vehicle")} onFleet={() => setDialog("fleet")} onClose={() => setDialog(null)} />}
+      {dialog === "fleet" && (
+        <NewFleetDialog
+          vehicles={vehicles}
+          onClose={() => setDialog(null)}
+          onCreated={(fleet, vehiclesFailed) => {
+            setDialog(null);
+            setNotice({ ok: !vehiclesFailed, text: t(vehiclesFailed ? "fleetNew.vehiclesFailed" : "fleetNew.created", { fleet }) });
+            refetch();
+          }}
+        />
+      )}
+      {dialog === "vehicle" && (
         <NewVehicleDialog
           name={name}
           plate={plate}
@@ -573,8 +645,17 @@ export function VehiclesPage() {
           onPlate={setPlate}
           onDevice={setDeviceId}
           onSubmit={handleCreate}
-          onClose={() => setCreating(false)}
+          onClose={() => setDialog(null)}
         />
+      )}
+
+      {notice && (
+        <p
+          role="status"
+          className={`mb-4 rounded-xl px-3 py-2 text-sm ${notice.ok ? "bg-emerald-50 text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-300" : "bg-amber-50 text-amber-900 dark:bg-amber-500/10 dark:text-amber-200"}`}
+        >
+          {notice.text}
+        </p>
       )}
 
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">

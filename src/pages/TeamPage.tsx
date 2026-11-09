@@ -57,7 +57,7 @@ function canManageOther(currentUser: CurrentUser | null, member: TeamMember): bo
   return false;
 }
 
-function ProductCheckboxes({
+export function ProductCheckboxes({
   products,
   selected,
   onChange,
