@@ -6,14 +6,15 @@ import { FleetScoreTable, type FleetRow } from "../components/driving/FleetScore
 import { IncidentList } from "../components/driving/IncidentList";
 import { ScoreRing } from "../components/driving/ScoreRing";
 import { useFleet } from "../context/FleetContext";
+import { useLanguage, type MessageKey } from "../i18n";
 import { getDrivingStyle, getVehicleIncidents } from "../lib/api";
 import { INCIDENT_LABELS, type Incident, type IncidentType } from "../lib/drivingBehavior";
 import type { DrivingStyleResponse, VehicleDrivingStyle } from "../lib/types";
 
-const RANGES: Array<{ label: string; days: number }> = [
-  { label: "24h", days: 1 },
-  { label: "7 días", days: 7 },
-  { label: "30 días", days: 30 },
+const RANGES: Array<{ label: MessageKey; days: number }> = [
+  { label: "driving.h24", days: 1 },
+  { label: "driving.days7", days: 7 },
+  { label: "driving.days30", days: 30 },
 ];
 
 const CATEGORY_ORDER: IncidentType[] = ["harshBraking", "harshAcceleration", "harshCornering", "speeding"];
@@ -23,12 +24,10 @@ const SPEED_LIMIT_DEBOUNCE_MS = 500;
 
 type Selection = "overall" | IncidentType;
 
-const QUALITY_NOTES: Partial<Record<VehicleDrivingStyle["quality"], string>> = {
-  no_data: "Este vehículo no tiene posiciones en el periodo elegido.",
-  insufficient_data:
-    "Condujo muy poco en el periodo (menos de 2 horas): no hay datos suficientes para puntuar su manejo.",
-  speeding_only:
-    "Este dispositivo reporta con poca frecuencia, así que no se pueden detectar frenadas, aceleraciones ni curvas bruscas. Solo se puntúa la velocidad.",
+const QUALITY_NOTES: Partial<Record<VehicleDrivingStyle["quality"], MessageKey>> = {
+  no_data: "driving.q.noData",
+  insufficient_data: "driving.q.insufficient",
+  speeding_only: "driving.q.speedingOnly",
 };
 
 function scoreFor(vehicle: VehicleDrivingStyle, selection: Selection): number | null {
@@ -41,6 +40,7 @@ function totalIncidents(vehicle: VehicleDrivingStyle): number {
 }
 
 export function DrivingBehaviorPage() {
+  const { t, locale } = useLanguage();
   const { filteredVehicles: vehicles, loading: fleetLoading } = useFleet();
   const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
   const [rangeDays, setRangeDays] = useState(7);
@@ -84,7 +84,7 @@ export function DrivingBehaviorPage() {
         if (!cancelled) setStyle(result);
       })
       .catch((err: unknown) => {
-        if (!cancelled) setError(err instanceof Error ? err.message : "No se pudo calcular el estilo de conducción");
+        if (!cancelled) setError(err instanceof Error ? err.message : t("driving.calcFailed"));
       });
     return () => {
       cancelled = true;
@@ -135,8 +135,9 @@ export function DrivingBehaviorPage() {
   );
 
   const loading = fleetLoading || (!style && !error);
-  const categoryLabel = selection === "overall" ? "General" : INCIDENT_LABELS[selection];
-  const qualityNote = current ? QUALITY_NOTES[current.quality] : undefined;
+  const categoryLabel = selection === "overall" ? t("driving.general") : t(INCIDENT_LABELS[selection]);
+  const qualityKey = current ? QUALITY_NOTES[current.quality] : undefined;
+  const qualityNote = qualityKey ? t(qualityKey) : undefined;
   const fromVelocity = current?.source === "velocity";
   const byGps =
     !!current &&
@@ -148,12 +149,9 @@ export function DrivingBehaviorPage() {
 
   return (
     <div className="h-full overflow-y-auto bg-[#f5f6fb] p-4 sm:p-6 lg:p-8 dark:bg-[#0a0e1a]">
-      <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Conducción</h1>
+      <h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t("driving.title")}</h1>
       <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">
-        Puntaje de manejo por vehículo con el método de Radius Velocity: cada categoría (aceleración, frenado, curvas y
-        velocidad) baja según los eventos por hora de conducción, y el general es el promedio de las cuatro. Los
-        vehículos de Velocity muestran el mismo puntaje que su informe de Driver Performance. Hacé click en cualquier
-        puntaje para comparar toda la flota en esa métrica.
+        {t("driving.intro")}
       </p>
 
       <div className="mb-4">
@@ -175,14 +173,14 @@ export function DrivingBehaviorPage() {
                 : "bg-white text-slate-500 hover:bg-slate-100 dark:bg-[#111729] dark:text-slate-400 dark:hover:bg-white/10"
             }`}
           >
-            {r.label}
+            {t(r.label)}
           </button>
         ))}
 
         <span className="mx-1 h-5 w-px bg-slate-200 dark:bg-white/10" />
 
         <label className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-          Límite de velocidad
+          {t("driving.speedLimit")}
           <input
             type="number"
             min={10}
@@ -198,41 +196,34 @@ export function DrivingBehaviorPage() {
       </div>
 
       {!fleetLoading && vehicles.length === 0 && (
-        <p className="text-sm text-slate-500 dark:text-slate-400">Todavía no hay vehículos cargados.</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400">{t("driving.noVehicles")}</p>
       )}
 
       {error && <p className="mb-4 text-sm text-red-600 dark:text-red-400">{error}</p>}
 
-      {current && loading && <p className="text-sm text-slate-500 dark:text-slate-400">Calculando puntajes...</p>}
+      {current && loading && <p className="text-sm text-slate-500 dark:text-slate-400">{t("driving.calculating")}</p>}
 
       {current && !loading && (
         <>
           <p className="mb-3 text-sm text-slate-500 dark:text-slate-400">
-            {current.distanceKm} km · {current.drivingHours} h en movimiento · {current.trips}{" "}
-            {current.trips === 1 ? "viaje" : "viajes"}
+            {t("driving.summary", { km: current.distanceKm, hours: current.drivingHours, trips: current.trips })}
           </p>
 
           {fromVelocity && (
             <p className="mb-4 rounded-xl bg-blue-50 px-4 py-2 text-sm text-blue-800 dark:bg-blue-500/10 dark:text-blue-300">
-              Puntajes de Radius Velocity para los días del periodo (por días completos). Cada categoría resta puntos
-              según los eventos que detecta el dispositivo por hora de conducción, y el puntaje general es el promedio
-              de las cuatro.
+              {t("driving.fromVelocity")}
             </p>
           )}
 
           {byDevice && current.measuredSince && (
             <p className="mb-4 rounded-xl bg-emerald-50 px-4 py-2 text-sm text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-300">
-              Eventos medidos por el propio equipo (acelerómetro) desde el{" "}
-              {new Date(current.measuredSince).toLocaleString()}: la misma forma de medir que Radius Velocity. Los
-              kilómetros y las horas de esta tarjeta son de ese periodo.
+              {t("driving.byDevice", { since: new Date(current.measuredSince).toLocaleString(locale) })}
             </p>
           )}
 
           {byGps && current.quality === "full" && (
             <p className="mb-4 rounded-xl bg-slate-100 px-4 py-2 text-sm text-slate-600 dark:bg-white/5 dark:text-slate-300">
-              Este vehículo no está en Velocity: los eventos los detecta OneTrack en su GPS, no un acelerómetro como el
-              de los dispositivos de Velocity. Suelen salir más eventos que en Velocity, así que el puntaje tiende a ser
-              más bajo. La fórmula es la misma.
+              {t("driving.byGps")}
             </p>
           )}
 
@@ -244,31 +235,30 @@ export function DrivingBehaviorPage() {
 
           <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-5">
             <ScoreRing
-              label="General"
+              label={t("driving.general")}
               score={current.scores?.overall ?? null}
               count={current.scores ? totalIncidents(current) : null}
-              countLabel="incidentes en total"
+              countLabel={t("driving.totalIncidents")}
               active={selection === "overall"}
               onClick={() => setSelection("overall")}
             />
             {CATEGORY_ORDER.map((key) => (
               <ScoreRing
                 key={key}
-                label={INCIDENT_LABELS[key]}
+                label={t(INCIDENT_LABELS[key])}
                 score={current.scores ? current.scores[key] : null}
                 count={current.scores ? current.incidents[key] : null}
-                countLabel="eventos"
+                countLabel={t("driving.eventsLabel")}
                 active={selection === key}
                 onClick={() => setSelection(key)}
               />
             ))}
           </div>
 
-          <Panel title={selection === "overall" ? "Todos los incidentes" : INCIDENT_LABELS[selection]} className="mb-6">
+          <Panel title={selection === "overall" ? t("driving.allIncidents") : t(INCIDENT_LABELS[selection])} className="mb-6">
             {fromVelocity ? (
               <p className="text-sm text-slate-500 dark:text-slate-400">
-                Velocity informa cuántos eventos hubo, pero no dónde ni cuándo ocurrió cada uno, así que para este
-                vehículo no hay lista de incidentes en el mapa.
+                {t("driving.velocityNoList")}
               </p>
             ) : (
               <IncidentList
@@ -282,7 +272,7 @@ export function DrivingBehaviorPage() {
       )}
 
       {style && (
-        <Panel title={`Flota — ${categoryLabel}`}>
+        <Panel title={t("driving.fleetPanel", { category: categoryLabel })}>
           <FleetScoreTable
             rows={fleetRows}
             categoryLabel={categoryLabel}

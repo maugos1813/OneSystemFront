@@ -6,28 +6,30 @@ import { StatusBadge, VehicleStatusBadge } from "../components/StatusBadge";
 import { isIdling, thresholdsFromSettings, vehicleStatus } from "../lib/vehicleStatus";
 import { useAuth } from "../context/AuthContext";
 import { useFleet } from "../context/FleetContext";
+import { useLanguage, type MessageKey } from "../i18n";
 import { ApiError, claimDevice } from "../lib/api";
 import { DEVICE_MODELS, hasProfile, modelProfile } from "../lib/deviceModels";
 import { trackGlow } from "../lib/glow";
 import type { DeviceSource } from "../lib/types";
 
-function formatDate(iso: string | null): string {
-  if (!iso) return "Nunca";
-  return new Date(iso).toLocaleString();
+function formatDate(iso: string | null, locale: string, never: string): string {
+  if (!iso) return never;
+  return new Date(iso).toLocaleString(locale);
 }
 
 type SourceFilter = "all" | DeviceSource;
 
-const SOURCE_FILTERS: Array<{ key: SourceFilter; label: string }> = [
-  { key: "all", label: "Todos" },
+const SOURCE_FILTERS: Array<{ key: SourceFilter; label: string | MessageKey }> = [
+  { key: "all", label: "devices.all" },
   { key: "teltonika", label: "Teltonika" },
   { key: "radius_velocity", label: "Velocity" },
 ];
 
 function ModelTags({ model }: { model: string }) {
+  const { t } = useLanguage();
   if (!hasProfile(model)) return null;
   const profile = modelProfile(model);
-  const tags = [profile.obd ? "OBD" : null, profile.output ? "Salida" : null].filter(Boolean);
+  const tags = [profile.obd ? "OBD" : null, profile.output ? t("devices.tagOutput") : null].filter(Boolean);
   if (tags.length === 0) return null;
   return (
     <span className="ml-2 inline-flex gap-1 align-middle">
@@ -41,6 +43,7 @@ function ModelTags({ model }: { model: string }) {
 }
 
 export function DevicesPage() {
+  const { t, locale } = useLanguage();
   const { currentUser } = useAuth();
   const { devices, vehicles, positions, settings, loading, refetch } = useFleet();
   const vehicleByDeviceId = new Map(vehicles.filter((v) => v.deviceId).map((v) => [v.deviceId, v]));
@@ -91,8 +94,8 @@ export function DevicesPage() {
         err instanceof ApiError && err.status === 400
           ? err.message
           : err instanceof ApiError && err.status === 404
-            ? "Ese IMEI ya está vinculado a otra empresa."
-            : "No se pudo agregar el dispositivo",
+            ? t("devices.claimBadImei")
+            : t("devices.addFailed"),
       );
     } finally {
       setSubmitting(false);
@@ -101,10 +104,10 @@ export function DevicesPage() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
-      <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Dispositivos</h1>
+      <h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t("devices.title")}</h1>
       <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">
-        Los trackers GPS vinculados a tu empresa.
-        {isPlatform && " Para agregar uno nuevo escribe su IMEI: puedes hacerlo antes de que se conecte, no necesita SIM todavía."}
+        {t("devices.intro")}
+        {isPlatform && t("devices.introPlatform")}
       </p>
 
       {isPlatform && (
@@ -116,7 +119,7 @@ export function DevicesPage() {
           >
             <div className="flex-1">
               <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300" htmlFor="imei">
-                IMEI del dispositivo
+                {t("devices.imei")}
               </label>
               <input
                 id="imei"
@@ -131,7 +134,7 @@ export function DevicesPage() {
             </div>
             <div>
               <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300" htmlFor="claim-model">
-                Modelo
+                {t("devices.model")}
               </label>
               <select
                 id="claim-model"
@@ -152,7 +155,7 @@ export function DevicesPage() {
               className="brand-button flex items-center justify-center gap-1.5 rounded-xl px-4 py-2 text-sm font-medium disabled:opacity-50"
             >
               <Plus className="h-4 w-4" />
-              Agregar
+              {t("devices.add")}
             </button>
           </form>
           <p className="mb-6 -mt-4 text-xs text-slate-500 dark:text-slate-400">{modelProfile(model).summary}</p>
@@ -160,10 +163,10 @@ export function DevicesPage() {
         </>
       )}
 
-      {loading && <p className="text-sm text-slate-500 dark:text-slate-400">Cargando...</p>}
+      {loading && <p className="text-sm text-slate-500 dark:text-slate-400">{t("common.loading")}</p>}
 
       {!loading && devices.length === 0 && (
-        <p className="text-sm text-slate-500 dark:text-slate-400">Todavía no reclamaste ningún dispositivo.</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400">{t("devices.none")}</p>
       )}
 
       {!loading && devices.length > 0 && (
@@ -178,20 +181,20 @@ export function DevicesPage() {
                   : "bg-white text-slate-500 hover:bg-violet-100 dark:bg-[#111729] dark:text-slate-400 dark:hover:bg-white/10"
               }`}
             >
-              {label} <span className="opacity-70">{counts[key]}</span>
+              {label === "devices.all" ? t("devices.all") : label} <span className="opacity-70">{counts[key]}</span>
             </button>
           ))}
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder={isPlatform ? "Buscar IMEI, modelo o placa…" : "Buscar modelo, vehículo o placa…"}
+            placeholder={isPlatform ? t("devices.searchPlatform") : t("devices.search")}
             className="field-input ml-auto w-full rounded-xl border border-slate-300 px-3 py-1.5 text-sm sm:w-64 dark:border-white/10 dark:bg-white/5 dark:text-white"
           />
         </div>
       )}
 
       {!loading && devices.length > 0 && shown.length === 0 && (
-        <p className="text-sm text-slate-500 dark:text-slate-400">Ningún dispositivo coincide con el filtro.</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400">{t("devices.noMatch")}</p>
       )}
 
       {!loading && shown.length > 0 && (
@@ -200,12 +203,12 @@ export function DevicesPage() {
             <thead className="border-b border-violet-100 bg-violet-50/60 text-xs text-slate-500 uppercase dark:border-white/10 dark:bg-white/5 dark:text-slate-400">
               <tr>
                 {isPlatform && <th className="px-4 py-2 font-medium">IMEI</th>}
-                {!isPlatform && <th className="px-4 py-2 font-medium">Vehículo</th>}
-                <th className="px-4 py-2 font-medium">Modelo</th>
-                {isPlatform && <th className="px-4 py-2 font-medium">Vehículo</th>}
-                <th className="px-4 py-2 font-medium">Fuente</th>
-                <th className="px-4 py-2 font-medium">Estado</th>
-                <th className="px-4 py-2 font-medium">Última conexión</th>
+                {!isPlatform && <th className="px-4 py-2 font-medium">{t("devices.colVehicle")}</th>}
+                <th className="px-4 py-2 font-medium">{t("devices.model")}</th>
+                {isPlatform && <th className="px-4 py-2 font-medium">{t("devices.colVehicle")}</th>}
+                <th className="px-4 py-2 font-medium">{t("devices.colSource")}</th>
+                <th className="px-4 py-2 font-medium">{t("devices.colStatus")}</th>
+                <th className="px-4 py-2 font-medium">{t("devices.colLastSeen")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-white/10">
@@ -217,7 +220,7 @@ export function DevicesPage() {
                 >
                   <td className="px-4 py-3 font-medium text-slate-900 dark:text-white">
                     <Link to={`/dispositivos/${device.id}`} onClick={(e) => e.stopPropagation()} className="hover:underline">
-                      {isPlatform ? device.imei : (vehicleByDeviceId.get(device.id)?.name ?? "Sin asignar")}
+                      {isPlatform ? device.imei : (vehicleByDeviceId.get(device.id)?.name ?? t("devices.unassigned"))}
                     </Link>
                   </td>
                   <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
@@ -226,7 +229,7 @@ export function DevicesPage() {
                   </td>
                   {isPlatform && (
                     <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
-                      {vehicleByDeviceId.get(device.id)?.name ?? <span className="text-slate-400">Sin asignar</span>}
+                      {vehicleByDeviceId.get(device.id)?.name ?? <span className="text-slate-400">{t("devices.unassigned")}</span>}
                     </td>
                   )}
                   <td className="px-4 py-3">
@@ -243,7 +246,7 @@ export function DevicesPage() {
                       );
                     })()}
                   </td>
-                  <td className="px-4 py-3 text-slate-500 dark:text-slate-400">{formatDate(device.lastSeenAt)}</td>
+                  <td className="px-4 py-3 text-slate-500 dark:text-slate-400">{formatDate(device.lastSeenAt, locale, t("devices.never"))}</td>
                 </tr>
               ))}
             </tbody>

@@ -8,6 +8,7 @@ import { LogoUpload } from "../components/LogoUpload";
 import { LanguageSelect } from "../components/LanguageSelect";
 import { ModulesPicker } from "../components/ModulesPicker";
 import { useAuth } from "../context/AuthContext";
+import { useT, type MessageKey } from "../i18n";
 import {
   ApiError,
   resetMemberTotp,
@@ -32,22 +33,19 @@ import { fileToLogoVariants, LOGO_ACCEPT } from "../lib/logoImage";
 import { MODULE_INFO, MODULE_TEMPLATES, matchingTemplate, visibleModules, type ModuleKey } from "../lib/modules";
 import type { CurrentUser, Product, TeamMember, TeamRole, Vehicle } from "../lib/types";
 
-const ROLE_LABEL: Record<TeamRole, string> = {
+const ROLE_LABEL: Record<TeamRole, MessageKey> = {
   // The account holder is the client itself; its people are its team.
-  owner: "Cliente",
-  admin: "Admin",
-  manager: "Manager",
-  viewer: "Usuario",
+  owner: "role.owner",
+  admin: "role.admin",
+  manager: "role.manager",
+  viewer: "role.viewer",
 };
 
 /** What each role can do, as the backend enforces it (owner/admin/manager gates on each route). */
-const ROLE_HELP: Record<"admin" | "manager" | "viewer", string> = {
-  viewer:
-    "Solo mira. Ve las cards y la flota que le des, pero no puede crear ni editar vehículos, dispositivos, geocercas, SIMs, ajustes ni bloquear un vehículo.",
-  manager:
-    "Igual que Usuario, y además crea y administra sus propios sub-usuarios (siempre como Usuario, nunca con más acceso del que él tiene) y registra mantenimientos.",
-  admin:
-    "Controla todo: vehículos, dispositivos (incluido el bloqueo remoto), SIMs, API Keys, ajustes, geocercas y equipo. Ve todas las cards. No puede modificar al Owner.",
+const ROLE_HELP: Record<"admin" | "manager" | "viewer", MessageKey> = {
+  viewer: "team.help.viewer",
+  manager: "team.help.manager",
+  admin: "team.help.admin",
 };
 
 /** Mirrors the backend's canManageOther() — deliberately excludes self-service, since
@@ -90,13 +88,14 @@ function ProductCheckboxes({
 }
 
 function AreaSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const t = useT();
   const groups = useFleetGroups();
   return (
     <FleetGroupSelect
       value={value}
       onChange={onChange}
       groups={groups}
-      emptyLabel="Todas las flotas"
+      emptyLabel={t("settings.allFleets")}
       className="field-input rounded-lg border border-slate-300 px-2 py-1 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
     />
   );
@@ -116,6 +115,7 @@ function MemberRow({
   onChanged: () => void;
   onVehiclesChanged: () => void;
 }) {
+  const t = useT();
   const { currentUser } = useAuth();
   const [productKeys, setProductKeys] = useState(member.productKeys);
   const [savingProducts, setSavingProducts] = useState(false);
@@ -214,7 +214,7 @@ function MemberRow({
       setEditingName(false);
       onChanged();
     } catch (err) {
-      setNameError(err instanceof ApiError ? err.message : "No se pudo actualizar el nombre");
+      setNameError(err instanceof ApiError ? err.message : t("team.err.name"));
     } finally {
       setSavingName(false);
     }
@@ -228,7 +228,7 @@ function MemberRow({
       setEditingEmail(false);
       onChanged();
     } catch (err) {
-      setEmailError(err instanceof ApiError ? err.message : "No se pudo actualizar el email");
+      setEmailError(err instanceof ApiError ? err.message : t("team.err.email"));
     } finally {
       setSavingEmail(false);
     }
@@ -242,7 +242,7 @@ function MemberRow({
       setEditingArea(false);
       onChanged();
     } catch (err) {
-      setAreaError(err instanceof ApiError ? err.message : "No se pudo actualizar la flota");
+      setAreaError(err instanceof ApiError ? err.message : t("team.err.fleet"));
     } finally {
       setSavingArea(false);
     }
@@ -258,7 +258,7 @@ function MemberRow({
       setPasswordSaved(true);
       setTimeout(() => setPasswordSaved(false), 2000);
     } catch (err) {
-      setPasswordError(err instanceof ApiError ? err.message : "No se pudo actualizar la contraseña");
+      setPasswordError(err instanceof ApiError ? err.message : t("team.err.password"));
     } finally {
       setSavingPassword(false);
     }
@@ -300,7 +300,7 @@ function MemberRow({
       }
       onChanged();
     } catch (err) {
-      setLogoError(err instanceof Error ? err.message : "No se pudo guardar el logo");
+      setLogoError(err instanceof Error ? err.message : t("team.err.logo"));
     } finally {
       setSavingLogo(false);
     }
@@ -311,20 +311,20 @@ function MemberRow({
   const [resettingTotp, setResettingTotp] = useState(false);
 
   async function handleResetTotp() {
-    if (!confirm(`¿Quitar la verificación en dos pasos de "${member.name || member.email}"? Se le cerrará la sesión en todos sus dispositivos y tendrá que configurarla de nuevo al entrar.`)) return;
+    if (!confirm(t("team.confirmReset", { who: member.name || member.email }))) return;
     setResettingTotp(true);
     try {
       await resetMemberTotp(member.id);
       onChanged();
     } catch (err) {
-      alert(err instanceof ApiError ? err.message : "No se pudo restablecer la verificación");
+      alert(err instanceof ApiError ? err.message : t("team.err.reset"));
     } finally {
       setResettingTotp(false);
     }
   }
 
   async function handleDelete() {
-    if (!confirm(`¿Eliminar a "${member.name || member.email}" del equipo? No va a poder volver a entrar.`)) return;
+    if (!confirm(t("team.confirmDelete", { who: member.name || member.email }))) return;
     setDeleting(true);
     try {
       await deleteTeamMember(member.id);
@@ -355,7 +355,7 @@ function MemberRow({
             <span className="flex gap-0.5">
               <label
                 className={`cursor-pointer rounded-md p-0.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-500 dark:hover:bg-white/10 ${savingLogo ? "pointer-events-none opacity-50" : ""}`}
-                title={member.logo ? "Cambiar logo" : "Subir logo"}
+                title={member.logo ? t("team.logoChange") : t("team.logoUpload")}
               >
                 <ImagePlus className="h-3.5 w-3.5" />
                 <input
@@ -373,8 +373,8 @@ function MemberRow({
                   onClick={() => void handleLogo(null, true)}
                   disabled={savingLogo}
                   className="rounded-md p-0.5 text-slate-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-50 dark:text-slate-500 dark:hover:bg-red-500/10"
-                  title="Quitar logo"
-                  aria-label="Quitar logo"
+                  title={t("team.logoRemove")}
+                  aria-label={t("team.logoRemove")}
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
@@ -389,7 +389,7 @@ function MemberRow({
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 autoFocus
-                placeholder="Nombre"
+                placeholder={t("team.name")}
                 className="field-input min-w-0 flex-1 rounded-lg border border-slate-300 px-2 py-1 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
               />
               <button
@@ -397,7 +397,7 @@ function MemberRow({
                 disabled={savingName}
                 className="brand-button shrink-0 rounded-lg px-2.5 py-1 text-xs font-medium disabled:opacity-50"
               >
-                Guardar
+                {t("team.save")}
               </button>
               <button
                 onClick={() => {
@@ -406,7 +406,7 @@ function MemberRow({
                   setNameError(null);
                 }}
                 className="shrink-0 rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-500 dark:hover:bg-white/10"
-                aria-label="Cancelar"
+                aria-label={t("team.cancel")}
               >
                 <X className="h-3.5 w-3.5" />
               </button>
@@ -420,7 +420,7 @@ function MemberRow({
                 <button
                   onClick={() => setEditingName(true)}
                   className="shrink-0 rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-500 dark:hover:bg-white/10"
-                  aria-label="Editar nombre"
+                  aria-label={t("team.editName")}
                 >
                   <Pencil className="h-3.5 w-3.5" />
                 </button>
@@ -442,7 +442,7 @@ function MemberRow({
                 disabled={savingEmail}
                 className="brand-button shrink-0 rounded-lg px-2.5 py-1 text-xs font-medium disabled:opacity-50"
               >
-                Guardar
+                {t("team.save")}
               </button>
               <button
                 onClick={() => {
@@ -451,7 +451,7 @@ function MemberRow({
                   setEmailError(null);
                 }}
                 className="shrink-0 rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-500 dark:hover:bg-white/10"
-                aria-label="Cancelar"
+                aria-label={t("team.cancel")}
               >
                 <X className="h-3.5 w-3.5" />
               </button>
@@ -463,7 +463,7 @@ function MemberRow({
                 <button
                   onClick={() => setEditingEmail(true)}
                   className="shrink-0 rounded-lg p-0.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-500 dark:hover:bg-white/10"
-                  aria-label="Editar email"
+                  aria-label={t("team.editEmail")}
                 >
                   <Pencil className="h-3 w-3" />
                 </button>
@@ -472,7 +472,7 @@ function MemberRow({
           )}
           {emailError && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{emailError}</p>}
           {logoError && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{logoError}</p>}
-          {isSelf && <p className="text-xs text-slate-400 dark:text-slate-500">Vos</p>}
+          {isSelf && <p className="text-xs text-slate-400 dark:text-slate-500">{t("team.you")}</p>}
         </div>
 
         <div className="flex shrink-0 items-center gap-1.5">
@@ -483,19 +483,19 @@ function MemberRow({
               onChange={(e) => handleRoleChange(e.target.value as TeamRole)}
               className="field-input rounded-lg border border-slate-300 px-2 py-1 text-sm disabled:opacity-50 dark:border-white/10 dark:bg-white/5 dark:text-white"
             >
-              <option value="admin">Admin</option>
-              <option value="manager">Manager</option>
-              <option value="viewer">Usuario</option>
+              <option value="admin">{t("role.admin")}</option>
+              <option value="manager">{t("role.manager")}</option>
+              <option value="viewer">{t("role.viewer")}</option>
             </select>
           ) : (
             <span className="rounded-full bg-violet-100 px-2.5 py-1 text-xs font-medium text-violet-700 dark:bg-violet-500/15 dark:text-violet-300">
-              {ROLE_LABEL[member.role]}
+              {t(ROLE_LABEL[member.role])}
             </span>
           )}
 
           {member.totpEnabled && (
-            <span title="Verificación en dos pasos activada" className="text-emerald-600 dark:text-emerald-400">
-              <ShieldCheck className="h-4 w-4" aria-label="Verificación en dos pasos activada" />
+            <span title={t("team.twoStepOn")} className="text-emerald-600 dark:text-emerald-400">
+              <ShieldCheck className="h-4 w-4" aria-label={t("team.twoStepOn")} />
             </span>
           )}
 
@@ -504,8 +504,8 @@ function MemberRow({
               onClick={handleResetTotp}
               disabled={resettingTotp}
               className="rounded-lg p-1.5 text-slate-400 hover:bg-amber-50 hover:text-amber-600 disabled:opacity-50 dark:text-slate-500 dark:hover:bg-amber-500/10 dark:hover:text-amber-400"
-              aria-label="Restablecer la verificación en dos pasos"
-              title="Restablecer la verificación en dos pasos (teléfono perdido)"
+              aria-label={t("team.twoStepReset")}
+              title={t("team.twoStepResetTitle")}
             >
               <ShieldOff className="h-4 w-4" />
             </button>
@@ -515,8 +515,8 @@ function MemberRow({
             <button
               onClick={() => setEditingPassword((v) => !v)}
               className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-500 dark:hover:bg-white/10"
-              aria-label="Cambiar contraseña"
-              title="Cambiar contraseña"
+              aria-label={t("team.changePassword")}
+              title={t("team.changePassword")}
             >
               <KeyRound className="h-4 w-4" />
             </button>
@@ -527,8 +527,8 @@ function MemberRow({
               onClick={handleDelete}
               disabled={deleting}
               className="rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-50 dark:text-slate-500 dark:hover:bg-red-500/10 dark:hover:text-red-400"
-              aria-label="Eliminar"
-              title="Eliminar"
+              aria-label={t("team.delete")}
+              title={t("team.delete")}
             >
               <Trash2 className="h-4 w-4" />
             </button>
@@ -541,7 +541,7 @@ function MemberRow({
           <PasswordField
             required
             minLength={8}
-            placeholder="Nueva contraseña (mínimo 8 caracteres)"
+            placeholder={t("team.newPassword")}
             value={password}
             onChange={setPassword}
             autoFocus
@@ -553,7 +553,7 @@ function MemberRow({
             disabled={savingPassword || password.length < 8}
             className="brand-button shrink-0 rounded-lg px-2.5 py-1 text-xs font-medium disabled:opacity-50"
           >
-            Guardar
+            {t("team.save")}
           </button>
           <button
             onClick={() => {
@@ -562,7 +562,7 @@ function MemberRow({
               setPasswordError(null);
             }}
             className="shrink-0 rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-500 dark:hover:bg-white/10"
-            aria-label="Cancelar"
+            aria-label={t("team.cancel")}
           >
             <X className="h-3.5 w-3.5" />
           </button>
@@ -570,19 +570,19 @@ function MemberRow({
         </div>
       )}
       {passwordSaved && (
-        <p className="mt-2 text-xs font-medium text-emerald-600 dark:text-emerald-400">Contraseña actualizada ✓</p>
+        <p className="mt-2 text-xs font-medium text-emerald-600 dark:text-emerald-400">{t("team.passwordUpdated")}</p>
       )}
 
       {showProducts && (
         <div className="mt-3 border-t border-slate-200 pt-3 dark:border-white/10">
           <div className="mb-2 flex items-center justify-between">
-            <p className="text-xs font-medium tracking-wide text-slate-400 uppercase dark:text-slate-500">Flota</p>
+            <p className="text-xs font-medium tracking-wide text-slate-400 uppercase dark:text-slate-500">{t("team.fleet")}</p>
             {canManageOtherOnly && !editingArea && (
               <button
                 onClick={() => setEditingArea(true)}
                 className="text-xs text-blue-600 hover:underline dark:text-blue-400"
               >
-                Cambiar
+                {t("team.change")}
               </button>
             )}
           </div>
@@ -594,7 +594,7 @@ function MemberRow({
                 disabled={savingArea}
                 className="brand-button shrink-0 rounded-lg px-2.5 py-1 text-xs font-medium disabled:opacity-50"
               >
-                Guardar
+                {t("team.save")}
               </button>
               <button
                 onClick={() => {
@@ -603,7 +603,7 @@ function MemberRow({
                   setAreaError(null);
                 }}
                 className="shrink-0 rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-500 dark:hover:bg-white/10"
-                aria-label="Cancelar"
+                aria-label={t("team.cancel")}
               >
                 <X className="h-3.5 w-3.5" />
               </button>
@@ -612,21 +612,21 @@ function MemberRow({
           ) : member.allowedArea ? (
             <div className="flex flex-wrap items-center gap-2">
               <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700 dark:bg-blue-500/15 dark:text-blue-400">
-                Solo {member.allowedArea}
+                {t("team.onlyArea", { area: member.allowedArea })}
               </span>
               {canManageOtherOnly && vehicles.length > 0 && (
                 <>
                   <span className="text-xs text-slate-500 dark:text-slate-400">
-                    {vehicles.filter((v) => v.fleetGroup === member.allowedArea).length} vehículos
+                    {t("team.vehicleCount", { count: vehicles.filter((v) => v.fleetGroup === member.allowedArea).length })}
                   </span>
                   <button onClick={() => setChoosingVehicles(true)} className="brand-button rounded-lg px-2.5 py-1 text-xs font-medium">
-                    Elegir vehículos
+                    {t("team.chooseVehicles")}
                   </button>
                 </>
               )}
             </div>
           ) : (
-            <span className="text-xs text-slate-400 dark:text-slate-500">Todas las flotas</span>
+            <span className="text-xs text-slate-400 dark:text-slate-500">{t("settings.allFleets")}</span>
           )}
         </div>
       )}
@@ -634,7 +634,7 @@ function MemberRow({
       {showProducts && (
         <div className="mt-3 border-t border-slate-200 pt-3 dark:border-white/10">
           <p className="mb-2 text-xs font-medium tracking-wide text-slate-400 uppercase dark:text-slate-500">
-            Acceso a cards
+            {t("team.cardsAccess")}
           </p>
           {canManageOtherOnly ? (
             <>
@@ -645,17 +645,17 @@ function MemberRow({
                   disabled={savingProducts}
                   className="brand-button mt-3 rounded-lg px-3 py-1.5 text-xs font-medium disabled:opacity-50"
                 >
-                  {savingProducts ? "Guardando..." : "Guardar acceso"}
+                  {savingProducts ? t("team.saving") : t("team.saveAccess")}
                 </button>
               )}
               {savedProducts && (
-                <span className="ml-2 text-xs font-medium text-emerald-600 dark:text-emerald-400">Guardado ✓</span>
+                <span className="ml-2 text-xs font-medium text-emerald-600 dark:text-emerald-400">{t("settings.saved")}</span>
               )}
             </>
           ) : (
             <div className="flex flex-wrap gap-1.5">
               {member.productKeys.length === 0 && (
-                <span className="text-xs text-slate-400 dark:text-slate-500">Ninguna</span>
+                <span className="text-xs text-slate-400 dark:text-slate-500">{t("settings.none")}</span>
               )}
               {products
                 .filter((p) => member.productKeys.includes(p.key))
@@ -675,16 +675,16 @@ function MemberRow({
       {canManageOtherOnly && (
         <div className="mt-3 flex items-center justify-between gap-3 border-t border-slate-200 pt-3 dark:border-white/10">
           <p className="text-xs font-medium tracking-wide text-slate-400 uppercase dark:text-slate-500">
-            Idioma <span className="font-normal normal-case">(de la app, los avisos y los correos)</span>
+            {t("team.language")} <span className="font-normal normal-case">{t("team.languageHint")}</span>
           </p>
-          <LanguageSelect value={member.language ?? "es"} onChange={(l) => void handleLanguage(l)} disabled={savingLanguage} />
+          <LanguageSelect value={member.language ?? "it"} onChange={(l) => void handleLanguage(l)} disabled={savingLanguage} />
         </div>
       )}
 
       {showProducts && (
         <div className="mt-3 border-t border-slate-200 pt-3 dark:border-white/10">
           <p className="mb-2 text-xs font-medium tracking-wide text-slate-400 uppercase dark:text-slate-500">
-            Secciones de OneTrack
+            {t("team.oneTrackSections")}
           </p>
           {canManageOtherOnly ? (
             <>
@@ -699,17 +699,17 @@ function MemberRow({
                   disabled={savingModules}
                   className="brand-button mt-3 rounded-lg px-3 py-1.5 text-xs font-medium disabled:opacity-50"
                 >
-                  {savingModules ? "Guardando..." : "Guardar secciones"}
+                  {savingModules ? t("team.saving") : t("team.saveSections")}
                 </button>
               )}
-              {savedModules && <span className="ml-2 text-xs font-medium text-emerald-600 dark:text-emerald-400">Guardado ✓</span>}
+              {savedModules && <span className="ml-2 text-xs font-medium text-emerald-600 dark:text-emerald-400">{t("settings.saved")}</span>}
             </>
           ) : (
             <div className="flex flex-wrap gap-1.5">
-              {member.modules.length === 0 && <span className="text-xs text-slate-400 dark:text-slate-500">Ninguna</span>}
+              {member.modules.length === 0 && <span className="text-xs text-slate-400 dark:text-slate-500">{t("settings.none")}</span>}
               {visibleModules(member.modules).map((key) => (
                 <span key={key} className="rounded-full bg-slate-200 px-2 py-0.5 text-xs text-slate-600 dark:bg-white/10 dark:text-slate-300">
-                  {MODULE_INFO[key].label}
+                  {t(MODULE_INFO[key].label)}
                 </span>
               ))}
             </div>
@@ -730,6 +730,7 @@ function MemberRow({
 
 /** `embedded`: inside the OneTrack layout, which has its own bars (no "back to the portal" header). */
 export function TeamPage({ embedded = false }: { embedded?: boolean }) {
+  const t = useT();
   const { currentUser } = useAuth();
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -747,7 +748,7 @@ export function TeamPage({ embedded = false }: { embedded?: boolean }) {
   const [logo, setLogo] = useState<string | null>(null);
   const [logoTag, setLogoTag] = useState<string | null>(null);
   const [newModules, setNewModules] = useState<ModuleKey[]>([...MODULE_TEMPLATES.estandar]);
-  const [newLanguage, setNewLanguage] = useState<"es" | "it">("es");
+  const [newLanguage, setNewLanguage] = useState<"es" | "it">("it");
   const [newMemberProducts, setNewMemberProducts] = useState<string[]>([]);
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
@@ -800,11 +801,11 @@ export function TeamPage({ embedded = false }: { embedded?: boolean }) {
       setRole("viewer");
       setLogo(null);
       setNewModules([...MODULE_TEMPLATES.estandar]);
-      setNewLanguage("es");
+      setNewLanguage("it");
       if (!areaLocked) setArea("");
       await refetch();
     } catch (err) {
-      setCreateError(err instanceof Error ? err.message : "No se pudo invitar al usuario");
+      setCreateError(err instanceof Error ? err.message : t("team.err.invite"));
     } finally {
       setCreating(false);
     }
@@ -812,7 +813,7 @@ export function TeamPage({ embedded = false }: { embedded?: boolean }) {
 
   if (loading) {
     return (
-      <div className="flex h-full items-center justify-center text-slate-500 dark:text-slate-400">Cargando...</div>
+      <div className="flex h-full items-center justify-center text-slate-500 dark:text-slate-400">{t("common.loading")}</div>
     );
   }
 
@@ -825,27 +826,25 @@ export function TeamPage({ embedded = false }: { embedded?: boolean }) {
             className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
           >
             <ArrowLeft className="h-4 w-4" />
-            Volver al portal
+            {t("team.backToPortal")}
           </Link>
         </header>
       )}
 
       <div className="p-4 sm:p-6 lg:p-8">
-        <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Equipo</h1>
+        <h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t("team.title")}</h1>
         <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">
-          {isManager
-            ? "Los sub-usuarios que creaste, y a qué cards y flota tiene acceso cada uno."
-            : "Quién puede entrar a tu cuenta de OneSystec, y a qué cards tiene acceso cada uno."}
+          {isManager ? t("team.introManager") : t("team.intro")}
         </p>
 
         <div className="space-y-6">
-          <Panel title={isManager ? "Crear un sub-usuario" : "Invitar a alguien"}>
+          <Panel title={isManager ? t("team.createSub") : t("team.invite")}>
             <form onSubmit={handleCreate} className="space-y-3">
               <div className="flex flex-col gap-3 sm:flex-row">
                 <input
                   type="text"
                   required
-                  placeholder="Nombre"
+                  placeholder={t("team.name")}
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className="field-input min-w-0 flex-1 rounded-xl border border-slate-300 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
@@ -853,7 +852,7 @@ export function TeamPage({ embedded = false }: { embedded?: boolean }) {
                 <input
                   type="email"
                   required
-                  placeholder="Email"
+                  placeholder={t("team.email")}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="field-input min-w-0 flex-1 rounded-xl border border-slate-300 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
@@ -861,7 +860,7 @@ export function TeamPage({ embedded = false }: { embedded?: boolean }) {
                 <PasswordField
                   required
                   minLength={8}
-                  placeholder="Contraseña (mínimo 8 caracteres)"
+                  placeholder={t("team.passwordPlaceholder")}
                   value={password}
                   onChange={setPassword}
                   className="min-w-0 flex-1"
@@ -876,16 +875,15 @@ export function TeamPage({ embedded = false }: { embedded?: boolean }) {
                     onChange={(e) => setRole(e.target.value as "admin" | "manager" | "viewer")}
                     className="field-input rounded-xl border border-slate-300 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
                   >
-                    <option value="viewer">Usuario</option>
-                    <option value="manager">Manager (puede crear sus propios sub-usuarios)</option>
-                    <option value="admin">Admin</option>
+                    <option value="viewer">{t("role.viewer")}</option>
+                    <option value="manager">{t("team.roleManagerOption")}</option>
+                    <option value="admin">{t("role.admin")}</option>
                   </select>
                 )}
 
                 {areaLocked ? (
                   <p className="flex items-center text-sm text-slate-500 dark:text-slate-400">
-                    Flota: <span className="ml-1 font-medium text-slate-700 dark:text-slate-300">{area}</span> (la
-                    misma que la tuya)
+                    {t("team.fleetLocked", { area })}
                   </p>
                 ) : (
                   <AreaSelect value={area} onChange={setArea} />
@@ -893,16 +891,15 @@ export function TeamPage({ embedded = false }: { embedded?: boolean }) {
               </div>
 
               <p className="rounded-xl bg-slate-50 px-3 py-2 text-xs text-slate-600 dark:bg-white/5 dark:text-slate-400">
-                <strong className="font-semibold text-slate-700 dark:text-slate-300">{ROLE_LABEL[effectiveRole]}:</strong>{" "}
-                {ROLE_HELP[effectiveRole]}
+                <strong className="font-semibold text-slate-700 dark:text-slate-300">{t(ROLE_LABEL[effectiveRole])}:</strong>{" "}
+                {t(ROLE_HELP[effectiveRole])}
                 {" "}
-                <strong className="font-semibold text-slate-700 dark:text-slate-300">Flota:</strong> si eliges una (por ejemplo ONE DRIVER
-                EXPRESS) solo ve los vehículos de esa flota (lo hace cumplir el servidor). La foto de la cuenta es la imagen de la flota en las placas del mapa.
+                <strong className="font-semibold text-slate-700 dark:text-slate-300">{t("team.fleet")}:</strong> {t("team.fleetNote")}
               </p>
 
               <div>
                 <p className="mb-2 text-xs font-medium tracking-wide text-slate-400 uppercase dark:text-slate-500">
-                  Logo del cliente <span className="font-normal normal-case">(opcional, reemplaza al de la empresa en su pantalla)</span>
+                  {t("team.clientLogo")} <span className="font-normal normal-case">{t("team.clientLogoHint")}</span>
                 </p>
                 <LogoUpload
                   value={logo}
@@ -916,7 +913,7 @@ export function TeamPage({ embedded = false }: { embedded?: boolean }) {
 
               <div>
                 <p className="mb-2 text-xs font-medium tracking-wide text-slate-400 uppercase dark:text-slate-500">
-                  Idioma <span className="font-normal normal-case">(de la app, los avisos y los correos)</span>
+                  {t("team.language")} <span className="font-normal normal-case">{t("team.languageHint")}</span>
                 </p>
                 <LanguageSelect value={newLanguage} onChange={setNewLanguage} />
               </div>
@@ -924,8 +921,8 @@ export function TeamPage({ embedded = false }: { embedded?: boolean }) {
               {showProductsSection && (
                 <div>
                   <p className="mb-2 text-xs font-medium tracking-wide text-slate-400 uppercase dark:text-slate-500">
-                    Secciones de OneTrack{" "}
-                    <span className="font-normal normal-case">(Conducción viene apagada)</span>
+                    {t("team.oneTrackSections")}{" "}
+                    <span className="font-normal normal-case">{t("team.drivingOff")}</span>
                   </p>
                   <ModulesPicker
                     selected={newModules}
@@ -934,12 +931,8 @@ export function TeamPage({ embedded = false }: { embedded?: boolean }) {
                   />
                   {matchingTemplate(newModules) === "recursosHumanos" && (
                     <p className="mt-2 rounded-lg bg-blue-50 px-2.5 py-1.5 text-xs text-blue-800 dark:bg-blue-500/10 dark:text-blue-300">
-                      Recursos humanos ve solo Vehículos y su Tagliando.{" "}
-                      {effectiveRole === "viewer"
-                        ? "Con el rol Usuario solo puede mirar: para que anote los tagliandos hechos, elige el rol Manager."
-                        : effectiveRole === "manager"
-                          ? "Con el rol Manager puede anotar los tagliandos y los km del tablero."
-                          : ""}
+                      {t("team.hrNote")}{" "}
+                      {effectiveRole === "viewer" ? t("team.hrViewer") : effectiveRole === "manager" ? t("team.hrManager") : ""}
                     </p>
                   )}
                 </div>
@@ -948,7 +941,7 @@ export function TeamPage({ embedded = false }: { embedded?: boolean }) {
               {showProductsSection && (
                 <div>
                   <p className="mb-2 text-xs font-medium tracking-wide text-slate-400 uppercase dark:text-slate-500">
-                    Acceso a cards
+                    {t("team.cardsAccess")}
                   </p>
                   <ProductCheckboxes products={products} selected={newMemberProducts} onChange={setNewMemberProducts} />
                 </div>
@@ -961,7 +954,7 @@ export function TeamPage({ embedded = false }: { embedded?: boolean }) {
                 disabled={creating}
                 className="brand-button rounded-xl px-5 py-2.5 text-sm font-medium disabled:opacity-50"
               >
-                {creating ? "Creando..." : isManager ? "Crear sub-usuario" : "Invitar"}
+                {creating ? t("team.creating") : isManager ? t("team.createSubButton") : t("team.inviteButton")}
               </button>
             </form>
           </Panel>
@@ -975,17 +968,17 @@ export function TeamPage({ embedded = false }: { embedded?: boolean }) {
             );
             if (owners.length === 0) {
               return (
-                <Panel title={`Miembros (${members.length})`}>
+                <Panel title={t("team.members", { count: members.length })}>
                   <div className="space-y-2">{members.map(row)}</div>
                 </Panel>
               );
             }
             return (
-              <Panel title={`Cliente y su equipo (${team.length})`}>
+              <Panel title={t("team.clientAndTeam", { count: team.length })}>
                 <div className="space-y-2">{owners.slice(0, 1).map(row)}</div>
-                <p className="mt-4 mb-2 text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-500">Equipo</p>
+                <p className="mt-4 mb-2 text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-500">{t("team.title")}</p>
                 {team.length === 0 ? (
-                  <p className="text-sm text-slate-500 dark:text-slate-400">Todavía no hay nadie en el equipo.</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">{t("team.noTeam")}</p>
                 ) : (
                   <div className="space-y-2 border-l-2 border-violet-100 pl-3 dark:border-white/10">{[...owners.slice(1), ...team].map(row)}</div>
                 )}

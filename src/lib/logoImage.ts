@@ -1,3 +1,4 @@
+import { rememberedLanguage, translate } from "../i18n";
 /** Longest side of a stored logo, in pixels: sharp on the top bar, small enough to keep each load light. */
 const MAX_SIDE = 256;
 /** What the server accepts (base64 text length); the image is shrunk further until it fits. */
@@ -17,7 +18,7 @@ function loadImage(file: File): Promise<HTMLImageElement> {
     };
     image.onerror = () => {
       URL.revokeObjectURL(url);
-      reject(new Error("No se pudo leer la imagen"));
+      reject(new Error(translate(rememberedLanguage(), "logo.err.read")));
     };
     image.src = url;
   });
@@ -29,13 +30,13 @@ function loadImage(file: File): Promise<HTMLImageElement> {
  * never stores anything that could carry script.
  */
 export async function fileToLogoDataUrl(file: File): Promise<string> {
-  if (!ACCEPTED.includes(file.type)) throw new Error("Usa una imagen PNG, JPG, WebP o SVG");
-  if (file.size > MAX_INPUT_BYTES) throw new Error("La imagen pesa más de 8 MB");
+  if (!ACCEPTED.includes(file.type)) throw new Error(translate(rememberedLanguage(), "logo.err.type"));
+  if (file.size > MAX_INPUT_BYTES) throw new Error(translate(rememberedLanguage(), "logo.err.size"));
 
   const image = await loadImage(file);
   const width = image.naturalWidth || MAX_SIDE;
   const height = image.naturalHeight || MAX_SIDE;
-  if (width === 0 || height === 0) throw new Error("No se pudo leer la imagen");
+  if (width === 0 || height === 0) throw new Error(translate(rememberedLanguage(), "logo.err.read"));
 
   for (const side of [MAX_SIDE, 192, 128]) {
     const scale = Math.min(1, side / Math.max(width, height));
@@ -45,7 +46,7 @@ export async function fileToLogoDataUrl(file: File): Promise<string> {
     canvas.width = Math.max(1, Math.round(width * factor));
     canvas.height = Math.max(1, Math.round(height * factor));
     const context = canvas.getContext("2d");
-    if (!context) throw new Error("Tu navegador no puede procesar la imagen");
+    if (!context) throw new Error(translate(rememberedLanguage(), "logo.err.browser"));
     context.drawImage(image, 0, 0, canvas.width, canvas.height);
 
     const png = canvas.toDataURL("image/png");
@@ -53,7 +54,7 @@ export async function fileToLogoDataUrl(file: File): Promise<string> {
     const webp = canvas.toDataURL("image/webp", 0.85);
     if (webp.startsWith("data:image/webp") && webp.length <= MAX_CHARS) return webp;
   }
-  throw new Error("La imagen es demasiado compleja; prueba con una más simple");
+  throw new Error(translate(rememberedLanguage(), "logo.err.complex"));
 }
 
 /** The small copy kept for the map's plate tags, which are drawn a few dozen pixels wide: a few KB instead of a few hundred. */
@@ -98,7 +99,7 @@ function loadImageFromDataUrl(url: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const image = new Image();
     image.onload = () => resolve(image);
-    image.onerror = () => reject(new Error("No se pudo leer la imagen"));
+    image.onerror = () => reject(new Error(translate(rememberedLanguage(), "logo.err.read")));
     image.src = url;
   });
 }

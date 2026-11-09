@@ -4,18 +4,19 @@ import { LogoUpload } from "../components/LogoUpload";
 import { SecurityPanel } from "../components/security/SecurityPanel";
 import { useAuth } from "../context/AuthContext";
 import { useFleet } from "../context/FleetContext";
+import { useT, type MessageKey } from "../i18n";
 import { MODULE_INFO, visibleModules } from "../lib/modules";
 import { updateSettings } from "../lib/api";
 import type { AlertPreferences, OrgSettings, WeekdayKey, WorkingHoursDay } from "../lib/types";
 
-const DAYS: Array<{ key: WeekdayKey; label: string }> = [
-  { key: "monday", label: "Lunes" },
-  { key: "tuesday", label: "Martes" },
-  { key: "wednesday", label: "Miércoles" },
-  { key: "thursday", label: "Jueves" },
-  { key: "friday", label: "Viernes" },
-  { key: "saturday", label: "Sábado" },
-  { key: "sunday", label: "Domingo" },
+const DAYS: Array<{ key: WeekdayKey; label: MessageKey }> = [
+  { key: "monday", label: "day.monday" },
+  { key: "tuesday", label: "day.tuesday" },
+  { key: "wednesday", label: "day.wednesday" },
+  { key: "thursday", label: "day.thursday" },
+  { key: "friday", label: "day.friday" },
+  { key: "saturday", label: "day.saturday" },
+  { key: "sunday", label: "day.sunday" },
 ];
 
 function AlertRow({
@@ -78,24 +79,25 @@ function NumberField({
   );
 }
 
-const ROLE_LABEL: Record<string, string> = { owner: "Cliente", admin: "Admin", manager: "Manager", viewer: "Usuario" };
+const ROLE_LABEL: Record<string, MessageKey> = { owner: "role.owner", admin: "role.admin", manager: "role.manager", viewer: "role.viewer" };
 const LANGUAGE_LABEL: Record<string, string> = { es: "Español", it: "Italiano" };
 
 /** Who is signed in: their account and what it can see. Everyone has it, whatever their role. */
 function ProfilePanel() {
+  const t = useT();
   const { currentUser } = useAuth();
   if (!currentUser) return null;
   const photo = currentUser.userLogo ?? currentUser.orgLogo;
   const name = currentUser.name.trim() || currentUser.orgName;
   const sections = visibleModules(currentUser.modules);
   const rows: Array<[string, string]> = [
-    ["Empresa", currentUser.orgName],
-    ["Flota", currentUser.allowedArea ? currentUser.allowedArea : "Todas las flotas"],
-    ["Idioma", LANGUAGE_LABEL[currentUser.language] ?? currentUser.language],
+    [t("settings.company"), currentUser.orgName],
+    [t("settings.fleet"), currentUser.allowedArea ? currentUser.allowedArea : t("settings.allFleets")],
+    [t("settings.language"), LANGUAGE_LABEL[currentUser.language] ?? currentUser.language],
   ];
 
   return (
-    <Panel title="Mi perfil">
+    <Panel title={t("settings.profile")}>
       <div className="grid gap-6 lg:grid-cols-[minmax(0,22rem)_1fr] lg:items-start">
         <div className="flex items-center gap-4">
           <span className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-3xl bg-white p-1 ring-1 ring-slate-200 dark:ring-white/10">
@@ -111,7 +113,7 @@ function ProfilePanel() {
             <p className="truncate text-lg font-semibold text-slate-900 dark:text-white">{name}</p>
             <p className="truncate text-sm text-slate-500 dark:text-slate-400">{currentUser.email}</p>
             <span className="mt-1.5 inline-flex rounded-full bg-violet-100 px-2.5 py-0.5 text-xs font-medium text-violet-700 dark:bg-violet-500/15 dark:text-violet-300">
-              {ROLE_LABEL[currentUser.role] ?? currentUser.role}
+              {ROLE_LABEL[currentUser.role] ? t(ROLE_LABEL[currentUser.role]) : currentUser.role}
             </span>
           </div>
         </div>
@@ -124,12 +126,12 @@ function ProfilePanel() {
             </div>
           ))}
           <div className="sm:col-span-2">
-            <p className="mb-1.5 text-xs font-medium tracking-wide text-slate-400 uppercase dark:text-slate-500">Secciones de tu cuenta</p>
+            <p className="mb-1.5 text-xs font-medium tracking-wide text-slate-400 uppercase dark:text-slate-500">{t("settings.sections")}</p>
             <div className="flex flex-wrap gap-1.5">
-              {sections.length === 0 && <span className="text-sm text-slate-500 dark:text-slate-400">Ninguna</span>}
+              {sections.length === 0 && <span className="text-sm text-slate-500 dark:text-slate-400">{t("settings.none")}</span>}
               {sections.map((key) => (
                 <span key={key} className="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-700 dark:bg-white/10 dark:text-slate-300">
-                  {MODULE_INFO[key].label}
+                  {t(MODULE_INFO[key].label)}
                 </span>
               ))}
             </div>
@@ -141,6 +143,7 @@ function ProfilePanel() {
 }
 
 export function SettingsPage() {
+  const t = useT();
   const { settings, refetchSettings } = useFleet();
   const { currentUser, refreshUser } = useAuth();
   const [form, setForm] = useState<OrgSettings | null>(null);
@@ -162,7 +165,7 @@ export function SettingsPage() {
 
   if (!form && canEditCompany) {
     return (
-      <div className="flex h-full items-center justify-center text-slate-500 dark:text-slate-400">Cargando...</div>
+      <div className="flex h-full items-center justify-center text-slate-500 dark:text-slate-400">{t("common.loading")}</div>
     );
   }
 
@@ -196,9 +199,9 @@ export function SettingsPage() {
 
   return (
     <div className="h-full overflow-y-auto bg-[#f5f6fb] p-4 sm:p-6 lg:p-8 dark:bg-[#0a0e1a]">
-      <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Ajustes</h1>
+      <h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t("settings.title")}</h1>
       <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">
-        Tu perfil{canEditCompany ? ", la empresa, el horario laboral y las preferencias de alertas" : ""}.
+        {t(canEditCompany ? "settings.introAdmin" : "settings.intro")}
       </p>
 
       <div className="mb-6">
@@ -212,14 +215,14 @@ export function SettingsPage() {
       {form && canEditCompany && (
       <>
       <div className="gap-6 xl:columns-2 [&>*]:mb-6 [&>*]:break-inside-avoid">
-        <Panel title="Empresa">
-          <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Nombre</label>
+        <Panel title={t("settings.company")}>
+          <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">{t("settings.name")}</label>
           <input
             value={form.orgName}
             onChange={(e) => setForm((f) => f && { ...f, orgName: e.target.value })}
             className="field-input w-full max-w-sm rounded-xl border border-slate-300 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
           />
-          <label className="mt-4 mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">Logo</label>
+          <label className="mt-4 mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">{t("settings.logo")}</label>
           <LogoUpload
             value={logo}
             onChange={(next, tag) => {
@@ -229,11 +232,11 @@ export function SettingsPage() {
             name={form.orgName}
           />
           <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-            Aparece arriba a la izquierda en el inicio de OneSystec. Se guarda con el botón Guardar.
+            {t("settings.logoHint")}
           </p>
         </Panel>
 
-        <Panel title="Horario laboral">
+        <Panel title={t("settings.hours")}>
           <div className="space-y-2">
             {DAYS.map(({ key, label }) => {
               const day = form.workingHours[key];
@@ -249,7 +252,7 @@ export function SettingsPage() {
                       onChange={(e) => updateDay(key, { enabled: e.target.checked })}
                       className="brand-range h-4 w-4 shrink-0"
                     />
-                    {label}
+                    {t(label)}
                   </label>
                   <div className="flex items-center gap-2 pl-6 sm:pl-0">
                     <input
@@ -259,7 +262,7 @@ export function SettingsPage() {
                       onChange={(e) => updateDay(key, { start: e.target.value })}
                       className="field-input min-w-0 flex-1 rounded-lg border border-slate-300 px-2 py-1.5 text-sm disabled:opacity-40 sm:flex-none dark:border-white/10 dark:bg-white/5 dark:text-white"
                     />
-                    <span className="shrink-0 text-sm text-slate-400 dark:text-slate-500">a</span>
+                    <span className="shrink-0 text-sm text-slate-400 dark:text-slate-500">{t("settings.to")}</span>
                     <input
                       type="time"
                       value={day.end}
@@ -274,97 +277,97 @@ export function SettingsPage() {
           </div>
         </Panel>
 
-        <Panel title="Preferencias de alertas">
+        <Panel title={t("settings.alertPrefs")}>
           <div className="divide-y divide-slate-100 dark:divide-white/10">
             <AlertRow
-              label="Uso fuera de horario laboral"
+              label={t("settings.afterHours")}
               enabled={form.alerts.afterHoursEnabled}
               onToggle={(v) => updateAlert("afterHoursEnabled", v)}
             >
-              Usa el horario laboral configurado arriba.
+              {t("settings.afterHoursHint")}
             </AlertRow>
             <AlertRow
-              label="Dispositivo sin señal"
+              label={t("settings.deviceOffline")}
               enabled={form.alerts.deviceOfflineEnabled}
               onToggle={(v) => updateAlert("deviceOfflineEnabled", v)}
             >
               <NumberField
                 value={form.alerts.deviceOfflineHours}
                 onChange={(v) => updateAlert("deviceOfflineHours", v)}
-                suffix="horas sin reportar"
+                suffix={t("settings.hoursNoReport")}
                 min={0.5}
                 max={72}
                 step={0.5}
               />
             </AlertRow>
             <AlertRow
-              label="Batería del dispositivo baja"
+              label={t("settings.lowBattery")}
               enabled={form.alerts.lowBatteryEnabled}
               onToggle={(v) => updateAlert("lowBatteryEnabled", v)}
             >
               <NumberField
                 value={form.alerts.lowBatteryVoltage}
                 onChange={(v) => updateAlert("lowBatteryVoltage", v)}
-                suffix="V mínimo"
+                suffix={t("settings.voltMin")}
                 min={6}
                 max={30}
                 step={0.1}
               />
             </AlertRow>
             <AlertRow
-              label="Exceso de velocidad"
+              label={t("settings.speeding")}
               enabled={form.alerts.speedingEnabled}
               onToggle={(v) => updateAlert("speedingEnabled", v)}
             >
               <NumberField
                 value={form.alerts.speedLimitKmh}
                 onChange={(v) => updateAlert("speedLimitKmh", v)}
-                suffix="km/h límite"
+                suffix={t("settings.kmhLimit")}
                 min={10}
                 max={300}
               />
             </AlertRow>
             <AlertRow
-              label="Motor encendido, vehículo detenido"
+              label={t("settings.idling")}
               enabled={form.alerts.excessiveIdlingEnabled}
               onToggle={(v) => updateAlert("excessiveIdlingEnabled", v)}
             >
               <NumberField
                 value={form.alerts.excessiveIdlingMinutes}
                 onChange={(v) => updateAlert("excessiveIdlingMinutes", v)}
-                suffix="min"
+                suffix={t("settings.minutes")}
                 min={1}
                 max={240}
               />
             </AlertRow>
             <AlertRow
-              label="Entrada/salida de geocercas"
+              label={t("settings.geofences")}
               enabled={form.alerts.geofenceEnabled}
               onToggle={(v) => updateAlert("geofenceEnabled", v)}
             >
-              Configurá las zonas en la página Geocercas.
+              {t("settings.geofencesHint")}
             </AlertRow>
             <AlertRow
-              label="GPS desconectado (aviso urgente)"
+              label={t("settings.gpsDisconnect")}
               enabled={form.alerts.gpsDisconnectEnabled}
               onToggle={(v) => updateAlert("gpsDisconnectEnabled", v)}
             >
               <div className="flex flex-col gap-2">
                 <p className="max-w-md">
-                  Con el vehículo en marcha: el GPS sin corriente o sin enviar datos. Llega como notificación urgente y se repite hasta que vuelva.
+                  {t("settings.gpsDisconnectHint")}
                 </p>
                 <div className="flex flex-wrap gap-x-4 gap-y-2">
                   <NumberField
                     value={form.alerts.gpsDisconnectSilenceMinutes}
                     onChange={(v) => updateAlert("gpsDisconnectSilenceMinutes", v)}
-                    suffix="min sin datos"
+                    suffix={t("settings.minNoData")}
                     min={5}
                     max={240}
                   />
                   <NumberField
                     value={form.alerts.gpsDisconnectReminderMinutes}
                     onChange={(v) => updateAlert("gpsDisconnectReminderMinutes", v)}
-                    suffix="min entre recordatorios"
+                    suffix={t("settings.minBetweenReminders")}
                     min={5}
                     max={120}
                   />
@@ -372,18 +375,18 @@ export function SettingsPage() {
               </div>
             </AlertRow>
             <AlertRow
-              label="Alarmas del dispositivo"
+              label={t("settings.deviceAlarms")}
               enabled={form.alerts.deviceAlarmsEnabled}
               onToggle={(v) => updateAlert("deviceAlarmsEnabled", v)}
             >
-              Desconexión del equipo, interferencia de señal, remolque y choque. Solo llegan si el tracker las tiene activadas.
+              {t("settings.deviceAlarmsHint")}
             </AlertRow>
             <AlertRow
-              label="Mantenimiento y documentos por vencer"
+              label={t("settings.maintenance")}
               enabled={form.alerts.maintenanceEnabled}
               onToggle={(v) => updateAlert("maintenanceEnabled", v)}
             >
-              Avisa cuando un plan de Mantenimiento está por cumplirse o ya se pasó.
+              {t("settings.maintenanceHint")}
             </AlertRow>
           </div>
         </Panel>
@@ -395,9 +398,9 @@ export function SettingsPage() {
           disabled={saving}
           className="brand-button rounded-xl px-5 py-2.5 text-sm font-medium disabled:opacity-50"
         >
-          {saving ? "Guardando..." : "Guardar cambios"}
+          {saving ? t("settings.saving") : t("settings.saveChanges")}
         </button>
-        {saved && <span className="text-sm font-medium text-emerald-600">Guardado ✓</span>}
+        {saved && <span className="text-sm font-medium text-emerald-600">{t("settings.saved")}</span>}
         </div>
       </>
       )}

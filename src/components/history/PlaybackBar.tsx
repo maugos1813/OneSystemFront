@@ -1,4 +1,5 @@
 import { Pause, Play, Square } from "lucide-react";
+import { useT } from "../../i18n";
 import { PLAYBACK_RATES } from "../../lib/playback";
 
 interface PlaybackBarProps {
@@ -31,6 +32,7 @@ export function PlaybackBar({
   onSpeedLimitChange,
   currentTs,
 }: PlaybackBarProps) {
+  const t = useT();
   const overLimit = currentSpeed > speedLimit;
 
   return (
@@ -40,14 +42,14 @@ export function PlaybackBar({
         <button
           onClick={onTogglePlay}
           className="brand-button flex h-11 w-11 items-center justify-center rounded-full"
-          aria-label={playing ? "Pausar" : "Reproducir"}
+          aria-label={playing ? t("playback.pause") : t("playback.play")}
         >
           {playing ? <Pause className="h-5 w-5" /> : <Play className="ml-0.5 h-5 w-5" />}
         </button>
         <button
           onClick={onStop}
           className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition hover:bg-slate-200 dark:bg-white/10 dark:text-slate-400 dark:hover:bg-white/20"
-          aria-label="Detener"
+          aria-label={t("playback.stop")}
         >
           <Square className="h-4 w-4" />
         </button>
@@ -73,7 +75,7 @@ export function PlaybackBar({
         className="brand-range h-1.5 w-full flex-1 cursor-pointer rounded-full"
       />
 
-      <div className="flex shrink-0 flex-wrap items-center gap-1" role="group" aria-label="Velocidad de reproducción">
+      <div className="flex shrink-0 flex-wrap items-center gap-1" role="group" aria-label={t("playback.speed")}>
         {PLAYBACK_RATES.map((r) => (
           <button
             key={r}

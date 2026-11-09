@@ -1,5 +1,6 @@
 import { ArrowDown, ArrowUp, ArrowUpDown, Search } from "lucide-react";
 import { useMemo, useState } from "react";
+import { useT, type MessageKey } from "../../i18n";
 import { formatDuration } from "../../lib/geo";
 import { NO_SCORE_COLOR, scoreColor } from "../../lib/drivingBehavior";
 
@@ -24,10 +25,10 @@ function tierOf(score: number): Tier {
   return "bajo";
 }
 
-const TIER_META: Record<Tier, { label: string; color: string }> = {
-  alto: { label: "Score alto", color: "#16a34a" },
-  medio: { label: "Score medio", color: "#f59e0b" },
-  bajo: { label: "Score bajo", color: "#dc2626" },
+const TIER_META: Record<Tier, { label: MessageKey; color: string }> = {
+  alto: { label: "score.tierHigh", color: "#16a34a" },
+  medio: { label: "score.tierMid", color: "#f59e0b" },
+  bajo: { label: "score.tierLow", color: "#dc2626" },
 };
 
 function SortHeader({
@@ -71,6 +72,7 @@ interface FleetScoreTableProps {
  * the rings — a search box, a score-tier filter, sortable columns, and a jump-to-vehicle
  * button per row that hands off to the map + incident list above. */
 export function FleetScoreTable({ rows, categoryLabel, selectedVehicleId, onSelectVehicle }: FleetScoreTableProps) {
+  const t = useT();
   const [query, setQuery] = useState("");
   const [tierFilter, setTierFilter] = useState<Tier | "all">("all");
   const [sortKey, setSortKey] = useState<SortKey>("score");
@@ -125,7 +127,7 @@ export function FleetScoreTable({ rows, categoryLabel, selectedVehicleId, onSele
             <div key={tier} className="flex items-center justify-between px-1 py-1.5 text-sm">
               <span className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
                 <span className="h-2.5 w-2.5 rounded-full" style={{ background: TIER_META[tier].color }} />
-                {TIER_META[tier].label}
+                {t(TIER_META[tier].label)}
               </span>
               <span className="font-semibold tabular-nums text-slate-900 dark:text-white">{tierCounts[tier]}</span>
             </div>
@@ -133,15 +135,15 @@ export function FleetScoreTable({ rows, categoryLabel, selectedVehicleId, onSele
         </div>
         <div className="rounded-2xl border border-white bg-white p-3 shadow-sm shadow-slate-200/50 dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40">
           <div className="flex items-center justify-between px-1 py-1.5 text-sm">
-            <span className="text-slate-600 dark:text-slate-300">Eventos ({categoryLabel})</span>
+            <span className="text-slate-600 dark:text-slate-300">{t("score.events", { category: categoryLabel })}</span>
             <span className="font-semibold tabular-nums text-slate-900 dark:text-white">{totals.events}</span>
           </div>
           <div className="flex items-center justify-between px-1 py-1.5 text-sm">
-            <span className="text-slate-600 dark:text-slate-300">Distancia (km)</span>
+            <span className="text-slate-600 dark:text-slate-300">{t("score.distanceKm")}</span>
             <span className="font-semibold tabular-nums text-slate-900 dark:text-white">{totals.distanceKm}</span>
           </div>
           <div className="flex items-center justify-between px-1 py-1.5 text-sm">
-            <span className="text-slate-600 dark:text-slate-300">Viajes</span>
+            <span className="text-slate-600 dark:text-slate-300">{t("score.trips")}</span>
             <span className="font-semibold tabular-nums text-slate-900 dark:text-white">{totals.trips}</span>
           </div>
         </div>
@@ -153,7 +155,7 @@ export function FleetScoreTable({ rows, categoryLabel, selectedVehicleId, onSele
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Buscar por vehículo o targa..."
+            placeholder={t("score.search")}
             className="field-input w-full rounded-xl border border-slate-300 py-2 pr-3 pl-9 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
           />
         </div>
@@ -162,10 +164,10 @@ export function FleetScoreTable({ rows, categoryLabel, selectedVehicleId, onSele
           onChange={(e) => setTierFilter(e.target.value as Tier | "all")}
           className="field-input rounded-xl border border-slate-300 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
         >
-          <option value="all">Todos los niveles</option>
-          <option value="alto">Score alto</option>
-          <option value="medio">Score medio</option>
-          <option value="bajo">Score bajo</option>
+          <option value="all">{t("score.allTiers")}</option>
+          <option value="alto">{t("score.tierHigh")}</option>
+          <option value="medio">{t("score.tierMid")}</option>
+          <option value="bajo">{t("score.tierLow")}</option>
         </select>
       </div>
 
@@ -173,10 +175,10 @@ export function FleetScoreTable({ rows, categoryLabel, selectedVehicleId, onSele
         <table className="w-full min-w-[640px] text-left text-sm">
           <thead className="border-b border-violet-100 bg-violet-50/60 text-xs text-slate-500 uppercase dark:border-white/10 dark:bg-white/5 dark:text-slate-400">
             <tr>
-              <SortHeader label="Score" sortKey="score" activeKey={sortKey} dir={sortDir} onClick={toggleSort} />
-              <SortHeader label="Vehículo" sortKey="name" activeKey={sortKey} dir={sortDir} onClick={toggleSort} />
+              <SortHeader label={t("score.colScore")} sortKey="score" activeKey={sortKey} dir={sortDir} onClick={toggleSort} />
+              <SortHeader label={t("score.colVehicle")} sortKey="name" activeKey={sortKey} dir={sortDir} onClick={toggleSort} />
               <SortHeader
-                label="Viajes"
+                label={t("score.trips")}
                 sortKey="trips"
                 activeKey={sortKey}
                 dir={sortDir}
@@ -184,7 +186,7 @@ export function FleetScoreTable({ rows, categoryLabel, selectedVehicleId, onSele
                 align="right"
               />
               <SortHeader
-                label="Distancia (km)"
+                label={t("score.distanceKm")}
                 sortKey="distanceKm"
                 activeKey={sortKey}
                 dir={sortDir}
@@ -192,7 +194,7 @@ export function FleetScoreTable({ rows, categoryLabel, selectedVehicleId, onSele
                 align="right"
               />
               <SortHeader
-                label="Duración"
+                label={t("score.colDuration")}
                 sortKey="durationMs"
                 activeKey={sortKey}
                 dir={sortDir}
@@ -200,14 +202,14 @@ export function FleetScoreTable({ rows, categoryLabel, selectedVehicleId, onSele
                 align="right"
               />
               <SortHeader
-                label="Eventos"
+                label={t("score.colEvents")}
                 sortKey="events"
                 activeKey={sortKey}
                 dir={sortDir}
                 onClick={toggleSort}
                 align="right"
               />
-              <th className="px-4 py-2 text-right font-medium">Ver detalle</th>
+              <th className="px-4 py-2 text-right font-medium">{t("score.seeDetail")}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-white/10">
@@ -246,7 +248,7 @@ export function FleetScoreTable({ rows, categoryLabel, selectedVehicleId, onSele
                         : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-white/10 dark:text-slate-300 dark:hover:bg-white/20"
                     }`}
                   >
-                    Ver detalle
+                    {t("score.seeDetail")}
                   </button>
                 </td>
               </tr>
@@ -254,7 +256,7 @@ export function FleetScoreTable({ rows, categoryLabel, selectedVehicleId, onSele
             {visibleRows.length === 0 && (
               <tr>
                 <td colSpan={7} className="px-4 py-6 text-center text-sm text-slate-400 dark:text-slate-500">
-                  Ningún vehículo coincide con la búsqueda.
+                  {t("score.noMatch")}
                 </td>
               </tr>
             )}

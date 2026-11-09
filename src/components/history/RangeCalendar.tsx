@@ -1,5 +1,6 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useState } from "react";
+import { useLanguage } from "../../i18n";
 
 /** A day as yyyy-mm-dd in the person's own calendar: what a date means to them, with no hour or time zone to trip over. */
 export type Day = string;
@@ -13,8 +14,6 @@ export const addDays = (day: Day, n: number): Day => {
   return dayOf(date);
 };
 
-const MONTH = new Intl.DateTimeFormat("es-ES", { month: "long", year: "numeric" });
-const WEEKDAYS = ["L", "M", "X", "J", "V", "S", "D"];
 
 /** The days of one month laid out in weeks starting on Monday; null fills the cells before the 1st. */
 function monthCells(year: number, month: number): Array<Day | null> {
@@ -41,12 +40,13 @@ function Month({
   end: Day | null;
   onPick: (day: Day) => void;
 }) {
+  const { t, locale } = useLanguage();
   return (
     <div>
-      <p className="mb-2 text-center text-sm font-semibold text-slate-800 capitalize dark:text-white">{MONTH.format(new Date(year, month, 1))}</p>
+      <p className="mb-2 text-center text-sm font-semibold text-slate-800 capitalize dark:text-white">{new Intl.DateTimeFormat(locale, { month: "long", year: "numeric" }).format(new Date(year, month, 1))}</p>
       <div className="grid grid-cols-7 text-center">
-        {WEEKDAYS.map((w) => (
-          <span key={w} className="py-1 text-[11px] font-medium text-slate-400 dark:text-slate-500">
+        {t("calendar.weekdays").split(",").map((w, i) => (
+          <span key={i} className="py-1 text-[11px] font-medium text-slate-400 dark:text-slate-500">
             {w}
           </span>
         ))}
@@ -101,6 +101,7 @@ export function RangeCalendar({
   end: Day | null;
   onChange: (start: Day | null, end: Day | null) => void;
 }) {
+  const { t } = useLanguage();
   const latest = parse(max);
   // The month shown first is the one that holds the end of the chosen stretch (this month by default).
   const anchor = end ?? start ?? max;
@@ -125,10 +126,10 @@ export function RangeCalendar({
   return (
     <div>
       <div className="mb-2 flex items-center justify-between">
-        <button type="button" onClick={() => shift(-1)} disabled={!canBack} aria-label="Mes anterior" className="rounded-full p-2 text-slate-600 hover:bg-slate-100 disabled:opacity-30 dark:text-slate-300 dark:hover:bg-white/10">
+        <button type="button" onClick={() => shift(-1)} disabled={!canBack} aria-label={t("calendar.prev")} className="rounded-full p-2 text-slate-600 hover:bg-slate-100 disabled:opacity-30 dark:text-slate-300 dark:hover:bg-white/10">
           <ChevronLeft className="h-5 w-5" />
         </button>
-        <button type="button" onClick={() => shift(1)} disabled={!canForward} aria-label="Mes siguiente" className="rounded-full p-2 text-slate-600 hover:bg-slate-100 disabled:opacity-30 dark:text-slate-300 dark:hover:bg-white/10">
+        <button type="button" onClick={() => shift(1)} disabled={!canForward} aria-label={t("calendar.next")} className="rounded-full p-2 text-slate-600 hover:bg-slate-100 disabled:opacity-30 dark:text-slate-300 dark:hover:bg-white/10">
           <ChevronRight className="h-5 w-5" />
         </button>
       </div>

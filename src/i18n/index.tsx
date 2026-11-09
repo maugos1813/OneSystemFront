@@ -13,14 +13,27 @@ const STORAGE_KEY = "onesystem.language";
 export type Params = Record<string, string | number>;
 export type Translate = (key: MessageKey, params?: Params) => string;
 
-/** The language a person last used on this device, so the sign-in page already speaks it. */
+/** The language a person last used on this device, so the sign-in page already speaks it (Italian when there is none yet). */
 export function rememberedLanguage(): Language {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
-    return stored === "it" || stored === "es" ? stored : "es";
+    return stored === "it" || stored === "es" ? stored : "it";
   } catch {
-    return "es";
+    return "it";
   }
+}
+
+/**
+ * For long technical texts that live in data tables (the device sheet): the Spanish and the Italian wording side by side, chosen when
+ * it is read (never when the module loads, before the language is known).
+ */
+export function bi(es: string, it: string): string {
+  return rememberedLanguage() === "it" ? it : es;
+}
+
+/** "es-ES" / "it-IT" of the language this device last used: for numbers and dates formatted outside a component. */
+export function currentLocale(): string {
+  return LOCALES[rememberedLanguage()];
 }
 
 function remember(language: Language): void {

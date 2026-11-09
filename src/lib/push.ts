@@ -1,4 +1,5 @@
 import { Capacitor } from "@capacitor/core";
+import { rememberedLanguage, translate } from "../i18n";
 import { PushNotifications } from "@capacitor/push-notifications";
 import { registerPushToken, unregisterPushToken } from "./api";
 import { pushUnavailable } from "./appFlavor";
@@ -42,16 +43,16 @@ export async function enablePush(): Promise<void> {
 
     await PushNotifications.createChannel({
       id: CHANNEL_ID,
-      name: "Alertas",
-      description: "Alertas de tu flota y vencimientos",
+      name: translate(rememberedLanguage(), "push.channelAlerts"),
+      description: translate(rememberedLanguage(), "push.channelAlertsDesc"),
       importance: 4,
       visibility: 1,
       vibration: true,
     });
     await PushNotifications.createChannel({
       id: URGENT_CHANNEL_ID,
-      name: "Alertas urgentes (GPS desconectado)",
-      description: "Aviso insistente cuando un GPS pierde la corriente o deja de enviar datos",
+      name: translate(rememberedLanguage(), "push.channelUrgent"),
+      description: translate(rememberedLanguage(), "push.channelUrgentDesc"),
       importance: 5,
       visibility: 1,
       vibration: true,

@@ -1,3 +1,5 @@
+import type { MessageKey } from "../i18n";
+
 /**
  * The OneTrack sections an admin gives a client. Mirrors the server's catalog (services/modules.ts there):
  * the server is what enforces them, this is what the menu and the admin screen show.
@@ -23,10 +25,10 @@ export type ModuleKey = (typeof MODULE_KEYS)[number];
 export const ADMIN_SECTION_KEYS = ["dispositivos", "ajustes", "api_keys"] as const;
 export type AdminSectionKey = (typeof ADMIN_SECTION_KEYS)[number];
 
-export const ADMIN_SECTION_INFO: Record<AdminSectionKey, { label: string; hint: string }> = {
-  dispositivos: { label: "Dispositivos", hint: "Sus dispositivos, su salud y las balizas EYE BEACON" },
-  ajustes: { label: "Ajustes de OneTrack", hint: "Horarios y umbrales de las alertas" },
-  api_keys: { label: "API Keys", hint: "Claves para integrar OneTrack con otros sistemas" },
+export const ADMIN_SECTION_INFO: Record<AdminSectionKey, { label: MessageKey; hint: MessageKey }> = {
+  dispositivos: { label: "adminSection.dispositivos", hint: "adminSection.dispositivos.hint" },
+  ajustes: { label: "adminSection.ajustes", hint: "adminSection.ajustes.hint" },
+  api_keys: { label: "adminSection.api_keys", hint: "adminSection.api_keys.hint" },
 };
 
 /**
@@ -37,22 +39,15 @@ export function visibleModules(keys: readonly string[]): ModuleKey[] {
   return keys.filter((key): key is ModuleKey => key in MODULE_INFO && !HIDDEN_MODULES.includes(key));
 }
 
+/** The name and one-line description of a section, as translation keys (show them with t()). */
 export interface ModuleInfo {
-  label: string;
-  hint: string;
+  label: MessageKey;
+  hint: MessageKey;
 }
 
-export const MODULE_INFO: Record<ModuleKey, ModuleInfo> = {
-  mapa: { label: "Mapa", hint: "Seguimiento en vivo de sus vehículos" },
-  historial: { label: "Historial", hint: "Recorridos de días anteriores" },
-  alertas: { label: "Alertas", hint: "Avisos de su flota" },
-  vehiculos: { label: "Vehículos", hint: "Lista de sus unidades" },
-  geocercas: { label: "Geocercas", hint: "Zonas y avisos de entrada y salida" },
-  mantenimiento: { label: "Mantenimiento", hint: "Planes y servicios por kilometraje" },
-  cockpit: { label: "Cockpit", hint: "Panel del vehículo con fuerzas G y puntuación de conducción" },
-  conduccion: { label: "Conducción", hint: "Comportamiento de los choferes (sensible)" },
-  vencimientos: { label: "Vencimientos", hint: "Seguro, revisión, bollo y tacógrafo de sus propios vehículos, con avisos" },
-};
+export const MODULE_INFO: Record<ModuleKey, ModuleInfo> = Object.fromEntries(
+  MODULE_KEYS.map((key) => [key, { label: `module.${key}` as MessageKey, hint: `module.${key}.hint` as MessageKey }]),
+) as Record<ModuleKey, ModuleInfo>;
 
 /** Ready-made packages. Cockpit, Conducción and Vencimientos are in none of them. */
 export const MODULE_TEMPLATES: Record<"basico" | "estandar" | "completo" | "recursosHumanos", readonly ModuleKey[]> = {
@@ -63,11 +58,11 @@ export const MODULE_TEMPLATES: Record<"basico" | "estandar" | "completo" | "recu
   recursosHumanos: ["vehiculos", "mantenimiento"],
 };
 
-export const TEMPLATE_LABEL: Record<keyof typeof MODULE_TEMPLATES, string> = {
-  basico: "Básico",
-  estandar: "Estándar",
-  completo: "Completo",
-  recursosHumanos: "Recursos humanos",
+export const TEMPLATE_LABEL: Record<keyof typeof MODULE_TEMPLATES, MessageKey> = {
+  basico: "template.basico",
+  estandar: "template.estandar",
+  completo: "template.completo",
+  recursosHumanos: "template.recursosHumanos",
 };
 
 /** Which template a selection is exactly, or null when it is a custom mix. */

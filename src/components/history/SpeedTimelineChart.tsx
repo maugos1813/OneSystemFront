@@ -1,4 +1,5 @@
 import { useRef, type MouseEvent } from "react";
+import { useT } from "../../i18n";
 import type { Position } from "../../lib/types";
 
 const WIDTH = 700;
@@ -30,10 +31,11 @@ interface SpeedTimelineChartProps {
 }
 
 export function SpeedTimelineChart({ positions, speedLimit, currentIndex, onSeek }: SpeedTimelineChartProps) {
+  const t = useT();
   const svgRef = useRef<SVGSVGElement>(null);
 
   if (positions.length < 2) {
-    return <p className="text-sm text-slate-400 dark:text-slate-500">No hay datos suficientes para graficar.</p>;
+    return <p className="text-sm text-slate-400 dark:text-slate-500">{t("chart.noData")}</p>;
   }
 
   const times = positions.map((p) => new Date(p.ts).getTime());

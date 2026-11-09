@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { rememberedLanguage, translate } from "../i18n";
 import { useAuth } from "./AuthContext";
 import { useAllPositions } from "../hooks/useAllPositions";
 import { useDriverVehicles } from "../hooks/useDriverVehicles";
@@ -81,7 +82,7 @@ export function FleetProvider({ children }: { children: ReactNode }) {
         setError(null);
       })
       .catch(() => {
-        if (!cancelled) setError("No se pudieron cargar los datos de la flota");
+        if (!cancelled) setError(translate(rememberedLanguage(), "fleet.loadFailed"));
       })
       .finally(() => {
         if (!cancelled) setLoading(false);

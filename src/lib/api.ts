@@ -268,7 +268,7 @@ function fallbackModules(role: CurrentUser["role"]): ModuleKey[] {
 
 export async function getCurrentUser(): Promise<CurrentUser> {
   const me = await request<CurrentUser>("/me");
-  return { ...me, modules: me.modules ?? fallbackModules(me.role), language: me.language ?? "es" };
+  return { ...me, modules: me.modules ?? fallbackModules(me.role), language: me.language ?? "it" };
 }
 
 // --- Devices ---

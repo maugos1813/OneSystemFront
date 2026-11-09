@@ -6,6 +6,7 @@ import { Panel } from "../components/analytics/Panel";
 import { useAuth } from "../context/AuthContext";
 import { useFleet } from "../context/FleetContext";
 import { useTheme } from "../context/ThemeContext";
+import { useT } from "../i18n";
 import { createGeofence, deleteGeofence, updateGeofence, type UpdateGeofenceInput } from "../lib/api";
 import { geofenceZoneColor } from "../lib/geo";
 import { trackGlow } from "../lib/glow";
@@ -43,6 +44,7 @@ function draftFromGeofence(g: Geofence): Draft {
 }
 
 export function GeofencesPage() {
+  const t = useT();
   const { currentUser } = useAuth();
   const { geofences, loading, refetchGeofences } = useFleet();
   const [placing, setPlacing] = useState(false);
@@ -121,7 +123,7 @@ export function GeofencesPage() {
   }
 
   async function handleDelete(id: string) {
-    if (!confirm("¿Eliminar esta geocerca?")) return;
+    if (!confirm(t("geo.confirmDelete"))) return;
     await deleteGeofence(id);
     if (draft?.id === id) setDraft(null);
     refetchGeofences();
@@ -130,7 +132,7 @@ export function GeofencesPage() {
   if (!apiKey) {
     return (
       <div className="flex h-full items-center justify-center text-sm text-slate-400 dark:text-slate-500">
-        Falta configurar VITE_GOOGLE_MAPS_API_KEY.
+        {t("geo.mapsKey")}
       </div>
     );
   }
@@ -143,9 +145,9 @@ export function GeofencesPage() {
     <div className="h-full overflow-y-auto bg-[#f5f6fb] p-4 sm:p-6 lg:p-8 dark:bg-[#0a0e1a]">
       <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Geocercas</h1>
+          <h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t("geo.title")}</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            Zonas circulares o con límites oficiales — te avisamos cuando un vehículo entra o sale.
+            {t("geo.intro")}
           </p>
         </div>
         {canManage && !draft && !placing && (
@@ -154,15 +156,15 @@ export function GeofencesPage() {
             className="brand-button flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-medium"
           >
             <Plus className="h-4 w-4" />
-            Nueva geocerca
+            {t("geo.new")}
           </button>
         )}
       </div>
 
-      <Panel title="Mapa" className="mb-6">
+      <Panel title={t("geo.map")} className="mb-6">
         {placing && (
           <p className="mb-3 rounded-xl bg-violet-50 px-3 py-2 text-sm text-violet-700 dark:bg-violet-500/15 dark:text-violet-300">
-            Hacé click en el mapa para ubicar el centro de la geocerca.
+            {t("geo.clickMap")}
           </p>
         )}
         <div className={`h-80 overflow-hidden rounded-2xl sm:h-96 ${placing ? "cursor-crosshair" : ""}`}>
@@ -227,21 +229,21 @@ export function GeofencesPage() {
       </Panel>
 
       {draft && (
-        <Panel title={draft.id ? "Editar geocerca" : "Nueva geocerca"} className="mb-6">
+        <Panel title={draft.id ? t("geo.edit") : t("geo.new")} className="mb-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
             <div className="flex-1">
-              <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Nombre</label>
+              <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">{t("geo.name")}</label>
               <input
                 value={draft.name}
                 onChange={(e) => setDraft((d) => d && { ...d, name: e.target.value })}
-                placeholder="Depósito central"
+                placeholder={t("geo.namePlaceholder")}
                 className="field-input w-full rounded-xl border border-slate-300 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
               />
             </div>
             {draft.type === "circle" && (
               <div className="w-full sm:w-36">
                 <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
-                  Radio (m)
+                  {t("geo.radius")}
                 </label>
                 <input
                   type="number"
@@ -256,7 +258,7 @@ export function GeofencesPage() {
           </div>
           {draft.type === "polygon" && (
             <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">
-              Esta zona tiene límites oficiales — solo se puede renombrar y ajustar sus alertas.
+              {t("geo.officialZone")}
             </p>
           )}
 
@@ -268,7 +270,7 @@ export function GeofencesPage() {
                 onChange={(e) => setDraft((d) => d && { ...d, alertOnEnter: e.target.checked })}
                 className="brand-range h-4 w-4"
               />
-              Avisar al entrar
+              {t("geo.alertEnter")}
             </label>
             <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
               <input
@@ -277,7 +279,7 @@ export function GeofencesPage() {
                 onChange={(e) => setDraft((d) => d && { ...d, alertOnExit: e.target.checked })}
                 className="brand-range h-4 w-4"
               />
-              Avisar al salir
+              {t("geo.alertExit")}
             </label>
           </div>
 
@@ -287,21 +289,21 @@ export function GeofencesPage() {
               disabled={saving || !draft.name.trim()}
               className="brand-button rounded-xl px-4 py-2 text-sm font-medium disabled:opacity-50"
             >
-              {saving ? "Guardando..." : "Guardar"}
+              {saving ? t("geo.saving") : t("geo.save")}
             </button>
             <button
               onClick={cancelDraft}
               className="flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-medium text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-white/5"
             >
               <X className="h-4 w-4" />
-              Cancelar
+              {t("geo.cancel")}
             </button>
           </div>
         </Panel>
       )}
 
       {!loading && geofences.length === 0 && !draft && (
-        <p className="text-sm text-slate-500 dark:text-slate-400">Todavía no creaste ninguna geocerca.</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400">{t("geo.none")}</p>
       )}
 
       {geofences.length > 0 && (
@@ -324,14 +326,14 @@ export function GeofencesPage() {
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium text-slate-900 dark:text-white">{g.name}</p>
                 <p className="text-xs text-slate-400 dark:text-slate-500">
-                  {g.type === "polygon" ? "Zona con límites oficiales" : `${g.radiusMeters} m de radio`} ·{" "}
+                  {g.type === "polygon" ? t("geo.officialShort") : t("geo.radiusOf", { meters: g.radiusMeters ?? 0 })} ·{" "}
                   {g.alertOnEnter && g.alertOnExit
-                    ? "entrada y salida"
+                    ? t("geo.enterExit")
                     : g.alertOnEnter
-                      ? "solo entrada"
+                      ? t("geo.onlyEnter")
                       : g.alertOnExit
-                        ? "solo salida"
-                        : "sin alertas"}
+                        ? t("geo.onlyExit")
+                        : t("geo.noAlerts")}
                 </p>
               </div>
               {canManage && (
@@ -340,12 +342,12 @@ export function GeofencesPage() {
                     onClick={() => setDraft(draftFromGeofence(g))}
                     className="rounded-lg px-3 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-white/5"
                   >
-                    Editar
+                    {t("geo.editButton")}
                   </button>
                   <button
                     onClick={() => handleDelete(g.id)}
                     className="rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600 dark:text-slate-500 dark:hover:bg-red-500/10 dark:hover:text-red-400"
-                    aria-label="Eliminar"
+                    aria-label={t("geo.deleteButton")}
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>

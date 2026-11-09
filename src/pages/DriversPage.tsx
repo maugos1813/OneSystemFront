@@ -1,6 +1,6 @@
 import { ChevronDown, ChevronRight, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { useT } from "../i18n";
+import { useT, type MessageKey } from "../i18n";
 import {
   assignDriverBeacon,
   assignDriverBeaconByMac,
@@ -21,10 +21,10 @@ interface Row {
   phone: string | null;
 }
 
-const PERIODS = [
+const PERIODS: Array<{ label: string; hours: number }> = [
   { label: "24 h", hours: 24 },
-  { label: "7 días", hours: 24 * 7 },
-  { label: "30 días", hours: 24 * 30 },
+  { label: "beacons.days7", hours: 24 * 7 },
+  { label: "beacons.days30", hours: 24 * 30 },
 ];
 
 const kindOf = (beaconId: string): string => (beaconId.startsWith("ibeacon:") ? "iBeacon" : "Eddystone");
@@ -41,14 +41,15 @@ const shortLabel = (beaconId: string): string =>
   `${kindOf(beaconId)} · ${factoryMac(beaconId) ?? `…${idOf(beaconId).slice(-10)}`}`;
 
 /** How close a beacon was, from its signal: arm's length is about -50 to -70 dBm, a neighbour's far below that. */
-function proximity(rssi: number | null): { label: string; tone: string } {
-  if (rssi === null) return { label: "sin dato", tone: "text-slate-400" };
-  if (rssi >= -75) return { label: "cerca", tone: "text-emerald-600 dark:text-emerald-400" };
-  if (rssi >= -90) return { label: "media", tone: "text-amber-600 dark:text-amber-400" };
-  return { label: "lejos", tone: "text-slate-400 dark:text-slate-500" };
+function proximity(rssi: number | null): { label: MessageKey; tone: string } {
+  if (rssi === null) return { label: "beacons.noSignal", tone: "text-slate-400" };
+  if (rssi >= -75) return { label: "beacons.near", tone: "text-emerald-600 dark:text-emerald-400" };
+  if (rssi >= -90) return { label: "beacons.medium", tone: "text-amber-600 dark:text-amber-400" };
+  return { label: "beacons.far", tone: "text-slate-400 dark:text-slate-500" };
 }
 
 function NameCell({ row, onSaved }: { row: Row; onSaved: () => void }) {
+  const t = useT();
   const [name, setName] = useState(row.driverName ?? "");
   const [phone, setPhone] = useState(row.phone ?? "");
   const [saving, setSaving] = useState(false);
@@ -65,7 +66,7 @@ function NameCell({ row, onSaved }: { row: Row; onSaved: () => void }) {
       else await assignDriverBeacon(row.beaconId, name.trim(), phone.trim() || undefined);
       onSaved();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No se pudo guardar");
+      setError(err instanceof Error ? err.message : t("beacons.saveFailed"));
     } finally {
       setSaving(false);
     }
@@ -78,7 +79,7 @@ function NameCell({ row, onSaved }: { row: Row; onSaved: () => void }) {
           value={name}
           onChange={(e) => setName(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && save()}
-          placeholder="Nombre del chofer"
+          placeholder={t("beacons.driverName")}
           maxLength={100}
           className="field-input w-44 rounded-lg border border-slate-300 px-2 py-1 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
         />
@@ -86,11 +87,11 @@ function NameCell({ row, onSaved }: { row: Row; onSaved: () => void }) {
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && save()}
-          placeholder="Teléfono"
+          placeholder={t("beacons.phone")}
           type="tel"
           inputMode="tel"
           maxLength={30}
-          aria-label="Teléfono del chofer"
+          aria-label={t("beacons.driverPhone")}
           className="field-input w-36 rounded-lg border border-slate-300 px-2 py-1 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
         />
         {changed && name.trim() && (
@@ -99,7 +100,7 @@ function NameCell({ row, onSaved }: { row: Row; onSaved: () => void }) {
             disabled={saving}
             className="brand-button rounded-lg px-3 py-1 text-xs font-medium disabled:opacity-50"
           >
-            {row.registeredId ? "Guardar" : "Asignar"}
+            {row.registeredId ? t("beacons.save") : t("beacons.assign")}
           </button>
         )}
       </div>
@@ -110,6 +111,7 @@ function NameCell({ row, onSaved }: { row: Row; onSaved: () => void }) {
 
 /** Registers a beacon before any tracker has heard it, from the MAC on its label. */
 function AddByMacForm({ onAdded }: { onAdded: () => void }) {
+  const t = useT();
   const [mac, setMac] = useState("");
   const [name, setName] = useState("");
   const [saving, setSaving] = useState(false);
@@ -125,7 +127,7 @@ function AddByMacForm({ onAdded }: { onAdded: () => void }) {
       setName("");
       onAdded();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No se pudo guardar");
+      setError(err instanceof Error ? err.message : t("beacons.saveFailed"));
     } finally {
       setSaving(false);
     }
@@ -137,11 +139,9 @@ function AddByMacForm({ onAdded }: { onAdded: () => void }) {
       onMouseMove={trackGlow}
       className="glow float-card rounded-2xl border border-white bg-white p-4 shadow-lg shadow-slate-200/50 dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40"
     >
-      <p className="mb-1 text-sm font-semibold text-slate-900 dark:text-white">Asignar baliza por MAC</p>
+      <p className="mb-1 text-sm font-semibold text-slate-900 dark:text-white">{t("beacons.assignByMac")}</p>
       <p className="mb-3 text-xs text-slate-500 dark:text-slate-400">
-        La MAC está impresa en la etiqueta de la baliza (por ejemplo 7C:D9:F4:0B:39:E3). Sirve para balizas con su
-        identidad de fábrica; si le cambiaste el namespace o el ID, espera a que un GPS la oiga y asígnala desde la
-        lista.
+        {t("beacons.assignByMacHint")}
       </p>
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start">
         <input
@@ -156,7 +156,7 @@ function AddByMacForm({ onAdded }: { onAdded: () => void }) {
           required
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Nombre del chofer"
+          placeholder={t("beacons.driverName")}
           maxLength={100}
           className="field-input w-full flex-1 rounded-xl border border-slate-300 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
         />
@@ -165,7 +165,7 @@ function AddByMacForm({ onAdded }: { onAdded: () => void }) {
           disabled={saving}
           className="brand-button rounded-xl px-4 py-2 text-sm font-medium disabled:opacity-50"
         >
-          Asignar baliza
+          {t("beacons.assignButton")}
         </button>
       </div>
       {error && <p className="mt-2 text-xs text-red-500">{error}</p>}
@@ -197,7 +197,7 @@ function BeaconLine({
         {onRemove && (
           <button
             onClick={onRemove}
-            aria-label="Quitar baliza"
+            aria-label={t("beacons.remove")}
             className="shrink-0 rounded-lg p-1.5 text-slate-400 transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10"
           >
             <Trash2 className="h-4 w-4" />
@@ -207,16 +207,16 @@ function BeaconLine({
       <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
         <span className="font-mono">{shortLabel(beacon.beaconId)}</span>
         <span className="mx-1.5">·</span>
-        última vez {formatRelativeTime(beacon.lastSeen, t)}
+        {t("beacons.lastSeen", { when: formatRelativeTime(beacon.lastSeen, t) })}
         <span className="mx-1.5">·</span>
         <span className={near.tone}>
-          {beacon.avgRssi !== null ? `${beacon.avgRssi} dBm` : "—"} ({near.label})
+          {beacon.avgRssi !== null ? `${beacon.avgRssi} dBm` : "—"} ({t(near.label)})
         </span>
         <span className="mx-1.5">·</span>
-        {beacon.sightings} lecturas
+        {t("beacons.sightings", { count: beacon.sightings })}
         {beacon.ignitionSightings > 0
-          ? `, ${beacon.ignitionSightings} con el vehículo encendido`
-          : ", solo con el vehículo apagado"}
+          ? t("beacons.withIgnition", { count: beacon.ignitionSightings })
+          : t("beacons.ignitionOffOnly")}
       </p>
     </li>
   );
@@ -251,15 +251,14 @@ function VehicleCard({
         </h2>
         <p className="text-xs text-slate-500 dark:text-slate-400">
           {entry.lastReport
-            ? `Último reporte de balizas: ${formatRelativeTime(entry.lastReport, t)}`
-            : "Sin reportes de balizas en este periodo"}
+            ? t("beacons.lastReport", { when: formatRelativeTime(entry.lastReport, t) })
+            : t("beacons.noReports")}
         </p>
       </div>
 
       {!entry.lastReport && (
         <p className="mb-2 rounded-lg bg-amber-50 px-2.5 py-1.5 text-xs text-amber-800 dark:bg-amber-500/10 dark:text-amber-300">
-          Este GPS no ha enviado ningún reporte de balizas. Comprueba que tenga el Bluetooth y la detección de balizas
-          activados.
+          {t("beacons.noReportsWarn")}
         </p>
       )}
 
@@ -272,7 +271,7 @@ function VehicleCard({
       ) : (
         entry.lastReport && (
           <p className="py-2 text-sm text-slate-500 dark:text-slate-400">
-            Ningún chofer registrado estuvo en este vehículo en el periodo.
+            {t("beacons.noDrivers")}
           </p>
         )
       )}
@@ -286,14 +285,13 @@ function VehicleCard({
             className="flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
           >
             {openUnnamed ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
-            {unnamed.length} {unnamed.length === 1 ? "baliza sin nombre" : "balizas sin nombre"}
-            {unnamedNear > 0 && <span className="text-emerald-600 dark:text-emerald-400">· {unnamedNear} cerca</span>}
+            {t("beacons.unnamed", { count: unnamed.length })}
+            {unnamedNear > 0 && <span className="text-emerald-600 dark:text-emerald-400">{t("beacons.unnamedNear", { count: unnamedNear })}</span>}
           </button>
           {openUnnamed && (
             <>
               <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
-                Las que llegan con señal lejana suelen ser de otros vehículos o de gente de la zona, no de tu flota.
-                Ponle nombre solo a las que sean de un chofer tuyo.
+                {t("beacons.unnamedHint")}
               </p>
               <ul className="divide-y divide-slate-100 dark:divide-white/10">
                 {unnamed.map((beacon) => (
@@ -323,7 +321,7 @@ export function DriversPage() {
         setByVehicle(vehicles);
         setError(null);
       })
-      .catch((err: unknown) => setError(err instanceof Error ? err.message : "No se pudieron cargar las balizas"))
+      .catch((err: unknown) => setError(err instanceof Error ? err.message : t("beacons.loadFailed")))
       .finally(() => setLoading(false));
   }
 
@@ -341,7 +339,7 @@ export function DriversPage() {
 
   async function handleRemove(registeredId: string | null, driverName: string | null) {
     if (!registeredId) return;
-    if (!confirm(`¿Quitar la baliza de ${driverName}? Dejará de identificarse a este chofer.`)) return;
+    if (!confirm(t("beacons.confirmRemove", { name: driverName ?? "" }))) return;
     await removeDriverBeacon(registeredId);
     refetch();
   }
@@ -350,10 +348,7 @@ export function DriversPage() {
     <div className="p-4 sm:p-6 lg:p-8">
       <h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t("nav.drivers")}</h1>
       <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">
-        Cada chofer lleva una baliza Bluetooth (Teltonika EYE Beacon). El GPS del vehículo la oye y así sabemos quién
-        estuvo en él. Con dos choferes en la cabina se muestra como probable conductor el que se oye más fuerte: es una
-        identificación, no una prueba. Para decidir quién conduce solo cuentan los momentos en que el vehículo se mueve;
-        en la lista de cada vehículo se ven todas las lecturas, también las del motor encendido.
+        {t("beacons.intro")}
       </p>
 
       <div className="mb-6 grid gap-6 lg:grid-cols-2">
@@ -361,21 +356,18 @@ export function DriversPage() {
           onMouseMove={trackGlow}
           className="glow float-card rounded-2xl border border-white bg-white p-4 text-sm text-slate-600 shadow-lg shadow-slate-200/50 dark:border-white/10 dark:bg-[#111729] dark:text-slate-300 dark:shadow-black/40"
         >
-          <p className="mb-1 font-semibold text-slate-900 dark:text-white">Cómo agregar la baliza de un chofer</p>
+          <p className="mb-1 font-semibold text-slate-900 dark:text-white">{t("beacons.howTitle")}</p>
           <ol className="list-decimal space-y-1 pl-5">
-            <li>El GPS del vehículo debe tener Bluetooth activado y escanear balizas (Beacon Detection: All).</li>
-            <li>
-              Asígnala con su MAC (a la derecha), o acércala al GPS y espera un par de minutos: aparece en ese vehículo,
-              en «sin nombre».
-            </li>
-            <li>Escribe el nombre del chofer y pulsa Asignar.</li>
+            <li>{t("beacons.how1")}</li>
+            <li>{t("beacons.how2")}</li>
+            <li>{t("beacons.how3")}</li>
           </ol>
         </div>
         <AddByMacForm onAdded={refetch} />
       </div>
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        <span className="mr-1 text-sm text-slate-500 dark:text-slate-400">Periodo</span>
+        <span className="mr-1 text-sm text-slate-500 dark:text-slate-400">{t("beacons.period")}</span>
         {PERIODS.map((p) => (
           <button
             key={p.hours}
@@ -386,17 +378,17 @@ export function DriversPage() {
                 : "bg-white text-slate-500 hover:bg-slate-100 dark:bg-[#111729] dark:text-slate-400 dark:hover:bg-white/10"
             }`}
           >
-            {p.label}
+            {p.label.startsWith("beacons.") ? t(p.label as MessageKey) : p.label}
           </button>
         ))}
       </div>
 
-      {loading && <p className="text-sm text-slate-500 dark:text-slate-400">Cargando...</p>}
+      {loading && <p className="text-sm text-slate-500 dark:text-slate-400">{t("common.loading")}</p>}
       {error && <p className="text-sm text-red-500">{error}</p>}
 
       {!loading && !error && byVehicle.length === 0 && (
         <p className="rounded-2xl bg-white p-6 text-center text-sm text-slate-500 dark:bg-[#111729] dark:text-slate-400">
-          No hay vehículos con un GPS Teltonika, que son los que pueden oír balizas.
+          {t("beacons.noVehicles")}
         </p>
       )}
 
@@ -414,10 +406,10 @@ export function DriversPage() {
       {silent.length > 0 && (
         <div className="mt-6 rounded-2xl border border-white bg-white p-4 shadow-lg shadow-slate-200/50 dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40">
           <h2 className="mb-1 text-sm font-semibold text-slate-900 dark:text-white">
-            Asignadas, sin señal en este periodo
+            {t("beacons.silentTitle")}
           </h2>
           <p className="mb-2 text-xs text-slate-500 dark:text-slate-400">
-            Ningún GPS las oyó: el chofer no condujo, o la baliza está lejos o dormida.
+            {t("beacons.silentHint")}
           </p>
           <ul className="divide-y divide-slate-100 dark:divide-white/10">
             {silent.map((r) => (
@@ -434,7 +426,7 @@ export function DriversPage() {
                 </span>
                 <button
                   onClick={() => void handleRemove(r.id, r.driverName)}
-                  aria-label="Quitar baliza"
+                  aria-label={t("beacons.remove")}
                   className="rounded-lg p-1.5 text-slate-400 transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10"
                 >
                   <Trash2 className="h-4 w-4" />

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useT } from "../i18n";
 import type { Vehicle } from "../lib/types";
 
 interface VehiclePickerProps {
@@ -12,6 +13,7 @@ const norm = (s: string) => s.toLowerCase().replace(/[\s-]/g, "");
 /** The vehicle choice for pages that look at one vehicle at a time: a searchable dropdown (plate, name or fleet) with
  * previous/next arrows, instead of one pill per vehicle, which stops being usable once the fleet grows. */
 export function VehiclePicker({ vehicles, selectedId, onSelect }: VehiclePickerProps) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
@@ -93,7 +95,7 @@ export function VehiclePicker({ vehicles, selectedId, onSelect }: VehiclePickerP
 
   return (
     <div ref={root} className="relative flex items-center gap-2">
-      <button type="button" aria-label="Vehículo anterior" onClick={() => step(-1)} className={arrow}>
+      <button type="button" aria-label={t("picker.prev")} onClick={() => step(-1)} className={arrow}>
         ‹
       </button>
 
@@ -105,7 +107,7 @@ export function VehiclePicker({ vehicles, selectedId, onSelect }: VehiclePickerP
         className="flex min-w-56 items-center justify-between gap-3 rounded-xl bg-white px-4 py-2 text-left text-sm font-semibold text-slate-800 shadow-sm ring-1 ring-slate-200 hover:ring-violet-300 dark:bg-[#111729] dark:text-white dark:ring-white/10 dark:hover:ring-white/25"
       >
         <span className="flex items-center gap-2">
-          {selected?.name ?? "Elegí un vehículo"}
+          {selected?.name ?? t("picker.choose")}
           {selected?.fleetGroup && (
             <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium tracking-wide text-slate-500 dark:bg-white/10 dark:text-slate-400">
               {selected.fleetGroup}
@@ -117,7 +119,7 @@ export function VehiclePicker({ vehicles, selectedId, onSelect }: VehiclePickerP
         </span>
       </button>
 
-      <button type="button" aria-label="Vehículo siguiente" onClick={() => step(1)} className={arrow}>
+      <button type="button" aria-label={t("picker.next")} onClick={() => step(1)} className={arrow}>
         ›
       </button>
 
@@ -128,18 +130,18 @@ export function VehiclePicker({ vehicles, selectedId, onSelect }: VehiclePickerP
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={onKeyDown}
-            placeholder={`Buscar entre ${vehicles.length} vehículos…`}
+            placeholder={t("picker.search", { count: vehicles.length })}
             className="w-full border-b border-slate-200 bg-transparent px-4 py-3 text-sm outline-none placeholder:text-slate-400 dark:border-white/10 dark:text-white"
           />
           <div role="listbox" className="max-h-72 overflow-y-auto py-1">
-            {ordered.length === 0 && <p className="px-4 py-6 text-center text-sm text-slate-400">Sin resultados.</p>}
+            {ordered.length === 0 && <p className="px-4 py-6 text-center text-sm text-slate-400">{t("picker.noResults")}</p>}
             {(() => {
               let n = 0;
               return groups.map(([fleet, list]) => (
                 <div key={fleet}>
                   {groups.length > 1 && (
                     <p className="sticky top-0 bg-slate-50 px-4 py-1 text-[10px] font-semibold tracking-wider text-slate-400 uppercase dark:bg-[#0d1322]">
-                      {fleet || "Sin flota"} · {list.length}
+                      {fleet || t("picker.noFleet")} · {list.length}
                     </p>
                   )}
                   {list.map((v) => {

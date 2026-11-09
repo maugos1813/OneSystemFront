@@ -1,3 +1,4 @@
+import { bi, currentLocale } from "../i18n";
 import { OBD_IO_IDS } from "./avlDictionary";
 import { modelProfile } from "./deviceModels";
 import type { DeviceDetail } from "./types";
@@ -33,18 +34,18 @@ export function buildChecklist(detail: DeviceDetail, nowMs: number, canSeeSim: b
     seenMs === null
       ? {
           key: "connected",
-          label: "Se conectó al servidor",
+          label: bi("Se conectó al servidor", "Si è collegato al server"),
           state: "pending",
-          detail: "Todavía no llegó nada. Revisa el servidor, el puerto y el APN en el Configurator.",
+          detail: bi("Todavía no llegó nada. Revisa el servidor, el puerto y el APN en el Configurator.", "Non è ancora arrivato nulla. Controlla il server, la porta e l'APN nel Configurator."),
         }
       : {
           key: "connected",
-          label: "Se conectó al servidor",
+          label: bi("Se conectó al servidor", "Si è collegato al server"),
           state: seenMs <= ONLINE_WINDOW_MS ? "ok" : "warn",
           detail:
             seenMs <= ONLINE_WINDOW_MS
-              ? "Está enviando datos ahora."
-              : "Ya se conectó antes, pero hace más de 10 minutos que no envía.",
+              ? bi("Está enviando datos ahora.", "Sta inviando dati adesso.")
+              : bi("Ya se conectó antes, pero hace más de 10 minutos que no envía.", "Si è già collegato prima, ma da più di 10 minuti non invia."),
         },
   );
 
@@ -53,22 +54,22 @@ export function buildChecklist(detail: DeviceDetail, nowMs: number, canSeeSim: b
   const gnssStatus = ioValue(detail, 69);
   items.push(
     !lastPosition
-      ? { key: "gps", label: "Tiene señal de GPS", state: "pending", detail: "Sin posiciones todavía." }
+      ? { key: "gps", label: bi("Tiene señal de GPS", "Ha il segnale GPS"), state: "pending", detail: bi("Sin posiciones todavía.", "Nessuna posizione ancora.") }
       : hasCoordinates && (satellites === null || satellites >= MIN_SATELLITES)
         ? {
             key: "gps",
-            label: "Tiene señal de GPS",
+            label: bi("Tiene señal de GPS", "Ha il segnale GPS"),
             state: "ok",
-            detail: satellites === null ? "Posición recibida." : `${satellites} satélites.`,
+            detail: satellites === null ? bi("Posición recibida.", "Posizione ricevuta.") : bi(`${satellites} satélites.`, `${satellites} satelliti.`),
           }
         : {
             key: "gps",
-            label: "Tiene señal de GPS",
+            label: bi("Tiene señal de GPS", "Ha il segnale GPS"),
             state: "warn",
             detail:
               gnssStatus !== undefined && Number(gnssStatus) !== 1
-                ? "El GPS no tiene fix. En un equipo OBD, sácalo del tablero o ubícalo con vista al cielo."
-                : `Solo ${satellites ?? 0} satélites; se necesitan al menos ${MIN_SATELLITES}.`,
+                ? bi("El GPS no tiene fix. En un equipo OBD, sácalo del tablero o ubícalo con vista al cielo.", "Il GPS non ha il fix. Con un apparecchio OBD, toglilo dal cruscotto o mettilo con vista sul cielo.")
+                : bi(`Solo ${satellites ?? 0} satélites; se necesitan al menos ${MIN_SATELLITES}.`, `Solo ${satellites ?? 0} satelliti; ne servono almeno ${MIN_SATELLITES}.`),
           },
   );
 
@@ -77,15 +78,15 @@ export function buildChecklist(detail: DeviceDetail, nowMs: number, canSeeSim: b
     voltage === undefined
       ? {
           key: "power",
-          label: "Lee la alimentación del vehículo",
+          label: bi("Lee la alimentación del vehículo", "Legge l'alimentazione del veicolo"),
           state: "pending",
-          detail: "No llega el voltaje externo (ID 66). Actívalo en el Configurator.",
+          detail: bi("No llega el voltaje externo (ID 66). Actívalo en el Configurator.", "Non arriva la tensione esterna (ID 66). Attivala nel Configurator."),
         }
       : {
           key: "power",
-          label: "Lee la alimentación del vehículo",
+          label: bi("Lee la alimentación del vehículo", "Legge l'alimentazione del veicolo"),
           state: "ok",
-          detail: `${(Number(voltage) / 1000).toLocaleString("es-AR", { maximumFractionDigits: 2 })} V.`,
+          detail: `${(Number(voltage) / 1000).toLocaleString(currentLocale(), { maximumFractionDigits: 2 })} V.`,
         },
   );
 
@@ -93,12 +94,12 @@ export function buildChecklist(detail: DeviceDetail, nowMs: number, canSeeSim: b
     const obd = detail.io.filter((reading) => OBD_IO_IDS.has(reading.id));
     items.push(
       obd.length > 0
-        ? { key: "obd", label: "Envía datos del motor (OBD)", state: "ok", detail: obd.length === 1 ? "1 elemento de OBD llegando." : `${obd.length} elementos de OBD llegando.` }
+        ? { key: "obd", label: bi("Envía datos del motor (OBD)", "Invia i dati del motore (OBD)"), state: "ok", detail: obd.length === 1 ? bi("1 elemento de OBD llegando.", "1 elemento OBD in arrivo.") : bi(`${obd.length} elementos de OBD llegando.`, `${obd.length} elementi OBD in arrivo.`) }
         : {
             key: "obd",
-            label: "Envía datos del motor (OBD)",
+            label: bi("Envía datos del motor (OBD)", "Invia i dati del motore (OBD)"),
             state: "pending",
-            detail: "Aún no llegan. Se activan en el Configurator (pestaña OBD) y el equipo debe estar en el puerto del vehículo.",
+            detail: bi("Aún no llegan. Se activan en el Configurator (pestaña OBD) y el equipo debe estar en el puerto del vehículo.", "Non arrivano ancora. Si attivano nel Configurator (scheda OBD) e l'apparecchio deve essere nella porta del veicolo."),
           },
     );
   }
@@ -109,32 +110,32 @@ export function buildChecklist(detail: DeviceDetail, nowMs: number, canSeeSim: b
       ignition === undefined
         ? {
             key: "ignition",
-            label: "Lee la ignición",
+            label: bi("Lee la ignición", "Legge l'accensione"),
             state: "pending",
-            detail: "No llega la ignición (ID 239). Revisa el cable amarillo (DIN1) y que Ignition Source sea DIN1.",
+            detail: bi("No llega la ignición (ID 239). Revisa el cable amarillo (DIN1) y que Ignition Source sea DIN1.", "Non arriva l'accensione (ID 239). Controlla il cavo giallo (DIN1) e che Ignition Source sia DIN1."),
           }
-        : { key: "ignition", label: "Lee la ignición", state: "ok", detail: Number(ignition) === 1 ? "Encendida." : "Apagada." },
+        : { key: "ignition", label: bi("Lee la ignición", "Legge l'accensione"), state: "ok", detail: Number(ignition) === 1 ? bi("Encendida.", "Accesa.") : bi("Apagada.", "Spenta.") },
     );
   }
 
   items.push(
     vehicle
-      ? { key: "vehicle", label: "Está asignado a un vehículo", state: "ok", detail: vehicle.name }
-      : { key: "vehicle", label: "Está asignado a un vehículo", state: "pending", detail: "Asígnalo desde Vehículos." },
+      ? { key: "vehicle", label: bi("Está asignado a un vehículo", "È assegnato a un veicolo"), state: "ok", detail: vehicle.name }
+      : { key: "vehicle", label: bi("Está asignado a un vehículo", "È assegnato a un veicolo"), state: "pending", detail: bi("Asígnalo desde Vehículos.", "Assegnalo da Veicoli.") },
   );
 
   if (canSeeSim) {
     items.push(
       sim
-        ? { key: "sim", label: "Tiene la SIM registrada", state: "ok", detail: sim.phoneNumber ?? sim.iccid }
-        : { key: "sim", label: "Tiene la SIM registrada", state: "pending", detail: "Cárgala en la sección SIMs para controlar los datos." },
+        ? { key: "sim", label: bi("Tiene la SIM registrada", "Ha la SIM registrata"), state: "ok", detail: sim.phoneNumber ?? sim.iccid }
+        : { key: "sim", label: bi("Tiene la SIM registrada", "Ha la SIM registrata"), state: "pending", detail: bi("Cárgala en la sección SIMs para controlar los datos.", "Caricala nella sezione SIM per controllare i dati.") },
     );
   }
 
   items.push(
     device.serialNumber
-      ? { key: "serial", label: "Tiene el número de serie cargado", state: "ok", detail: device.serialNumber }
-      : { key: "serial", label: "Tiene el número de serie cargado", state: "pending", detail: "Está impreso en la etiqueta (S/N)." },
+      ? { key: "serial", label: bi("Tiene el número de serie cargado", "Ha il numero di serie caricato"), state: "ok", detail: device.serialNumber }
+      : { key: "serial", label: bi("Tiene el número de serie cargado", "Ha il numero di serie caricato"), state: "pending", detail: bi("Está impreso en la etiqueta (S/N).", "È stampato sull'etichetta (S/N).") },
   );
 
   return items;

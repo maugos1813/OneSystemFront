@@ -1,5 +1,6 @@
 import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
+import { useT } from "../i18n";
 
 /** A password box with the eye that shows what was typed (so a password dictated to someone else isn't typed blind). */
 export function PasswordField({
@@ -21,6 +22,7 @@ export function PasswordField({
   className?: string;
   inputClassName?: string;
 }) {
+  const t = useT();
   const [visible, setVisible] = useState(false);
   return (
     <div className={`relative ${className}`}>
@@ -38,8 +40,8 @@ export function PasswordField({
       <button
         type="button"
         onClick={() => setVisible((v) => !v)}
-        aria-label={visible ? "Ocultar contraseña" : "Mostrar contraseña"}
-        title={visible ? "Ocultar contraseña" : "Mostrar contraseña"}
+        aria-label={visible ? t("password.hide") : t("password.show")}
+        title={visible ? t("password.hide") : t("password.show")}
         className="absolute inset-y-0 right-0 flex items-center px-2.5 text-slate-400 hover:text-slate-700 dark:hover:text-white"
       >
         {visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}

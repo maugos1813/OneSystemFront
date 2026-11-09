@@ -1,4 +1,5 @@
 import { NO_SCORE_COLOR, scoreColor } from "../../lib/drivingBehavior";
+import { useT } from "../../i18n";
 import { trackGlow } from "../../lib/glow";
 
 const SIZE = 60;
@@ -19,6 +20,7 @@ interface ScoreRingProps {
 /** A single ring lives in its own floating card so a full row of them spreads edge to
  * edge — the active one "pops" forward with a bigger shadow and a slight lift. */
 export function ScoreRing({ label, score, count, countLabel, active, onClick }: ScoreRingProps) {
+  const t = useT();
   const clamped = score === null ? 0 : Math.max(0, Math.min(100, score));
   const dash = (clamped / 100) * CIRCUMFERENCE;
   const color = score === null ? NO_SCORE_COLOR : scoreColor(score);
@@ -63,7 +65,7 @@ export function ScoreRing({ label, score, count, countLabel, active, onClick }: 
       <div className="min-w-0">
         <p className="text-sm leading-tight font-semibold text-slate-900 dark:text-white">{label}</p>
         <p className="mt-0.5 text-xs leading-tight text-slate-400 dark:text-slate-500">
-          {count === null ? "no medible" : `${count} ${countLabel}`}
+          {count === null ? t("score.notMeasurable") : `${count} ${countLabel}`}
         </p>
       </div>
     </button>

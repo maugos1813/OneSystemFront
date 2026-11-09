@@ -11,7 +11,7 @@ import { describeIo } from "../lib/avlDictionary";
 import { describeEvent } from "../lib/deviceEvents";
 import { buildChecklist, type CheckState } from "../lib/deviceChecklist";
 import { hasSetupGuide, modelOptions, modelProfile } from "../lib/deviceModels";
-import { useT } from "../i18n";
+import { currentLocale, rememberedLanguage, translate, useT } from "../i18n";
 import { trackGlow } from "../lib/glow";
 import type { DeviceDetail } from "../lib/types";
 import { ModalPortal } from "../components/ModalPortal";
@@ -24,17 +24,19 @@ const INPUT =
   "field-input w-full rounded-xl border border-slate-300 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white";
 const LABEL = "mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300";
 
+const tr = (key: Parameters<typeof translate>[1], params?: Parameters<typeof translate>[2]) => translate(rememberedLanguage(), key, params);
+
 function formatDate(iso: string | null | undefined): string {
-  return iso ? new Date(iso).toLocaleString() : "Nunca";
+  return iso ? new Date(iso).toLocaleString(currentLocale()) : tr("dd.never");
 }
 
 function relativeTime(iso: string | null | undefined): string {
-  if (!iso) return "Nunca";
+  if (!iso) return tr("dd.never");
   const seconds = Math.round((Date.now() - new Date(iso).getTime()) / 1000);
-  if (seconds < 60) return "recién";
-  if (seconds < 3600) return `hace ${Math.round(seconds / 60)} min`;
-  if (seconds < 86400) return `hace ${Math.round(seconds / 3600)} h`;
-  return `hace ${Math.round(seconds / 86400)} d`;
+  if (seconds < 60) return tr("time.justNow");
+  if (seconds < 3600) return tr("time.minutesAgo", { count: Math.round(seconds / 60) });
+  if (seconds < 86400) return tr("time.hoursAgo", { count: Math.round(seconds / 3600) });
+  return tr("time.daysAgo", { count: Math.round(seconds / 86400) });
 }
 
 const CHECK_ICON: Record<CheckState, ReactNode> = {
@@ -87,9 +89,9 @@ export function DeviceDetailPage() {
         setError(null);
       })
       .catch((err: unknown) =>
-        setError(err instanceof ApiError && err.status === 404 ? "No se encontró este dispositivo." : "No se pudo cargar el dispositivo."),
+        setError(err instanceof ApiError && err.status === 404 ? t("dd.notFound") : t("dd.loadFailed")),
       );
-  }, [id]);
+  }, [id, t]);
 
   const refresh = useCallback(() => {
     setRefreshing(true);
@@ -118,14 +120,14 @@ export function DeviceDetailPage() {
     return (
       <div className="mx-auto max-w-5xl p-4 sm:p-6 lg:p-8">
         <Link to="/dispositivos" className="mb-4 inline-flex items-center gap-1 text-sm text-slate-500 hover:underline">
-          <ArrowLeft className="h-4 w-4" /> Dispositivos
+          <ArrowLeft className="h-4 w-4" /> {t("dd.devices")}
         </Link>
         <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
       </div>
     );
   }
   if (!detail) {
-    return <p className="p-8 text-sm text-slate-500 dark:text-slate-400">Cargando...</p>;
+    return <p className="p-8 text-sm text-slate-500 dark:text-slate-400">{t("common.loading")}</p>;
   }
 
   const { device, vehicle, sim, lastPosition } = detail;
@@ -140,13 +142,13 @@ export function DeviceDetailPage() {
   return (
     <div className="mx-auto max-w-5xl p-4 sm:p-6 lg:p-8">
       <Link to="/dispositivos" className="mb-3 inline-flex items-center gap-1 text-sm text-slate-500 hover:underline dark:text-slate-400">
-        <ArrowLeft className="h-4 w-4" /> Dispositivos
+        <ArrowLeft className="h-4 w-4" /> {t("dd.devices")}
       </Link>
 
       <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold text-slate-900 dark:text-white">
-            {device.model} · {vehicle?.name ?? "Sin vehículo"}
+            {device.model} · {vehicle?.name ?? t("dd.noVehicle")}
           </h1>
           <p className="mt-1 flex flex-wrap items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
             {isPlatform && <span>IMEI {device.imei}</span>}
@@ -161,19 +163,19 @@ export function DeviceDetailPage() {
           disabled={refreshing}
           className="flex items-center gap-1.5 rounded-xl border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5"
         >
-          <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} /> Actualizar
+          <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} /> {t("dd.refresh")}
         </button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
         <Section
-          title="Identificación"
+          title={t("dd.identification")}
           action={
             canEdit && isPlatform && (
               <button
                 type="button"
                 onClick={() => setEditing(true)}
-                aria-label="Editar identificación"
+                aria-label={t("dd.editIdentification")}
                 className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-white/10"
               >
                 <Pencil className="h-4 w-4" />
@@ -183,17 +185,17 @@ export function DeviceDetailPage() {
         >
           <dl className="divide-y divide-slate-100 dark:divide-white/10">
             {isPlatform && <Fact label="IMEI">{device.imei}</Fact>}
-            <Fact label="Modelo">{device.model}</Fact>
-            {isPlatform && <Fact label="Número de serie">{device.serialNumber ?? "—"}</Fact>}
+            <Fact label={t("dd.model")}>{device.model}</Fact>
+            {isPlatform && <Fact label={t("dd.serial")}>{device.serialNumber ?? "—"}</Fact>}
             {isPlatform && <Fact label="Firmware">{device.firmware ?? "—"}</Fact>}
-            <Fact label="Vehículo">
+            <Fact label={t("dd.vehicle")}>
               {vehicle ? (
                 <Link to="/vehiculos" className="hover:underline">
                   {vehicle.name}
                   {vehicle.plate ? ` · ${vehicle.plate}` : ""}
                 </Link>
               ) : (
-                "Sin asignar"
+                t("dd.unassigned")
               )}
             </Fact>
             {canSeeSim && (
@@ -204,16 +206,16 @@ export function DeviceDetailPage() {
                   </Link>
                 ) : (
                   <Link to="/sims" className="text-slate-400 hover:underline">
-                    Sin registrar
+                    {t("dd.unregistered")}
                   </Link>
                 )}
               </Fact>
             )}
-            <Fact label="Dado de alta">{formatDate(device.createdAt)}</Fact>
+            <Fact label={t("dd.registered")}>{formatDate(device.createdAt)}</Fact>
           </dl>
         </Section>
 
-        <Section title="Puesta en marcha" action={<span className="text-xs text-slate-500">{doneCount} de {checklist.length}</span>}>
+        <Section title={t("dd.setup")} action={<span className="text-xs text-slate-500">{t("dd.setupCount", { done: doneCount, total: checklist.length })}</span>}>
           <ul className="space-y-2.5">
             {checklist.map((item) => (
               <li key={item.key} className="flex gap-2.5">
@@ -227,31 +229,31 @@ export function DeviceDetailPage() {
           </ul>
         </Section>
 
-        <Section title="Conexión">
+        <Section title={t("dd.connection")}>
           <dl className="divide-y divide-slate-100 dark:divide-white/10">
-            <Fact label="Estado">
+            <Fact label={t("dd.status")}>
               <StatusBadge lastSeenAt={device.lastSeenAt} />
             </Fact>
-            <Fact label="Última conexión">
+            <Fact label={t("dd.lastConnection")}>
               {formatDate(device.lastSeenAt)} <span className="text-slate-400">({relativeTime(device.lastSeenAt)})</span>
             </Fact>
-            <Fact label="Último dato de posición">{lastPosition ? relativeTime(lastPosition.ts) : "—"}</Fact>
-            <Fact label="Señal GSM">{ioNumber(21)}</Fact>
-            <Fact label="Tipo de red">{ioNumber(237)}</Fact>
-            <Fact label="Estado del GPS">{ioNumber(69)}</Fact>
-            <Fact label="Satélites">{lastPosition?.satellites ?? "—"}</Fact>
-            <Fact label="Ubicación">
+            <Fact label={t("dd.lastPositionData")}>{lastPosition ? relativeTime(lastPosition.ts) : "—"}</Fact>
+            <Fact label={t("dd.gsm")}>{ioNumber(21)}</Fact>
+            <Fact label={t("dd.network")}>{ioNumber(237)}</Fact>
+            <Fact label={t("dd.gpsStatus")}>{ioNumber(69)}</Fact>
+            <Fact label={t("dd.satellites")}>{lastPosition?.satellites ?? "—"}</Fact>
+            <Fact label={t("dd.location")}>
               {!lastPosition
                 ? "—"
                 : lastPosition.lat === 0 && lastPosition.lng === 0
-                  ? "Sin ubicación (el GPS aún no tiene fix)"
+                  ? t("dd.noFix")
                   : `${lastPosition.lat.toFixed(5)}, ${lastPosition.lng.toFixed(5)}`}
             </Fact>
           </dl>
         </Section>
 
         {wiredIo.length > 0 && (
-          <Section title="Entradas y salidas">
+          <Section title={t("dd.io")}>
             <dl className="divide-y divide-slate-100 dark:divide-white/10">
               {wiredIo.map((item) => (
                 <Fact key={item.id} label={item.label}>
@@ -266,19 +268,19 @@ export function DeviceDetailPage() {
         )}
 
         {canEdit && supportsGreenDriving(device.model, device.source) && (
-          <Section title="Conducción">
+          <Section title={t("dd.driving")}>
             <GreenDrivingPanel deviceId={device.id} since={device.greenDrivingSince} onChanged={() => void load()} />
           </Section>
         )}
 
-        <Section title="Alimentación y estado">
+        <Section title={t("dd.power")}>
           <dl className="divide-y divide-slate-100 dark:divide-white/10">
-            <Fact label="Voltaje del vehículo">{ioNumber(66)}</Fact>
-            <Fact label="Batería interna">{ioNumber(67)}</Fact>
-            <Fact label="Nivel de batería interna">{ioNumber(113)}</Fact>
-            <Fact label="Ignición">{ioNumber(239)}</Fact>
-            <Fact label="Movimiento">{ioNumber(240)}</Fact>
-            <Fact label="Odómetro">{ioNumber(16)}</Fact>
+            <Fact label={t("dd.vehicleVoltage")}>{ioNumber(66)}</Fact>
+            <Fact label={t("dd.internalBattery")}>{ioNumber(67)}</Fact>
+            <Fact label={t("dd.internalBatteryLevel")}>{ioNumber(113)}</Fact>
+            <Fact label={t("dd.ignition")}>{ioNumber(239)}</Fact>
+            <Fact label={t("dd.movement")}>{ioNumber(240)}</Fact>
+            <Fact label={t("dd.odometer")}>{ioNumber(16)}</Fact>
           </dl>
         </Section>
       </div>
@@ -286,7 +288,7 @@ export function DeviceDetailPage() {
       {hasSetupGuide(device.model) && (
         <details onMouseMove={trackGlow} className={`${CARD} group mt-4`}>
           <summary className="cursor-pointer text-sm font-semibold text-slate-900 dark:text-white">
-            Guía de configuración del {device.model}
+            {t("dd.setupGuide", { model: device.model })}
           </summary>
           <div className="mt-3 space-y-4">
             {profile.setup.map((step) => (
@@ -304,11 +306,10 @@ export function DeviceDetailPage() {
       )}
 
       <section onMouseMove={trackGlow} className={`${CARD} mt-4`}>
-        <h2 className="mb-2 text-sm font-semibold text-slate-900 dark:text-white">Eventos y alarmas</h2>
+        <h2 className="mb-2 text-sm font-semibold text-slate-900 dark:text-white">{t("dd.events")}</h2>
         {detail.events.length === 0 ? (
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            Todavía no hay eventos. Aparecen cuando cambia la ignición o el movimiento, o cuando el equipo levanta una alarma
-            (desconexión, interferencia, remolque, choque).
+            {t("dd.noEvents")}
           </p>
         ) : (
           <ul className="divide-y divide-slate-100 dark:divide-white/10">
@@ -339,39 +340,38 @@ export function DeviceDetailPage() {
       {isPlatform && (
         <section onMouseMove={trackGlow} className={`${CARD} mt-4`}>
           <div className="mb-1 flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Lo que está enviando el equipo</h2>
+            <h2 className="text-sm font-semibold text-slate-900 dark:text-white">{t("dd.sending")}</h2>
             <input
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
-              placeholder="Buscar por nombre o ID"
-              aria-label="Buscar elemento"
+              placeholder={t("dd.searchIo")}
+              aria-label={t("dd.searchIoLabel")}
               className={`${INPUT} !w-56`}
             />
           </div>
           <p className="mb-3 text-xs text-slate-500 dark:text-slate-400">
-            El último valor de cada elemento de I/O recibido (se revisan los últimos 100 registros, porque el equipo solo
-            reenvía lo que cambia). Es la forma de comprobar qué activaste en el Configurator.
-            {device.source === "radius_velocity" && " Este equipo viene de Radius Velocity y solo trae posición, velocidad e ignición."}
+            {t("dd.sendingHint")}
+            {device.source === "radius_velocity" && t("dd.velocityNote")}
           </p>
           {detail.io.length === 0 ? (
-            <p className="text-sm text-slate-500 dark:text-slate-400">Todavía no se recibió ningún dato de este equipo.</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">{t("dd.noData")}</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full min-w-[460px] text-left text-sm">
                 <thead className="border-b border-violet-100 text-xs text-slate-500 uppercase dark:border-white/10 dark:text-slate-400">
                   <tr>
                     <th className="px-2 py-2 font-medium">ID</th>
-                    <th className="px-2 py-2 font-medium">Elemento</th>
-                    <th className="px-2 py-2 font-medium">Valor</th>
-                    <th className="px-2 py-2 font-medium">Valor crudo</th>
-                    <th className="px-2 py-2 font-medium">Recibido</th>
+                    <th className="px-2 py-2 font-medium">{t("dd.colElement")}</th>
+                    <th className="px-2 py-2 font-medium">{t("dd.colValue")}</th>
+                    <th className="px-2 py-2 font-medium">{t("dd.colRaw")}</th>
+                    <th className="px-2 py-2 font-medium">{t("dd.colReceived")}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-white/10">
                   {io.map(({ reading, name, display, known }) => (
                     <tr key={reading.id}>
                       <td className="px-2 py-2 text-slate-500 tabular-nums dark:text-slate-400">{reading.id}</td>
-                      <td className={`px-2 py-2 ${known ? "text-slate-900 dark:text-white" : "text-slate-400"}`}>{known ? name : "Sin nombre"}</td>
+                      <td className={`px-2 py-2 ${known ? "text-slate-900 dark:text-white" : "text-slate-400"}`}>{known ? name : t("dd.unnamed")}</td>
                       <td className="px-2 py-2 font-medium text-slate-900 dark:text-white">{display}</td>
                       <td className="px-2 py-2 text-slate-500 tabular-nums dark:text-slate-400">{String(reading.value)}</td>
                       <td className="px-2 py-2 text-slate-500 dark:text-slate-400">{relativeTime(reading.ts)}</td>
@@ -380,7 +380,7 @@ export function DeviceDetailPage() {
                   {io.length === 0 && (
                     <tr>
                       <td colSpan={5} className="px-2 py-3 text-slate-500 dark:text-slate-400">
-                        Ningún elemento coincide con la búsqueda.
+                        {t("dd.noMatch")}
                       </td>
                     </tr>
                   )}
@@ -406,6 +406,7 @@ export function DeviceDetailPage() {
 }
 
 function EditDialog({ detail, onClose, onSaved }: { detail: DeviceDetail; onClose: () => void; onSaved: () => void }) {
+  const t = useT();
   const { device } = detail;
   const [model, setModel] = useState(device.model);
   const [serialNumber, setSerialNumber] = useState(device.serialNumber ?? "");
@@ -421,7 +422,7 @@ function EditDialog({ detail, onClose, onSaved }: { detail: DeviceDetail; onClos
       await updateDevice(device.id, { model, serialNumber: serialNumber.trim(), firmware: firmware.trim() });
       onSaved();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No se pudo guardar");
+      setError(err instanceof Error ? err.message : t("dd.saveFailed"));
     } finally {
       setSubmitting(false);
     }
@@ -435,14 +436,14 @@ function EditDialog({ detail, onClose, onSaved }: { detail: DeviceDetail; onClos
         className="w-full max-w-md rounded-2xl border border-white bg-white p-5 shadow-xl dark:border-white/10 dark:bg-[#111729]"
       >
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-base font-semibold text-slate-900 dark:text-white">Editar dispositivo</h2>
-          <button type="button" onClick={onClose} aria-label="Cerrar" className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10">
+          <h2 className="text-base font-semibold text-slate-900 dark:text-white">{t("dd.editDevice")}</h2>
+          <button type="button" onClick={onClose} aria-label={t("dd.close")} className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10">
             <X className="h-4 w-4" />
           </button>
         </div>
         <div className="space-y-3">
           <div>
-            <label className={LABEL} htmlFor="model">Modelo</label>
+            <label className={LABEL} htmlFor="model">{t("dd.model")}</label>
             <select id="model" value={model} onChange={(e) => setModel(e.target.value)} className={INPUT}>
               {modelOptions(device.model).map((option) => (
                 <option key={option} value={option}>
@@ -452,21 +453,21 @@ function EditDialog({ detail, onClose, onSaved }: { detail: DeviceDetail; onClos
             </select>
           </div>
           <div>
-            <label className={LABEL} htmlFor="serial">Número de serie (S/N)</label>
+            <label className={LABEL} htmlFor="serial">{t("dd.serialLabel")}</label>
             <input id="serial" value={serialNumber} onChange={(e) => setSerialNumber(e.target.value)} maxLength={32} placeholder="1164718028" className={INPUT} />
           </div>
           <div>
             <label className={LABEL} htmlFor="firmware">Firmware</label>
-            <input id="firmware" value={firmware} onChange={(e) => setFirmware(e.target.value)} maxLength={32} placeholder="Ej. 03.28.07" className={INPUT} />
+            <input id="firmware" value={firmware} onChange={(e) => setFirmware(e.target.value)} maxLength={32} placeholder={t("dd.firmwarePlaceholder")} className={INPUT} />
           </div>
         </div>
         {error && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{error}</p>}
         <div className="mt-5 flex justify-end gap-2">
           <button type="button" onClick={onClose} className="rounded-xl px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-white/10">
-            Cancelar
+            {t("dd.cancel")}
           </button>
           <button type="submit" disabled={submitting} className="brand-button rounded-xl px-4 py-2 text-sm font-medium disabled:opacity-50">
-            Guardar
+            {t("dd.save")}
           </button>
         </div>
       </form>

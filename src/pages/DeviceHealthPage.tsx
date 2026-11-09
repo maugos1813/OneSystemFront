@@ -2,17 +2,18 @@ import { AreaFilterPills } from "../components/AreaFilterPills";
 import { DeviceSourceBadge } from "../components/DeviceSourceBadge";
 import { useAuth } from "../context/AuthContext";
 import { useFleet } from "../context/FleetContext";
+import { useT, type Translate } from "../i18n";
 import { isLowVoltage, isOffline } from "../lib/alerts";
 import { trackGlow } from "../lib/glow";
 import { AVL_ID } from "../lib/types";
 
-function relativeTime(iso: string | null): string {
-  if (!iso) return "Nunca";
+function relativeTime(iso: string | null, t: Translate): string {
+  if (!iso) return t("health.never");
   const seconds = Math.round((Date.now() - new Date(iso).getTime()) / 1000);
-  if (seconds < 60) return "recién";
-  if (seconds < 3600) return `hace ${Math.round(seconds / 60)}min`;
-  if (seconds < 86400) return `hace ${Math.round(seconds / 3600)}h`;
-  return `hace ${Math.round(seconds / 86400)}d`;
+  if (seconds < 60) return t("time.justNow");
+  if (seconds < 3600) return t("time.minutesAgo", { count: Math.round(seconds / 60) });
+  if (seconds < 86400) return t("time.hoursAgo", { count: Math.round(seconds / 3600) });
+  return t("time.daysAgo", { count: Math.round(seconds / 86400) });
 }
 
 type Severity = "ok" | "warning" | "critical";
@@ -24,6 +25,7 @@ const SEVERITY_COLOR: Record<Severity, string> = {
 };
 
 export function DeviceHealthPage() {
+  const t = useT();
   const isPlatform = useAuth().currentUser?.isPlatform === true;
   const { devices: allDevices, vehicles, positions, loading, settings, selectedArea } = useFleet();
   const deviceOfflineMs = (settings?.alerts.deviceOfflineHours ?? 2) * 3_600_000;
@@ -57,7 +59,7 @@ export function DeviceHealthPage() {
 
     return {
       device,
-      vehicleName: vehicle?.name ?? "Sin asignar",
+      vehicleName: vehicle?.name ?? t("health.unassigned"),
       offline,
       severity,
       batteryVoltage,
@@ -72,11 +74,9 @@ export function DeviceHealthPage() {
 
   return (
     <div className="h-full overflow-y-auto bg-[#f5f6fb] p-4 sm:p-6 lg:p-8 dark:bg-[#0a0e1a]">
-      <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Salud del dispositivo</h1>
+      <h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t("health.title")}</h1>
       <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">
-        Estado de conectividad y hardware de todos los dispositivos de tu flota. Los dispositivos Radius Velocity
-        solo reportan posición, velocidad e ignición — batería, voltaje y satélites siempre se muestran como "—"
-        porque esa fuente no los provee, no por una falla.
+        {t("health.intro")}
       </p>
 
       <div className="mb-6">
@@ -86,21 +86,21 @@ export function DeviceHealthPage() {
       {!loading && (
         <div className="mb-6 flex flex-wrap gap-2">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-red-50 px-3 py-1 text-xs font-medium text-red-600 dark:bg-red-500/15 dark:text-red-400">
-            {criticalCount} con problema crítico
+            {t("health.critical", { count: criticalCount })}
           </span>
           <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-600 dark:bg-amber-500/15 dark:text-amber-400">
-            {warningCount} para revisar
+            {t("health.review", { count: warningCount })}
           </span>
           <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400">
-            {rows.length - criticalCount - warningCount} saludables
+            {t("health.healthy", { count: rows.length - criticalCount - warningCount })}
           </span>
         </div>
       )}
 
-      {loading && <p className="text-sm text-slate-500 dark:text-slate-400">Cargando...</p>}
+      {loading && <p className="text-sm text-slate-500 dark:text-slate-400">{t("common.loading")}</p>}
 
       {!loading && rows.length === 0 && (
-        <p className="text-sm text-slate-500 dark:text-slate-400">Todavía no hay dispositivos.</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400">{t("health.none")}</p>
       )}
 
       {!loading && rows.length > 0 && (
@@ -108,15 +108,15 @@ export function DeviceHealthPage() {
           <table className="w-full min-w-[760px] text-left text-sm">
             <thead className="border-b border-violet-100 bg-violet-50/60 text-xs text-slate-500 uppercase dark:border-white/10 dark:bg-white/5 dark:text-slate-400">
               <tr>
-                <th className="px-4 py-2 font-medium">Estado</th>
-                <th className="px-4 py-2 font-medium">Vehículo</th>
+                <th className="px-4 py-2 font-medium">{t("health.colStatus")}</th>
+                <th className="px-4 py-2 font-medium">{t("health.colVehicle")}</th>
                 {isPlatform && <th className="px-4 py-2 font-medium">IMEI</th>}
-                <th className="px-4 py-2 font-medium">Fuente</th>
-                <th className="px-4 py-2 font-medium">Última conexión</th>
-                <th className="px-4 py-2 text-right font-medium">Batería</th>
-                <th className="px-4 py-2 text-right font-medium">Voltaje externo</th>
-                <th className="px-4 py-2 text-right font-medium">Satélites</th>
-                <th className="px-4 py-2 text-right font-medium">Señal GSM</th>
+                <th className="px-4 py-2 font-medium">{t("health.colSource")}</th>
+                <th className="px-4 py-2 font-medium">{t("health.colLastSeen")}</th>
+                <th className="px-4 py-2 text-right font-medium">{t("health.colBattery")}</th>
+                <th className="px-4 py-2 text-right font-medium">{t("health.colExternal")}</th>
+                <th className="px-4 py-2 text-right font-medium">{t("health.colSatellites")}</th>
+                <th className="px-4 py-2 text-right font-medium">{t("health.colGsm")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-white/10">
@@ -133,7 +133,7 @@ export function DeviceHealthPage() {
                       style={{ backgroundColor: `${SEVERITY_COLOR[row.severity]}1a`, color: SEVERITY_COLOR[row.severity] }}
                     >
                       <span className="h-1.5 w-1.5 rounded-full" style={{ background: SEVERITY_COLOR[row.severity] }} />
-                      {row.offline ? "Desconectado" : row.severity === "ok" ? "Saludable" : "Revisar"}
+                      {row.offline ? t("health.disconnected") : row.severity === "ok" ? t("health.statusHealthy") : t("health.statusReview")}
                     </span>
                   </td>
                   <td className="px-4 py-3 font-medium text-slate-900 dark:text-white">{row.vehicleName}</td>
@@ -142,7 +142,7 @@ export function DeviceHealthPage() {
                     <DeviceSourceBadge source={row.device.source} />
                   </td>
                   <td className="px-4 py-3 text-slate-500 dark:text-slate-400">
-                    {relativeTime(row.device.lastSeenAt)}
+                    {relativeTime(row.device.lastSeenAt, t)}
                   </td>
                   <td className="px-4 py-3 text-right tabular-nums text-slate-600 dark:text-slate-300">
                     {row.batteryVoltage !== null ? `${row.batteryVoltage.toFixed(1)} V` : "—"}

@@ -5,6 +5,7 @@ import { Panel } from "../components/analytics/Panel";
 import { LogoUpload } from "../components/LogoUpload";
 import { PasswordField } from "../components/PasswordField";
 import { useAuth } from "../context/AuthContext";
+import { useLanguage, type MessageKey } from "../i18n";
 import { ApiError, claimDevice, createPlatformOrganization, getPlatformOrganization, listPlatformOrganizations, resetPlatformUserTotp, setOrganizationLogoAsPlatform, setOrganizationSections, setUserLogoAsPlatform, viewClientToken } from "../lib/api";
 import { startViewing } from "../lib/auth";
 import { fileToLogoVariants, LOGO_ACCEPT } from "../lib/logoImage";
@@ -12,14 +13,14 @@ import { ADMIN_SECTION_INFO, ADMIN_SECTION_KEYS, HIDDEN_MODULES, MODULE_INFO, MO
 import { DEVICE_MODELS } from "../lib/deviceModels";
 import type { PlatformOrganization, PlatformOrganizationDetail } from "../lib/types";
 
-const dateFormat = new Intl.DateTimeFormat("es", { dateStyle: "medium" });
-const dateTimeFormat = new Intl.DateTimeFormat("es", { dateStyle: "short", timeStyle: "short" });
-
 const INPUT =
   "field-input min-w-0 flex-1 rounded-xl border border-slate-300 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white";
 
 /** The whole platform seen from above: every client organization. Only OneSystec's own owner/admin gets here (the server enforces it). */
 export function PlatformPage({ embedded = false }: { embedded?: boolean }) {
+  const { t, locale } = useLanguage();
+  const dateFormat = new Intl.DateTimeFormat(locale, { dateStyle: "medium" });
+  const dateTimeFormat = new Intl.DateTimeFormat(locale, { dateStyle: "short", timeStyle: "short" });
   const { currentUser } = useAuth();
   const [orgs, setOrgs] = useState<PlatformOrganization[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,7 +40,7 @@ export function PlatformPage({ embedded = false }: { embedded?: boolean }) {
       setOrgs(await listPlatformOrganizations());
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No se pudo cargar la lista");
+      setError(err instanceof Error ? err.message : t("platform.err.list"));
     } finally {
       setLoading(false);
     }
@@ -64,7 +65,7 @@ export function PlatformPage({ embedded = false }: { embedded?: boolean }) {
       setAllowed(loaded.sections);
       setSectionsMessage(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No se pudo cargar el cliente");
+      setError(err instanceof Error ? err.message : t("platform.err.client"));
     }
   }
 
@@ -86,9 +87,9 @@ export function PlatformPage({ embedded = false }: { embedded?: boolean }) {
       const saved = await setOrganizationSections(orgId, allowed);
       setAllowed(saved.sections);
       setDetail(await getPlatformOrganization(orgId));
-      setSectionsMessage({ ok: true, text: "Guardado. Se aplica al instante." });
+      setSectionsMessage({ ok: true, text: t("platform.sectionsSaved") });
     } catch (err) {
-      setSectionsMessage({ ok: false, text: err instanceof Error ? err.message : "No se pudo guardar" });
+      setSectionsMessage({ ok: false, text: err instanceof Error ? err.message : t("platform.err.save") });
     } finally {
       setSavingSections(false);
     }
@@ -103,7 +104,7 @@ export function PlatformPage({ embedded = false }: { embedded?: boolean }) {
       await setOrganizationLogoAsPlatform(orgId, logo, tag);
       setDetail(await getPlatformOrganization(orgId));
     } catch (err) {
-      setLogoError(err instanceof Error ? err.message : "No se pudo cambiar el logo");
+      setLogoError(err instanceof Error ? err.message : t("platform.err.logo"));
     }
   }
 
@@ -122,7 +123,7 @@ export function PlatformPage({ embedded = false }: { embedded?: boolean }) {
       }
       setDetail(await getPlatformOrganization(orgId));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No se pudo cambiar la foto");
+      setError(err instanceof Error ? err.message : t("platform.err.photo"));
     } finally {
       setPhotoBusy(null);
     }
@@ -130,13 +131,13 @@ export function PlatformPage({ embedded = false }: { embedded?: boolean }) {
 
   /** A person lost their phone (and their recovery codes): their authenticator is removed and they are signed out everywhere. */
   async function resetTotp(userId: string, orgId: string, who: string) {
-    if (!confirm(`¿Quitar la verificación en dos pasos de ${who}? Se le cierra la sesión en todos sus dispositivos y la configura de nuevo al entrar.`)) return;
+    if (!confirm(t("platform.confirmReset", { who }))) return;
     setPhotoBusy(userId);
     try {
       await resetPlatformUserTotp(userId);
       setDetail(await getPlatformOrganization(orgId));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No se pudo restablecer la verificación");
+      setError(err instanceof Error ? err.message : t("platform.err.reset"));
     } finally {
       setPhotoBusy(null);
     }
@@ -152,7 +153,7 @@ export function PlatformPage({ embedded = false }: { embedded?: boolean }) {
       startViewing(token);
       window.location.assign("/gps");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No se pudo abrir la cuenta del cliente");
+      setError(err instanceof Error ? err.message : t("platform.err.open"));
       setOpeningId(null);
     }
   }
@@ -164,7 +165,7 @@ export function PlatformPage({ embedded = false }: { embedded?: boolean }) {
     try {
       await claimDevice(claimImei.trim(), claimModel, orgId);
       setClaimImei("");
-      setClaimMessage({ ok: true, text: "Dispositivo agregado." });
+      setClaimMessage({ ok: true, text: t("platform.deviceAdded") });
       setDetail(await getPlatformOrganization(orgId));
       await refetch();
     } catch (err) {
@@ -174,8 +175,8 @@ export function PlatformPage({ embedded = false }: { embedded?: boolean }) {
           err instanceof ApiError && err.status === 400
             ? err.message
             : err instanceof ApiError && err.status === 404
-              ? "Ese IMEI ya está vinculado a otra empresa (o no existe)."
-              : "No se pudo agregar el dispositivo",
+              ? t("platform.imeiTaken")
+              : t("platform.err.addDevice"),
       });
     } finally {
       setClaiming(false);
@@ -195,7 +196,7 @@ export function PlatformPage({ embedded = false }: { embedded?: boolean }) {
       setPassword("");
       await refetch();
     } catch (err) {
-      setCreateError(err instanceof Error ? err.message : "No se pudo crear el cliente");
+      setCreateError(err instanceof Error ? err.message : t("platform.err.create"));
     } finally {
       setCreating(false);
     }
@@ -213,26 +214,26 @@ export function PlatformPage({ embedded = false }: { embedded?: boolean }) {
             className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
           >
             <ArrowLeft className="h-4 w-4" />
-            Volver al portal
+            {t("platform.back")}
           </Link>
         </header>
       )}
 
       <div className="p-4 sm:p-6 lg:p-8">
-        <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Clientes</h1>
+        <h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t("platform.title")}</h1>
         <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">
-          Todos los clientes de la plataforma: crea los que necesites y gestiona sus dispositivos. Solo OneSystec ve esta sección; cada cliente administra su propio Equipo y solo ve lo suyo.
+          {t("platform.intro")}
         </p>
 
         <div className="space-y-6">
-          <Panel title="Dar de alta un cliente">
+          <Panel title={t("platform.createTitle")}>
             <form onSubmit={handleCreate} className="space-y-3">
               <div className="flex flex-col gap-3 sm:flex-row">
                 <input
                   type="text"
                   required
                   minLength={2}
-                  placeholder="Nombre del cliente (empresa)"
+                  placeholder={t("platform.orgPlaceholder")}
                   value={orgName}
                   onChange={(e) => setOrgName(e.target.value)}
                   className={INPUT}
@@ -240,7 +241,7 @@ export function PlatformPage({ embedded = false }: { embedded?: boolean }) {
                 <input
                   type="email"
                   required
-                  placeholder="Email de su primer usuario (owner)"
+                  placeholder={t("platform.ownerEmail")}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className={INPUT}
@@ -248,7 +249,7 @@ export function PlatformPage({ embedded = false }: { embedded?: boolean }) {
                 <PasswordField
                   required
                   minLength={8}
-                  placeholder="Contraseña (mínimo 8 caracteres)"
+                  placeholder={t("platform.passwordPlaceholder")}
                   value={password}
                   onChange={setPassword}
                   className="min-w-0 flex-1"
@@ -256,16 +257,16 @@ export function PlatformPage({ embedded = false }: { embedded?: boolean }) {
                 />
               </div>
               {createError && <p className="text-xs text-red-600 dark:text-red-400">{createError}</p>}
-              {created && <p className="text-xs text-emerald-600 dark:text-emerald-400">Cliente «{created}» creado.</p>}
+              {created && <p className="text-xs text-emerald-600 dark:text-emerald-400">{t("platform.created", { name: created })}</p>}
               <button type="submit" disabled={creating} className="brand-button rounded-xl px-4 py-2 text-sm font-medium disabled:opacity-60">
-                {creating ? "Creando..." : "Crear cliente"}
+                {creating ? t("platform.creating") : t("platform.createButton")}
               </button>
             </form>
           </Panel>
 
-          <Panel title={`Clientes (${orgs.length})`}>
+          <Panel title={t("platform.clients", { count: orgs.length })}>
             {loading ? (
-              <p className="text-sm text-slate-500 dark:text-slate-400">Cargando...</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">{t("common.loading")}</p>
             ) : error ? (
               <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
             ) : (
@@ -284,10 +285,10 @@ export function PlatformPage({ embedded = false }: { embedded?: boolean }) {
                         {org.name}
                       </span>
                       <span className="text-xs text-slate-500 dark:text-slate-400">
-                        {org.users} usuarios · {org.vehicles} vehículos · {org.devices} dispositivos
+                        {t("platform.orgSummary", { users: org.users, vehicles: org.vehicles, devices: org.devices })}
                       </span>
                       <span className="w-40 text-right text-xs text-slate-500 dark:text-slate-400">
-                        {org.lastDeviceSeenAt ? `Último dato: ${dateTimeFormat.format(new Date(org.lastDeviceSeenAt))}` : "Sin datos"}
+                        {org.lastDeviceSeenAt ? t("platform.lastData", { when: dateTimeFormat.format(new Date(org.lastDeviceSeenAt)) }) : t("platform.noData")}
                       </span>
                     </button>
                     <button
@@ -297,30 +298,30 @@ export function PlatformPage({ embedded = false }: { embedded?: boolean }) {
                       className="brand-button flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-medium disabled:opacity-60"
                     >
                       <MapIcon className="h-3.5 w-3.5" />
-                      {openingId === org.id ? "Abriendo..." : "Ver mapa"}
+                      {openingId === org.id ? t("platform.opening") : t("platform.viewMap")}
                     </button>
                     </div>
 
                     {openId === org.id && (
                       <div className="mb-3 ml-8 space-y-3 rounded-2xl bg-slate-50 p-3 text-sm dark:bg-white/5">
                         {!detail ? (
-                          <p className="text-slate-500 dark:text-slate-400">Cargando...</p>
+                          <p className="text-slate-500 dark:text-slate-400">{t("common.loading")}</p>
                         ) : (
                           <>
                             <p className="text-xs text-slate-500 dark:text-slate-400">
-                              Alta: {dateFormat.format(new Date(detail.createdAt))} · plan {detail.plan} · id {detail.id}
+                              {t("platform.since", { date: dateFormat.format(new Date(detail.createdAt)), plan: detail.plan, id: detail.id })}
                             </p>
                             <div className="rounded-xl border border-slate-200 p-3 dark:border-white/10">
-                              <p className="mb-2 font-medium text-slate-700 dark:text-slate-300">Logo del cliente</p>
+                              <p className="mb-2 font-medium text-slate-700 dark:text-slate-300">{t("platform.clientLogo")}</p>
                               <LogoUpload value={detail.logo} onChange={(logo, tag) => void changeOrgLogo(detail.id, logo, tag ?? null)} name={detail.name} />
                               {logoError && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{logoError}</p>}
                               <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-                                Es el logo de la empresa en la barra de su app. Si un usuario tiene foto propia, a él se le muestra la suya.
+                                {t("platform.clientLogoHint")}
                               </p>
                             </div>
                             <div className="rounded-xl border border-slate-200 p-3 dark:border-white/10">
                               <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                                <p className="font-medium text-slate-700 dark:text-slate-300">Vistas del cliente</p>
+                                <p className="font-medium text-slate-700 dark:text-slate-300">{t("platform.views")}</p>
                                 <label className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
                                   <input
                                     type="checkbox"
@@ -329,16 +330,16 @@ export function PlatformPage({ embedded = false }: { embedded?: boolean }) {
                                       setAllowed(e.target.checked ? null : [...MODULE_KEYS.filter((k) => !HIDDEN_MODULES.includes(k)), ...ADMIN_SECTION_KEYS])
                                     }
                                   />
-                                  Sin límite (todas)
+                                  {t("platform.noLimit")}
                                 </label>
                               </div>
                               <p className="mb-2 text-xs text-slate-500 dark:text-slate-400">
-                                Lo máximo que su titular y sus administradores pueden ver. Sus usuarios ven lo que se les asigne dentro de esto. Equipo es siempre suyo.
+                                {t("platform.viewsHint")}
                               </p>
                               <div className={`grid gap-x-4 gap-y-1 sm:grid-cols-2 ${allowed === null ? "pointer-events-none opacity-50" : ""}`}>
                                 {[
-                                  ...MODULE_KEYS.filter((k) => !HIDDEN_MODULES.includes(k)).map((k) => [k, MODULE_INFO[k].label, MODULE_INFO[k].hint] as const),
-                                  ...ADMIN_SECTION_KEYS.map((k) => [k, ADMIN_SECTION_INFO[k].label, ADMIN_SECTION_INFO[k].hint] as const),
+                                  ...MODULE_KEYS.filter((k) => !HIDDEN_MODULES.includes(k)).map((k) => [k, t(MODULE_INFO[k].label), t(MODULE_INFO[k].hint)] as const),
+                                  ...ADMIN_SECTION_KEYS.map((k) => [k, t(ADMIN_SECTION_INFO[k].label), t(ADMIN_SECTION_INFO[k].hint)] as const),
                                 ].map(([key, label, hint]) => (
                                   <label key={key} className="flex items-start gap-2 py-0.5">
                                     <input
@@ -366,7 +367,7 @@ export function PlatformPage({ embedded = false }: { embedded?: boolean }) {
                                   disabled={savingSections || JSON.stringify(allowed === null ? null : [...allowed].sort()) === JSON.stringify(detail.sections === null ? null : [...detail.sections].sort())}
                                   className="brand-button rounded-xl px-4 py-1.5 text-xs font-medium disabled:opacity-50"
                                 >
-                                  {savingSections ? "Guardando..." : "Guardar vistas"}
+                                  {savingSections ? t("platform.saving") : t("platform.saveViews")}
                                 </button>
                                 {sectionsMessage && (
                                   <span className={`text-xs ${sectionsMessage.ok ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
@@ -376,7 +377,7 @@ export function PlatformPage({ embedded = false }: { embedded?: boolean }) {
                               </div>
                             </div>
                             <div>
-                              <p className="mb-1 font-medium text-slate-700 dark:text-slate-300">Usuarios</p>
+                              <p className="mb-1 font-medium text-slate-700 dark:text-slate-300">{t("platform.users")}</p>
                               <ul className="space-y-2">
                                 {detail.members.map((member) => (
                                   <li key={member.id} className="flex items-center gap-3 text-slate-700 dark:text-slate-300">
@@ -391,9 +392,9 @@ export function PlatformPage({ embedded = false }: { embedded?: boolean }) {
                                     </span>
                                     <span className="min-w-0 flex-1">
                                       <span className="block truncate">
-                                        {member.name.trim() || "—"} · {member.role === "owner" ? "Cliente" : member.role}
-                                        {member.allowedArea ? ` · flota ${member.allowedArea}` : ""}
-                                        {member.totpEnabled && <ShieldCheck className="ml-1.5 inline h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" aria-label="Verificación en dos pasos activada" />}
+                                        {member.name.trim() || "—"} · {t(`role.${member.role}` as MessageKey)}
+                                        {member.allowedArea ? t("platform.inFleet", { area: member.allowedArea }) : ""}
+                                        {member.totpEnabled && <ShieldCheck className="ml-1.5 inline h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" aria-label={t("platform.twoStepOn")} />}
                                       </span>
                                       <span className="block truncate text-xs text-slate-500 dark:text-slate-400">{member.email}</span>
                                     </span>
@@ -402,7 +403,7 @@ export function PlatformPage({ embedded = false }: { embedded?: boolean }) {
                                         className={`flex cursor-pointer items-center gap-1 rounded-lg border border-slate-300 px-2 py-1 text-xs hover:bg-slate-100 dark:border-white/10 dark:hover:bg-white/10 ${photoBusy === member.id ? "pointer-events-none opacity-50" : ""}`}
                                       >
                                         <ImagePlus className="h-3.5 w-3.5" />
-                                        {member.logo ? "Cambiar foto" : "Subir foto"}
+                                        {member.logo ? t("platform.changePhoto") : t("platform.uploadPhoto")}
                                         <input
                                           type="file"
                                           accept={LOGO_ACCEPT}
@@ -418,8 +419,8 @@ export function PlatformPage({ embedded = false }: { embedded?: boolean }) {
                                           type="button"
                                           disabled={photoBusy === member.id}
                                           onClick={() => void resetTotp(member.id, detail.id, member.name.trim() || member.email)}
-                                          aria-label="Quitar la verificación en dos pasos"
-                                          title="Quitar la verificación en dos pasos (teléfono perdido)"
+                                          aria-label={t("platform.removeTwoStep")}
+                                          title={t("platform.removeTwoStepTitle")}
                                           className="rounded-lg p-1.5 text-slate-400 hover:bg-amber-50 hover:text-amber-600 disabled:opacity-50 dark:hover:bg-amber-500/10"
                                         >
                                           <ShieldOff className="h-3.5 w-3.5" />
@@ -430,8 +431,8 @@ export function PlatformPage({ embedded = false }: { embedded?: boolean }) {
                                           type="button"
                                           disabled={photoBusy === member.id}
                                           onClick={() => void changePhoto(member.id, detail.id, null)}
-                                          aria-label="Quitar foto"
-                                          title="Quitar foto"
+                                          aria-label={t("platform.removePhoto")}
+                                          title={t("platform.removePhoto")}
                                           className="rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-50 dark:hover:bg-red-500/10"
                                         >
                                           <Trash2 className="h-3.5 w-3.5" />
@@ -445,18 +446,18 @@ export function PlatformPage({ embedded = false }: { embedded?: boolean }) {
                             <details className="group rounded-xl border border-slate-200 p-3 dark:border-white/10">
                               <summary className="flex cursor-pointer list-none items-center gap-2 font-medium text-slate-700 dark:text-slate-300">
                                 <ChevronRight className="h-4 w-4 transition group-open:rotate-90" />
-                                Dispositivos ({detail.deviceList.length})
+                                {t("platform.devices", { count: detail.deviceList.length })}
                               </summary>
                               <div className="mt-2">
                               {detail.deviceList.length === 0 ? (
-                                <p className="text-slate-500 dark:text-slate-400">Ninguno.</p>
+                                <p className="text-slate-500 dark:text-slate-400">{t("platform.noneM")}</p>
                               ) : (
                                 <ul className="space-y-0.5">
                                   {detail.deviceList.map((device) => (
                                     <li key={device.id} className="text-slate-700 dark:text-slate-300">
                                       {device.imei} · {device.model} · {device.status}
                                       {device.vehicle ? ` · ${device.vehicle.plate ?? device.vehicle.name}` : ""}
-                                      {device.lastSeenAt ? ` · visto ${dateTimeFormat.format(new Date(device.lastSeenAt))}` : ""}
+                                      {device.lastSeenAt ? t("platform.seen", { when: dateTimeFormat.format(new Date(device.lastSeenAt)) }) : ""}
                                     </li>
                                   ))}
                                 </ul>
@@ -468,14 +469,14 @@ export function PlatformPage({ embedded = false }: { embedded?: boolean }) {
                                   minLength={10}
                                   value={claimImei}
                                   onChange={(e) => setClaimImei(e.target.value)}
-                                  placeholder="IMEI del dispositivo para este cliente"
-                                  aria-label="IMEI del dispositivo"
+                                  placeholder={t("platform.imeiForClient")}
+                                  aria-label={t("platform.imei")}
                                   className={INPUT}
                                 />
                                 <select
                                   value={claimModel}
                                   onChange={(e) => setClaimModel(e.target.value)}
-                                  aria-label="Modelo"
+                                  aria-label={t("platform.model")}
                                   className="field-input rounded-xl border border-slate-300 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
                                 >
                                   {DEVICE_MODELS.map((option) => (
@@ -485,7 +486,7 @@ export function PlatformPage({ embedded = false }: { embedded?: boolean }) {
                                   ))}
                                 </select>
                                 <button type="submit" disabled={claiming} className="brand-button rounded-xl px-4 py-2 text-sm font-medium disabled:opacity-60">
-                                  {claiming ? "Agregando..." : "Agregar dispositivo"}
+                                  {claiming ? t("platform.adding") : t("platform.addDevice")}
                                 </button>
                               </form>
                               {claimMessage && (

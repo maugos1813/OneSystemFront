@@ -182,10 +182,10 @@ function VehicleRow({
         <td className="px-4 py-3">
           {maintenance && maintenance.status.state !== "unknown" ? (
             <div>
-              <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${STATE_BADGE[maintenance.status.state]}`}>{STATE_LABEL[maintenance.status.state]}</span>
+              <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${STATE_BADGE[maintenance.status.state]}`}>{t(STATE_LABEL[maintenance.status.state])}</span>
               {maintenance.status.kmRemaining !== null && (
                 <p className="mt-0.5 text-xs whitespace-nowrap text-slate-500 dark:text-slate-400">
-                  {maintenance.status.kmRemaining >= 0 ? `Faltan ${formatKm(maintenance.status.kmRemaining)}` : `Pasado ${formatKm(-maintenance.status.kmRemaining)}`}
+                  {maintenance.status.kmRemaining >= 0 ? t("tagliando.remaining", { km: formatKm(maintenance.status.kmRemaining) }) : t("tagliando.over", { km: formatKm(-maintenance.status.kmRemaining) })}
                 </p>
               )}
             </div>
@@ -354,10 +354,10 @@ function VehicleCard({
             <dd>
               {state ? (
                 <>
-                  <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${STATE_BADGE[state.state]}`}>{STATE_LABEL[state.state]}</span>
+                  <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${STATE_BADGE[state.state]}`}>{t(STATE_LABEL[state.state])}</span>
                   {state.kmRemaining !== null && (
                     <span className="block text-xs text-slate-500 dark:text-slate-400">
-                      {state.kmRemaining >= 0 ? `Faltan ${formatKm(state.kmRemaining)}` : `Pasado ${formatKm(-state.kmRemaining)}`}
+                      {state.kmRemaining >= 0 ? t("tagliando.remaining", { km: formatKm(state.kmRemaining) }) : t("tagliando.over", { km: formatKm(-state.kmRemaining) })}
                     </span>
                   )}
                 </>

@@ -1,6 +1,7 @@
 import { Search, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
+import { useT } from "../i18n";
 import { setFleetVehicles } from "../lib/api";
 import { squash } from "../lib/vehicleStatus";
 import type { Vehicle } from "../lib/types";
@@ -22,6 +23,7 @@ export function FleetVehiclesDialog({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const t = useT();
   const initial = useMemo(() => new Set(vehicles.filter((v) => v.fleetGroup === fleet).map((v) => v.id)), [vehicles, fleet]);
   const [selected, setSelected] = useState<Set<string>>(() => new Set(initial));
   const [search, setSearch] = useState("");
@@ -76,17 +78,17 @@ export function FleetVehiclesDialog({
       onSaved();
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No se pudieron guardar los vehículos");
+      setError(err instanceof Error ? err.message : t("fleetDlg.saveFailed"));
     } finally {
       setSaving(false);
     }
   }
 
   const FILTERS: Array<[Filter, string]> = [
-    ["all", `Todos ${vehicles.length}`],
-    ["selected", `En esta flota ${selected.size}`],
-    ["other", `En otra flota ${vehicles.filter((v) => v.fleetGroup && v.fleetGroup !== fleet).length}`],
-    ["none", `Sin flota ${vehicles.filter((v) => !v.fleetGroup).length}`],
+    ["all", t("fleetDlg.all", { count: vehicles.length })],
+    ["selected", t("fleetDlg.inThis", { count: selected.size })],
+    ["other", t("fleetDlg.inOther", { count: vehicles.filter((v) => v.fleetGroup && v.fleetGroup !== fleet).length })],
+    ["none", t("fleetDlg.none", { count: vehicles.filter((v) => !v.fleetGroup).length })],
   ];
 
   // In the page body, not inside the card it was opened from: a card that moves or has an effect would otherwise carry the dialog with it.
@@ -94,16 +96,16 @@ export function FleetVehiclesDialog({
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/50 p-0 sm:items-center sm:p-4" onClick={onClose}>
       <div
         role="dialog"
-        aria-label={`Vehículos de ${fleet}`}
+        aria-label={t("fleetDlg.title", { fleet })}
         onClick={(e) => e.stopPropagation()}
         className="flex max-h-[92vh] w-full max-w-lg flex-col rounded-t-3xl bg-white shadow-2xl sm:rounded-3xl dark:bg-[#111729]"
       >
         <div className="flex items-start justify-between gap-3 border-b border-slate-100 px-5 py-4 dark:border-white/10">
           <div>
-            <h2 className="text-base font-semibold text-slate-900 dark:text-white">Vehículos de {fleet}</h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400">Marca los que esta flota ve. Un vehículo está en una sola flota a la vez.</p>
+            <h2 className="text-base font-semibold text-slate-900 dark:text-white">{t("fleetDlg.title", { fleet })}</h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400">{t("fleetDlg.hint")}</p>
           </div>
-          <button type="button" onClick={onClose} aria-label="Cerrar" className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-white/10">
+          <button type="button" onClick={onClose} aria-label={t("fleetDlg.close")} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-white/10">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -114,7 +116,7 @@ export function FleetVehiclesDialog({
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar por placa o nombre…"
+              placeholder={t("fleetDlg.search")}
               className="field-input w-full rounded-xl border border-slate-300 py-2 pr-3 pl-9 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
             />
           </div>
@@ -135,16 +137,16 @@ export function FleetVehiclesDialog({
           </div>
           <div className="flex gap-3 text-xs">
             <button type="button" onClick={() => setMany(visible.map((v) => v.id), true)} className="font-medium text-blue-600 hover:underline dark:text-blue-400">
-              Marcar los {visible.length} que se ven
+              {t("fleetDlg.markVisible", { count: visible.length })}
             </button>
             <button type="button" onClick={() => setMany(visible.map((v) => v.id), false)} className="font-medium text-slate-500 hover:underline dark:text-slate-400">
-              Quitar los que se ven
+              {t("fleetDlg.unmarkVisible")}
             </button>
           </div>
         </div>
 
         <ul className="styled-scrollbar min-h-0 flex-1 overflow-y-auto">
-          {visible.length === 0 && <li className="p-5 text-sm text-slate-500 dark:text-slate-400">Ningún vehículo coincide.</li>}
+          {visible.length === 0 && <li className="p-5 text-sm text-slate-500 dark:text-slate-400">{t("fleetDlg.noMatch")}</li>}
           {visible.map((v) => {
             const on = selected.has(v.id);
             const elsewhere = !!v.fleetGroup && v.fleetGroup !== fleet;
@@ -158,10 +160,10 @@ export function FleetVehiclesDialog({
                   </span>
                   {elsewhere ? (
                     <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${on ? "bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300" : "bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-slate-300"}`}>
-                      {on ? `Pasa desde ${v.fleetGroup}` : `En ${v.fleetGroup}`}
+                      {on ? t("fleetDlg.movesFrom", { fleet: v.fleetGroup ?? "" }) : t("fleetDlg.inFleet", { fleet: v.fleetGroup ?? "" })}
                     </span>
                   ) : !v.fleetGroup && !on ? (
-                    <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-500 dark:bg-white/10 dark:text-slate-400">Sin flota</span>
+                    <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-500 dark:bg-white/10 dark:text-slate-400">{t("fleetDlg.noFleet")}</span>
                   ) : null}
                 </label>
               </li>
@@ -173,15 +175,15 @@ export function FleetVehiclesDialog({
           {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
           <div className="flex items-center justify-between gap-3">
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              {selected.size} {selected.size === 1 ? "vehículo" : "vehículos"} en la flota
-              {moving > 0 ? ` · ${moving} ${moving === 1 ? "pasa" : "pasan"} de otra flota` : ""}
+              {t("fleetDlg.count", { count: selected.size })}
+              {moving > 0 ? t("fleetDlg.moving", { count: moving }) : ""}
             </p>
             <div className="flex gap-2">
               <button type="button" onClick={onClose} className="rounded-xl px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-white/10">
-                Cancelar
+                {t("fleetDlg.cancel")}
               </button>
               <button type="button" onClick={() => void save()} disabled={saving || !changed} className="brand-button rounded-xl px-4 py-2 text-sm font-medium disabled:opacity-50">
-                {saving ? "Guardando..." : "Guardar"}
+                {saving ? t("fleetDlg.saving") : t("fleetDlg.save")}
               </button>
             </div>
           </div>

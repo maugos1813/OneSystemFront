@@ -1,5 +1,6 @@
 import { CheckCircle2 } from "lucide-react";
-import { INCIDENT_COLORS, INCIDENT_LABELS, type Incident } from "../../lib/drivingBehavior";
+import { useLanguage } from "../../i18n";
+import { INCIDENT_COLORS, INCIDENT_LABELS, incidentDetail, type Incident } from "../../lib/drivingBehavior";
 
 interface IncidentListProps {
   incidents: Incident[];
@@ -8,11 +9,12 @@ interface IncidentListProps {
 }
 
 export function IncidentList({ incidents, activeIndex, onSelect }: IncidentListProps) {
+  const { t, locale } = useLanguage();
   if (incidents.length === 0) {
     return (
       <div className="flex items-center gap-2 text-sm text-emerald-600 dark:text-emerald-400">
         <CheckCircle2 className="h-4 w-4" />
-        Sin incidentes en este rango.
+        {t("incident.none")}
       </div>
     );
   }
@@ -36,12 +38,12 @@ export function IncidentList({ incidents, activeIndex, onSelect }: IncidentListP
             />
             <span className="min-w-0 flex-1">
               <span className="block truncate text-sm font-medium text-slate-900 dark:text-white">
-                {INCIDENT_LABELS[incident.type]}
+                {t(INCIDENT_LABELS[incident.type])}
               </span>
-              <span className="block truncate text-xs text-slate-400 dark:text-slate-500">{incident.detail}</span>
+              <span className="block truncate text-xs text-slate-400 dark:text-slate-500">{incidentDetail(t, incident)}</span>
             </span>
             <span className="shrink-0 text-xs text-slate-400 tabular-nums dark:text-slate-500">
-              {new Date(incident.ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+              {new Date(incident.ts).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })}
             </span>
           </button>
         </li>

@@ -1,6 +1,7 @@
 import { Eye, EyeOff, Pencil, Plus, Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useAuth } from "../context/AuthContext";
+import { useT } from "../i18n";
 import {
   ApiError,
   createSim,
@@ -48,6 +49,7 @@ const INPUT =
 const LABEL = "mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300";
 
 export function SimsPage() {
+  const t = useT();
   const { currentUser } = useAuth();
   // SIMs are OneSystec's: it picks the client they belong to, and that client's devices are the ones it can put them in.
   const [orgs, setOrgs] = useState<PlatformOrganization[]>([]);
@@ -69,8 +71,8 @@ export function SimsPage() {
         setOrgs(rows);
         setOrgId((current) => current ?? (rows.find((o) => o.id === currentUser?.orgId) ?? rows[0])?.id ?? null);
       })
-      .catch((err: unknown) => setError(err instanceof Error ? err.message : "No se pudieron cargar los clientes"));
-  }, [currentUser?.orgId]);
+      .catch((err: unknown) => setError(err instanceof Error ? err.message : t("sims.loadClientsFailed")));
+  }, [currentUser?.orgId, t]);
 
   const refetch = useCallback(() => {
     if (!orgId) return;
@@ -81,9 +83,9 @@ export function SimsPage() {
         setOrgDevices(org.deviceList.map((d) => ({ id: d.id, imei: d.imei, plate: d.vehicle?.plate ?? d.vehicle?.name ?? null })));
         setError(null);
       })
-      .catch((err: unknown) => setError(err instanceof Error ? err.message : "No se pudieron cargar las SIMs"))
+      .catch((err: unknown) => setError(err instanceof Error ? err.message : t("sims.loadFailed")))
       .finally(() => setLoading(false));
-  }, [orgId]);
+  }, [orgId, t]);
 
   useEffect(() => {
     // Picking the client from inside the new-SIM form must not close that form.
@@ -146,20 +148,20 @@ export function SimsPage() {
       setEditing(null);
       refetch();
     } catch (err) {
-      setFormError(err instanceof ApiError || err instanceof Error ? err.message : "No se pudo guardar la SIM");
+      setFormError(err instanceof ApiError || err instanceof Error ? err.message : t("sims.saveFailed"));
     } finally {
       setSubmitting(false);
     }
   }
 
   async function handleDelete(sim: SimCard) {
-    if (!confirm(`¿Eliminar la SIM ${sim.phoneNumber ?? sim.iccid}? Se borran también su PIN y PUK guardados.`)) return;
+    if (!confirm(t("sims.confirmDelete", { sim: sim.phoneNumber ?? sim.iccid }))) return;
     try {
       await deleteSim(sim.id, orgId ?? undefined);
       if (editing && editing !== "new" && editing.id === sim.id) setEditing(null);
       refetch();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No se pudo eliminar la SIM");
+      setError(err instanceof Error ? err.message : t("sims.deleteFailed"));
     }
   }
 
@@ -179,7 +181,7 @@ export function SimsPage() {
       hideTimers.current[sim.id] = setTimeout(() => hideSecrets(sim.id), SECRETS_VISIBLE_MS);
     } catch (err) {
       hideSecrets(sim.id);
-      setError(err instanceof Error ? err.message : "No se pudieron obtener el PIN y el PUK");
+      setError(err instanceof Error ? err.message : t("sims.secretsFailed"));
     }
   }
 
@@ -189,12 +191,12 @@ export function SimsPage() {
     <div className="mx-auto max-w-6xl p-4 sm:p-6 lg:p-8">
       <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-slate-900 dark:text-white">SIMs</h1>
+          <h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t("sims.title")}</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            Las tarjetas SIM de los trackers de cada cliente: número, ICCID, NMU, PIN y PUK. Solo OneSystec las ve y las gestiona.
+            {t("sims.intro")}
           </p>
           <label className="mt-3 flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
-            Cliente
+            {t("sims.client")}
             <select
               value={orgId ?? ""}
               onChange={(e) => {
@@ -214,7 +216,7 @@ export function SimsPage() {
         {!editing && (
           <button onClick={startNew} className="brand-button flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-medium">
             <Plus className="h-4 w-4" />
-            Agregar SIM
+            {t("sims.add")}
           </button>
         )}
       </div>
@@ -227,12 +229,12 @@ export function SimsPage() {
         >
           <div className="mb-4 flex items-center justify-between">
             <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-              {editingSim ? "Editar SIM" : "Nueva SIM"}
+              {editingSim ? t("sims.editTitle") : t("sims.newTitle")}
             </p>
             <button
               type="button"
               onClick={() => setEditing(null)}
-              aria-label="Cancelar"
+              aria-label={t("sims.cancel")}
               className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10"
             >
               <X className="h-4 w-4" />
@@ -242,7 +244,7 @@ export function SimsPage() {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <div className="sm:col-span-2 lg:col-span-3">
               <label className={LABEL} htmlFor="sim-client">
-                Cliente al que pertenece esta SIM
+                {t("sims.clientOfSim")}
               </label>
               {/* A SIM belongs to one client. Changing it here switches the whole page to that client (and its devices). */}
               <select
@@ -265,10 +267,10 @@ export function SimsPage() {
             </div>
             <div className="lg:col-span-2">
               <label className={LABEL} htmlFor="sim-device">
-                Dispositivo (tracker)
+                {t("sims.device")}
               </label>
               <select id="sim-device" value={form.deviceId} onChange={(e) => set("deviceId", e.target.value)} className={INPUT}>
-                <option value="">Sin asignar (en stock)</option>
+                <option value="">{t("sims.unassigned")}</option>
                 {availableDevices.map((d) => (
                   <option key={d.id} value={d.id}>
                     {d.imei}
@@ -279,14 +281,14 @@ export function SimsPage() {
             </div>
             <div>
               <label className={LABEL} htmlFor="sim-operator">
-                Operador
+                {t("sims.operator")}
               </label>
               <input id="sim-operator" value={form.operator} onChange={(e) => set("operator", e.target.value)} maxLength={50} className={INPUT} />
             </div>
 
             <div className="lg:col-span-2">
               <label className={LABEL} htmlFor="sim-iccid">
-                ICCID (el número largo de la tarjeta)
+                {t("sims.iccidLabel")}
               </label>
               <input
                 id="sim-iccid"
@@ -299,7 +301,7 @@ export function SimsPage() {
             </div>
             <div>
               <label className={LABEL} htmlFor="sim-phone">
-                N. Tel (número de la SIM)
+                {t("sims.phoneLabel")}
               </label>
               <input
                 id="sim-phone"
@@ -328,7 +330,7 @@ export function SimsPage() {
                 inputMode="numeric"
                 autoComplete="off"
                 maxLength={8}
-                placeholder={editingSim?.hasPin ? "•••• (vacío = sin cambios)" : "0000"}
+                placeholder={editingSim?.hasPin ? t("sims.pinKeep") : "0000"}
                 className={INPUT}
               />
             </div>
@@ -343,14 +345,14 @@ export function SimsPage() {
                 inputMode="numeric"
                 autoComplete="off"
                 maxLength={8}
-                placeholder={editingSim?.hasPuk ? "•••••••• (vacío = sin cambios)" : "8 dígitos"}
+                placeholder={editingSim?.hasPuk ? t("sims.pukKeep") : t("sims.pukDigits")}
                 className={INPUT}
               />
             </div>
 
             <div className="sm:col-span-2 lg:col-span-3">
               <label className={LABEL} htmlFor="sim-notes">
-                Notas
+                {t("sims.notes")}
               </label>
               <textarea
                 id="sim-notes"
@@ -358,7 +360,7 @@ export function SimsPage() {
                 onChange={(e) => set("notes", e.target.value)}
                 rows={2}
                 maxLength={2000}
-                placeholder="Plan contratado, fecha de recarga, a nombre de quién está..."
+                placeholder={t("sims.notesPlaceholder")}
                 className={INPUT}
               />
             </div>
@@ -372,14 +374,14 @@ export function SimsPage() {
               disabled={submitting}
               className="brand-button rounded-xl px-5 py-2 text-sm font-medium disabled:opacity-50"
             >
-              {editingSim ? "Guardar cambios" : "Guardar SIM"}
+              {editingSim ? t("sims.saveChanges") : t("sims.save")}
             </button>
             <button
               type="button"
               onClick={() => setEditing(null)}
               className="rounded-xl px-5 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-white/10"
             >
-              Cancelar
+              {t("sims.cancel")}
             </button>
           </div>
         </form>
@@ -389,10 +391,10 @@ export function SimsPage() {
         <p className="mb-4 rounded-xl bg-red-50 px-4 py-2 text-sm text-red-600 dark:bg-red-500/10 dark:text-red-400">{error}</p>
       )}
 
-      {loading && <p className="text-sm text-slate-500 dark:text-slate-400">Cargando...</p>}
+      {loading && <p className="text-sm text-slate-500 dark:text-slate-400">{t("common.loading")}</p>}
 
       {!loading && !error && sims.length === 0 && (
-        <p className="text-sm text-slate-500 dark:text-slate-400">Todavía no registraste ninguna SIM.</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400">{t("sims.none")}</p>
       )}
 
       {sims.length > 0 && (
@@ -400,13 +402,13 @@ export function SimsPage() {
           <table className="w-full min-w-[860px] text-left text-sm">
             <thead className="border-b border-violet-100 bg-violet-50/60 text-xs text-slate-500 uppercase dark:border-white/10 dark:bg-white/5 dark:text-slate-400">
               <tr>
-                <th className="px-4 py-2 font-medium">Dispositivo</th>
-                <th className="px-4 py-2 font-medium">Operador</th>
-                <th className="px-4 py-2 font-medium">Número</th>
+                <th className="px-4 py-2 font-medium">{t("sims.colDevice")}</th>
+                <th className="px-4 py-2 font-medium">{t("sims.operator")}</th>
+                <th className="px-4 py-2 font-medium">{t("sims.colNumber")}</th>
                 <th className="px-4 py-2 font-medium">ICCID</th>
                 <th className="px-4 py-2 font-medium">NMU</th>
                 <th className="px-4 py-2 font-medium">PIN / PUK</th>
-                <th className="px-4 py-2 text-right font-medium">Acciones</th>
+                <th className="px-4 py-2 text-right font-medium">{t("sims.colActions")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-white/10">
@@ -417,12 +419,12 @@ export function SimsPage() {
                     <td className="px-4 py-3">
                       {sim.device ? (
                         <>
-                          <p className="font-medium text-slate-900 dark:text-white">{sim.vehicle?.plate ?? sim.vehicle?.name ?? "Sin vehículo"}</p>
+                          <p className="font-medium text-slate-900 dark:text-white">{sim.vehicle?.plate ?? sim.vehicle?.name ?? t("sims.noVehicle")}</p>
                           <p className="font-mono text-xs text-slate-400 dark:text-slate-500">{sim.device.imei}</p>
                         </>
                       ) : (
                         <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500 dark:bg-white/10 dark:text-slate-400">
-                          En stock
+                          {t("sims.inStock")}
                         </span>
                       )}
                     </td>
@@ -440,7 +442,7 @@ export function SimsPage() {
                           </span>
                           <button
                             onClick={() => hideSecrets(sim.id)}
-                            aria-label="Ocultar PIN y PUK"
+                            aria-label={t("sims.hidePinPuk")}
                             className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-white/10 dark:hover:text-white"
                           >
                             <EyeOff className="h-4 w-4" />
@@ -453,21 +455,21 @@ export function SimsPage() {
                           className="flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-medium text-violet-600 hover:bg-violet-50 disabled:opacity-50 dark:text-violet-400 dark:hover:bg-white/10"
                         >
                           <Eye className="h-4 w-4" />
-                          <span className="font-mono tracking-widest">••••</span> Mostrar
+                          <span className="font-mono tracking-widest">••••</span> {t("sims.show")}
                         </button>
                       )}
                     </td>
                     <td className="px-4 py-3 text-right whitespace-nowrap">
                       <button
                         onClick={() => startEdit(sim)}
-                        aria-label="Editar"
+                        aria-label={t("sims.edit")}
                         className="rounded-lg p-1.5 text-slate-400 hover:bg-violet-50 hover:text-violet-600 dark:hover:bg-white/10"
                       >
                         <Pencil className="h-4 w-4" />
                       </button>
                       <button
                         onClick={() => handleDelete(sim)}
-                        aria-label="Eliminar"
+                        aria-label={t("sims.delete")}
                         className="rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10 dark:hover:text-red-400"
                       >
                         <Trash2 className="h-4 w-4" />

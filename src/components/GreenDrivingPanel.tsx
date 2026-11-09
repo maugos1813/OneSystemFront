@@ -1,5 +1,6 @@
 import { Activity } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import { useLanguage, type MessageKey } from "../i18n";
 import { getDeviceCommands, requestGreenDriving } from "../lib/api";
 import type { DeviceCommand, DeviceCommandStatus } from "../lib/types";
 import { ModalPortal } from "./ModalPortal";
@@ -11,13 +12,13 @@ export function supportsGreenDriving(model: string, source: string): boolean {
   return source === "teltonika" && GREEN_DRIVING_MODELS.has(model);
 }
 
-const STATUS_LABEL: Record<DeviceCommandStatus, string> = {
-  pending: "En espera: se enviará cuando el equipo se conecte",
-  sent: "Enviada, esperando respuesta del equipo",
-  confirmed: "Confirmada por el equipo",
-  failed: "Falló",
-  expired: "Vencida: no se pudo entregar a tiempo",
-  cancelled: "Reemplazada por una orden más nueva",
+const STATUS_LABEL: Record<DeviceCommandStatus, MessageKey> = {
+  pending: "cmd.pending",
+  sent: "cmd.sent",
+  confirmed: "cmd.confirmed",
+  failed: "cmd.failed",
+  expired: "cmd.expired",
+  cancelled: "cmd.cancelled",
 };
 
 const ACTIVE: ReadonlySet<DeviceCommandStatus> = new Set(["pending", "sent"]);
@@ -29,6 +30,7 @@ const SLOW_MS = 30_000;
  * accelerometer). Conducción counts those events — the way Radius Velocity scores — from the moment the device confirms.
  */
 export function GreenDrivingPanel({ deviceId, since, onChanged }: { deviceId: string; since: string | null | undefined; onChanged: () => void }) {
+  const { t, locale } = useLanguage();
   const [commands, setCommands] = useState<DeviceCommand[]>([]);
   const [confirming, setConfirming] = useState<"enable" | "disable" | null>(null);
   const [busy, setBusy] = useState(false);
@@ -66,7 +68,7 @@ export function GreenDrivingPanel({ deviceId, since, onChanged }: { deviceId: st
       setConfirming(null);
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No se pudo enviar la orden");
+      setError(err instanceof Error ? err.message : t("cmd.sendFailed"));
       setConfirming(null);
     } finally {
       setBusy(false);
@@ -79,12 +81,12 @@ export function GreenDrivingPanel({ deviceId, since, onChanged }: { deviceId: st
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="min-w-0">
           <p className="flex items-center gap-1.5 text-sm font-medium text-slate-900 dark:text-white">
-            <Activity className="h-4 w-4 text-blue-600 dark:text-blue-400" /> Medición de conducción del equipo
+            <Activity className="h-4 w-4 text-blue-600 dark:text-blue-400" /> {t("green.title")}
           </p>
           <p className="text-xs text-slate-500 dark:text-slate-400">
             {active
-              ? `Activa desde ${new Date(since!).toLocaleString()}: el equipo detecta él mismo las aceleraciones, frenadas y curvas bruscas y Conducción puntúa con ellas.`
-              : "Desactivada: este equipo no avisa de aceleraciones, frenadas ni curvas bruscas. Conducción las deduce del GPS."}
+              ? t("green.activeSince", { since: new Date(since!).toLocaleString(locale) })
+              : t("green.inactive")}
           </p>
         </div>
         <button
@@ -97,7 +99,7 @@ export function GreenDrivingPanel({ deviceId, since, onChanged }: { deviceId: st
               : "brand-button rounded-xl px-3 py-1.5 text-sm font-medium disabled:opacity-50"
           }
         >
-          {active ? "Desactivar" : "Activar"}
+          {active ? t("green.deactivate") : t("green.activate")}
         </button>
       </div>
 
@@ -108,9 +110,9 @@ export function GreenDrivingPanel({ deviceId, since, onChanged }: { deviceId: st
           {commands.slice(0, 3).map((command) => (
             <li key={command.id} className="flex items-baseline justify-between gap-3 text-xs">
               <span className="text-slate-700 dark:text-slate-300">
-                <strong>{/\b(11000|1025300):0\b/.test(command.command) ? "Desactivar" : "Activar"}</strong> · {STATUS_LABEL[command.status]}
+                <strong>{/\b(11000|1025300):0\b/.test(command.command) ? t("green.deactivate") : t("green.activate")}</strong> · {t(STATUS_LABEL[command.status])}
               </span>
-              <span className="shrink-0 text-slate-500 dark:text-slate-400">{new Date(command.createdAt).toLocaleString()}</span>
+              <span className="shrink-0 text-slate-500 dark:text-slate-400">{new Date(command.createdAt).toLocaleString(locale)}</span>
             </li>
           ))}
         </ul>
@@ -121,15 +123,15 @@ export function GreenDrivingPanel({ deviceId, since, onChanged }: { deviceId: st
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true">
             <div className="w-full max-w-md rounded-2xl border border-white bg-white p-5 shadow-xl dark:border-white/10 dark:bg-[#111729]">
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-                {confirming === "enable" ? "¿Activar la medición de conducción?" : "¿Desactivar la medición de conducción?"}
+                {confirming === "enable" ? t("green.confirmEnableTitle") : t("green.confirmDisableTitle")}
               </h3>
               <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
                 {confirming === "enable"
-                  ? "Se cambian ajustes del equipo (Green Driving): el acelerómetro mide aceleraciones, frenadas y curvas bruscas con los límites de fábrica de Teltonika (2,5, 2,7 y 3,4 m/s²). Para que midan bien, el equipo debe ir fijo y lo más nivelado posible. Conducción puntuará con estos eventos desde que el equipo confirme; hasta tener 2 horas de conducción medidas, sigue usando el GPS."
-                  : "Se apaga la medición del equipo y Conducción vuelve a deducir los eventos del GPS."}
+                  ? t("green.confirmEnableBody")
+                  : t("green.confirmDisableBody")}
               </p>
               <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-                Si el equipo no está conectado, la orden espera hasta 24 horas. Se puede volver a desactivar cuando quieras.
+                {t("green.confirmNote")}
               </p>
               <div className="mt-5 flex justify-end gap-2">
                 <button
@@ -137,7 +139,7 @@ export function GreenDrivingPanel({ deviceId, since, onChanged }: { deviceId: st
                   onClick={() => setConfirming(null)}
                   className="rounded-xl px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-white/10"
                 >
-                  Cancelar
+                  {t("cmd.cancel")}
                 </button>
                 <button
                   type="button"
@@ -145,7 +147,7 @@ export function GreenDrivingPanel({ deviceId, since, onChanged }: { deviceId: st
                   onClick={() => void confirm(confirming)}
                   className="brand-button rounded-xl px-4 py-2 text-sm font-medium disabled:opacity-50"
                 >
-                  {confirming === "enable" ? "Sí, activar" : "Sí, desactivar"}
+                  {confirming === "enable" ? t("green.yesEnable") : t("green.yesDisable")}
                 </button>
               </div>
             </div>

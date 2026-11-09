@@ -1,3 +1,4 @@
+import { useT } from "../i18n";
 import { HIDDEN_MODULES, MODULE_INFO, MODULE_KEYS, MODULE_TEMPLATES, TEMPLATE_LABEL, matchingTemplate, type ModuleKey } from "../lib/modules";
 
 /** Pick which OneTrack sections a client gets: a ready-made package, then fine-tune one by one. */
@@ -11,6 +12,7 @@ export function ModulesPicker({
   onChange: (modules: ModuleKey[]) => void;
   available?: readonly ModuleKey[];
 }) {
+  const t = useT();
   const active = matchingTemplate(selected);
   const templates = (Object.keys(MODULE_TEMPLATES) as Array<keyof typeof MODULE_TEMPLATES>).filter((name) =>
     MODULE_TEMPLATES[name].every((key) => available.includes(key)),
@@ -34,12 +36,12 @@ export function ModulesPicker({
                 : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10"
             }`}
           >
-            {TEMPLATE_LABEL[name]}
+            {t(TEMPLATE_LABEL[name])}
           </button>
         ))}
         {active === null && (
           <span className="rounded-full bg-violet-100 px-2.5 py-1 text-xs font-medium text-violet-700 dark:bg-violet-500/15 dark:text-violet-300">
-            Personalizado
+            {t("template.custom")}
           </span>
         )}
       </div>
@@ -53,8 +55,8 @@ export function ModulesPicker({
               className="brand-range mt-0.5 h-4 w-4 shrink-0"
             />
             <span>
-              {MODULE_INFO[key].label}
-              <span className="block text-xs text-slate-400 dark:text-slate-500">{MODULE_INFO[key].hint}</span>
+              {t(MODULE_INFO[key].label)}
+              <span className="block text-xs text-slate-400 dark:text-slate-500">{t(MODULE_INFO[key].hint)}</span>
             </span>
           </label>
         ))}

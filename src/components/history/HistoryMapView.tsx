@@ -4,7 +4,8 @@ import { Box, Map as MapIcon } from "lucide-react";
 import { MapFullscreenButton, MapResizeOnChange } from "../MapFullscreenControl";
 import { MapsProvider } from "../MapsProvider";
 import { useTheme } from "../../context/ThemeContext";
-import { INCIDENT_LABELS, type Incident } from "../../lib/drivingBehavior";
+import { useLanguage } from "../../i18n";
+import { INCIDENT_LABELS, incidentDetail, type Incident } from "../../lib/drivingBehavior";
 import { incidentPinUrl, PIN_HEIGHT, PIN_WIDTH } from "../../lib/incidentPins";
 import {
   AHEAD_PX,
@@ -204,6 +205,7 @@ export function HistoryMapView({
 }: HistoryMapViewProps) {
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
   const { theme } = useTheme();
+  const { t, locale } = useLanguage();
   const [follow, setFollow] = useState(true);
   const [fitSignal, setFitSignal] = useState(0);
   const [mode, setMode] = useState<Mode>(readMode);
@@ -286,7 +288,7 @@ export function HistoryMapView({
               key={`${incident.type}-${incident.ts}-${i}`}
               position={{ lat: incident.lat, lng: incident.lng }}
               icon={incidentIcon(incident.type)}
-              title={INCIDENT_LABELS[incident.type]}
+              title={t(INCIDENT_LABELS[incident.type])}
               zIndex={10}
               onClick={() => {
                 setOpenIncident(incident);
@@ -302,10 +304,10 @@ export function HistoryMapView({
               onCloseClick={() => setOpenIncident(null)}
             >
               <div className="text-slate-900">
-                <p className="text-sm font-semibold">{INCIDENT_LABELS[openIncident.type]}</p>
-                <p className="text-xs">{openIncident.detail}</p>
+                <p className="text-sm font-semibold">{t(INCIDENT_LABELS[openIncident.type])}</p>
+                <p className="text-xs">{incidentDetail(t, openIncident)}</p>
                 <p className="text-xs text-slate-500">
-                  {new Date(openIncident.ts).toLocaleString([], { dateStyle: "short", timeStyle: "short" })}
+                  {new Date(openIncident.ts).toLocaleString(locale, { dateStyle: "short", timeStyle: "short" })}
                 </p>
               </div>
             </InfoWindow>
