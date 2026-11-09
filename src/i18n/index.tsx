@@ -8,7 +8,9 @@ export const LANGUAGE_NAME: Record<Language, string> = { es: "Español", it: "It
 
 const DICTIONARIES: Record<Language, Record<MessageKey, string>> = { es, it };
 const LOCALES: Record<Language, string> = { es: "es-ES", it: "it-IT" };
-const STORAGE_KEY = "onesystem.language";
+// A new key on purpose: browsers that remembered "es" back when Spanish was the default must start over in Italian (once someone signs in,
+// the language of their account is remembered again under this key).
+const STORAGE_KEY = "onesystem.lang.v2";
 
 export type Params = Record<string, string | number>;
 export type Translate = (key: MessageKey, params?: Params) => string;
