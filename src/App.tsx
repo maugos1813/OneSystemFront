@@ -84,7 +84,7 @@ export default function App() {
                 <Route path="/alertas" element={<AlertsHubPage />} />
                 <Route path="/conduccion" element={<MovedTo to="/alertas" tab="conduccion" />} />
                 <Route path="/geocercas" element={<GeofencesPage />} />
-                <Route path="/salud-dispositivos" element={<MovedTo to="/dispositivos" tab="salud" />} />
+                <Route path="/salud-dispositivos" element={<MovedTo to="/dispositivos" />} />
                 <Route path="/vehiculos" element={<VehiclesHubPage />} />
                 <Route path="/vehiculos/:id" element={<VehicleProfilePage />} />
                 {/* Maintenance now lives inside each vehicle's profile. */}
