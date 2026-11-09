@@ -89,7 +89,7 @@ export function AlertsPage() {
           </p>
         </div>
         <Link
-          to="/ajustes"
+          to="/ajustes?tab=avvisi"
           className="flex shrink-0 items-center gap-1.5 rounded-xl bg-white px-3 py-2 text-sm font-medium text-slate-600 shadow-sm transition hover:bg-slate-50 dark:bg-[#111729] dark:text-slate-300 dark:hover:bg-white/10"
         >
           <SettingsIcon className="h-4 w-4" />

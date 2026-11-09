@@ -1,5 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Panel } from "../components/analytics/Panel";
+import { BellRing, Clock, ShieldCheck, UserRound } from "lucide-react";
+import { SectionHub, type HubView } from "../components/SectionHub";
 import { LogoUpload } from "../components/LogoUpload";
 import { SecurityPanel } from "../components/security/SecurityPanel";
 import { useAuth } from "../context/AuthContext";
@@ -197,25 +199,28 @@ export function SettingsPage() {
     }
   }
 
-  return (
-    <div className="h-full overflow-y-auto bg-[#f5f6fb] p-4 sm:p-6 lg:p-8 dark:bg-[#0a0e1a]">
-      <h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t("settings.title")}</h1>
-      <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">
-        {t(canEditCompany ? "settings.introAdmin" : "settings.intro")}
-      </p>
+  const saveBar = (
+    <div className="flex items-center gap-3 pt-2 pb-4">
+      <button onClick={handleSave} disabled={saving} className="brand-button rounded-xl px-5 py-2.5 text-sm font-medium disabled:opacity-50">
+        {saving ? t("settings.saving") : t("settings.saveChanges")}
+      </button>
+      {saved && <span className="text-sm font-medium text-emerald-600">{t("settings.saved")}</span>}
+    </div>
+  );
+  const view = "p-4 sm:p-6 lg:p-8";
 
-      <div className="mb-6">
-        <ProfilePanel />
-      </div>
-
-      <div className="mb-6">
-        <SecurityPanel />
-      </div>
-
-      {form && canEditCompany && (
-      <>
-      <div className="gap-6 xl:columns-2 [&>*]:mb-6 [&>*]:break-inside-avoid">
-        <Panel title={t("settings.company")}>
+  const views: HubView[] = [
+    {
+      key: "profilo",
+      label: t("settings.profile"),
+      description: t(canEditCompany ? "settings.hubProfileAdminDesc" : "settings.hubProfileDesc"),
+      icon: UserRound,
+      content: (
+        <div className={`${view} space-y-6`}>
+          <ProfilePanel />
+          {form && canEditCompany && (
+            <>
+    <Panel title={t("settings.company")}>
           <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">{t("settings.name")}</label>
           <input
             value={form.orgName}
@@ -235,8 +240,36 @@ export function SettingsPage() {
             {t("settings.logoHint")}
           </p>
         </Panel>
-
-        <Panel title={t("settings.hours")}>
+    
+    
+              {saveBar}
+            </>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: "sicurezza",
+      label: t("security.title"),
+      description: t("settings.hubSecurityDesc"),
+      icon: ShieldCheck,
+      content: (
+        <div className={view}>
+          <SecurityPanel />
+        </div>
+      ),
+    },
+  ];
+  if (form && canEditCompany) {
+    views.push(
+      {
+        key: "orario",
+        label: t("settings.hours"),
+        description: t("settings.hubHoursDesc"),
+        icon: Clock,
+        content: (
+          <div className={`${view} max-w-3xl`}>
+    <Panel title={t("settings.hours")}>
           <div className="space-y-2">
             {DAYS.map(({ key, label }) => {
               const day = form.workingHours[key];
@@ -276,8 +309,20 @@ export function SettingsPage() {
             })}
           </div>
         </Panel>
-
-        <Panel title={t("settings.alertPrefs")}>
+    
+    
+            {saveBar}
+          </div>
+        ),
+      },
+      {
+        key: "avvisi",
+        label: t("settings.alertPrefs"),
+        description: t("settings.hubAlertsDesc"),
+        icon: BellRing,
+        content: (
+          <div className={`${view} max-w-3xl`}>
+    <Panel title={t("settings.alertPrefs")}>
           <div className="divide-y divide-slate-100 dark:divide-white/10">
             <AlertRow
               label={t("settings.afterHours")}
@@ -390,20 +435,14 @@ export function SettingsPage() {
             </AlertRow>
           </div>
         </Panel>
+    
+    
+            {saveBar}
+          </div>
+        ),
+      },
+    );
+  }
 
-      </div>
-      <div className="flex items-center gap-3 pb-4">
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="brand-button rounded-xl px-5 py-2.5 text-sm font-medium disabled:opacity-50"
-        >
-          {saving ? t("settings.saving") : t("settings.saveChanges")}
-        </button>
-        {saved && <span className="text-sm font-medium text-emerald-600">{t("settings.saved")}</span>}
-        </div>
-      </>
-      )}
-    </div>
-  );
+  return <SectionHub title={t("settings.title")} hint={t(canEditCompany ? "settings.introAdmin" : "settings.intro")} views={views} />;
 }
