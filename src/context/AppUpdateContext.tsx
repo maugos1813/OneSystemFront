@@ -1,6 +1,7 @@
 import { Capacitor } from "@capacitor/core";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { rememberedLanguage, translate } from "../i18n";
+import { isPlayStoreApp } from "../lib/appFlavor";
 import {
   fetchLatestRelease,
   isUpdateAvailable,
@@ -13,6 +14,8 @@ import {
 interface AppUpdateValue {
   /** True inside the Android app. */
   isNative: boolean;
+  /** Installed from Google Play: it is updated there, so nothing about updates is shown. */
+  managedByStore: boolean;
   installed: InstalledApp | null;
   latest: AndroidRelease | null;
   /** A newer app than the one installed is published. */
@@ -40,7 +43,7 @@ export function AppUpdateProvider({ children }: { children: ReactNode }) {
   const busy = useRef(false);
 
   const check = useCallback(async () => {
-    if (busy.current) return;
+    if (isPlayStoreApp || busy.current) return; // Google Play updates this app, not this website
     busy.current = true;
     setChecking(true);
     setError(null);
@@ -69,7 +72,7 @@ export function AppUpdateProvider({ children }: { children: ReactNode }) {
   }, [latest]);
 
   const value = useMemo<AppUpdateValue>(
-    () => ({ isNative, installed, latest, available: isUpdateAvailable(installed, latest), checking, error, checkedAt, check, install }),
+    () => ({ isNative, managedByStore: isPlayStoreApp, installed, latest, available: isUpdateAvailable(installed, latest), checking, error, checkedAt, check, install }),
     [isNative, installed, latest, checking, error, checkedAt, check, install],
   );
 

@@ -10,6 +10,12 @@ export const isOneTrackApp = Capacitor.isNativePlatform() && navigator.userAgent
 /** The OneTrack app built before its package was registered in Firebase has no push: the wrapper says so. */
 export const pushUnavailable = isOneTrackApp && navigator.userAgent.includes("NoPush");
 
+/**
+ * The app was installed from Google Play (its wrapper adds "PlayStore" to the user agent, see MainActivity). Play only allows
+ * an app it delivered to be updated by Play, so there it never looks for, offers or downloads an APK from this website.
+ */
+export const isPlayStoreApp = Capacitor.isNativePlatform() && navigator.userAgent.includes("PlayStore");
+
 /** Running inside one of the Android apps (as opposed to a browser): their sessions last longer, since the phone is the person's own. */
 export function isNativeApp(): boolean {
   return Capacitor.isNativePlatform();

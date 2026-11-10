@@ -16,7 +16,8 @@ function mapRotationSupport(): { webgl2: boolean; version: string } {
 
 export function AppUpdateCard() {
   const t = useT();
-  const { isNative, installed, latest, available, checking, error, checkedAt, check, install } = useAppUpdate();
+  const { isNative, managedByStore, installed, latest, available, checking, error, checkedAt, check, install } = useAppUpdate();
+  if (managedByStore) return null; // from Google Play: Play updates it, and no APK is offered
   const rotation = mapRotationSupport();
   const upToDate = isNative && !!installed && !!latest && !available && !!checkedAt && !error;
 
