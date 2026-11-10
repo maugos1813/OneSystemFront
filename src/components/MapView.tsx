@@ -10,7 +10,7 @@ import { useSmoothedPosition } from "../hooks/useSmoothedPosition";
 import { geofenceZoneColor, isRomeZtl } from "../lib/geo";
 import { MAP_ID } from "../lib/mapConfig";
 import { fleetClass, fleetTagCss, GAMONAL_FLEET } from "../lib/fleetBrand";
-import { getVehicleIcon } from "../lib/markerIcon";
+import { getBrokenIcon, getVehicleIcon } from "../lib/markerIcon";
 import { AVL_ID, type Position, type SharedVehicle, type Vehicle, type VehicleEta } from "../lib/types";
 
 const FOCUS_ZOOM = 15;
@@ -273,11 +273,22 @@ function SharedVehicleMarker({
 /** Glides between real reports instead of snapping — see useSmoothedPosition. Split out
  * so each vehicle's animation is its own hook instance, independent of the others. */
 function AnimatedVehicleMarker({ vehicle, position, selected, onSelect, theme }: AnimatedVehicleMarkerProps) {
+  const t = useT();
   const smoothed = useSmoothedPosition(position);
   const heading = useMapHeading();
   if (!smoothed) return null;
 
   return (
+    <>
+    {vehicle.outOfService && (
+      <Marker
+        position={{ lat: smoothed.lat, lng: smoothed.lng }}
+        title={t("map.broken", { plate: vehicle.plate ?? vehicle.name })}
+        icon={getBrokenIcon()}
+        clickable={false}
+        zIndex={1000}
+      />
+    )}
     <Marker
       position={{ lat: smoothed.lat, lng: smoothed.lng }}
       title={vehicle.name}
@@ -293,6 +304,7 @@ function AnimatedVehicleMarker({ vehicle, position, selected, onSelect, theme }:
         color: theme === "dark" ? "#e2e8f0" : "#0f172a",
       }}
     />
+    </>
   );
 }
 

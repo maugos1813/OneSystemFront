@@ -55,6 +55,9 @@ export interface Vehicle {
   /** Client-contract tag (e.g. "DHL", "UNIVEX") — only set for vehicles synced from Radius Velocity. */
   fleetGroup: string | null;
   deviceId: string | null;
+  /** Broken down ("guasto"): switched on from the vehicles list, it puts a wrench over the plate on the map. */
+  outOfService: boolean;
+  outOfServiceAt: string | null;
   // Profile
   brand: string | null;
   model: string | null;

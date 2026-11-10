@@ -1,4 +1,4 @@
-import { AlertTriangle, ChevronRight, IdCard, Pencil, Plus, Trash2, Truck, UsersRound, X } from "lucide-react";
+import { AlertTriangle, ChevronRight, IdCard, Pencil, Plus, Trash2, Truck, UsersRound, Wrench, X } from "lucide-react";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { AreaFilterSelect } from "../components/AreaFilterSelect";
@@ -170,7 +170,8 @@ function VehicleRow({
   return (
     <tr>
       <td className="px-4 py-3 font-medium text-slate-900 dark:text-white">
-        <Link to={`/vehiculos/${vehicle.id}`} className="hover:text-blue-600 hover:underline dark:hover:text-blue-400">
+        <Link to={`/vehiculos/${vehicle.id}`} className="inline-flex items-center gap-1.5 hover:text-blue-600 hover:underline dark:hover:text-blue-400">
+          {vehicle.outOfService && <Wrench className="h-4 w-4 shrink-0 text-red-600 dark:text-red-400" aria-label={t("vehiclesPage.broken")} />}
           {vehicle.name}
         </Link>
       </td>
@@ -208,6 +209,11 @@ function VehicleRow({
         )}
       </td>
       <td className="px-4 py-3 text-right whitespace-nowrap">
+        {canManage && (
+          <span className="mr-3 inline-flex align-middle">
+            <BrokenSwitch vehicle={vehicle} onChanged={onChanged} />
+          </span>
+        )}
         <Link
           to={`/vehiculos/${vehicle.id}`}
           className="mr-1 inline-flex rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-500 dark:hover:bg-white/5 dark:hover:text-white"
@@ -312,17 +318,64 @@ function DeleteVehicleDialog({
   );
 }
 
+/**
+ * The "guasto" switch: marks a vehicle as broken down. While it is on, the map shows a wrench over the plate, for everyone
+ * who sees that vehicle. It saves at once and goes back if the server refuses.
+ */
+function BrokenSwitch({ vehicle, onChanged, withLabel }: { vehicle: Vehicle; onChanged: () => void; withLabel?: boolean }) {
+  const t = useT();
+  const [on, setOn] = useState(vehicle.outOfService);
+  const [busy, setBusy] = useState(false);
+  useEffect(() => setOn(vehicle.outOfService), [vehicle.outOfService]);
+
+  async function toggle() {
+    const next = !on;
+    setOn(next);
+    setBusy(true);
+    try {
+      await updateVehicle(vehicle.id, { outOfService: next });
+      onChanged();
+    } catch {
+      setOn(!next);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <label className="inline-flex cursor-pointer items-center gap-2" title={t("vehiclesPage.brokenHint")}>
+      <Wrench className={`h-4 w-4 ${on ? "text-red-600 dark:text-red-400" : "text-slate-400 dark:text-slate-500"}`} />
+      {withLabel && <span className={`text-sm font-medium ${on ? "text-red-700 dark:text-red-300" : "text-slate-700 dark:text-slate-300"}`}>{t("vehiclesPage.broken")}</span>}
+      <button
+        type="button"
+        role="switch"
+        aria-checked={on}
+        aria-label={t("vehiclesPage.broken")}
+        disabled={busy}
+        onClick={() => void toggle()}
+        className={`relative h-6 w-10 shrink-0 rounded-full transition disabled:opacity-60 ${on ? "bg-red-500" : "bg-slate-300 dark:bg-white/20"}`}
+      >
+        <span className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition ${on ? "translate-x-4" : ""}`} />
+      </button>
+    </label>
+  );
+}
+
 /** A vehicle of the list on a phone: its km and tagliando at a glance, and clear buttons to its profile and its tagliando. */
 function VehicleCard({
   vehicle,
   odometer,
   maintenance,
   showMaintenance,
+  canManage,
+  onChanged,
 }: {
   vehicle: Vehicle;
   odometer: VehicleOdometerRow | undefined;
   maintenance: MaintenancePlan | null;
   showMaintenance: boolean;
+  canManage: boolean;
+  onChanged: () => void;
 }) {
   const t = useT();
   const state = maintenance && maintenance.status.state !== "unknown" ? maintenance.status : null;
@@ -332,7 +385,10 @@ function VehicleCard({
     <li className="float-card rounded-2xl border border-white bg-white p-4 shadow-lg shadow-slate-200/50 dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="truncate font-semibold text-slate-900 dark:text-white">{vehicle.name}</p>
+          <p className="flex items-center gap-1.5 truncate font-semibold text-slate-900 dark:text-white">
+            {vehicle.outOfService && <Wrench className="h-4 w-4 shrink-0 text-red-600 dark:text-red-400" aria-label={t("vehiclesPage.broken")} />}
+            <span className="truncate">{vehicle.name}</span>
+          </p>
           {vehicle.plate && vehicle.plate !== vehicle.name && <p className="text-sm text-slate-500 dark:text-slate-400">{vehicle.plate}</p>}
         </div>
         {vehicle.fleetGroup && (
@@ -371,6 +427,13 @@ function VehicleCard({
           </div>
         )}
       </dl>
+
+      {canManage && (
+        <div className="mt-3 flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2 dark:bg-white/5">
+          <span className="text-xs text-slate-500 dark:text-slate-400">{t("vehiclesPage.brokenShort")}</span>
+          <BrokenSwitch vehicle={vehicle} onChanged={onChanged} withLabel />
+        </div>
+      )}
 
       <div className="mt-4 flex gap-2">
         <Link to={`/vehiculos/${vehicle.id}`} className={BUTTON}>
@@ -703,6 +766,8 @@ export function VehiclesPage() {
               odometer={odometers.get(vehicle.id)}
               maintenance={maintenance.get(vehicle.id) ?? null}
               showMaintenance={showMaintenance}
+              canManage={canManage}
+              onChanged={refetch}
             />
           ))}
         </ul>

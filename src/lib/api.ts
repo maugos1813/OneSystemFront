@@ -324,6 +324,7 @@ export interface SimInput {
   pin?: string | null;
   puk?: string | null;
   notes?: string | null;
+  outOfService?: boolean;
 }
 
 /** SIMs are OneSystec's: `orgId` picks the client whose SIMs these are (without it, the caller's own organization). */
@@ -373,6 +374,7 @@ export interface VehicleInput {
   fuelType?: FuelType | null;
   color?: string | null;
   notes?: string | null;
+  outOfService?: boolean;
 }
 
 export function getVehicleProfile(id: string): Promise<VehicleProfile> {
