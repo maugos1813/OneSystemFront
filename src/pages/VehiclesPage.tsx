@@ -580,6 +580,8 @@ export function VehiclesPage() {
   }, [filteredVehicles, search]);
   const deviceById = new Map(devices.map((d) => [d.id, d]));
   const unassignedDevices = devices.filter((d) => !vehicles.some((v) => v.deviceId === d.id));
+  // OneSystec's overview mixes every client's devices; a vehicle can only take one of its own client's (the server refuses the rest).
+  const devicesOf = (orgId: string | null | undefined) => unassignedDevices.filter((d) => !orgId || !d.orgId || d.orgId === orgId);
 
   async function handleCreate(e: FormEvent) {
     e.preventDefault();
@@ -643,7 +645,7 @@ export function VehiclesPage() {
           plate={plate}
           deviceId={deviceId}
           canAssignDevice={canAssignDevice}
-          devices={unassignedDevices}
+          devices={devicesOf(currentUser?.orgId)}
           submitting={submitting}
           error={createError}
           onName={setName}
@@ -729,7 +731,7 @@ export function VehiclesPage() {
                   maintenance={maintenance.get(vehicle.id) ?? null}
                   showMaintenance={showMaintenance}
                   deviceImei={vehicle.deviceId && deviceById.get(vehicle.deviceId) ? deviceLabel(deviceById.get(vehicle.deviceId)!) : null}
-                  devices={vehicle.deviceId ? [...unassignedDevices, deviceById.get(vehicle.deviceId)!] : unassignedDevices}
+                  devices={vehicle.deviceId ? [...devicesOf(vehicle.orgId), deviceById.get(vehicle.deviceId)!] : devicesOf(vehicle.orgId)}
                   groups={fleetGroups}
                   canManage={canManage}
                   isAdmin={isAdmin}
