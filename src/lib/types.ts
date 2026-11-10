@@ -593,6 +593,8 @@ export interface PlatformOrganizationDetail extends PlatformOrganization {
     lastSeenAt: string | null;
     vehicle: { name: string; plate: string | null } | null;
   }>;
+  /** The client's vehicles and the device each has: OneSystec is the one who assigns devices. */
+  vehicleList: Array<{ id: string; name: string; plate: string | null; fleetGroup: string | null; deviceId: string | null }>;
 }
 
 /** What the map needs of a fleet: its name and the small picture that opens each plate. */

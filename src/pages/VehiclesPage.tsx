@@ -59,6 +59,7 @@ function VehicleRow({
   groups,
   canManage,
   isAdmin,
+  canAssignDevice,
   odometer,
   maintenance,
   showMaintenance,
@@ -71,6 +72,8 @@ function VehicleRow({
   canManage: boolean;
   /** Only owner/admin assign the device and the flota; a client only renames their own vehicles. */
   isAdmin: boolean;
+  /** The main client (or OneSystec): a fleet's own account never gives a vehicle its device. */
+  canAssignDevice: boolean;
   odometer: VehicleOdometerRow | undefined;
   /** Its tagliando plan, or null when none has been entered. */
   maintenance: MaintenancePlan | null;
@@ -91,7 +94,7 @@ function VehicleRow({
       await updateVehicle(
         vehicle.id,
         isAdmin
-          ? { name, plate: plate || undefined, deviceId: deviceId || undefined, fleetGroup: fleetGroup || null }
+          ? { name, plate: plate || undefined, ...(canAssignDevice ? { deviceId: deviceId || undefined } : {}), fleetGroup: fleetGroup || null }
           : { name, plate: plate || undefined },
       );
       setEditing(false);
@@ -140,7 +143,7 @@ function VehicleRow({
         <td className="px-4 py-2" />
         {showMaintenance && <td className="px-4 py-2" />}
         <td className="px-4 py-2">
-          {isAdmin ? <DeviceSelect value={deviceId} onChange={setDeviceId} devices={devices} /> : <span className="text-slate-600 dark:text-slate-300">{deviceImei ?? t("vehiclesPage.unassigned")}</span>}
+          {canAssignDevice ? <DeviceSelect value={deviceId} onChange={setDeviceId} devices={devices} /> : <span className="text-slate-600 dark:text-slate-300">{deviceImei ?? t("vehiclesPage.unassigned")}</span>}
         </td>
         <td className="px-4 py-2">
           {isAdmin ? <AreaSelect value={fleetGroup} onChange={setFleetGroup} groups={groups} /> : <span className="text-slate-600 dark:text-slate-300">{vehicle.fleetGroup ?? "—"}</span>}
@@ -441,7 +444,7 @@ function NewVehicleDialog({
   name,
   plate,
   deviceId,
-  isAdmin,
+  canAssignDevice,
   devices,
   submitting,
   error,
@@ -454,7 +457,7 @@ function NewVehicleDialog({
   name: string;
   plate: string;
   deviceId: string;
-  isAdmin: boolean;
+  canAssignDevice: boolean;
   devices: { id: string; imei: string; model: string }[];
   submitting: boolean;
   error: string | null;
@@ -497,7 +500,7 @@ function NewVehicleDialog({
               <label className={label}>{t("common.plate")}</label>
               <input value={plate} onChange={(e) => onPlate(e.target.value)} className={input} />
             </div>
-            {isAdmin && (
+            {canAssignDevice && (
               <div>
                 <label className={label}>{t("common.device")}</label>
                 <DeviceSelect value={deviceId} onChange={onDevice} devices={devices} />
@@ -541,6 +544,8 @@ export function VehiclesPage() {
   const isAdmin = isOrgAdmin && !currentUser?.allowedArea;
   // A new fleet is created by the main client (never by a fleet's own account, nor while looking at a client's account read-only).
   const canCreateFleet = isAdmin && !currentUser?.viewingAs;
+  // The main client puts the devices OneSystec handed to it on its vehicles; a fleet's own account cannot (the server refuses it).
+  const canAssignDevice = isAdmin && !currentUser?.viewingAs;
   // A client with the Vehículos section and a flota registers and edits the vehicles of that flota (the admin assigns devices).
   const canManage = isOrgAdmin || (!!currentUser?.allowedArea && !!currentUser.modules.includes("vehiculos"));
   // Maintenance is shown for those who have it; its state comes from the plans of each vehicle.
@@ -581,7 +586,7 @@ export function VehiclesPage() {
     setSubmitting(true);
     setCreateError(null);
     try {
-      await createVehicle({ name, plate: plate || undefined, ...(isAdmin && deviceId ? { deviceId } : {}) });
+      await createVehicle({ name, plate: plate || undefined, ...(canAssignDevice && deviceId ? { deviceId } : {}) });
       setName("");
       setPlate("");
       setDeviceId("");
@@ -637,7 +642,7 @@ export function VehiclesPage() {
           name={name}
           plate={plate}
           deviceId={deviceId}
-          isAdmin={isAdmin}
+          canAssignDevice={canAssignDevice}
           devices={unassignedDevices}
           submitting={submitting}
           error={createError}
@@ -728,6 +733,7 @@ export function VehiclesPage() {
                   groups={fleetGroups}
                   canManage={canManage}
                   isAdmin={isAdmin}
+                  canAssignDevice={canAssignDevice}
                   onChanged={refetch}
                 />
               ))}

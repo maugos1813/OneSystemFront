@@ -745,6 +745,11 @@ export function assignDriverBeaconByMac(mac: string, driverName: string): Promis
   return request("/driver-beacons", { method: "POST", body: JSON.stringify({ mac, driverName }) });
 }
 
+/** OneSystec gives a device to a vehicle of a client (null takes it off). */
+export function assignVehicleDevice(orgId: string, vehicleId: string, deviceId: string | null): Promise<{ id: string; deviceId: string | null }> {
+  return request(`/platform/organizations/${orgId}/vehicles/${vehicleId}/device`, { method: "PATCH", body: JSON.stringify({ deviceId }) });
+}
+
 /** OneSystec hands an EYE Beacon (by the MAC on its label) to a client. */
 export function assignBeaconToClient(orgId: string, mac: string, driverName: string): Promise<DriverBeacon> {
   return request(`/platform/organizations/${orgId}/driver-beacons`, { method: "POST", body: JSON.stringify({ mac, driverName }) });

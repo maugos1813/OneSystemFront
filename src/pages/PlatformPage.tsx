@@ -3,6 +3,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { Panel } from "../components/analytics/Panel";
 import { ClientBeacons } from "../components/ClientBeacons";
+import { ClientVehicles } from "../components/ClientVehicles";
 import { LogoUpload } from "../components/LogoUpload";
 import { PasswordField } from "../components/PasswordField";
 import { useAuth } from "../context/AuthContext";
@@ -497,6 +498,7 @@ export function PlatformPage({ embedded = false }: { embedded?: boolean }) {
                               )}
                               </div>
                             </details>
+                            <ClientVehicles detail={detail} onChanged={async () => setDetail(await getPlatformOrganization(detail.id))} />
                             <ClientBeacons key={detail.id} orgId={detail.id} />
                           </>
                         )}
