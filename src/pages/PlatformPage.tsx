@@ -1,14 +1,15 @@
-import { ArrowLeft, Building2, ChevronDown, ChevronRight, ImagePlus, Map as MapIcon, ShieldCheck, ShieldOff, Trash2 } from "lucide-react";
+import { ArrowLeft, Building2, ChevronDown, ChevronRight, ImagePlus, Map as MapIcon, Pencil, ShieldCheck, ShieldOff, Trash2 } from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { Panel } from "../components/analytics/Panel";
+import { ClientAccessLog } from "../components/ClientAccessLog";
 import { ClientBeacons } from "../components/ClientBeacons";
 import { ClientVehicles } from "../components/ClientVehicles";
 import { LogoUpload } from "../components/LogoUpload";
 import { PasswordField } from "../components/PasswordField";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage, type MessageKey } from "../i18n";
-import { ApiError, claimDevice, createPlatformOrganization, getPlatformOrganization, listPlatformOrganizations, resetPlatformUserTotp, setOrganizationLogoAsPlatform, setOrganizationSections, setUserLogoAsPlatform, viewClientToken } from "../lib/api";
+import { ApiError, claimDevice, createPlatformOrganization, getPlatformOrganization, listPlatformOrganizations, resetPlatformUserTotp, setOrganizationLogoAsPlatform, setOrganizationSections, setUserLogoAsPlatform, manageClientToken, viewClientToken } from "../lib/api";
 import { startViewing } from "../lib/auth";
 import { fileToLogoVariants, LOGO_ACCEPT } from "../lib/logoImage";
 import { ADMIN_SECTION_INFO, ADMIN_SECTION_KEYS, HIDDEN_MODULES, MODULE_INFO, MODULE_KEYS } from "../lib/modules";
@@ -160,6 +161,19 @@ export function PlatformPage({ embedded = false }: { embedded?: boolean }) {
     }
   }
 
+  /** Into the client's account with permission to change things (each change is logged): to help it or set it up. */
+  async function manageClient(id: string) {
+    setOpeningId(id);
+    try {
+      const { token } = await manageClientToken(id);
+      startViewing(token);
+      window.location.assign("/vehiculos");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("platform.err.open"));
+      setOpeningId(null);
+    }
+  }
+
   async function handleClaim(e: FormEvent, orgId: string) {
     e.preventDefault();
     setClaiming(true);
@@ -292,6 +306,16 @@ export function PlatformPage({ embedded = false }: { embedded?: boolean }) {
                       <span className="w-40 text-right text-xs text-slate-500 dark:text-slate-400">
                         {org.lastDeviceSeenAt ? t("platform.lastData", { when: dateTimeFormat.format(new Date(org.lastDeviceSeenAt)) }) : t("platform.noData")}
                       </span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void manageClient(org.id)}
+                      disabled={openingId === org.id}
+                      title={t("platform.manageHint")}
+                      className="flex shrink-0 items-center gap-1.5 rounded-xl border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/5"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                      {t("platform.manage")}
                     </button>
                     <button
                       type="button"
@@ -500,6 +524,7 @@ export function PlatformPage({ embedded = false }: { embedded?: boolean }) {
                             </details>
                             <ClientVehicles detail={detail} onChanged={async () => setDetail(await getPlatformOrganization(detail.id))} />
                             <ClientBeacons key={detail.id} orgId={detail.id} />
+                            <ClientAccessLog key={`log-${detail.id}`} orgId={detail.id} />
                           </>
                         )}
                       </div>

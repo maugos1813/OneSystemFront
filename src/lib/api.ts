@@ -752,6 +752,11 @@ export function assignVehicleDevice(orgId: string, vehicleId: string, deviceId: 
   return request(`/platform/organizations/${orgId}/vehicles/${vehicleId}/device`, { method: "PATCH", body: JSON.stringify({ deviceId }) });
 }
 
+/** OneSystec creates a vehicle straight in a client's account, optionally with one of that client's devices. */
+export function createClientVehicle(orgId: string, input: { name: string; plate?: string; deviceId?: string }): Promise<Vehicle> {
+  return request(`/platform/organizations/${orgId}/vehicles`, { method: "POST", body: JSON.stringify(input) });
+}
+
 /** OneSystec hands an EYE Beacon (by the MAC on its label) to a client. */
 export function assignBeaconToClient(orgId: string, mac: string, driverName: string): Promise<DriverBeacon> {
   return request(`/platform/organizations/${orgId}/driver-beacons`, { method: "POST", body: JSON.stringify({ mac, driverName }) });
@@ -804,6 +809,25 @@ export function createPlatformOrganization(input: { orgName: string; email: stri
 /** A read-only token to look at a client's account (OneSystec only). */
 export function viewClientToken(orgId: string): Promise<{ token: string; orgId: string; orgName: string }> {
   return request(`/platform/organizations/${orgId}/view`, { method: "POST" });
+}
+
+/** A token to manage a client's account: like the viewing one, but everything can be changed, and each change is logged (OneSystec only). */
+export function manageClientToken(orgId: string): Promise<{ token: string; orgId: string; orgName: string }> {
+  return request(`/platform/organizations/${orgId}/manage`, { method: "POST" });
+}
+
+export interface AccessLogEntry {
+  id: string;
+  /** "view" | "manage" | "write" */
+  action: string;
+  detail: string | null;
+  createdAt: string;
+  userEmail: string | null;
+}
+
+/** Who of OneSystec went into a client's account, and what they changed there. */
+export function listClientAccessLog(orgId: string): Promise<AccessLogEntry[]> {
+  return request(`/platform/organizations/${orgId}/access-log`);
 }
 
 /** OneSystec's own map: every vehicle and device of every client (a device without a vehicle gets a stand-in), with positions. */

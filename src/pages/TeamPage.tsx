@@ -32,6 +32,7 @@ import { useFleetGroups } from "../lib/useFleetGroups";
 import { fileToLogoVariants, LOGO_ACCEPT } from "../lib/logoImage";
 import { MODULE_INFO, MODULE_TEMPLATES, matchingTemplate, visibleModules, type ModuleKey } from "../lib/modules";
 import type { CurrentUser, Product, TeamMember, TeamRole, Vehicle } from "../lib/types";
+import { isReadOnlyView } from "../lib/viewMode";
 
 const ROLE_LABEL: Record<TeamRole, MessageKey> = {
   // The account holder is the client itself; its people are its team.
@@ -754,7 +755,7 @@ export function TeamPage({ embedded = false }: { embedded?: boolean }) {
   const [createError, setCreateError] = useState<string | null>(null);
 
   async function refetch() {
-    const canChoose = (currentUser?.role === "owner" || currentUser?.role === "admin") && !currentUser.allowedArea && !currentUser.viewingAs;
+    const canChoose = (currentUser?.role === "owner" || currentUser?.role === "admin") && !currentUser.allowedArea && !isReadOnlyView(currentUser);
     const [membersList, productsList, vehiclesList] = await Promise.all([
       listTeamMembers(),
       listProducts(),

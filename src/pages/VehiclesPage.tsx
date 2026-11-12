@@ -12,6 +12,7 @@ import { formatKm, STATE_BADGE, STATE_LABEL } from "../lib/maintenance";
 import type { MaintenancePlan, Vehicle, VehicleOdometerRow } from "../lib/types";
 import { ModalPortal } from "../components/ModalPortal";
 import { NewFleetDialog } from "../components/NewFleetDialog";
+import { isReadOnlyView } from "../lib/viewMode";
 
 function DeviceSelect({
   value,
@@ -606,9 +607,9 @@ export function VehiclesPage() {
   // Devices and the fleet of each vehicle are the main client's to assign: an account limited to one fleet cannot move them (the server refuses it).
   const isAdmin = isOrgAdmin && !currentUser?.allowedArea;
   // A new fleet is created by the main client (never by a fleet's own account, nor while looking at a client's account read-only).
-  const canCreateFleet = isAdmin && !currentUser?.viewingAs;
+  const canCreateFleet = isAdmin && !isReadOnlyView(currentUser);
   // The main client puts the devices OneSystec handed to it on its vehicles; a fleet's own account cannot (the server refuses it).
-  const canAssignDevice = isAdmin && !currentUser?.viewingAs;
+  const canAssignDevice = isAdmin && !isReadOnlyView(currentUser);
   // A client with the Vehículos section and a flota registers and edits the vehicles of that flota (the admin assigns devices).
   const canManage = isOrgAdmin || (!!currentUser?.allowedArea && !!currentUser.modules.includes("vehiculos"));
   // Maintenance is shown for those who have it; its state comes from the plans of each vehicle.

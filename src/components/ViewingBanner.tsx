@@ -1,11 +1,12 @@
-import { Eye } from "lucide-react";
+import { Eye, Pencil } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { stopViewing } from "../lib/auth";
 
-/** While OneSystec looks at a client's account (read-only) this is always on screen, with the way back. */
+/** While OneSystec is in a client's account this is always on screen, with the way back: looking only, or managing it (changes are logged). */
 export function ViewingBanner() {
   const { currentUser } = useAuth();
   if (!currentUser?.viewingAs) return null;
+  const managing = currentUser.managing === true;
 
   function leave() {
     // A full reload: every screen drops what it loaded for the client.
@@ -15,9 +16,11 @@ export function ViewingBanner() {
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-20 z-[1000] md:bottom-3 flex justify-center px-3">
       <div className="pointer-events-auto flex max-w-full items-center gap-3 rounded-full bg-slate-900 py-1.5 pr-1.5 pl-4 text-sm text-white shadow-xl ring-1 ring-white/20">
-        <Eye className="h-4 w-4 shrink-0 text-sky-300" />
+        {managing ? <Pencil className="h-4 w-4 shrink-0 text-amber-300" /> : <Eye className="h-4 w-4 shrink-0 text-sky-300" />}
         <span className="min-w-0 truncate">
-          Viendo a <strong>{currentUser.viewingAs.orgName}</strong> · solo lectura
+          {managing ? "Gestionando a " : "Viendo a "}
+          <strong>{currentUser.viewingAs.orgName}</strong>
+          {managing ? " · los cambios quedan registrados" : " · solo lectura"}
         </span>
         <button
           type="button"

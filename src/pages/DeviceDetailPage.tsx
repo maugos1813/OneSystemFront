@@ -15,6 +15,7 @@ import { currentLocale, rememberedLanguage, translate, useT } from "../i18n";
 import { trackGlow } from "../lib/glow";
 import type { DeviceDetail } from "../lib/types";
 import { ModalPortal } from "../components/ModalPortal";
+import { isReadOnlyView } from "../lib/viewMode";
 
 const REFRESH_MS = 30_000;
 
@@ -73,7 +74,7 @@ export function DeviceDetailPage() {
   const canEdit = (currentUser?.role === "owner" || currentUser?.role === "admin") && !currentUser.allowedArea;
   // The hardware identity (IMEI, serial, firmware), the SIM and the raw data the tracker sends are OneSystec's.
   // OneSystec's own view only: looking at a client's account (read-only) it sees what the client sees, with no IMEIs, makes or claim form.
-  const isPlatform = currentUser?.isPlatform === true && !currentUser.viewingAs;
+  const isPlatform = currentUser?.isPlatform === true && !isReadOnlyView(currentUser);
   const [detail, setDetail] = useState<DeviceDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);

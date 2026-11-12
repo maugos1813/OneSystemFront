@@ -162,6 +162,8 @@ export interface CurrentUser {
   isPlatform?: boolean;
   /** Set while OneSystec is looking at a client's account (read-only): whose it is. */
   viewingAs?: { orgId: string; orgName: string };
+  /** With `viewingAs`: OneSystec is managing the account (everything can be changed, and each change is logged), not only looking. */
+  managing?: boolean;
 }
 
 /** A Gamonal vehicle a client sees on the map because the admin of Gamonal Driver switched it on there. Read-only. */

@@ -13,6 +13,7 @@ import { ApiError, claimDevice } from "../lib/api";
 import { DEVICE_MODELS, hasProfile, modelProfile } from "../lib/deviceModels";
 import { trackGlow } from "../lib/glow";
 import { AVL_ID, type Device, type DeviceSource } from "../lib/types";
+import { isReadOnlyView } from "../lib/viewMode";
 
 function formatDate(iso: string | null, locale: string, never: string): string {
   if (!iso) return never;
@@ -95,7 +96,7 @@ export function DevicesPage() {
   };
   // The IMEI is OneSystec's: it adds hardware by IMEI and sees it. A client knows each device by its vehicle.
   // OneSystec's own view only: looking at a client's account (read-only) it sees what the client sees, with no IMEIs, makes or claim form.
-  const isPlatform = currentUser?.isPlatform === true && !currentUser.viewingAs;
+  const isPlatform = currentUser?.isPlatform === true && !isReadOnlyView(currentUser);
   const navigate = useNavigate();
   const [imei, setImei] = useState("");
   const [model, setModel] = useState<string>(DEVICE_MODELS[0]);
