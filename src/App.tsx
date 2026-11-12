@@ -74,6 +74,8 @@ export default function App() {
               <Route index element={null} />
               <Route element={<AppLayout />}>
                 <Route path="/inicio" element={<HomePage />} />
+                {/* OneSystec's way into every client: the same page as the clients of its own configuration, as a tab of OneTrack. */}
+                <Route path="/clienti" element={<PlatformPage embedded />} />
                 <Route path="/gps" element={<DashboardPage />} />
                 {/* Cockpit is hidden for now: its page stays in the code, its address leads to the map. */}
                 <Route path="/cockpit" element={<Navigate to="/gps" replace />} />

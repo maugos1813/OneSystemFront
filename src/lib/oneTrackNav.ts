@@ -1,5 +1,6 @@
 import {
   BellRing,
+  Building2,
   Home,
   Map,
   MapPin,
@@ -27,11 +28,15 @@ export interface OneTrackNavItem {
   ownerAdminOnly?: boolean;
   /** The administration page of the account this is: OneSystec may leave it out for a client. */
   adminSection?: AdminSectionKey;
+  /** OneSystec's own people only (and only in their own session, not while inside a client's account): the way in to every client. */
+  platformOnly?: boolean;
 }
 
 export const ONETRACK_NAV: OneTrackNavItem[] = [
   // The start: how the fleet is doing, and a shortcut to everything else. Everyone has it.
   { to: "/inicio", label: "nav.home", icon: Home, end: true },
+  // Only for OneSystec: every client, and the way into each one's account (to look at it or to manage it).
+  { to: "/clienti", hint: "navHint.clients", label: "nav.clients", icon: Building2, end: false, platformOnly: true },
   { to: "/gps", hint: "navHint.map", label: "nav.map", icon: Map, end: true, module: "mapa" },
   // Alertas also holds Conducción as a tab: the item opens with either section.
   { to: "/alertas", hint: "navHint.alerts", label: "nav.alerts", icon: BellRing, end: false, anyOf: ["alertas", "conduccion"] },
@@ -49,6 +54,7 @@ export const ONETRACK_NAV: OneTrackNavItem[] = [
 /** Whether this user may open the section. Owner and admin may open all of what their organization has (OneSystec may limit it). */
 export function canOpen(user: CurrentUser | null, item: OneTrackNavItem): boolean {
   if (!user) return false;
+  if (item.platformOnly) return user.isPlatform === true && !user.viewingAs;
   if (user.role === "owner" || user.role === "admin") {
     if (item.adminSection) return user.adminSections?.includes(item.adminSection) ?? true;
     if (item.anyOf) return item.anyOf.some((module) => user.modules.includes(module));
@@ -69,7 +75,7 @@ export function navItemForPath(pathname: string): OneTrackNavItem | undefined {
 }
 
 /** The sections that get a place in the phone's bottom bar, in the order they are preferred: the ones people use all day. */
-const BOTTOM_PRIORITY = ["/gps", "/alertas", "/vehiculos", "/dispositivos", "/geocercas", "/ajustes"];
+const BOTTOM_PRIORITY = ["/clienti", "/gps", "/alertas", "/vehiculos", "/dispositivos", "/geocercas", "/ajustes"];
 const BOTTOM_SLOTS = 4;
 export const HOME_PATH = "/inicio";
 

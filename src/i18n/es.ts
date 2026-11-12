@@ -203,6 +203,7 @@ export const es = {
   "navHint.vehicles": "Recorridos, tus unidades y su mantenimiento",
   "navHint.devices": "Estado de tus equipos",
   "navHint.settings": "Horarios y alertas",
+  "navHint.clients": "Entra en la cuenta de cada cliente",
   "home.greeting": "Hola, {name}",
   "home.subtitle": "Así está tu flota ahora",
   "home.moving": "En movimiento",

@@ -202,6 +202,7 @@ export const it: Record<MessageKey, string> = {
   "navHint.vehicles": "Percorsi, i tuoi mezzi e la manutenzione",
   "navHint.devices": "Stato dei tuoi dispositivi",
   "navHint.settings": "Orari e avvisi",
+  "navHint.clients": "Entra nell'account di ogni cliente",
   "home.greeting": "Ciao, {name}",
   "home.subtitle": "Ecco com'è la tua flotta adesso",
   "home.moving": "In movimento",
