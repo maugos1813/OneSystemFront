@@ -28,6 +28,14 @@ body,
   padding-top: max(env(safe-area-inset-top), 0.75rem);
 }
 
+/* iPhone and iPad app: iOS zooms the whole page when a text box with letters smaller than 16px is tapped, and leaves it zoomed. Every box
+   in the app is at least 16px there, so it never does (the viewport also forbids zooming, see main.tsx). */
+.ios-app input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+.ios-app select,
+.ios-app textarea {
+  font-size: 16px;
+}
+
 @media (prefers-reduced-motion: no-preference) {
   html {
     scroll-behavior: smooth;

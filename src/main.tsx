@@ -9,7 +9,8 @@ import { reloadWhenANewVersionIsOut } from './lib/newVersion.ts'
 // reports its safe areas) and leave that space free (see ".ios-app" in index.css). Only there: Android and the browser lay out as before.
 if (Capacitor.getPlatform() === 'ios') {
   document.documentElement.classList.add('ios-app')
-  document.querySelector('meta[name="viewport"]')?.setAttribute('content', 'width=device-width, initial-scale=1.0, viewport-fit=cover')
+  // No pinch or automatic zoom: a screen that zooms (iOS does it by itself when a text box is tapped) leaves the app bigger than the phone.
+  document.querySelector('meta[name="viewport"]')?.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover')
 }
 
 createRoot(document.getElementById('root')!).render(
