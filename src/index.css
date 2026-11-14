@@ -21,6 +21,13 @@ body,
   height: 100%;
 }
 
+/* iPhone and iPad app: the top of the page starts below the status bar and the Dynamic Island. (The bottom bar already keeps clear of the
+   home indicator with env(safe-area-inset-bottom).) */
+.ios-app #root {
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top);
+}
+
 @media (prefers-reduced-motion: no-preference) {
   html {
     scroll-behavior: smooth;

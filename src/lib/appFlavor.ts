@@ -11,10 +11,10 @@ export const isOneTrackApp = Capacitor.isNativePlatform() && navigator.userAgent
 export const pushUnavailable = isOneTrackApp && navigator.userAgent.includes("NoPush");
 
 /**
- * The app was installed from Google Play (its wrapper adds "PlayStore" to the user agent, see MainActivity). Play only allows
+ * The app was installed from a store: Google Play (its wrapper adds "PlayStore" to the user agent, see MainActivity). Play only allows
  * an app it delivered to be updated by Play, so there it never looks for, offers or downloads an APK from this website.
  */
-export const isPlayStoreApp = Capacitor.isNativePlatform() && navigator.userAgent.includes("PlayStore");
+export const isPlayStoreApp = Capacitor.isNativePlatform() && (navigator.userAgent.includes("PlayStore") || Capacitor.getPlatform() === "ios");
 
 /** Running inside one of the Android apps (as opposed to a browser): their sessions last longer, since the phone is the person's own. */
 export function isNativeApp(): boolean {

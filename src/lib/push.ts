@@ -17,7 +17,8 @@ const URGENT_CHANNEL_ID = "alerts-urgent";
  * (the Capacitor wrapper); in a normal browser it is a no-op. Safe to call on every sign-in.
  */
 export async function enablePush(): Promise<void> {
-  if (!Capacitor.isNativePlatform() || pushUnavailable) return;
+  // Android only for now: on an iPhone the plugin hands out an Apple token, not the Firebase one the server sends to.
+  if (!Capacitor.isNativePlatform() || Capacitor.getPlatform() !== "android" || pushUnavailable) return;
   try {
     let status = await PushNotifications.checkPermissions();
     if (status.receive === "prompt" || status.receive === "prompt-with-rationale") {
