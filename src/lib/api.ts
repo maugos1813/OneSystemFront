@@ -862,3 +862,46 @@ export function listFleetPictures(): Promise<FleetTag[]> {
   return request("/fleets");
 }
 
+
+// --- "Sign in with OneTrack" (other apps read your vehicles, with your consent) ---
+
+export interface AuthorizeParams {
+  response_type: string | null;
+  client_id: string | null;
+  redirect_uri: string | null;
+  scope: string | null;
+  state: string | null;
+  code_challenge: string | null;
+  code_challenge_method: string | null;
+}
+
+export type AuthorizeValidation =
+  | { valid: true; clientName: string; scope: string }
+  /** `redirectTo`: the error may go back to the app (its address is registered); without it, only a page can show it. */
+  | { valid: false; error: string; description: string; redirectTo?: string };
+
+const present = (params: AuthorizeParams) => Object.fromEntries(Object.entries(params).filter(([, value]) => value !== null)) as Record<string, string>;
+
+export function validateAuthorizeRequest(params: AuthorizeParams): Promise<AuthorizeValidation> {
+  return request(`/oauth/authorize/validate?${new URLSearchParams(present(params))}`);
+}
+
+/** The person approves or declines: where to send the browser next (the app's own address, with the code or the error). */
+export function decideAuthorization(params: AuthorizeParams, decision: "approve" | "deny"): Promise<{ redirectTo: string }> {
+  return request("/oauth/authorize/decision", { method: "POST", body: JSON.stringify({ ...present(params), decision }) });
+}
+
+export interface ConnectedApp {
+  id: string;
+  clientName: string;
+  scope: string;
+  connectedAt: string;
+}
+
+export function listConnectedApps(): Promise<ConnectedApp[]> {
+  return request("/oauth/connections");
+}
+
+export function disconnectApp(id: string): Promise<void> {
+  return request(`/oauth/connections/${id}`, { method: "DELETE" });
+}

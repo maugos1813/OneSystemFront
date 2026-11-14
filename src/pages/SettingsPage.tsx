@@ -3,6 +3,7 @@ import { Panel } from "../components/analytics/Panel";
 import { BellRing, Clock, ShieldCheck, UserRound } from "lucide-react";
 import { SectionHub, type HubView } from "../components/SectionHub";
 import { LogoUpload } from "../components/LogoUpload";
+import { ConnectedApps } from "../components/security/ConnectedApps";
 import { SecurityPanel } from "../components/security/SecurityPanel";
 import { useAuth } from "../context/AuthContext";
 import { useFleet } from "../context/FleetContext";
@@ -254,8 +255,9 @@ export function SettingsPage() {
       description: t("settings.hubSecurityDesc"),
       icon: ShieldCheck,
       content: (
-        <div className={view}>
+        <div className={`${view} space-y-6`}>
           <SecurityPanel />
+          <ConnectedApps />
         </div>
       ),
     },

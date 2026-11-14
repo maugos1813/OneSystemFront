@@ -19,6 +19,7 @@ import { HomePage } from "./pages/HomePage";
 import { VehiclesHubPage } from "./pages/VehiclesHubPage";
 import { LinkInfoPage } from "./pages/LinkInfoPage";
 import { LoginPage } from "./pages/LoginPage";
+import { OAuthAuthorizePage } from "./pages/OAuthAuthorizePage";
 import { PlatformPage } from "./pages/PlatformPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { SimsPage } from "./pages/SimsPage";
@@ -53,6 +54,8 @@ export default function App() {
           <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/vincular" element={<LinkInfoPage />} />
+            {/* "Sign in with OneTrack": another app asks to read the person's vehicles (login and consent). */}
+            <Route path="/oauth/authorize" element={<OAuthAuthorizePage />} />
             {/* Accounts are opened by OneSystec (Clientes): there is no public sign-up. */}
             <Route path="/register" element={<Navigate to="/login" replace />} />
 
