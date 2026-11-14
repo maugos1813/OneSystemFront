@@ -21,11 +21,11 @@ body,
   height: 100%;
 }
 
-/* iPhone and iPad app: the top of the page starts below the status bar and the Dynamic Island. (The bottom bar already keeps clear of the
-   home indicator with env(safe-area-inset-bottom).) */
-.ios-app #root {
-  box-sizing: border-box;
-  padding-top: env(safe-area-inset-top);
+/* iPhone and iPad app: a full-screen container ("app-shell") keeps its content clear of the status bar and the Dynamic Island by padding its
+   top *inside* its own height (the bottom bar already keeps clear of the home indicator with env(safe-area-inset-bottom)). It is the container
+   that does it, not #root: the layout is as tall as the screen (h-screen), so padding on a parent only pushed the bottom off the screen. */
+.ios-app .app-shell {
+  padding-top: max(env(safe-area-inset-top), 0.75rem);
 }
 
 @media (prefers-reduced-motion: no-preference) {

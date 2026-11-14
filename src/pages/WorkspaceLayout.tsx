@@ -205,7 +205,7 @@ function Workspace({ products }: { products: Product[] }) {
 
   return (
     <div
-      className={`flex h-screen flex-col overflow-hidden bg-[#f5f6fb] transition-all duration-300 dark:bg-[#0a0e1a] ${
+      className={`app-shell flex h-screen flex-col overflow-hidden bg-[#f5f6fb] transition-all duration-300 dark:bg-[#0a0e1a] ${
         expanded ? "p-0" : "p-3 sm:p-4"
       }`}
     >

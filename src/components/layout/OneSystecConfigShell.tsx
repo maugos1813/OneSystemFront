@@ -14,7 +14,7 @@ export function OneSystecConfigShell() {
   if (currentUser && item && !item.allowed(currentUser)) return <Navigate to="/" replace />;
 
   return (
-    <div className="flex h-full flex-col bg-[#f5f6fb] dark:bg-[#0a0e1a]">
+    <div className="app-shell flex h-full flex-col bg-[#f5f6fb] dark:bg-[#0a0e1a]">
       <header className="shrink-0 border-b border-violet-100 bg-white px-4 py-4 sm:px-8 dark:border-white/5 dark:bg-[#0d1220]">
         <Link
           to="/"
