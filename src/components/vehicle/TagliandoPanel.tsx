@@ -6,6 +6,7 @@ import { deleteMaintenancePlan, getTagliando, listMaintenance, saveTagliando } f
 import { trackGlow } from "../../lib/glow";
 import { formatKm, STATE_BADGE, STATE_BAR, STATE_LABEL } from "../../lib/maintenance";
 import type { MaintenancePlan, Tagliando } from "../../lib/types";
+import { fleetToday, formatDate } from "../../lib/time";
 
 const CARD =
   "glow float-card rounded-2xl border border-white bg-white p-4 shadow-lg shadow-slate-200/50 sm:p-5 dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40";
@@ -13,10 +14,7 @@ const INPUT =
   "field-input w-full rounded-xl border border-slate-300 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white";
 const LABEL = "mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300";
 
-const todayLocal = () => {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-};
+const todayLocal = fleetToday;
 
 /** "85.000" or "85000" → 85000; null for anything that is not a whole number of km. */
 function parseKm(value: string): number | null {
@@ -30,7 +28,7 @@ function parseKm(value: string): number | null {
  */
 export function TagliandoPanel({ vehicleId }: { vehicleId: string }) {
   const { t, locale } = useLanguage();
-  const formatDay = (value: string) => new Date(value).toLocaleDateString(locale);
+  const formatDay = (value: string) => formatDate(value, locale);
   const { currentUser } = useAuth();
   const canManage = currentUser?.role === "owner" || currentUser?.role === "admin" || currentUser?.role === "manager";
   const [data, setData] = useState<Tagliando | null>(null);

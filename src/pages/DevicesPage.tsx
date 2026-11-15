@@ -14,10 +14,11 @@ import { DEVICE_MODELS, hasProfile, modelProfile } from "../lib/deviceModels";
 import { trackGlow } from "../lib/glow";
 import { AVL_ID, type Device, type DeviceSource } from "../lib/types";
 import { isReadOnlyView } from "../lib/viewMode";
+import { formatDateTime } from "../lib/time";
 
 function formatDate(iso: string | null, locale: string, never: string): string {
   if (!iso) return never;
-  return new Date(iso).toLocaleString(locale);
+  return formatDateTime(iso, locale);
 }
 
 /** "2 min ago", "3 h ago"; the exact moment is in the tooltip. */

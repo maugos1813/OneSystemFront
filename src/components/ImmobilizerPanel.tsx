@@ -4,6 +4,7 @@ import { useLanguage, type MessageKey } from "../i18n";
 import { getDeviceCommands, requestImmobilizer } from "../lib/api";
 import type { DeviceCommand, DeviceCommandStatus } from "../lib/types";
 import { ModalPortal } from "./ModalPortal";
+import { formatDateTime } from "../lib/time";
 
 const STATUS_LABEL: Record<DeviceCommandStatus, MessageKey> = {
   pending: "cmd.pending",
@@ -24,7 +25,7 @@ const SLOW_MS = 30_000;
  */
 export function ImmobilizerPanel({ deviceId, outputValue }: { deviceId: string; outputValue: number | string | undefined }) {
   const { t, locale } = useLanguage();
-  const when = (iso: string) => new Date(iso).toLocaleString(locale);
+  const when = (iso: string) => formatDateTime(iso, locale);
   const [commands, setCommands] = useState<DeviceCommand[]>([]);
   const [confirming, setConfirming] = useState<"lock" | "unlock" | null>(null);
   const [busy, setBusy] = useState(false);

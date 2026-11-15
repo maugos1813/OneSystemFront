@@ -22,6 +22,7 @@ import { isNativeApp } from "../../lib/appFlavor";
 import { AuthenticatorEnroll } from "./AuthenticatorEnroll";
 import { CodeInput } from "./CodeInput";
 import { RecoveryCodes } from "./RecoveryCodes";
+import { formatDateTime } from "../../lib/time";
 
 type Dialog =
   | { kind: "enroll"; setup: TotpSetup }
@@ -170,7 +171,7 @@ export function SecurityPanel() {
     }
   }
 
-  const when = (iso: string) => new Date(iso).toLocaleString(locale, { dateStyle: "medium", timeStyle: "short" });
+  const when = (iso: string) => formatDateTime(iso, locale, { dateStyle: "medium", timeStyle: "short" });
   const others = sessions?.filter((session) => !session.current) ?? [];
   const lowCodes = !!status?.enabled && status.recoveryCodesLeft <= 2;
 

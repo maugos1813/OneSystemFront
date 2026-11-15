@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useLanguage } from "../../i18n";
 import { disconnectApp, listConnectedApps, type ConnectedApp } from "../../lib/api";
 import { Panel } from "../analytics/Panel";
+import { fleetFormat } from "../../lib/time";
 
 /** The apps that can read this person's vehicles ("Sign in with OneTrack"), with the date they were connected and a way to disconnect each. */
 export function ConnectedApps() {
@@ -29,7 +30,7 @@ export function ConnectedApps() {
     }
   }
 
-  const date = new Intl.DateTimeFormat(locale, { dateStyle: "medium" });
+  const date = fleetFormat(locale, { dateStyle: "medium" });
   return (
     <Panel title={t("settings.connectedApps")}>
       <p className="mb-3 text-xs text-slate-500 dark:text-slate-400">{t("settings.connectedApps.hint")}</p>

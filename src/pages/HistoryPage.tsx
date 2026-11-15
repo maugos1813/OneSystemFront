@@ -2,7 +2,7 @@ import { ArrowLeft, CalendarDays } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { HistoryMapView } from "../components/history/HistoryMapView";
-import { RangeCalendar, addDays, dayOf, type Day } from "../components/history/RangeCalendar";
+import { RangeCalendar, addDays, type Day } from "../components/history/RangeCalendar";
 import { PlaybackBar } from "../components/history/PlaybackBar";
 import { routeSummary } from "../lib/routeSummary";
 import { useInAppFullscreen } from "../hooks/useInAppFullscreen";
@@ -12,6 +12,7 @@ import { useFleet } from "../context/FleetContext";
 import { useLanguage, type MessageKey } from "../i18n";
 import { usePositionHistory } from "../hooks/usePositionHistory";
 import { usePlayback } from "../hooks/usePlayback";
+import { fleetDayOf, fleetEndOfDay, fleetStartOfDay, fleetToday, formatDateTime, formatTime } from "../lib/time";
 
 /** A route is kept for 6 months. */
 const HISTORY_DAYS = 183;
@@ -53,8 +54,8 @@ function HistoryView({
 
   // The period as moments: from the start of the first day to the end of the last (never past now).
   const { from, to, rangeKey } = useMemo(() => {
-    const end = new Date(`${toDay}T23:59:59.999`);
-    return { from: new Date(`${fromDay}T00:00:00`), to: end.getTime() > Date.now() ? null : end, rangeKey: `${fromDay}_${toDay}` };
+    const end = fleetEndOfDay(toDay);
+    return { from: fleetStartOfDay(fromDay), to: end.getTime() > Date.now() ? null : end, rangeKey: `${fromDay}_${toDay}` };
   }, [fromDay, toDay]);
   const { history, loading: historyLoading } = usePositionHistory(selectedVehicleId, from, to);
 
@@ -78,8 +79,8 @@ function HistoryView({
 
   const [mapFull, toggleMapFull] = useInAppFullscreen();
   const summary = useMemo(() => routeSummary(history), [history]);
-  const time = (iso: string) => new Date(iso).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
-  const dayTime = (iso: string) => new Date(iso).toLocaleString(locale, { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+  const time = (iso: string) => formatTime(iso, locale);
+  const dayTime = (iso: string) => formatDateTime(iso, locale, { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
 
   // The route fills the screen: a slim header, then the map taking all the room that is left and the controls beside it (laptop) or
   // right under it (phone), where the page scrolls to the rest. No panels, titles or margins around the map.
@@ -216,8 +217,8 @@ function ChooseDates({
   onPick: (fromDay: Day, toDay: Day) => void;
 }) {
   const { t, locale } = useLanguage();
-  const today = dayOf(new Date());
-  const oldest = dayOf(new Date(Date.now() - HISTORY_DAYS * DAY_MS));
+  const today = fleetToday();
+  const oldest = fleetDayOf(Date.now() - HISTORY_DAYS * DAY_MS);
   const [start, setStart] = useState<Day | null>(null);
   const [end, setEnd] = useState<Day | null>(null);
   const last = end ?? start;
@@ -309,8 +310,8 @@ export function HistoryPage() {
 
   const fromDay = params.get("desde");
   const toDay = params.get("hasta");
-  const oldest = dayOf(new Date(Date.now() - HISTORY_DAYS * DAY_MS));
-  const today = dayOf(new Date());
+  const oldest = fleetDayOf(Date.now() - HISTORY_DAYS * DAY_MS);
+  const today = fleetToday();
   if (!isDay(fromDay) || !isDay(toDay) || fromDay > toDay || fromDay < oldest || toDay > today) {
     return (
       <ChooseDates

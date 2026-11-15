@@ -4,6 +4,7 @@ import { useLanguage, type MessageKey } from "../i18n";
 import { getDeviceCommands, requestGreenDriving } from "../lib/api";
 import type { DeviceCommand, DeviceCommandStatus } from "../lib/types";
 import { ModalPortal } from "./ModalPortal";
+import { formatDateTime } from "../lib/time";
 
 /** The models whose Green Driving parameters are in Teltonika's own lists (same as the server). */
 const GREEN_DRIVING_MODELS: ReadonlySet<string> = new Set(["FMB204", "FMC003", "FMB920", "FTC920"]);
@@ -85,7 +86,7 @@ export function GreenDrivingPanel({ deviceId, since, onChanged }: { deviceId: st
           </p>
           <p className="text-xs text-slate-500 dark:text-slate-400">
             {active
-              ? t("green.activeSince", { since: new Date(since!).toLocaleString(locale) })
+              ? t("green.activeSince", { since: formatDateTime(since!, locale) })
               : t("green.inactive")}
           </p>
         </div>
@@ -112,7 +113,7 @@ export function GreenDrivingPanel({ deviceId, since, onChanged }: { deviceId: st
               <span className="text-slate-700 dark:text-slate-300">
                 <strong>{/\b(11000|1025300):0\b/.test(command.command) ? t("green.deactivate") : t("green.activate")}</strong> · {t(STATUS_LABEL[command.status])}
               </span>
-              <span className="shrink-0 text-slate-500 dark:text-slate-400">{new Date(command.createdAt).toLocaleString(locale)}</span>
+              <span className="shrink-0 text-slate-500 dark:text-slate-400">{formatDateTime(command.createdAt, locale)}</span>
             </li>
           ))}
         </ul>

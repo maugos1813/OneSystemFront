@@ -10,6 +10,7 @@ import { useLanguage, type MessageKey } from "../i18n";
 import { getDrivingStyle, getVehicleIncidents } from "../lib/api";
 import { INCIDENT_LABELS, type Incident, type IncidentType } from "../lib/drivingBehavior";
 import type { DrivingStyleResponse, VehicleDrivingStyle } from "../lib/types";
+import { formatDateTime } from "../lib/time";
 
 const RANGES: Array<{ label: MessageKey; days: number }> = [
   { label: "driving.h24", days: 1 },
@@ -225,7 +226,7 @@ export function DrivingBehaviorPage() {
 
           {byDevice && current.measuredSince && (
             <p className="mb-4 rounded-xl bg-emerald-50 px-4 py-2 text-sm text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-300">
-              {t("driving.byDevice", { since: new Date(current.measuredSince).toLocaleString(locale) })}
+              {t("driving.byDevice", { since: formatDateTime(current.measuredSince, locale) })}
             </p>
           )}
 

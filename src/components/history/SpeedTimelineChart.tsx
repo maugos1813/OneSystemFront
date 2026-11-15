@@ -1,6 +1,7 @@
 import { useRef, type MouseEvent } from "react";
 import { useT } from "../../i18n";
 import type { Position } from "../../lib/types";
+import { formatTime } from "../../lib/time";
 
 const WIDTH = 700;
 const HEIGHT = 200;
@@ -156,7 +157,7 @@ export function SpeedTimelineChart({ positions, speedLimit, currentIndex, onSeek
           textAnchor="middle"
           className="fill-slate-400 text-[9px] dark:fill-slate-500"
         >
-          {new Date(positions[i]!.ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+          {formatTime(positions[i]!.ts)}
         </text>
       ))}
     </svg>

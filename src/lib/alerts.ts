@@ -1,5 +1,6 @@
 import type { Translate } from "../i18n";
 import { AVL_ID, type Device, type OrgSettings, type Position, type Vehicle, type WeekdayKey } from "./types";
+import { fleetParts } from "./time";
 
 export const LOW_VOLTAGE_THRESHOLD_MV = 11500; // ~11.5V: weak car battery
 
@@ -74,11 +75,12 @@ const WEEKDAY_ORDER: WeekdayKey[] = ["sunday", "monday", "tuesday", "wednesday",
 /** Whether `date` falls outside the organization's configured working hours for that day —
  * a day with `enabled: false` counts as fully outside (no working hours at all that day). */
 export function isAfterHours(date: Date, workingHours: OrgSettings["workingHours"]): boolean {
-  const day = WEEKDAY_ORDER[date.getDay()]!;
+  const { weekday, hour, minute } = fleetParts(date);
+  const day = WEEKDAY_ORDER[weekday]!;
   const config = workingHours[day];
   if (!config.enabled) return true;
 
-  const minutes = date.getHours() * 60 + date.getMinutes();
+  const minutes = hour * 60 + minute;
   const [startH, startM] = config.start.split(":").map(Number);
   const [endH, endM] = config.end.split(":").map(Number);
   const startMinutes = (startH ?? 0) * 60 + (startM ?? 0);

@@ -3,6 +3,7 @@ import { useState, type FormEvent } from "react";
 import { useT } from "../i18n";
 import { getVehicleEta } from "../lib/api";
 import type { VehicleEta } from "../lib/types";
+import { fleetDayOf, fleetToday, formatTime } from "../lib/time";
 
 /** "1 h 12 min", "45 min". */
 export function formatDuration(minutes: number): string {
@@ -15,8 +16,8 @@ export function formatDuration(minutes: number): string {
 /** "14:35", or "mañana 02:10" when it is not today. */
 function formatArrival(iso: string, tomorrow: string): string {
   const at = new Date(iso);
-  const time = at.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
-  return at.toDateString() === new Date().toDateString() ? time : `${tomorrow} ${time}`;
+  const time = formatTime(at, "es-ES");
+  return fleetDayOf(at) === fleetToday() ? time : `${tomorrow} ${time}`;
 }
 
 /** The destination box of the vehicle panel: type a city or an address, see how long the vehicle takes to get there. */

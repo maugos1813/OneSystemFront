@@ -20,6 +20,7 @@ import {
 import { MAP_ID } from "../../lib/mapConfig";
 import { buildRouteSegments } from "../../lib/speedTimeline";
 import type { Position } from "../../lib/types";
+import { formatDateTime } from "../../lib/time";
 
 interface HistoryMapViewProps {
   positions: Position[];
@@ -307,7 +308,7 @@ export function HistoryMapView({
                 <p className="text-sm font-semibold">{t(INCIDENT_LABELS[openIncident.type])}</p>
                 <p className="text-xs">{incidentDetail(t, openIncident)}</p>
                 <p className="text-xs text-slate-500">
-                  {new Date(openIncident.ts).toLocaleString(locale, { dateStyle: "short", timeStyle: "short" })}
+                  {formatDateTime(openIncident.ts, locale, { dateStyle: "short", timeStyle: "short" })}
                 </p>
               </div>
             </InfoWindow>

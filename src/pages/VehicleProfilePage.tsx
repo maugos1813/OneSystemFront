@@ -10,6 +10,7 @@ import { getVehicleProfile, setVehicleOdometer, updateVehicle } from "../lib/api
 import { trackGlow } from "../lib/glow";
 import { formatKm } from "../lib/maintenance";
 import { FUEL_TYPES, type FuelType, type VehicleOdometer, type VehicleProfile } from "../lib/types";
+import { formatDate } from "../lib/time";
 
 const CARD =
   "glow float-card rounded-2xl border border-white bg-white p-4 shadow-lg shadow-slate-200/50 sm:p-5 dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40";
@@ -22,7 +23,7 @@ const REFRESH_MS = 30_000;
 const formatDay = (value: string) => {
   // a bare date (YYYY-MM-DD) is a calendar day, not an instant: read it as that day, not as midnight UTC
   const date = /^\d{4}-\d{2}-\d{2}$/.test(value) ? new Date(`${value}T12:00:00`) : new Date(value);
-  return date.toLocaleDateString("es-AR");
+  return /^\d{4}-\d{2}-\d{2}$/.test(value) ? date.toLocaleDateString("es-AR") : formatDate(date, "es-AR");
 };
 
 /** "85.000" or "85000" → 85000; null for anything that is not a whole number of km. */

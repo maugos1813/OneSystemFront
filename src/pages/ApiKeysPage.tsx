@@ -6,12 +6,13 @@ import { createApiKey, listApiKeys, revokeApiKey } from "../lib/api";
 import { trackGlow } from "../lib/glow";
 import { useFleetGroups } from "../lib/useFleetGroups";
 import type { ApiKey, CreatedApiKey } from "../lib/types";
+import { formatDateTime } from "../lib/time";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
 function formatDate(iso: string | null, locale: string, never: string): string {
   if (!iso) return never;
-  return new Date(iso).toLocaleString(locale);
+  return formatDateTime(iso, locale);
 }
 
 /** Whether a key sees the whole fleet or only one área — the first thing to check before handing a key out. */

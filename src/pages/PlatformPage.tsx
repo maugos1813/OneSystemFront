@@ -15,6 +15,7 @@ import { fileToLogoVariants, LOGO_ACCEPT } from "../lib/logoImage";
 import { ADMIN_SECTION_INFO, ADMIN_SECTION_KEYS, HIDDEN_MODULES, MODULE_INFO, MODULE_KEYS } from "../lib/modules";
 import { DEVICE_MODELS } from "../lib/deviceModels";
 import type { PlatformOrganization, PlatformOrganizationDetail } from "../lib/types";
+import { fleetFormat } from "../lib/time";
 
 const INPUT =
   "field-input min-w-0 flex-1 rounded-xl border border-slate-300 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white";
@@ -22,8 +23,8 @@ const INPUT =
 /** The whole platform seen from above: every client organization. Only OneSystec's own owner/admin gets here (the server enforces it). */
 export function PlatformPage() {
   const { t, locale } = useLanguage();
-  const dateFormat = new Intl.DateTimeFormat(locale, { dateStyle: "medium" });
-  const dateTimeFormat = new Intl.DateTimeFormat(locale, { dateStyle: "short", timeStyle: "short" });
+  const dateFormat = fleetFormat(locale, { dateStyle: "medium" });
+  const dateTimeFormat = fleetFormat(locale, { dateStyle: "short", timeStyle: "short" });
   const { currentUser } = useAuth();
   const [orgs, setOrgs] = useState<PlatformOrganization[]>([]);
   const [loading, setLoading] = useState(true);

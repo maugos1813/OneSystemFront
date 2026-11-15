@@ -1,17 +1,14 @@
 import { useEffect, useState } from "react";
 import { getDeviceEvents } from "../lib/api";
 import type { Vehicle } from "../lib/types";
+import { fleetStartOfDay, fleetToday } from "../lib/time";
 
 export interface TodayEventCounts {
   ignitionChanges: number;
   movementChanges: number;
 }
 
-function startOfToday(): Date {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  return d;
-}
+const startOfToday = (): Date => fleetStartOfDay(fleetToday());
 
 export function useTodayEventCounts(vehicles: Vehicle[]) {
   const [counts, setCounts] = useState<TodayEventCounts>({ ignitionChanges: 0, movementChanges: 0 });

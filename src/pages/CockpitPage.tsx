@@ -14,6 +14,7 @@ import { useTodayDrivingStyle } from "../hooks/useTodayDrivingStyle";
 import { classifyVehicleState } from "../lib/fleetStats";
 import { trackGlow } from "../lib/glow";
 import { AVL_ID } from "../lib/types";
+import { formatTime } from "../lib/time";
 
 export function CockpitPage() {
   const { filteredVehicles: vehicles, positions, loading } = useFleet();
@@ -60,7 +61,7 @@ export function CockpitPage() {
               <span className="text-sm text-slate-400 dark:text-slate-500">{vehicle.plate}</span>
             )}
             <span className="text-sm text-slate-400 dark:text-slate-500">
-              {new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+              {formatTime(new Date())}
             </span>
           </div>
         )}

@@ -1,12 +1,9 @@
 import { useEffect, useState } from "react";
 import { getDrivingStyle } from "../lib/api";
 import type { VehicleDrivingStyle } from "../lib/types";
+import { fleetStartOfDay, fleetToday } from "../lib/time";
 
-function startOfToday(): Date {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  return d;
-}
+const startOfToday = (): Date => fleetStartOfDay(fleetToday());
 
 /** Today's driving style for one vehicle, calculated on the server (same rules as the
  * Conducción page and the public API). `style` is null while loading or if it fails. */

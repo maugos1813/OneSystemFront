@@ -1,6 +1,7 @@
 import { Pause, Play, Square } from "lucide-react";
 import { useT } from "../../i18n";
 import { PLAYBACK_RATES } from "../../lib/playback";
+import { formatTime } from "../../lib/time";
 
 interface PlaybackBarProps {
   playing: boolean;
@@ -61,7 +62,7 @@ export function PlaybackBar({
             <span className="ml-1 text-sm font-medium text-slate-400 dark:text-slate-500">km/h</span>
           </p>
           <p className="text-xs text-slate-400 tabular-nums dark:text-slate-500">
-            {currentTs ? new Date(currentTs).toLocaleTimeString() : "--:--:--"}
+            {currentTs ? formatTime(currentTs, undefined, true) : "--:--:--"}
           </p>
         </div>
       </div>

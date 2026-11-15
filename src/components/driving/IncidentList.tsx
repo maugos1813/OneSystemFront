@@ -1,6 +1,7 @@
 import { CheckCircle2 } from "lucide-react";
 import { useLanguage } from "../../i18n";
 import { INCIDENT_COLORS, INCIDENT_LABELS, incidentDetail, type Incident } from "../../lib/drivingBehavior";
+import { formatTime } from "../../lib/time";
 
 interface IncidentListProps {
   incidents: Incident[];
@@ -43,7 +44,7 @@ export function IncidentList({ incidents, activeIndex, onSelect }: IncidentListP
               <span className="block truncate text-xs text-slate-400 dark:text-slate-500">{incidentDetail(t, incident)}</span>
             </span>
             <span className="shrink-0 text-xs text-slate-400 tabular-nums dark:text-slate-500">
-              {new Date(incident.ts).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })}
+              {formatTime(incident.ts, locale)}
             </span>
           </button>
         </li>

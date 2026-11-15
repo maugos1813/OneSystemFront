@@ -2,6 +2,7 @@ import { ChevronRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLanguage } from "../i18n";
 import { listClientAccessLog, type AccessLogEntry } from "../lib/api";
+import { fleetFormat } from "../lib/time";
 
 /** Who of OneSystec went into this client's account and what they changed there (opened, managed, each change). */
 export function ClientAccessLog({ orgId }: { orgId: string }) {
@@ -18,7 +19,7 @@ export function ClientAccessLog({ orgId }: { orgId: string }) {
     };
   }, [orgId]);
 
-  const when = new Intl.DateTimeFormat(locale, { dateStyle: "short", timeStyle: "short" });
+  const when = fleetFormat(locale, { dateStyle: "short", timeStyle: "short" });
   const what = (e: AccessLogEntry) =>
     e.action === "view" ? t("platform.log.view") : e.action === "manage" ? t("platform.log.manage") : (e.detail ?? t("platform.log.write"));
 
