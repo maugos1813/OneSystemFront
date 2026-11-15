@@ -1,11 +1,14 @@
 import {
   BellRing,
   Building2,
+  Cpu,
   Home,
+  Key,
   Map,
   MapPin,
   Settings,
   Truck,
+  Users,
   type LucideIcon,
 } from "lucide-react";
 import { TrackerIcon } from "./trackerIcon";
@@ -30,6 +33,8 @@ export interface OneTrackNavItem {
   adminSection?: AdminSectionKey;
   /** OneSystec's own people only (and only in their own session, not while inside a client's account): the way in to every client. */
   platformOnly?: boolean;
+  /** Roles that never get it (the team page is not for a viewer). */
+  excludeRoles?: ReadonlyArray<CurrentUser["role"]>;
 }
 
 export const ONETRACK_NAV: OneTrackNavItem[] = [
@@ -45,8 +50,13 @@ export const ONETRACK_NAV: OneTrackNavItem[] = [
   { to: "/vehiculos", hint: "navHint.vehicles", label: "nav.vehicles", icon: Truck, end: false, anyOf: ["vehiculos", "mantenimiento", "historial"] },
   // Dispositivos holds Salud and EYE BEACON as tabs.
   { to: "/dispositivos", hint: "navHint.devices", label: "nav.devices", icon: TrackerIcon, end: false, ownerAdminOnly: true, adminSection: "dispositivos" },
-  // The OneTrack settings (working hours, alert thresholds). What belongs to OneSystec itself (clients, team, SIMs, API keys) lives in its
-  // own configuration in the portal, not in this menu.
+  // Only for OneSystec: the SIMs of every client's trackers.
+  { to: "/sims", hint: "config.simsHint", label: "nav.sims", icon: Cpu, end: false, platformOnly: true },
+  // Users and roles of the account (not for a viewer).
+  { to: "/equipo", hint: "config.teamHint", label: "nav.team", icon: Users, end: false, excludeRoles: ["viewer"] },
+  // Keys to connect OneTrack with other systems: administration, and OneSystec may leave it out for a client.
+  { to: "/api-keys", hint: "config.apiKeysHint", label: "nav.apiKeys", icon: Key, end: false, ownerAdminOnly: true, adminSection: "api_keys" },
+  // The OneTrack settings (working hours, alert thresholds, security).
   // Open to everyone: it holds "Mi perfil", and the company settings only for owner/admin (the page decides).
   { to: "/ajustes", hint: "navHint.settings", label: "nav.settings", icon: Settings, end: false },
 ];
@@ -55,6 +65,7 @@ export const ONETRACK_NAV: OneTrackNavItem[] = [
 export function canOpen(user: CurrentUser | null, item: OneTrackNavItem): boolean {
   if (!user) return false;
   if (item.platformOnly) return user.isPlatform === true && !user.viewingAs;
+  if (item.excludeRoles?.includes(user.role)) return false;
   if (user.role === "owner" || user.role === "admin") {
     if (item.adminSection) return user.adminSections?.includes(item.adminSection) ?? true;
     if (item.anyOf) return item.anyOf.some((module) => user.modules.includes(module));

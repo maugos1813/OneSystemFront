@@ -1,8 +1,10 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Panel } from "../components/analytics/Panel";
-import { BellRing, Clock, ShieldCheck, UserRound } from "lucide-react";
+import { BellRing, Clock, Headset, ShieldCheck, UserRound } from "lucide-react";
 import { SectionHub, type HubView } from "../components/SectionHub";
 import { LogoUpload } from "../components/LogoUpload";
+import { AppUpdateCard } from "../components/AppUpdateCard";
+import { SUPPORT_EMAIL } from "../components/layout/LoginCard";
 import { ConnectedApps } from "../components/security/ConnectedApps";
 import { SecurityPanel } from "../components/security/SecurityPanel";
 import { useAuth } from "../context/AuthContext";
@@ -219,6 +221,11 @@ export function SettingsPage() {
       content: (
         <div className={`${view} space-y-6`}>
           <ProfilePanel />
+          <AppUpdateCard />
+          <a href={`mailto:${SUPPORT_EMAIL}`} className="inline-flex items-center gap-2 text-sm font-medium text-blue-700 hover:underline dark:text-blue-300">
+            <Headset className="h-4 w-4" />
+            {t("workspace.support")}: {SUPPORT_EMAIL}
+          </a>
           {form && canEditCompany && (
             <>
     <Panel title={t("settings.company")}>

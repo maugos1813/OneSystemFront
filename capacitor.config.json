@@ -1,6 +1,6 @@
 {
   "appId": "com.onesystec.app",
-  "appName": "OneSystec",
+  "appName": "OneTrack",
   "webDir": "dist",
   "server": {
     "url": "https://one-system-front-two.vercel.app",

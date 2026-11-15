@@ -20,7 +20,7 @@ export function RecoveryCodes({ codes, tone }: { codes: string[]; tone: "glass" 
   }
 
   function download() {
-    const url = URL.createObjectURL(new Blob([`OneSystec\n\n${text}\n`], { type: "text/plain" }));
+    const url = URL.createObjectURL(new Blob([`OneTrack\n\n${text}\n`], { type: "text/plain" }));
     const link = document.createElement("a");
     link.href = url;
     link.download = t("security.codesFile");

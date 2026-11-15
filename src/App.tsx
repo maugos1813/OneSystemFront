@@ -1,8 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { AppLayout } from "./components/layout/AppLayout";
 import { ViewingBanner } from "./components/ViewingBanner";
-import { OneSystecConfigShell } from "./components/layout/OneSystecConfigShell";
-import { RequireAuth } from "./components/layout/RequireAuth";
+import { OneTrackShell, StartRedirect } from "./components/layout/OneTrackShell";
 import { AppUpdateProvider } from "./context/AppUpdateContext";
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
@@ -25,7 +24,6 @@ import { SettingsPage } from "./pages/SettingsPage";
 import { SimsPage } from "./pages/SimsPage";
 import { TeamPage } from "./pages/TeamPage";
 import { VehicleProfilePage } from "./pages/VehicleProfilePage";
-import { WorkspaceLayout } from "./pages/WorkspaceLayout";
 
 /** An old address (a bookmark, an old link) that now lives inside another section: same page, same query, the right tab. */
 function MovedTo({ to, tab }: { to: string; tab?: string }) {
@@ -59,26 +57,20 @@ export default function App() {
             {/* Accounts are opened by OneSystec (Clientes): there is no public sign-up. */}
             <Route path="/register" element={<Navigate to="/login" replace />} />
 
-            {/* OneSystec's own configuration (clients, team, SIMs, API keys) is not part of OneTrack: it opens from the portal. */}
-            <Route element={<RequireAuth />}>
-              <Route element={<OneSystecConfigShell />}>
-                <Route path="/clientes" element={<PlatformPage embedded />} />
-                <Route path="/equipo" element={<TeamPage embedded />} />
-                <Route path="/sims" element={<SimsPage />} />
-                <Route path="/api-keys" element={<ApiKeysPage />} />
-              </Route>
-            </Route>
-            {/* Old address of the clients section. */}
-            <Route path="/administracion" element={<Navigate to="/clientes" replace />} />
+            {/* Old addresses of the clients section. */}
+            <Route path="/clientes" element={<Navigate to="/clienti" replace />} />
+            <Route path="/administracion" element={<Navigate to="/clienti" replace />} />
 
-            {/* "/" is the public site for visitors and the workspace once signed in; OneTrack's pages
-                live inside that same shell, so opening OneTrack just folds its bars away. */}
-            <Route element={<WorkspaceLayout />}>
-              <Route index element={null} />
+            {/* Everything below needs a signed-in account with OneTrack; "/" opens on the first section it may use. */}
+            <Route element={<OneTrackShell />}>
+              <Route index element={<StartRedirect />} />
               <Route element={<AppLayout />}>
                 <Route path="/inicio" element={<HomePage />} />
-                {/* OneSystec's way into every client: the same page as the clients of its own configuration, as a tab of OneTrack. */}
-                <Route path="/clienti" element={<PlatformPage embedded />} />
+                {/* OneSystec's way into every client (only for its own people). */}
+                <Route path="/clienti" element={<PlatformPage />} />
+                <Route path="/sims" element={<SimsPage />} />
+                <Route path="/equipo" element={<TeamPage />} />
+                <Route path="/api-keys" element={<ApiKeysPage />} />
                 <Route path="/gps" element={<DashboardPage />} />
                 {/* Cockpit is hidden for now: its page stays in the code, its address leads to the map. */}
                 <Route path="/cockpit" element={<Navigate to="/gps" replace />} />

@@ -1,6 +1,6 @@
-import { ArrowLeft, Building2, ChevronDown, ChevronRight, ImagePlus, Map as MapIcon, Pencil, ShieldCheck, ShieldOff, Trash2 } from "lucide-react";
+import { Building2, ChevronDown, ChevronRight, ImagePlus, Map as MapIcon, Pencil, ShieldCheck, ShieldOff, Trash2 } from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
-import { Link, Navigate } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import { Panel } from "../components/analytics/Panel";
 import { ClientAccessLog } from "../components/ClientAccessLog";
 import { ClientBeacons } from "../components/ClientBeacons";
@@ -20,7 +20,7 @@ const INPUT =
   "field-input min-w-0 flex-1 rounded-xl border border-slate-300 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white";
 
 /** The whole platform seen from above: every client organization. Only OneSystec's own owner/admin gets here (the server enforces it). */
-export function PlatformPage({ embedded = false }: { embedded?: boolean }) {
+export function PlatformPage() {
   const { t, locale } = useLanguage();
   const dateFormat = new Intl.DateTimeFormat(locale, { dateStyle: "medium" });
   const dateTimeFormat = new Intl.DateTimeFormat(locale, { dateStyle: "short", timeStyle: "short" });
@@ -223,18 +223,6 @@ export function PlatformPage({ embedded = false }: { embedded?: boolean }) {
 
   return (
     <div className="h-full overflow-y-auto bg-[#f5f6fb] dark:bg-[#0a0e1a]">
-      {!embedded && (
-        <header className="border-b border-violet-100 bg-white px-4 py-4 sm:px-8 dark:border-white/5 dark:bg-[#0d1220]">
-          <Link
-            to="/"
-            className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            {t("platform.back")}
-          </Link>
-        </header>
-      )}
-
       <div className="p-4 sm:p-6 lg:p-8">
         <h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t("platform.title")}</h1>
         <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">

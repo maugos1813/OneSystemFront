@@ -10,7 +10,7 @@ export function ViewingBanner() {
 
   function leave() {
     // A full reload: every screen drops what it loaded for the client.
-    window.location.assign(stopViewing() ? "/clientes" : "/login");
+    window.location.assign(stopViewing() ? "/clienti" : "/login");
   }
 
   return (

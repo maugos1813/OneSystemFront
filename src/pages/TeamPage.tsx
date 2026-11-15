@@ -1,6 +1,5 @@
-import { ArrowLeft, ImagePlus, KeyRound, Pencil, ShieldCheck, ShieldOff, Trash2, X } from "lucide-react";
+import { ImagePlus, KeyRound, Pencil, ShieldCheck, ShieldOff, Trash2, X } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import { Panel } from "../components/analytics/Panel";
 import { FleetVehiclesDialog } from "../components/FleetVehiclesDialog";
 import { PasswordField } from "../components/PasswordField";
@@ -729,8 +728,7 @@ function MemberRow({
   );
 }
 
-/** `embedded`: inside the OneTrack layout, which has its own bars (no "back to the portal" header). */
-export function TeamPage({ embedded = false }: { embedded?: boolean }) {
+export function TeamPage() {
   const t = useT();
   const { currentUser } = useAuth();
   const [members, setMembers] = useState<TeamMember[]>([]);
@@ -820,18 +818,6 @@ export function TeamPage({ embedded = false }: { embedded?: boolean }) {
 
   return (
     <div className="h-full overflow-y-auto bg-[#f5f6fb] dark:bg-[#0a0e1a]">
-      {!embedded && (
-        <header className="border-b border-violet-100 bg-white px-4 py-4 sm:px-8 dark:border-white/5 dark:bg-[#0d1220]">
-          <Link
-            to="/"
-            className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            {t("team.backToPortal")}
-          </Link>
-        </header>
-      )}
-
       <div className="p-4 sm:p-6 lg:p-8">
         <h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t("team.title")}</h1>
         <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">

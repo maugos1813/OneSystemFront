@@ -65,7 +65,7 @@ export function endSession(): void {
   if (isViewing()) {
     // The two-hour view of a client ran out: the person's own session is still there.
     stopViewing();
-    window.location.assign("/clientes");
+    window.location.assign("/clienti");
     return;
   }
   clearToken();
