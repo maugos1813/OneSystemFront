@@ -896,6 +896,27 @@ export interface ConnectedApp {
   clientName: string;
   scope: string;
   connectedAt: string;
+  /** null = every vehicle the person sees; otherwise how many they picked. */
+  sharedVehicles: number | null;
+}
+
+export interface AppVehicle {
+  id: string;
+  plate: string;
+  name: string;
+  fleetGroup: string | null;
+  organization: string | null;
+  shared: boolean;
+}
+
+/** The vehicles the person can offer to a connected app, each marked if the app sees it (`all`: it sees every one, new ones included). */
+export function getAppVehicles(id: string): Promise<{ all: boolean; vehicles: AppVehicle[] }> {
+  return request(`/oauth/connections/${id}/vehicles`);
+}
+
+/** Which vehicles the app sees: a list of ids, or null for every one the person sees. */
+export function setAppVehicles(id: string, vehicleIds: string[] | null): Promise<void> {
+  return request(`/oauth/connections/${id}/vehicles`, { method: "PUT", body: JSON.stringify({ vehicleIds }) });
 }
 
 export function listConnectedApps(): Promise<ConnectedApp[]> {
