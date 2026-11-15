@@ -118,7 +118,12 @@ function VehiclePicker({ app, onClose, onSaved }: { app: ConnectedApp; onClose: 
                       <input type="checkbox" checked={picked.has(v.id)} onChange={() => toggle(v.id)} />
                       <Car className="h-4 w-4 shrink-0 text-slate-400" />
                       <span className="min-w-0 flex-1">
-                        <span className="block truncate text-sm font-medium text-slate-900 dark:text-white">{v.plate}</span>
+                        <span className="flex items-center gap-2 text-sm font-medium text-slate-900 dark:text-white">
+                          {v.plate}
+                          {v.outOfService && (
+                            <span className="rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-700 dark:bg-red-500/15 dark:text-red-400">{t("settings.connectedApps.outOfService")}</span>
+                          )}
+                        </span>
                         <span className="block truncate text-xs text-slate-500 dark:text-slate-400">{[v.organization, v.fleetGroup, v.name].filter(Boolean).join(" · ")}</span>
                       </span>
                     </label>
@@ -126,6 +131,7 @@ function VehiclePicker({ app, onClose, onSaved }: { app: ConnectedApp; onClose: 
                 ))}
               </ul>
               <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">{t("settings.connectedApps.newNotice")}</p>
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{t("settings.connectedApps.outOfServiceNotice")}</p>
             </div>
           )}
           <div className="mt-3 flex items-center gap-3">

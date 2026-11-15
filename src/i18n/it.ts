@@ -610,6 +610,8 @@ export const it: Record<MessageKey, string> = {
   "settings.connectedApps.selectNone": "Deseleziona tutti",
   "settings.connectedApps.selected": "{count} di {total} scelti",
   "settings.connectedApps.error": "Impossibile salvare. Riprova.",
+  "settings.connectedApps.outOfService": "Fuori servizio",
+  "settings.connectedApps.outOfServiceNotice": "I veicoli segnati fuori servizio (la chiave inglese) non vengono inviati all'app finché hanno il segno.",
   "settings.connectedApps.noVehicles": "Nessun veicolo con targa e localizzatore da condividere.",
   "settings.connectedApps.newNotice": "I veicoli che aggiungerai in seguito non vengono condivisi finché non li selezioni qui.",
   "oauth.checking": "Controllo della richiesta…",

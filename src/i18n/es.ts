@@ -611,6 +611,8 @@ export const es = {
   "settings.connectedApps.selectNone": "Quitar todos",
   "settings.connectedApps.selected": "{count} de {total} elegidos",
   "settings.connectedApps.error": "No se pudo guardar. Inténtalo de nuevo.",
+  "settings.connectedApps.outOfService": "Fuera de servicio",
+  "settings.connectedApps.outOfServiceNotice": "Los vehículos marcados fuera de servicio (la llave inglesa) no se envían a la app mientras tengan la marca.",
   "settings.connectedApps.noVehicles": "No hay vehículos con matrícula y localizador para compartir.",
   "settings.connectedApps.newNotice": "Los vehículos que añadas más adelante no se comparten hasta que los marques aquí.",
   "oauth.checking": "Comprobando la solicitud…",

@@ -906,6 +906,8 @@ export interface AppVehicle {
   name: string;
   fleetGroup: string | null;
   organization: string | null;
+  /** Marked out of service in OneTrack: the app does not receive it while the mark is on. */
+  outOfService: boolean;
   shared: boolean;
 }
 
