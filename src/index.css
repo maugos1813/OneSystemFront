@@ -90,11 +90,42 @@ body,
 }
 
 body {
-  background: #f5f6fb;
+  background: #eef0f8;
 }
 
 .dark body {
   background: #0a0e1a;
+}
+
+/*
+ * Light theme: the app sits on a soft pearl wallpaper and its panels are frosted white glass over it. The dark theme keeps its solid
+ * navy. `app-wallpaper` goes on the full-screen container of the app (and of the screens shown before it).
+ */
+.app-wallpaper {
+  background-color: #eef0f8;
+  background-image: url("/backgrounds/onetrack-light.webp");
+  background-size: cover;
+  background-position: center top;
+  background-repeat: no-repeat;
+}
+.dark .app-wallpaper {
+  background-color: #0a0e1a;
+  background-image: none;
+}
+
+/*
+ * Every white card of the pages (the rounded-2xl / rounded-3xl panels) turns into frosted glass in the light theme, so the wallpaper
+ * shows faintly through all of them without touching each page. Only colour, edge and shadow change: no backdrop-filter, because that
+ * would make any `position: fixed` inside a card (a menu, a backdrop) position itself against the card instead of the screen.
+ * Unlayered on purpose: it has to win over Tailwind's `bg-white` utility.
+ */
+html:not(.dark) main :is(.rounded-2xl, .rounded-3xl).bg-white {
+  background-color: rgba(255, 255, 255, 0.68);
+  border-color: rgba(255, 255, 255, 0.9);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 10px 30px -12px rgba(79, 70, 229, 0.16),
+    0 2px 6px rgba(15, 23, 42, 0.04);
 }
 
 /*
@@ -195,6 +226,81 @@ body {
     outline: none;
     border-color: var(--brand-blue);
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+  }
+
+  /*
+   * Frosted glass panel (light theme) with the faint rainbow light running along its lower edge, as in the OneTrack look. The edge is
+   * a ::before so it never clashes with `.glow`, which uses ::after. In the dark theme it is the usual solid navy card.
+   */
+  .glass {
+    position: relative;
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.82) 0%, rgba(255, 255, 255, 0.6) 100%);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 1),
+      0 12px 32px -14px rgba(79, 70, 229, 0.18),
+      0 2px 6px rgba(15, 23, 42, 0.04);
+  }
+  .glass::before {
+    content: "";
+    position: absolute;
+    left: 12%;
+    right: 12%;
+    bottom: 0;
+    height: 2px;
+    border-radius: 9999px;
+    background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.55), rgba(139, 92, 246, 0.55), rgba(251, 191, 146, 0.6), transparent);
+    filter: blur(0.5px);
+    opacity: 0.7;
+    pointer-events: none;
+  }
+  .dark .glass {
+    border-color: rgba(255, 255, 255, 0.08);
+    background: #111729;
+    box-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.5);
+  }
+  .dark .glass::before {
+    opacity: 0.35;
+  }
+
+  /* The round white "pebble" an icon sits in on the glass cards. */
+  .glass-bubble {
+    background: linear-gradient(180deg, #ffffff 0%, #f1f3fb 100%);
+    box-shadow:
+      inset 0 1px 0 #ffffff,
+      inset 0 -2px 4px rgba(99, 102, 241, 0.06),
+      0 6px 14px -6px rgba(79, 70, 229, 0.28);
+  }
+  .dark .glass-bubble {
+    background: rgba(255, 255, 255, 0.06);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  }
+
+  /* The side menu's chosen item: a raised white pill with the rainbow light under it. */
+  .nav-pill-active {
+    position: relative;
+    color: #2563eb;
+    background: linear-gradient(180deg, #ffffff 0%, #f4f6fd 100%);
+    box-shadow:
+      inset 0 1px 0 #ffffff,
+      0 8px 20px -10px rgba(79, 70, 229, 0.45),
+      0 1px 3px rgba(15, 23, 42, 0.06);
+  }
+  .nav-pill-active::before {
+    content: "";
+    position: absolute;
+    left: 14%;
+    right: 14%;
+    bottom: 0;
+    height: 2px;
+    border-radius: 9999px;
+    background: linear-gradient(90deg, transparent, #38bdf8, #8b5cf6, #fdba74, transparent);
+    opacity: 0.8;
+  }
+  .dark .nav-pill-active {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
   }
 
   /* Soft lift + colored halo on hover, for floating glass cards. */

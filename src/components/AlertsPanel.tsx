@@ -42,10 +42,10 @@ export function AlertsPanel() {
           if (open) close();
           else setOpen(true);
         }}
-        className="relative rounded-xl p-2 text-slate-500 transition hover:bg-violet-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/5 dark:hover:text-white"
+        className="glass-bubble relative flex h-10 w-10 items-center justify-center rounded-full text-slate-600 transition hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
         aria-label={t("alerts.title")}
       >
-        <Bell className="h-5 w-5" />
+        <Bell className="h-[18px] w-[18px]" />
         {count > 0 && (
           <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-semibold text-white">
             {count}

@@ -15,7 +15,7 @@ export function BottomNav() {
   return (
     <nav
       aria-label="OneTrack"
-      className="relative z-10 shrink-0 border-t border-violet-100 bg-white pb-[env(safe-area-inset-bottom)] md:hidden dark:border-white/5 dark:bg-[#0d1220]"
+      className="relative z-10 shrink-0 border-t border-white/80 bg-white/75 pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_24px_-16px_rgba(79,70,229,0.3)] md:hidden dark:border-white/5 dark:bg-[#0d1220] dark:shadow-none"
     >
       <ul className="mx-auto flex max-w-xl items-stretch justify-around px-1">
         {items.map(({ to, label, icon: Icon, end }) => (
@@ -33,7 +33,7 @@ export function BottomNav() {
                 <>
                   <span
                     className={`flex h-8 w-14 items-center justify-center rounded-full transition ${
-                      isActive ? "bg-blue-100 dark:bg-blue-500/20" : ""
+                      isActive ? "nav-pill-active" : ""
                     }`}
                   >
                     <Icon className="h-[22px] w-[22px]" strokeWidth={isActive ? 2.4 : 2} />
