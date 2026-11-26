@@ -3,6 +3,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
+import { startMetalLight } from './lib/metalLight.ts'
 import { reloadWhenANewVersionIsOut } from './lib/newVersion.ts'
 
 // On an iPhone or iPad the website is drawn under the status bar and the Dynamic Island: tell the page to use the whole screen (so the phone
@@ -20,3 +21,5 @@ createRoot(document.getElementById('root')!).render(
 )
 
 reloadWhenANewVersionIsOut()
+// The cursor lights the metallic rim of the components (see lib/metalLight.ts).
+startMetalLight()

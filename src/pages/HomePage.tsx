@@ -112,7 +112,7 @@ export function HomePage() {
         </div>
       ) : (
         <>
-          <section className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-5">
+          <section className="grid grid-cols-2 gap-3 lg:gap-5 xl:grid-cols-4">
             {stats.map(({ to, label, value, sub, Icon, tone }) => {
               const body = (
                 <div className="flex items-center gap-4">
@@ -142,7 +142,7 @@ export function HomePage() {
             })}
           </section>
 
-          <div className="grid gap-5 lg:grid-cols-2 lg:gap-6 [&>section]:h-full">
+          <div className="grid gap-5 lg:gap-6 xl:grid-cols-2 [&>section]:h-full">
             <section className={CARD}>
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-white">
