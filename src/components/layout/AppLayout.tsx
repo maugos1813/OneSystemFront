@@ -54,7 +54,7 @@ export function AppLayout() {
   return (
     <div className="app-shell app-wallpaper relative flex h-screen overflow-hidden">
       {/* The dark theme's living backdrop (space with the Earth turning); the light theme keeps its pearl wallpaper. */}
-      {theme === "dark" && <SpaceBackdrop />}
+      <SpaceBackdrop theme={theme} />
       <aside
         // The side menu is for tablets and up: on a phone the bottom bar and the start take its place. On a tablet it is a slim rail of
         // icons; on a laptop it is the full menu, which can be folded away. In the light theme it is frosted glass over the wallpaper.

@@ -1,12 +1,13 @@
 import { useEffect, useRef } from "react";
 
 /**
- * The dark theme's living backdrop: deep space with drifting, twinkling stars, the Earth turning slowly (the day side in muted blues,
+ * The app's living backdrop. In the dark theme: deep space with drifting, twinkling stars, the Earth turning slowly (the day side in muted blues,
  * the night side lit by its cities, a blue atmosphere around it) and two orbits of light, each with a spark running along it, like the
  * menu backgrounds of a space strategy game. OneTrack's arrow, made a small 3D ship with a burning thruster, flies round the Earth on
  * the blue orbit: it weaves a little up and down and side to side, banks into the turn, grows as it passes in front and shrinks as it
  * goes round the back, and shows its tail and engine as it flies away. The globe leans a little toward the pointer (parallax) on a
- * computer.
+ * computer. In the light theme the same scene is a daytime Earth in a pale sky: true colours, thick white clouds, a white halo and fine
+ * white orbit lines.
  *
  * The scene is one small WebGL fragment shader on a single canvas (no 3D library): a ray hits a sphere per pixel and reads
  * NASA's public-domain day and night textures (public/backgrounds/earth-*.jpg), wrapped around it and turned with time. It runs at a
@@ -22,12 +23,15 @@ void main() { gl_Position = vec4(a, 0.0, 1.0); }
 
 const FRAGMENT = `
 precision highp float;
+#define OCTAVES __OCTAVES__
 uniform vec2 uRes;
 uniform float uTime;
 uniform vec2 uParallax;
 uniform vec3 uGlobe;
 uniform sampler2D uDay;
 uniform sampler2D uNight;
+// 1 for the light theme: a daytime Earth in a pale sky instead of the night one in deep space.
+uniform float uLight;
 
 const float PI = 3.14159265;
 
@@ -48,7 +52,7 @@ float noise3(vec3 p) {
 float fbm(vec3 p) {
   float v = 0.0;
   float a = 0.5;
-  for (int k = 0; k < 5; k++) {
+  for (int k = 0; k < OCTAVES; k++) {
     v += a * noise3(p);
     p *= 2.03;
     a *= 0.5;
@@ -93,6 +97,14 @@ vec4 orbit(vec2 uv, vec2 c, float radius, float flatness, float angle, float spe
   return vec4(light, q.y < 0.0 ? 1.0 : 0.0);
 }
 
+// An orbit's light over the scene. At night it simply adds up; by day it would wash out to white, so the line is laid over the sky in
+// its own colour instead, as much as it shines.
+vec3 addLight(vec3 col, vec3 light) {
+  if (uLight < 0.5) return col + light;
+  float a = clamp(max(light.r, max(light.g, light.b)), 0.0, 1.0);
+  return a > 0.0 ? mix(col, light / max(max(light.r, max(light.g, light.b)), 1e-4), a) : col;
+}
+
 void main() {
   vec2 uv = (gl_FragCoord.xy - 0.5 * uRes) / uRes.y;
   float aspect = uRes.x / uRes.y;
@@ -102,13 +114,20 @@ void main() {
   float r = uGlobe.z;
 
   // Deep space: a blue glow around the planet, a violet haze in the far corner, and three layers of stars.
-  vec3 col = vec3(0.006, 0.010, 0.028);
-  col += vec3(0.02, 0.06, 0.16) * exp(-length(uv - c) * 1.6);
-  col += vec3(0.05, 0.02, 0.09) * exp(-length(uv - vec2(-0.9 * aspect, -0.6)) * 2.2);
-  vec2 sp = uv - uParallax * 0.4;
-  col += stars(sp, 38.0, 0.010, 0.86) * 0.9;
-  col += stars(sp, 70.0, 0.006, 0.90) * 0.6;
-  col += stars(sp, 120.0, 0.003, 0.93) * 0.45;
+  vec3 col;
+  if (uLight > 0.5) {
+    // By day: a pale sky, bluer toward the lower right, whitening into a bright haze round the planet.
+    col = mix(vec3(0.93, 0.96, 1.0), vec3(0.72, 0.83, 0.96), smoothstep(-0.7, 0.9, uv.x / aspect * 1.2 - uv.y));
+    col = mix(col, vec3(1.0), exp(-length(uv - c) * 2.2) * 0.35);
+  } else {
+    col = vec3(0.006, 0.010, 0.028);
+    col += vec3(0.02, 0.06, 0.16) * exp(-length(uv - c) * 1.6);
+    col += vec3(0.05, 0.02, 0.09) * exp(-length(uv - vec2(-0.9 * aspect, -0.6)) * 2.2);
+    vec2 sp = uv - uParallax * 0.4;
+    col += stars(sp, 38.0, 0.010, 0.86) * 0.9;
+    col += stars(sp, 70.0, 0.006, 0.90) * 0.6;
+    col += stars(sp, 120.0, 0.003, 0.93) * 0.45;
+  }
 
   vec2 p = (uv - c) / r;
   float d = length(p);
@@ -119,17 +138,25 @@ void main() {
   // The blue orbit; OneTrack's ship rides it (worked out again in shipPose below: keep the two in step).
   vec2 o1c = c + vec2(-0.19, 0.07) * r * 2.0;
   float o1r = r * 1.59, o1flat = 0.36, o1angle = 0.08, o1speed = 0.16;
-  vec4 o1 = orbit(uv, o1c, o1r, o1flat, o1angle, o1speed, 0.0, vec3(0.25, 0.55, 1.0), vec3(0.65, 0.85, 1.0));
+  // By day the blue orbit is a fine white line with a white spark, as in the light wallpaper.
+  vec3 o1line = uLight > 0.5 ? vec3(0.96, 0.98, 1.0) : vec3(0.25, 0.55, 1.0);
+  vec3 o1spark = uLight > 0.5 ? vec3(1.0) : vec3(0.65, 0.85, 1.0);
+  vec4 o1 = orbit(uv, o1c, o1r, o1flat, o1angle, o1speed, 0.0, o1line, o1spark);
   vec4 o2 = orbit(uv, c + vec2(-0.05, -0.02), r * 2.05, 0.42, 0.30, -0.11, 2.4, vec3(1.0, 0.55, 0.22) * 0.45, vec3(1.0, 0.60, 0.25));
 
   // The far halves of the orbits pass behind the planet (drawn now, then covered by it); the near halves come after it.
   float outside = smoothstep(1.0 - px, 1.0 + px, d);
-  col += o1.rgb * (1.0 - o1.a) * outside;
-  col += o2.rgb * (1.0 - o2.a) * outside;
+  col = addLight(col, o1.rgb * (1.0 - o1.a) * outside);
+  col = addLight(col, o2.rgb * (1.0 - o2.a) * outside);
 
-  // The atmosphere outside the disc: a tight bright rim and a wide soft halo.
+  // The atmosphere outside the disc: a tight bright rim and a wide soft halo (by day, white glow fading into the sky).
   if (d > 1.0) {
-    col += vec3(0.18, 0.48, 1.0) * (exp(-(d - 1.0) * 18.0) * 0.6 + exp(-(d - 1.0) * 3.5) * 0.10);
+    if (uLight > 0.5) {
+      col = mix(col, vec3(1.0), exp(-(d - 1.0) * 16.0) * 0.85);
+      col = mix(col, vec3(0.90, 0.95, 1.0), exp(-(d - 1.0) * 3.0) * 0.35);
+    } else {
+      col += vec3(0.18, 0.48, 1.0) * (exp(-(d - 1.0) * 18.0) * 0.6 + exp(-(d - 1.0) * 3.5) * 0.10);
+    }
   }
 
   if (d < 1.0 + px) {
@@ -162,21 +189,42 @@ void main() {
     // Clouds that drift a little faster than the ground turns.
     float cl = lon + uTime * 0.004;
     vec3 e = vec3(cos(lat) * sin(cl), sin(lat), cos(lat) * cos(cl));
-    float cloud = smoothstep(0.55, 0.82, fbm(e * vec3(5.5, 9.0, 5.5)));
+    // By day the clouds are crisp, scattered white patches, as in the light wallpaper.
+    float cloud = uLight > 0.5 ? smoothstep(0.56, 0.72, fbm(e * vec3(5.5, 9.0, 5.5))) : smoothstep(0.55, 0.82, fbm(e * vec3(5.5, 9.0, 5.5)));
     vec3 planet = mix(base, sunlit, dayAmount * 0.65) + cities * (1.0 - 0.7 * dayAmount) * (1.0 - 0.7 * cloud);
     planet = mix(planet, vec3(0.72, 0.82, 0.98) * (0.22 + 0.55 * dayAmount), cloud * 0.6);
     // Limb: the atmosphere thickens toward the edge of the disc.
     float rim = pow(1.0 - z, 2.6);
     planet += vec3(0.15, 0.55, 1.0) * rim * 0.9;
+    if (uLight > 0.5) {
+      // By day, as in the light wallpaper: a vivid, glossy Earth. NASA's picture has deep navy seas; they are picked out (the pixels
+      // much bluer than red or green, in proportion, so the darkest deep sea counts too) and repainted a rich ocean blue, lighter in the shallows. The land keeps its colours,
+      // made richer (green forests, pale sand deserts). Lit from the upper left, deepening to a darker blue toward the far edge, with
+      // a sun glint on the sea, crisp white clouds and a thin bright atmosphere at the rim.
+      float dl = dot(day, vec3(0.30, 0.59, 0.11));
+      float ocean = smoothstep(1.15, 1.6, day.b / (max(day.r, day.g) + 0.02));
+      vec3 land = clamp(mix(vec3(dl), day, 1.25) * 1.32, 0.0, 1.0);
+      // Smooth open sea (the picture's sea-floor relief only faintly), lighter in the shallows along the coasts.
+      vec3 sea = mix(vec3(0.04, 0.32, 0.74), vec3(0.14, 0.58, 0.96), smoothstep(0.40, 0.70, day.b + day.g * 0.5) * 0.7);
+      float shade = 0.62 + 0.55 * max(light, 0.0);
+      planet = mix(land, sea, ocean) * shade;
+      vec3 glintDir = normalize(sun + vec3(0.0, 0.0, 1.0));
+      planet += vec3(0.75, 0.88, 1.0) * pow(max(dot(n, glintDir), 0.0), 30.0) * 0.35 * ocean;
+      planet = mix(planet, vec3(1.0) * (0.88 + 0.12 * shade), cloud * 0.95);
+      planet = mix(planet, vec3(0.02, 0.18, 0.52), smoothstep(0.6, 1.0, d) * 0.3);
+      planet = mix(planet, vec3(0.80, 0.93, 1.0), pow(1.0 - z, 4.0) * 0.95);
+    }
     float edge = 1.0 - smoothstep(1.0 - px, 1.0 + px, d);
     col = mix(col, planet, edge);
   }
 
   // The near halves of the orbits run in front of the planet.
-  col += o1.rgb * o1.a + o2.rgb * o2.a;
+  col = addLight(col, o1.rgb * o1.a);
+  col = addLight(col, o2.rgb * o2.a);
 
-  // Dark edges, so the scene sinks into the frame.
-  col *= 1.0 - 0.35 * smoothstep(0.55, 1.25, length(uv * vec2(0.8, 1.0)));
+  // Dark edges at night, so the scene sinks into the frame; by day a light haze instead.
+  float frame = smoothstep(0.55, 1.25, length(uv * vec2(0.8, 1.0)));
+  col = uLight > 0.5 ? mix(col, vec3(0.94, 0.97, 1.0), frame * 0.35) : col * (1.0 - 0.35 * frame);
   gl_FragColor = vec4(col, 1.0);
 }
 `;
@@ -457,30 +505,40 @@ function link(gl: WebGLRenderingContext, vertex: string, fragment: string): WebG
   return program;
 }
 
-function loadTexture(gl: WebGLRenderingContext, unit: number, url: string, onReady: () => void): WebGLTexture | null {
+/**
+ * A picture of the Earth wrapped round the globe, loaded in steps: each of `urls` in turn replaces the one before as it arrives, so a
+ * small one shows the planet quickly and a sharp one (4096 × 2048, which a big or dense screen needs not to look pixelated) follows.
+ * All are powers of two, so they can repeat round the globe and have mipmaps (no shimmer when drawn small).
+ */
+function loadTexture(gl: WebGLRenderingContext, unit: number, urls: string[], onReady: () => void): WebGLTexture | null {
   const texture = gl.createTexture();
   gl.activeTexture(gl.TEXTURE0 + unit);
   gl.bindTexture(gl.TEXTURE_2D, texture);
   // Black until the picture arrives.
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 0, 0]));
-  const image = new Image();
-  image.onload = () => {
-    gl.activeTexture(gl.TEXTURE0 + unit);
-    gl.bindTexture(gl.TEXTURE_2D, texture);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image);
-    // 2048 × 1024: powers of two, so it can repeat round the globe and have mipmaps (no shimmer when it is drawn small).
-    gl.generateMipmap(gl.TEXTURE_2D);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    onReady();
-  };
-  image.src = url;
+  let shown = -1;
+  urls.forEach((url, step) => {
+    const image = new Image();
+    image.onload = () => {
+      // A sharper picture that came first is not replaced by a smaller one, and nothing is uploaded once the effect is gone.
+      if (step < shown || !gl.isTexture(texture)) return;
+      shown = step;
+      gl.activeTexture(gl.TEXTURE0 + unit);
+      gl.bindTexture(gl.TEXTURE_2D, texture);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image);
+      gl.generateMipmap(gl.TEXTURE_2D);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      onReady();
+    };
+    image.src = url;
+  });
   return texture;
 }
 
-export function SpaceBackdrop({ layout = "app" }: { layout?: BackdropLayout }) {
+export function SpaceBackdrop({ layout = "app", theme = "dark" }: { layout?: BackdropLayout; theme?: "light" | "dark" }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -489,7 +547,12 @@ export function SpaceBackdrop({ layout = "app" }: { layout?: BackdropLayout }) {
     const gl = canvas?.getContext("webgl", { antialias: true, alpha: false, depth: true, powerPreference: "low-power" });
     if (!canvas || !gl) return;
 
-    const scene = link(gl, VERTEX, FRAGMENT);
+    const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const phone = !window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+    const light = theme === "light";
+
+    // A phone's GPU gets one layer less of cloud detail, which nobody sees at that size.
+    const scene = link(gl, VERTEX, FRAGMENT.replace("__OCTAVES__", phone ? "4" : "5"));
     if (!scene) return;
     // Without the ship the planet still turns.
     const ship = link(gl, SHIP_VERTEX, SHIP_FRAGMENT);
@@ -511,15 +574,12 @@ export function SpaceBackdrop({ layout = "app" }: { layout?: BackdropLayout }) {
     gl.useProgram(scene);
     gl.uniform1i(at(scene, "uDay"), 0);
     gl.uniform1i(at(scene, "uNight"), 1);
+    gl.uniform1f(at(scene, "uLight"), light ? 1 : 0);
 
-    const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const phone = !window.matchMedia("(hover: hover) and (pointer: fine)").matches;
-    // Pixels drawn per CSS pixel. A phone or tablet screen packs 2-3 device pixels into each CSS pixel, so drawing fewer than one
-    // per CSS pixel (as it did) left the planet and the icon blurred there: it draws about 1.6 per CSS pixel instead (capped at 2×
-    // the screen's density, never more than the screen has), still under the screen's full resolution so it stays light. A computer
-    // looks sharp with a little over one.
+    // Pixels drawn per CSS pixel. A phone or tablet screen packs 2-3 device pixels into each CSS pixel: it draws about 2¼ per CSS
+    // pixel there (nearly the screen's own sharpness; a little under it, so it stays light), and a computer a little over one.
     const dpr = window.devicePixelRatio || 1;
-    const scale = phone ? Math.min(dpr, 2) * 0.8 : Math.min(dpr, 1.5) * 0.85;
+    const scale = phone ? Math.min(dpr, 2.5) * 0.9 : Math.min(dpr, 1.5) * 0.9;
     const frameMs = phone ? 1000 / 24 : 1000 / 30;
 
     const resize = () => {
@@ -638,8 +698,13 @@ export function SpaceBackdrop({ layout = "app" }: { layout?: BackdropLayout }) {
     };
     const redraw = () => requestAnimationFrame(draw);
 
-    loadTexture(gl, 0, "/backgrounds/earth-day.jpg", redraw);
-    loadTexture(gl, 1, "/backgrounds/earth-night.jpg", redraw);
+    // The picture each theme shows in full gets the sharp version: the daytime Earth by day, the night one at night (where the day
+    // picture only tints the sunlit corner). A GPU that can't hold 4096-pixel pictures keeps the small ones.
+    const sharp = (gl.getParameter(gl.MAX_TEXTURE_SIZE) as number) >= 4096;
+    const textures = [
+      loadTexture(gl, 0, ["/backgrounds/earth-day.jpg", ...(light && sharp ? ["/backgrounds/earth-day-4k.jpg"] : [])], redraw),
+      loadTexture(gl, 1, light ? [] : ["/backgrounds/earth-night.jpg", ...(sharp ? ["/backgrounds/earth-night-4k.jpg"] : [])], redraw),
+    ];
 
     const onVisibility = () => {
       cancelAnimationFrame(frame);
@@ -659,8 +724,9 @@ export function SpaceBackdrop({ layout = "app" }: { layout?: BackdropLayout }) {
       // The context is not thrown away here: a remount on the same canvas (React does one in development) gets it back as it is.
       for (const program of [scene, ship, flame]) if (program) gl.deleteProgram(program);
       for (const buffer of [quad, mesh, corners]) gl.deleteBuffer(buffer);
+      for (const texture of textures) gl.deleteTexture(texture);
     };
-  }, [layout]);
+  }, [layout, theme]);
 
   return <canvas ref={canvasRef} aria-hidden className="pointer-events-none absolute inset-0 z-0 h-full w-full" />;
 }
