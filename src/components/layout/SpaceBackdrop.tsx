@@ -3,7 +3,7 @@ import { useEffect, useRef } from "react";
 /**
  * The dark theme's living backdrop: deep space with drifting, twinkling stars, the Earth turning slowly (the day side in muted blues,
  * the night side lit by its cities, a blue atmosphere around it) and two orbits of light, each with a spark running along it, like the
- * menu backgrounds of a space strategy game. The globe leans a little toward the pointer (parallax) on a computer.
+ * menu backgrounds of a space strategy game. OneTrack's icon flies round the Earth on the blue orbit, in perspective. The globe leans a little toward the pointer (parallax) on a computer.
  *
  * Everything is drawn by one small WebGL fragment shader on a single canvas (no 3D library): a ray hits a sphere per pixel and reads
  * NASA's public-domain day and night textures (public/backgrounds/earth-*.jpg), wrapped around it and turned with time. It runs at a
@@ -23,6 +23,7 @@ uniform float uTime;
 uniform vec2 uParallax;
 uniform sampler2D uDay;
 uniform sampler2D uNight;
+uniform sampler2D uIcon;
 
 const float PI = 3.14159265;
 
@@ -110,7 +111,10 @@ void main() {
 
   // The wallpaper's two orbits: a blue one, wide and nearly level, rising a little to the right; and a larger, steeper one whose
   // faint line carries the amber streaks.
-  vec4 o1 = orbit(uv, c + vec2(-0.19, 0.07) * r * 2.0, r * 1.59, 0.36, 0.08, 0.16, 0.0, vec3(0.25, 0.55, 1.0), vec3(0.65, 0.85, 1.0));
+  // The blue orbit; OneTrack's icon rides it (see below), so its centre, size, tilt and speed are named here once.
+  vec2 o1c = c + vec2(-0.19, 0.07) * r * 2.0;
+  float o1r = r * 1.59, o1flat = 0.36, o1angle = 0.08, o1speed = 0.16;
+  vec4 o1 = orbit(uv, o1c, o1r, o1flat, o1angle, o1speed, 0.0, vec3(0.25, 0.55, 1.0), vec3(0.65, 0.85, 1.0));
   vec4 o2 = orbit(uv, c + vec2(-0.05, -0.02), r * 2.05, 0.42, 0.30, -0.11, 2.4, vec3(1.0, 0.55, 0.22) * 0.45, vec3(1.0, 0.60, 0.25));
 
   // The far halves of the orbits pass behind the planet (drawn now, then covered by it); the near halves come after it.
@@ -166,6 +170,22 @@ void main() {
   // The near halves of the orbits run in front of the planet.
   col += o1.rgb * o1.a + o2.rgb * o2.a;
 
+  // OneTrack's icon flying round the Earth on the blue orbit, at the head of its spark. Seen in perspective: big as it passes in
+  // front (the lower half of the ellipse), small and a little dimmer as it goes round the back, where the planet hides it.
+  float t1 = mod(uTime * o1speed, 2.0 * PI);
+  vec2 onOrbit = vec2(cos(t1), sin(t1) * o1flat) * o1r;
+  vec2 ip = o1c + vec2(onOrbit.x * cos(o1angle) - onOrbit.y * sin(o1angle), onOrbit.x * sin(o1angle) + onOrbit.y * cos(o1angle));
+  float near = 0.5 - 0.5 * sin(t1);
+  float iconHalf = r * mix(0.045, 0.15, near * near);
+  float hidden = sin(t1) > 0.0 ? 1.0 - smoothstep(1.0 - px, 1.0 + px, length((uv - c) / r)) : 0.0;
+  float glow = exp(-length(uv - ip) / (iconHalf * 0.9)) * 0.35 * (1.0 - hidden);
+  col += vec3(0.30, 0.55, 1.0) * glow;
+  vec2 ls = (uv - ip) / iconHalf;
+  if (abs(ls.x) < 1.0 && abs(ls.y) < 1.0) {
+    vec4 icon = texture2D(uIcon, vec2(ls.x * 0.5 + 0.5, 0.5 - ls.y * 0.5));
+    col = mix(col, icon.rgb * mix(0.6, 1.1, near), icon.a * (1.0 - hidden));
+  }
+
   // Dark edges, so the scene sinks into the frame.
   col *= 1.0 - 0.35 * smoothstep(0.55, 1.25, length(uv * vec2(0.8, 1.0)));
   gl_FragColor = vec4(col, 1.0);
@@ -185,17 +205,28 @@ function compile(gl: WebGLRenderingContext, type: number, source: string): WebGL
   return shader;
 }
 
-function loadTexture(gl: WebGLRenderingContext, unit: number, url: string, onReady: () => void): WebGLTexture | null {
+function loadTexture(gl: WebGLRenderingContext, unit: number, url: string, onReady: () => void, square = false): WebGLTexture | null {
   const texture = gl.createTexture();
   gl.activeTexture(gl.TEXTURE0 + unit);
   gl.bindTexture(gl.TEXTURE_2D, texture);
   // Black until the picture arrives.
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, 1, 1, 0, gl.RGB, gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 0]));
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 0, 0]));
   const image = new Image();
   image.onload = () => {
     gl.activeTexture(gl.TEXTURE0 + unit);
     gl.bindTexture(gl.TEXTURE_2D, texture);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image);
+    if (square) {
+      // The icon: centred on a transparent 256 × 256 canvas (a power of two, for mipmaps: it is drawn small), with its transparency.
+      const canvas = document.createElement("canvas");
+      canvas.width = canvas.height = 256;
+      const ctx = canvas.getContext("2d");
+      const k = 256 / Math.max(image.width, image.height);
+      ctx?.drawImage(image, (256 - image.width * k) / 2, (256 - image.height * k) / 2, image.width * k, image.height * k);
+      gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, canvas);
+    } else {
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image);
+    }
     // 2048 × 1024: powers of two, so it can repeat round the globe and have mipmaps (no shimmer when it is drawn small).
     gl.generateMipmap(gl.TEXTURE_2D);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
@@ -241,6 +272,7 @@ export function SpaceBackdrop() {
     const uParallax = gl.getUniformLocation(program, "uParallax");
     gl.uniform1i(gl.getUniformLocation(program, "uDay"), 0);
     gl.uniform1i(gl.getUniformLocation(program, "uNight"), 1);
+    gl.uniform1i(gl.getUniformLocation(program, "uIcon"), 2);
 
     const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const phone = !window.matchMedia("(hover: hover) and (pointer: fine)").matches;
@@ -287,6 +319,7 @@ export function SpaceBackdrop() {
 
     loadTexture(gl, 0, "/backgrounds/earth-day.jpg", redraw);
     loadTexture(gl, 1, "/backgrounds/earth-night.jpg", redraw);
+    loadTexture(gl, 2, "/logos/onetrack-symbol.png", redraw, true);
 
     const onVisibility = () => {
       cancelAnimationFrame(frame);
