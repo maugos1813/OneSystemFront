@@ -25,7 +25,8 @@ const INPUT_CLASS =
   "w-full rounded-xl border border-transparent bg-white px-4 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-sky-400 focus:ring-4 focus:ring-sky-400/30 focus:outline-none sm:py-3";
 const PRIMARY_BUTTON =
   "flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-sky-400 via-blue-500 to-violet-500 px-4 py-2 text-base font-semibold sm:py-3 text-white shadow-lg shadow-blue-900/40 transition hover:brightness-110 disabled:opacity-60";
-const CARD_CLASS = "rounded-3xl border border-sky-300/30 bg-[#0a2260]/55 p-4 text-white shadow-2xl shadow-black/40 backdrop-blur-md sm:p-8";
+/** Thick smoked glass with the metallic rim lit by the cursor, the same glass as the app (always the night one: the text is white). */
+const CARD_CLASS = "glass-night rounded-3xl border p-4 text-white sm:p-8";
 
 /** The sign-in both apps share: a glass card meant to float over a dark picture. It goes on by itself to the second step when the account needs it. */
 export function LoginCard() {
@@ -325,7 +326,7 @@ export function LoginCard() {
             clearError();
             setStep({ kind: "qr" });
           }}
-          className="mb-3 flex w-full items-center justify-center gap-2 rounded-xl border border-white/60 px-4 py-2 text-sm font-medium transition hover:bg-white/10 sm:py-3"
+          className="mb-3 flex w-full items-center justify-center gap-2 rounded-xl border border-white/25 bg-white/[0.06] px-4 py-2 text-sm font-medium shadow-[inset_0_1px_0_rgba(255,255,255,0.15)] transition hover:bg-white/[0.12] sm:py-3"
         >
           <QrCode className="h-5 w-5" /> {t("login.withPhone")}
         </button>
@@ -333,7 +334,7 @@ export function LoginCard() {
 
       <a
         href={`mailto:${SUPPORT_EMAIL}`}
-        className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/60 px-4 py-2 text-sm font-medium transition hover:bg-white/10 sm:py-3"
+        className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/25 bg-white/[0.06] px-4 py-2 text-sm font-medium shadow-[inset_0_1px_0_rgba(255,255,255,0.15)] transition hover:bg-white/[0.12] sm:py-3"
       >
         <Headset className="h-5 w-5" /> {t("login.support")}
       </a>

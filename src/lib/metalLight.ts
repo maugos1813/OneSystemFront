@@ -5,7 +5,7 @@
  */
 
 /** What gets the rim. Keep in step with the selectors of the metal edge in index.css. */
-export const METAL_SELECTOR = ".glass, .glass-bubble, .nav-pill-active, main .rounded-2xl.bg-white, main .rounded-3xl.bg-white";
+export const METAL_SELECTOR = ".glass, .glass-night, .glass-bubble, .nav-pill-active, main .rounded-2xl.bg-white, main .rounded-3xl.bg-white";
 
 export function startMetalLight(): void {
   // A phone or tablet has no pointer hovering over the page: the rim stays as plain brushed silver there.

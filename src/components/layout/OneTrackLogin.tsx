@@ -1,37 +1,14 @@
 import { useT } from "../../i18n";
 import { LoginCard } from "./LoginCard";
 
-/** Faint grid of dots, like the map's: drawn in CSS so the app has no picture to download. */
-const DOTS = "radial-gradient(circle, rgba(125, 211, 252, 0.28) 1px, transparent 1.5px)";
-
 /**
- * The OneTrack app's sign-in: OneTrack's own symbol and name above the form (a glass card over a deep-blue night with a radar
- * glow behind the logo) and the signature of who made it at the foot.
+ * The OneTrack app's sign-in: OneTrack's own symbol and name above the form (a pane of the app's smoked glass over the night
+ * wallpaper, with radar rings behind the logo) and the signature of who made it at the foot.
  */
 export function OneTrackLogin() {
   const t = useT();
   return (
-    <main className="relative flex min-h-dvh flex-col items-center overflow-hidden overflow-y-auto bg-[#050d2e] px-[8%] pt-[max(env(safe-area-inset-top),2rem)] pb-[max(env(safe-area-inset-bottom),1.25rem)] sm:px-6">
-      {/* The night: a violet and a cyan glow, a fading grid of dots, and the radar rings behind the symbol. */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0"
-        style={{
-          backgroundImage:
-            "radial-gradient(ellipse 80% 45% at 50% 12%, rgba(59,130,246,0.38), transparent 70%), radial-gradient(ellipse 70% 40% at 85% 95%, rgba(124,58,237,0.42), transparent 70%), radial-gradient(ellipse 60% 35% at 5% 70%, rgba(56,189,248,0.18), transparent 70%)",
-        }}
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-70"
-        style={{
-          backgroundImage: DOTS,
-          backgroundSize: "22px 22px",
-          maskImage: "radial-gradient(ellipse 90% 60% at 50% 25%, black, transparent 75%)",
-          WebkitMaskImage: "radial-gradient(ellipse 90% 60% at 50% 25%, black, transparent 75%)",
-        }}
-      />
-
+    <main className="relative flex min-h-dvh flex-col items-center app-wallpaper-night overflow-hidden overflow-y-auto px-[8%] pt-[max(env(safe-area-inset-top),2rem)] pb-[max(env(safe-area-inset-bottom),1.25rem)] sm:px-6">
       <header className="relative flex w-full max-w-md flex-col items-center pt-2 text-center sm:pt-6">
         <div className="relative flex h-32 w-32 items-center justify-center sm:h-40 sm:w-40">
           <span aria-hidden className="absolute inset-0 rounded-full border border-sky-300/25" />
