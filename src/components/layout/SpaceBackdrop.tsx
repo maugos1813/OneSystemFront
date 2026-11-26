@@ -3,12 +3,16 @@ import { useEffect, useRef } from "react";
 /**
  * The dark theme's living backdrop: deep space with drifting, twinkling stars, the Earth turning slowly (the day side in muted blues,
  * the night side lit by its cities, a blue atmosphere around it) and two orbits of light, each with a spark running along it, like the
- * menu backgrounds of a space strategy game. OneTrack's icon flies round the Earth on the blue orbit, in perspective. The globe leans a little toward the pointer (parallax) on a computer.
+ * menu backgrounds of a space strategy game. OneTrack's arrow, made a small 3D ship with a burning thruster, flies round the Earth on
+ * the blue orbit: it weaves a little up and down and side to side, banks into the turn, grows as it passes in front and shrinks as it
+ * goes round the back, and shows its tail and engine as it flies away. The globe leans a little toward the pointer (parallax) on a
+ * computer.
  *
- * Everything is drawn by one small WebGL fragment shader on a single canvas (no 3D library): a ray hits a sphere per pixel and reads
+ * The scene is one small WebGL fragment shader on a single canvas (no 3D library): a ray hits a sphere per pixel and reads
  * NASA's public-domain day and night textures (public/backgrounds/earth-*.jpg), wrapped around it and turned with time. It runs at a
  * low frame rate and resolution (lower on a phone), stops while the tab is hidden, and is a still picture for anyone who asked their
- * device for less motion. Without WebGL it draws nothing and the dark wallpaper under it stays.
+ * device for less motion. Without WebGL it draws nothing and the dark wallpaper under it stays. The ship is a real model drawn over it
+ * (twelve faces, lit like the planet) and its thruster a glow beside it; the planet hides both when the ship is behind it.
  */
 
 const VERTEX = `
@@ -23,7 +27,6 @@ uniform float uTime;
 uniform vec2 uParallax;
 uniform sampler2D uDay;
 uniform sampler2D uNight;
-uniform sampler2D uIcon;
 
 const float PI = 3.14159265;
 
@@ -80,8 +83,11 @@ vec4 orbit(vec2 uv, vec2 c, float radius, float flatness, float angle, float spe
   float line = exp(-pow(sd / 0.0022, 2.0)) * 0.55 + exp(-sd / 0.012) * 0.10;
   float head = mod(uTime * speed + phase, 2.0 * PI);
   float behind = mod(head - theta, 2.0 * PI);
-  float spark = exp(-behind * 3.5) * (exp(-pow(sd / 0.003, 2.0)) * 1.6 + exp(-sd / 0.02) * 0.45);
-  spark += exp(-behind * 60.0) * exp(-sd / 0.01) * 1.4;
+  // The tail fades slowly behind the head and the light falls off quickly just ahead of it, so there is no hard edge at the head.
+  float ahead = 2.0 * PI - behind;
+  float trail = behind < PI ? exp(-behind * 3.5) : exp(-ahead * 60.0);
+  float spark = trail * (exp(-pow(sd / 0.003, 2.0)) * 1.6 + exp(-sd / 0.02) * 0.45);
+  spark += exp(-min(behind, ahead) * 60.0) * exp(-sd / 0.01) * 1.4;
   vec3 light = color * line + sparkColor * spark;
   return vec4(light, q.y < 0.0 ? 1.0 : 0.0);
 }
@@ -111,7 +117,7 @@ void main() {
 
   // The wallpaper's two orbits: a blue one, wide and nearly level, rising a little to the right; and a larger, steeper one whose
   // faint line carries the amber streaks.
-  // The blue orbit; OneTrack's icon rides it (see below), so its centre, size, tilt and speed are named here once.
+  // The blue orbit; OneTrack's ship rides it (worked out again in shipPose below: keep the two in step).
   vec2 o1c = c + vec2(-0.19, 0.07) * r * 2.0;
   float o1r = r * 1.59, o1flat = 0.36, o1angle = 0.08, o1speed = 0.16;
   vec4 o1 = orbit(uv, o1c, o1r, o1flat, o1angle, o1speed, 0.0, vec3(0.25, 0.55, 1.0), vec3(0.65, 0.85, 1.0));
@@ -170,27 +176,243 @@ void main() {
   // The near halves of the orbits run in front of the planet.
   col += o1.rgb * o1.a + o2.rgb * o2.a;
 
-  // OneTrack's icon flying round the Earth on the blue orbit, at the head of its spark. Seen in perspective: big as it passes in
-  // front (the lower half of the ellipse), small and a little dimmer as it goes round the back, where the planet hides it.
-  float t1 = mod(uTime * o1speed, 2.0 * PI);
-  vec2 onOrbit = vec2(cos(t1), sin(t1) * o1flat) * o1r;
-  vec2 ip = o1c + vec2(onOrbit.x * cos(o1angle) - onOrbit.y * sin(o1angle), onOrbit.x * sin(o1angle) + onOrbit.y * cos(o1angle));
-  float near = 0.5 - 0.5 * sin(t1);
-  float iconHalf = r * mix(0.045, 0.15, near * near);
-  float hidden = sin(t1) > 0.0 ? 1.0 - smoothstep(1.0 - px, 1.0 + px, length((uv - c) / r)) : 0.0;
-  float glow = exp(-length(uv - ip) / (iconHalf * 0.9)) * 0.35 * (1.0 - hidden);
-  col += vec3(0.30, 0.55, 1.0) * glow;
-  vec2 ls = (uv - ip) / iconHalf;
-  if (abs(ls.x) < 1.0 && abs(ls.y) < 1.0) {
-    vec4 icon = texture2D(uIcon, vec2(ls.x * 0.5 + 0.5, 0.5 - ls.y * 0.5));
-    col = mix(col, icon.rgb * mix(0.6, 1.1, near), icon.a * (1.0 - hidden));
-  }
-
   // Dark edges, so the scene sinks into the frame.
   col *= 1.0 - 0.35 * smoothstep(0.55, 1.25, length(uv * vec2(0.8, 1.0)));
   gl_FragColor = vec4(col, 1.0);
 }
 `;
+
+// OneTrack's arrow as a ship: a dart folded along a ridge like a paper plane, with a notched tail where the engine sits. Its own axes:
+// x to its right, y up, z forward (the nose).
+const NOSE = [0, 0, 1] as const;
+const LEFT = [-0.68, 0, -0.6] as const;
+const RIGHT = [0.68, 0, -0.6] as const;
+const RIDGE = [0, 0.22, -0.32] as const;
+const KEEL = [0, -0.09, -0.32] as const;
+/** Where the engine burns, in the notch of the tail. */
+const NOZZLE: Vec3 = [0, 0.03, -0.34];
+// Each face with its kind: 0 the top (OneTrack's blue to violet), 1 the belly, 2 the tail with the engine.
+const FACES: [readonly number[], readonly number[], readonly number[], number][] = [
+  [NOSE, LEFT, RIDGE, 0],
+  [NOSE, RIDGE, RIGHT, 0],
+  [NOSE, KEEL, LEFT, 1],
+  [NOSE, RIGHT, KEEL, 1],
+  [LEFT, KEEL, RIDGE, 2],
+  [RIGHT, RIDGE, KEEL, 2],
+];
+
+/** The model as the GPU takes it: per corner its position, its face's normal (pointing out, so each face is lit as a flat facet), its
+ * kind, and which corner of the face it is (so the shader knows how far a point is from the face's edges, to light them). */
+function shipMesh(): Float32Array {
+  const middle: Vec3 = [0, 0.02, -0.15];
+  const data: number[] = [];
+  for (const [a, b, c, kind] of FACES) {
+    let n = normalize(cross(sub(b as Vec3, a as Vec3), sub(c as Vec3, a as Vec3)));
+    const centroid = scale(add(add(a as Vec3, b as Vec3), c as Vec3), 1 / 3);
+    if (dot(n, sub(centroid, middle)) < 0) n = scale(n, -1);
+    [a, b, c].forEach((v, i) => data.push(v[0], v[1], v[2], n[0], n[1], n[2], kind, i === 0 ? 1 : 0, i === 1 ? 1 : 0, i === 2 ? 1 : 0));
+  }
+  return new Float32Array(data);
+}
+
+const SHIP_VERTEX = `
+attribute vec3 aPos;
+attribute vec3 aNormal;
+attribute float aFace;
+attribute vec3 aCorner;
+uniform mat3 uRot;
+uniform vec3 uCenter;
+uniform float uSize;
+uniform float uAspect;
+varying vec3 vN;
+varying vec3 vLocal;
+varying vec3 vWorld;
+varying float vFace;
+varying vec3 vCorner;
+void main() {
+  vec3 v = uRot * aPos;
+  // A touch of perspective inside the ship itself: the end nearer the eye is drawn a little bigger.
+  float persp = 1.0 / (1.0 + v.z * 0.18);
+  vec2 s = uCenter.xy + v.xy * uSize * persp;
+  vWorld = vec3(s, uCenter.z + v.z * uSize);
+  vN = uRot * aNormal;
+  vLocal = aPos;
+  vFace = aFace;
+  vCorner = aCorner;
+  gl_Position = vec4(s.x * 2.0 / uAspect, s.y * 2.0, v.z * 0.3, 1.0);
+}
+`;
+
+// Both the ship and its flame are hidden where the planet stands in front of them.
+const BEHIND_PLANET = `
+uniform vec3 uPlanet;
+bool behindPlanet(vec2 at, float depth) {
+  vec2 d = at - uPlanet.xy;
+  float h = uPlanet.z * uPlanet.z - dot(d, d);
+  return h > 0.0 && depth > -sqrt(h);
+}
+`;
+
+const SHIP_FRAGMENT = `
+precision highp float;
+uniform float uTime;
+uniform float uNear;
+varying vec3 vN;
+varying vec3 vLocal;
+varying vec3 vWorld;
+varying float vFace;
+varying vec3 vCorner;
+${BEHIND_PLANET}
+void main() {
+  if (behindPlanet(vWorld.xy, vWorld.z)) discard;
+  vec3 n = normalize(vN);
+  // Lit like the planet: the sun up and to the left, the eye looking into the screen.
+  vec3 L = normalize(vec3(-0.55, 0.65, -0.55));
+  vec3 V = vec3(0.0, 0.0, -1.0);
+  float diff = max(dot(n, L), 0.0);
+  float spec = pow(max(dot(n, normalize(L + V)), 0.0), 36.0);
+  float fres = pow(1.0 - abs(dot(n, V)), 3.0);
+  float side = clamp(vLocal.x / 1.36 + 0.5, 0.0, 1.0);
+  vec3 base;
+  if (vFace < 0.5) {
+    // OneTrack's arrow: bright blue on the left wing, violet on the right, turning cyan toward the nose.
+    base = mix(vec3(0.22, 0.62, 1.0), vec3(0.52, 0.28, 0.98), side);
+    base = mix(base, vec3(0.55, 0.92, 1.0), smoothstep(0.2, 1.0, vLocal.z) * 0.55);
+  } else if (vFace < 1.5) {
+    base = mix(vec3(0.10, 0.16, 0.45), vec3(0.25, 0.10, 0.50), side);
+  } else {
+    // The tail: brushed blue steel.
+    base = mix(vec3(0.30, 0.38, 0.70), vec3(0.38, 0.28, 0.72), side);
+  }
+  vec3 col = base * (0.30 + 0.9 * diff) + vec3(0.9, 0.95, 1.0) * spec * 0.8 + vec3(0.30, 0.60, 1.0) * fres * 0.7;
+  // Fine glowing edges, as on OneTrack's arrow, so its shape reads even small and against the dark planet.
+  float edge = min(min(vCorner.x, vCorner.y), vCorner.z);
+  col += vec3(0.55, 0.85, 1.0) * (1.0 - smoothstep(0.0, 0.07, edge)) * 0.55;
+  if (vFace > 1.5) {
+    // The engine glowing in the notch of the tail: what is seen of the ship as it flies away.
+    float e = length(vLocal.xy - vec2(0.0, 0.03));
+    float flicker = 0.85 + 0.15 * sin(uTime * 31.0);
+    col += vec3(0.55, 0.85, 1.0) * exp(-e * 16.0) * 2.2 * flicker + vec3(0.30, 0.50, 1.0) * exp(-e * 5.0) * 0.4;
+  }
+  col *= mix(0.7, 1.1, uNear);
+  gl_FragColor = vec4(col, 1.0);
+}
+`;
+
+const FLAME_VERTEX = `
+attribute vec2 aCorner;
+uniform vec4 uBox;
+uniform float uAspect;
+uniform float uZ;
+varying vec2 vUv;
+void main() {
+  vUv = uBox.xy + aCorner * uBox.zw;
+  gl_Position = vec4(vUv.x * 2.0 / uAspect, vUv.y * 2.0, uZ, 1.0);
+}
+`;
+
+// The thruster: a white-hot core at the nozzle, a blue plume that turns violet as it trails off behind the ship, and a soft halo. Seen
+// from behind the plume points at the eye and shrinks to a bright round burn.
+const FLAME_FRAGMENT = `
+precision highp float;
+uniform vec2 uTail;
+uniform vec2 uDir;
+uniform float uSize;
+uniform float uTime;
+uniform float uDepth;
+uniform float uFacing;
+uniform float uNear;
+varying vec2 vUv;
+${BEHIND_PLANET}
+void main() {
+  if (behindPlanet(vUv, uDepth)) discard;
+  vec2 d = vUv - uTail;
+  float len = max(length(uDir), 1e-4);
+  float h = clamp(dot(d, uDir / len) / len, 0.0, 1.0);
+  float ds = length(d - uDir * h);
+  float flicker = 0.82 + 0.18 * sin(uTime * 41.0) * sin(uTime * 17.0 + 1.3);
+  float w = uSize * (0.15 * (1.0 - 0.75 * h) + 0.012);
+  float plume = exp(-ds * ds / (w * w)) * pow(1.0 - h, 1.4) * flicker;
+  vec3 plumeColor = mix(vec3(0.85, 0.97, 1.0), mix(vec3(0.25, 0.62, 1.0), vec3(0.55, 0.30, 1.0), h), smoothstep(0.0, 0.45, h));
+  float r0 = length(d);
+  float core = exp(-r0 / (uSize * 0.06)) * (0.8 + 0.9 * uFacing) * flicker;
+  float halo = exp(-r0 / (uSize * 0.22)) * 0.28;
+  vec3 col = plumeColor * plume * 2.0 + vec3(0.8, 0.95, 1.0) * core * 1.4 + vec3(0.25, 0.5, 1.0) * halo;
+  gl_FragColor = vec4(col * mix(0.7, 1.1, uNear), 1.0);
+}
+`;
+
+type Vec3 = [number, number, number];
+const add = (a: Vec3, b: Vec3): Vec3 => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
+const sub = (a: Vec3, b: Vec3): Vec3 => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+const scale = (a: Vec3, k: number): Vec3 => [a[0] * k, a[1] * k, a[2] * k];
+const dot = (a: Vec3, b: Vec3) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+const cross = (a: Vec3, b: Vec3): Vec3 => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+const normalize = (a: Vec3): Vec3 => scale(a, 1 / (Math.hypot(a[0], a[1], a[2]) || 1));
+
+/**
+ * Where the ship is and how it is turned, in the shader's screen units (the screen's height is 1, the middle is 0; depth grows into the
+ * screen, the planet's centre at 0). The blue orbit is a circle on a tilted plane seen from a little above: its picture is the shader's
+ * ellipse, and the ship flies along the circle at the head of the orbit's spark. It weaves a little up and down and in and out, pitches
+ * with the weave and banks into the turn.
+ */
+function shipPose(time: number, aspect: number, parallaxX: number, parallaxY: number) {
+  const wide = aspect > 1;
+  const r = wide ? 0.48 : 0.3;
+  const planet: Vec3 = [(wide ? 0.158 * aspect : 0.12 * aspect) + parallaxX, (wide ? 0.014 : -0.06) + parallaxY, r];
+  // The shader's o1: centre c + (-0.19, 0.07)·2r, radius 1.59r, flatness 0.36, turned 0.08 rad, 0.16 rad a second.
+  const orbitCentre: Vec3 = [planet[0] - 0.38 * r, planet[1] + 0.14 * r, 0];
+  const radius = r * 1.59;
+  const f = 0.36;
+  const g = Math.sqrt(1 - f * f);
+  const ca = Math.cos(0.08);
+  const sa = Math.sin(0.08);
+  const e1: Vec3 = [ca, sa, 0];
+  const e2: Vec3 = [-f * sa, f * ca, g];
+  const up: Vec3 = [-g * sa, g * ca, -f];
+
+  const t = (time * 0.16) % (2 * Math.PI);
+  const radial = add(scale(e1, Math.cos(t)), scale(e2, Math.sin(t)));
+  const tangent = add(scale(e1, -Math.sin(t)), scale(e2, Math.cos(t)));
+  // How close it is to the eye: 1 at the front of the orbit, 0 at the back. It sets its size and brightness, as before.
+  const near = 0.5 - 0.5 * Math.sin(t);
+  const size = r * (0.06 + 0.11 * near ** 1.5);
+
+  const bob = Math.sin(time * 1.1) * 0.22 * size;
+  const sway = Math.sin(time * 0.7) * 0.2 * size;
+  const centre = add(add(orbitCentre, scale(radial, radius + sway)), scale(up, bob));
+  const pitch = 0.14 * Math.cos(time * 1.1);
+  const roll = 0.25 * Math.sin(time * 0.7);
+  const forward = normalize(add(scale(tangent, Math.cos(pitch)), scale(up, Math.sin(pitch))));
+  let shipUp = normalize(add(scale(up, Math.cos(pitch)), scale(tangent, -Math.sin(pitch))));
+  // The orbit is seen from only a little above, which would show the ship edge on as a thin sliver: its back is turned well toward
+  // the eye, so its arrow shape reads (as in a game's three-quarter view), then it rocks gently from wing to wing.
+  const toEye: Vec3 = [0, 0, -1];
+  shipUp = normalize(add(shipUp, scale(sub(toEye, scale(forward, dot(toEye, forward))), 0.9)));
+  let right = normalize(cross(shipUp, forward));
+  shipUp = normalize(add(scale(shipUp, Math.cos(roll)), scale(right, Math.sin(roll))));
+  right = normalize(cross(shipUp, forward));
+  shipUp = cross(forward, right);
+
+  const nozzle = add(add(scale(right, NOZZLE[0]), scale(shipUp, NOZZLE[1])), scale(forward, NOZZLE[2]));
+  const persp = 1 / (1 + nozzle[2] * 0.18);
+  const tail: [number, number] = [centre[0] + nozzle[0] * size * persp, centre[1] + nozzle[1] * size * persp];
+  // The plume, on the screen: straight back from the ship, as long as the ship when seen side on, short when it points at the eye.
+  const plume: [number, number] = [-forward[0] * size * 2.2 * persp, -forward[1] * size * 2.2 * persp];
+
+  return {
+    planet,
+    centre,
+    size,
+    near,
+    rotation: new Float32Array([...right, ...shipUp, ...forward]),
+    tail,
+    plume,
+    tailDepth: centre[2] + nozzle[2] * size,
+    tailZ: nozzle[2] * 0.3 - 0.04,
+    facing: Math.max(forward[2], 0),
+  };
+}
 
 function compile(gl: WebGLRenderingContext, type: number, source: string): WebGLShader | null {
   const shader = gl.createShader(type);
@@ -205,7 +427,25 @@ function compile(gl: WebGLRenderingContext, type: number, source: string): WebGL
   return shader;
 }
 
-function loadTexture(gl: WebGLRenderingContext, unit: number, url: string, onReady: () => void, square = false): WebGLTexture | null {
+function link(gl: WebGLRenderingContext, vertex: string, fragment: string): WebGLProgram | null {
+  const vs = compile(gl, gl.VERTEX_SHADER, vertex);
+  const fs = compile(gl, gl.FRAGMENT_SHADER, fragment);
+  const program = gl.createProgram();
+  if (!vs || !fs || !program) return null;
+  gl.attachShader(program, vs);
+  gl.attachShader(program, fs);
+  gl.linkProgram(program);
+  gl.deleteShader(vs);
+  gl.deleteShader(fs);
+  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+    console.warn("[backdrop]", gl.getProgramInfoLog(program));
+    gl.deleteProgram(program);
+    return null;
+  }
+  return program;
+}
+
+function loadTexture(gl: WebGLRenderingContext, unit: number, url: string, onReady: () => void): WebGLTexture | null {
   const texture = gl.createTexture();
   gl.activeTexture(gl.TEXTURE0 + unit);
   gl.bindTexture(gl.TEXTURE_2D, texture);
@@ -215,23 +455,7 @@ function loadTexture(gl: WebGLRenderingContext, unit: number, url: string, onRea
   image.onload = () => {
     gl.activeTexture(gl.TEXTURE0 + unit);
     gl.bindTexture(gl.TEXTURE_2D, texture);
-    if (square) {
-      // The icon: centred on a transparent 512 × 512 canvas (a power of two, for mipmaps), with its transparency. 512 keeps it crisp
-      // when it passes close in front on a dense phone screen.
-      const size = 512;
-      const canvas = document.createElement("canvas");
-      canvas.width = canvas.height = size;
-      const ctx = canvas.getContext("2d");
-      const k = size / Math.max(image.width, image.height);
-      if (ctx) {
-        ctx.imageSmoothingQuality = "high";
-        ctx.drawImage(image, (size - image.width * k) / 2, (size - image.height * k) / 2, image.width * k, image.height * k);
-      }
-      gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, canvas);
-    } else {
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image);
-    }
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image);
     // 2048 × 1024: powers of two, so it can repeat round the globe and have mipmaps (no shimmer when it is drawn small).
     gl.generateMipmap(gl.TEXTURE_2D);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
@@ -249,35 +473,32 @@ export function SpaceBackdrop() {
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    const gl = canvas?.getContext("webgl", { antialias: false, alpha: false, powerPreference: "low-power" });
+    // Antialiased, so the ship's edges stay clean; the depth buffer lets its near faces hide its far ones and the flame.
+    const gl = canvas?.getContext("webgl", { antialias: true, alpha: false, depth: true, powerPreference: "low-power" });
     if (!canvas || !gl) return;
 
-    const vs = compile(gl, gl.VERTEX_SHADER, VERTEX);
-    const fs = compile(gl, gl.FRAGMENT_SHADER, FRAGMENT);
-    const program = gl.createProgram();
-    if (!vs || !fs || !program) return;
-    gl.attachShader(program, vs);
-    gl.attachShader(program, fs);
-    gl.linkProgram(program);
-    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-      console.warn("[backdrop]", gl.getProgramInfoLog(program));
-      return;
-    }
-    gl.useProgram(program);
+    const scene = link(gl, VERTEX, FRAGMENT);
+    if (!scene) return;
+    // Without the ship the planet still turns.
+    const ship = link(gl, SHIP_VERTEX, SHIP_FRAGMENT);
+    const flame = link(gl, FLAME_VERTEX, FLAME_FRAGMENT);
 
-    const buffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    const quad = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, quad);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
-    const position = gl.getAttribLocation(program, "a");
-    gl.enableVertexAttribArray(position);
-    gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
+    const mesh = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, mesh);
+    const meshData = shipMesh();
+    gl.bufferData(gl.ARRAY_BUFFER, meshData, gl.STATIC_DRAW);
+    const corners = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, corners);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]), gl.STATIC_DRAW);
 
-    const uRes = gl.getUniformLocation(program, "uRes");
-    const uTime = gl.getUniformLocation(program, "uTime");
-    const uParallax = gl.getUniformLocation(program, "uParallax");
-    gl.uniform1i(gl.getUniformLocation(program, "uDay"), 0);
-    gl.uniform1i(gl.getUniformLocation(program, "uNight"), 1);
-    gl.uniform1i(gl.getUniformLocation(program, "uIcon"), 2);
+    const at = (program: WebGLProgram, name: string) => gl.getUniformLocation(program, name);
+    const sceneA = gl.getAttribLocation(scene, "a");
+    gl.useProgram(scene);
+    gl.uniform1i(at(scene, "uDay"), 0);
+    gl.uniform1i(at(scene, "uNight"), 1);
 
     const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const phone = !window.matchMedia("(hover: hover) and (pointer: fine)").matches;
@@ -306,6 +527,75 @@ export function SpaceBackdrop() {
       target.y = (event.clientY / window.innerHeight - 0.5) * 0.025;
     };
 
+    const drawShip = (time: number, aspect: number) => {
+      if (!ship || !flame) return;
+      const pose = shipPose(time, aspect, parallax.x, parallax.y);
+
+      gl.enable(gl.DEPTH_TEST);
+      gl.depthFunc(gl.LEQUAL);
+      gl.depthMask(true);
+      gl.clear(gl.DEPTH_BUFFER_BIT);
+      gl.useProgram(ship);
+      gl.bindBuffer(gl.ARRAY_BUFFER, mesh);
+      const stride = 10 * 4;
+      const attributes: [string, number, number][] = [
+        ["aPos", 3, 0],
+        ["aNormal", 3, 12],
+        ["aFace", 1, 24],
+        ["aCorner", 3, 28],
+      ];
+      const used: number[] = [];
+      for (const [name, size, offset] of attributes) {
+        const location = gl.getAttribLocation(ship, name);
+        if (location < 0) continue;
+        gl.enableVertexAttribArray(location);
+        gl.vertexAttribPointer(location, size, gl.FLOAT, false, stride, offset);
+        used.push(location);
+      }
+      gl.uniformMatrix3fv(at(ship, "uRot"), false, pose.rotation);
+      gl.uniform3f(at(ship, "uCenter"), pose.centre[0], pose.centre[1], pose.centre[2]);
+      gl.uniform1f(at(ship, "uSize"), pose.size);
+      gl.uniform1f(at(ship, "uAspect"), aspect);
+      gl.uniform3f(at(ship, "uPlanet"), pose.planet[0], pose.planet[1], pose.planet[2]);
+      gl.uniform1f(at(ship, "uTime"), time);
+      gl.uniform1f(at(ship, "uNear"), pose.near);
+      gl.drawArrays(gl.TRIANGLES, 0, meshData.length / 10);
+      used.forEach((location) => gl.disableVertexAttribArray(location));
+
+      // The flame adds light, behind whatever part of the ship is nearer the eye.
+      gl.depthMask(false);
+      gl.enable(gl.BLEND);
+      gl.blendFunc(gl.ONE, gl.ONE);
+      gl.useProgram(flame);
+      gl.bindBuffer(gl.ARRAY_BUFFER, corners);
+      const corner = gl.getAttribLocation(flame, "aCorner");
+      gl.enableVertexAttribArray(corner);
+      gl.vertexAttribPointer(corner, 2, gl.FLOAT, false, 0, 0);
+      const margin = pose.size * 0.9;
+      gl.uniform4f(
+        at(flame, "uBox"),
+        pose.tail[0] + pose.plume[0] / 2,
+        pose.tail[1] + pose.plume[1] / 2,
+        Math.abs(pose.plume[0]) / 2 + margin,
+        Math.abs(pose.plume[1]) / 2 + margin,
+      );
+      gl.uniform1f(at(flame, "uAspect"), aspect);
+      gl.uniform1f(at(flame, "uZ"), pose.tailZ);
+      gl.uniform2f(at(flame, "uTail"), pose.tail[0], pose.tail[1]);
+      gl.uniform2f(at(flame, "uDir"), pose.plume[0], pose.plume[1]);
+      gl.uniform1f(at(flame, "uSize"), pose.size);
+      gl.uniform1f(at(flame, "uTime"), time);
+      gl.uniform1f(at(flame, "uDepth"), pose.tailDepth);
+      gl.uniform1f(at(flame, "uFacing"), pose.facing);
+      gl.uniform1f(at(flame, "uNear"), pose.near);
+      gl.uniform3f(at(flame, "uPlanet"), pose.planet[0], pose.planet[1], pose.planet[2]);
+      gl.drawArrays(gl.TRIANGLES, 0, 6);
+      gl.disableVertexAttribArray(corner);
+      gl.disable(gl.BLEND);
+      gl.depthMask(true);
+      gl.disable(gl.DEPTH_TEST);
+    };
+
     const start = performance.now();
     let frame = 0;
     let last = 0;
@@ -313,10 +603,18 @@ export function SpaceBackdrop() {
       resize();
       parallax.x += (target.x - parallax.x) * 0.04;
       parallax.y += (target.y - parallax.y) * 0.04;
-      gl.uniform2f(uRes, canvas.width, canvas.height);
-      gl.uniform1f(uTime, still ? 40 : (now - start) / 1000);
-      gl.uniform2f(uParallax, parallax.x, parallax.y);
+      const time = still ? 40 : (now - start) / 1000;
+      const aspect = canvas.width / canvas.height;
+      gl.useProgram(scene);
+      gl.bindBuffer(gl.ARRAY_BUFFER, quad);
+      gl.enableVertexAttribArray(sceneA);
+      gl.vertexAttribPointer(sceneA, 2, gl.FLOAT, false, 0, 0);
+      gl.uniform2f(at(scene, "uRes"), canvas.width, canvas.height);
+      gl.uniform1f(at(scene, "uTime"), time);
+      gl.uniform2f(at(scene, "uParallax"), parallax.x, parallax.y);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
+      gl.disableVertexAttribArray(sceneA);
+      drawShip(time, aspect);
     };
     const loop = (now: number) => {
       frame = requestAnimationFrame(loop);
@@ -328,7 +626,6 @@ export function SpaceBackdrop() {
 
     loadTexture(gl, 0, "/backgrounds/earth-day.jpg", redraw);
     loadTexture(gl, 1, "/backgrounds/earth-night.jpg", redraw);
-    loadTexture(gl, 2, "/logos/onetrack-symbol.png", redraw, true);
 
     const onVisibility = () => {
       cancelAnimationFrame(frame);
@@ -346,7 +643,8 @@ export function SpaceBackdrop() {
       document.removeEventListener("visibilitychange", onVisibility);
       window.removeEventListener("pointermove", onPointer);
       // The context is not thrown away here: a remount on the same canvas (React does one in development) gets it back as it is.
-      gl.deleteProgram(program);
+      for (const program of [scene, ship, flame]) if (program) gl.deleteProgram(program);
+      for (const buffer of [quad, mesh, corners]) gl.deleteBuffer(buffer);
     };
   }, []);
 
