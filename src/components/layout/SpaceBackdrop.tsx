@@ -216,12 +216,17 @@ function loadTexture(gl: WebGLRenderingContext, unit: number, url: string, onRea
     gl.activeTexture(gl.TEXTURE0 + unit);
     gl.bindTexture(gl.TEXTURE_2D, texture);
     if (square) {
-      // The icon: centred on a transparent 256 × 256 canvas (a power of two, for mipmaps: it is drawn small), with its transparency.
+      // The icon: centred on a transparent 512 × 512 canvas (a power of two, for mipmaps), with its transparency. 512 keeps it crisp
+      // when it passes close in front on a dense phone screen.
+      const size = 512;
       const canvas = document.createElement("canvas");
-      canvas.width = canvas.height = 256;
+      canvas.width = canvas.height = size;
       const ctx = canvas.getContext("2d");
-      const k = 256 / Math.max(image.width, image.height);
-      ctx?.drawImage(image, (256 - image.width * k) / 2, (256 - image.height * k) / 2, image.width * k, image.height * k);
+      const k = size / Math.max(image.width, image.height);
+      if (ctx) {
+        ctx.imageSmoothingQuality = "high";
+        ctx.drawImage(image, (size - image.width * k) / 2, (size - image.height * k) / 2, image.width * k, image.height * k);
+      }
       gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, canvas);
     } else {
@@ -276,8 +281,12 @@ export function SpaceBackdrop() {
 
     const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const phone = !window.matchMedia("(hover: hover) and (pointer: fine)").matches;
-    // A soft, slow scene does not need many pixels or frames: far less work for the phone, and the glass over it stays smooth.
-    const scale = phone ? 0.55 : Math.min(window.devicePixelRatio || 1, 1.25) * 0.8;
+    // Pixels drawn per CSS pixel. A phone or tablet screen packs 2-3 device pixels into each CSS pixel, so drawing fewer than one
+    // per CSS pixel (as it did) left the planet and the icon blurred there: it draws about 1.6 per CSS pixel instead (capped at 2×
+    // the screen's density, never more than the screen has), still under the screen's full resolution so it stays light. A computer
+    // looks sharp with a little over one.
+    const dpr = window.devicePixelRatio || 1;
+    const scale = phone ? Math.min(dpr, 2) * 0.8 : Math.min(dpr, 1.5) * 0.85;
     const frameMs = phone ? 1000 / 24 : 1000 / 30;
 
     const resize = () => {
