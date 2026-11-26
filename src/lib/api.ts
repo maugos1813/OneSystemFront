@@ -45,17 +45,19 @@ import type {
 
 const API_URL = import.meta.env.VITE_API_URL;
 
-/** wss://.../realtime/positions?token=... — the JWT travels as a query param because a
- * browser WebSocket can't set an Authorization header on the handshake. */
-export function realtimePositionsUrl(token: string, allClients = false): string {
+/** wss://.../realtime/positions. The login token is not in the URL (proxies log URLs): send `realtimeAuthMessage(token)` as soon as
+ * the socket opens. */
+export function realtimePositionsUrl(allClients = false): string {
   const url = new URL(API_URL);
   url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
   url.pathname = "/realtime/positions";
-  url.searchParams.set("token", token);
   // OneSystec's own map: every device of every client (the server only allows it to OneSystec).
   if (allClients) url.searchParams.set("scope", "all");
   return url.toString();
 }
+
+/** The first message on the realtime socket: who is listening. */
+export const realtimeAuthMessage = (token: string): string => JSON.stringify({ type: "auth", token });
 
 /** The server words some messages in English or Spanish: the ones a person can run into are shown in their own language. */
 const SERVER_MESSAGES: Record<string, MessageKey> = {

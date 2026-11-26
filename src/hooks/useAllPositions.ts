@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ApiError, getLatestPosition, listLatestPositions, realtimePositionsUrl } from "../lib/api";
+import { ApiError, getLatestPosition, listLatestPositions, realtimeAuthMessage, realtimePositionsUrl } from "../lib/api";
 import { getFreshToken } from "../lib/session";
 import type { Position, Vehicle } from "../lib/types";
 
@@ -73,9 +73,11 @@ export function useAllPositions(
       const token = await getFreshToken();
       if (!token || cancelled) return;
 
-      socket = new WebSocket(realtimePositionsUrl(token, !!allClients));
+      const opened = new WebSocket(realtimePositionsUrl(!!allClients));
+      socket = opened;
 
       socket.onopen = () => {
+        opened.send(realtimeAuthMessage(token));
         reconnectAttempt = 0;
         fetchSnapshot();
       };
