@@ -400,8 +400,8 @@ const dot = (a: Vec3, b: Vec3) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 const cross = (a: Vec3, b: Vec3): Vec3 => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
 const normalize = (a: Vec3): Vec3 => scale(a, 1 / (Math.hypot(a[0], a[1], a[2]) || 1));
 
-/** Where the app's pages are drawn over the backdrop, or the sign-in page. */
-export type BackdropLayout = "app" | "login";
+/** Where the app's pages are drawn over the backdrop, the sign-in page, or a page filled by a map (only a strip of sky shows above it). */
+export type BackdropLayout = "app" | "login" | "map";
 
 /**
  * Where the globe sits (its centre and radius, in the shader's screen units). Framed as in OneTrack's wallpaper: on a wide screen a big
@@ -410,6 +410,8 @@ export type BackdropLayout = "app" | "login";
  * runs above the sign-in card instead of under it.
  */
 function globeFrame(aspect: number, layout: BackdropLayout, parallaxX: number, parallaxY: number): Vec3 {
+  // Above a map the Earth is left out (far below the screen, its glow and orbits with it): just stars, no planet cut off by the map.
+  if (layout === "map") return [0, -40, 0.3];
   if (aspect > 1) return [0.158 * aspect + parallaxX, 0.014 + parallaxY, 0.48];
   if (layout === "login") return [0.04 * aspect + parallaxX, 0.27 + parallaxY, 0.24];
   return [0.12 * aspect + parallaxX, -0.06 + parallaxY, 0.3];
@@ -550,7 +552,9 @@ export function SpaceBackdrop({ layout = "app", theme = "dark" }: { layout?: Bac
     const gl = canvas?.getContext("webgl", { antialias: true, alpha: false, depth: true, powerPreference: "low-power" });
     if (!canvas || !gl) return;
 
-    const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const overMap = layout === "map";
+    // Above a map only a strip of starry sky shows: it is drawn once and held still, leaving the GPU to the map.
+    const still = overMap || window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const phone = !window.matchMedia("(hover: hover) and (pointer: fine)").matches;
     const light = theme === "light";
 
@@ -691,7 +695,7 @@ export function SpaceBackdrop({ layout = "app", theme = "dark" }: { layout?: Bac
       gl.uniform3f(at(scene, "uGlobe"), globe[0], globe[1], globe[2]);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
       gl.disableVertexAttribArray(sceneA);
-      drawShip(time, aspect, globe);
+      if (!overMap) drawShip(time, aspect, globe);
     };
     const loop = (now: number) => {
       frame = requestAnimationFrame(loop);
@@ -712,10 +716,14 @@ export function SpaceBackdrop({ layout = "app", theme = "dark" }: { layout?: Bac
       redraw();
       requestAnimationFrame(() => requestAnimationFrame(() => (canvas.style.opacity = "1")));
     };
-    const textures = [
-      loadTexture(gl, 0, ["/backgrounds/earth-day.jpg", ...(light && sharp ? ["/backgrounds/earth-day-4k.jpg"] : [])], light ? reveal : redraw),
-      loadTexture(gl, 1, ["/backgrounds/earth-night.jpg", ...(!light && sharp ? ["/backgrounds/earth-night-4k.jpg"] : [])], light ? redraw : reveal),
-    ];
+    // (Above a map there is no Earth to wait for.)
+    const textures = overMap
+      ? []
+      : [
+          loadTexture(gl, 0, ["/backgrounds/earth-day.jpg", ...(light && sharp ? ["/backgrounds/earth-day-4k.jpg"] : [])], light ? reveal : redraw),
+          loadTexture(gl, 1, ["/backgrounds/earth-night.jpg", ...(!light && sharp ? ["/backgrounds/earth-night-4k.jpg"] : [])], light ? redraw : reveal),
+        ];
+    if (overMap) reveal();
 
     const onVisibility = () => {
       cancelAnimationFrame(frame);

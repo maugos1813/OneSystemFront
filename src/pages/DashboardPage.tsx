@@ -7,6 +7,7 @@ import { SharedVehiclePanel } from "../components/SharedVehiclePanel";
 import { VehicleList } from "../components/VehicleList";
 import { useAuth } from "../context/AuthContext";
 import { useBackToClose } from "../hooks/useBackToClose";
+import { useMapBackdrop } from "../components/layout/mapBackdrop";
 import { useInAppFullscreen } from "../hooks/useInAppFullscreen";
 import { useFleet } from "../context/FleetContext";
 import { useT } from "../i18n";
@@ -19,6 +20,7 @@ type MapSource = "all" | "gamonal" | "own";
 
 export function DashboardPage() {
   const t = useT();
+  useMapBackdrop();
   const { currentUser } = useAuth();
   const [source, setSource] = useState<MapSource>("all");
   const { filteredVehicles: allVehicles, devices, positions, loading, error, sharedVehicles, selectedArea, setSelectedArea, settings } = useFleet();

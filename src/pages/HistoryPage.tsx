@@ -6,6 +6,7 @@ import { RangeCalendar, addDays, type Day } from "../components/history/RangeCal
 import { PlaybackBar } from "../components/history/PlaybackBar";
 import { routeSummary } from "../lib/routeSummary";
 import { useInAppFullscreen } from "../hooks/useInAppFullscreen";
+import { useMapBackdrop } from "../components/layout/mapBackdrop";
 import { SpeedTimelineChart } from "../components/history/SpeedTimelineChart";
 import { VehicleChooser } from "../components/VehicleChooser";
 import { useFleet } from "../context/FleetContext";
@@ -73,6 +74,7 @@ function HistoryView({
   // Every hook runs before the early return below: otherwise the first render after the fleet finishes loading would call more hooks
   // than the one before it, and React would stop the page.
   const [mapFull, toggleMapFull] = useInAppFullscreen();
+  useMapBackdrop();
   const summary = useMemo(() => routeSummary(history), [history]);
 
   if (fleetLoading) {

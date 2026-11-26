@@ -17,6 +17,7 @@ import { allowedNav, canOpen, NAV_GROUP_LABEL, navItemForPath } from "../../lib/
 import { AlertsPanel } from "../AlertsPanel";
 import { OneSystecMark } from "../OneSystecMark";
 import { SpaceBackdrop } from "./SpaceBackdrop";
+import { MapBackdropContext } from "./mapBackdrop";
 import { BottomNav } from "./BottomNav";
 import { SUPPORT_EMAIL } from "./LoginCard";
 
@@ -32,6 +33,8 @@ export function AppLayout() {
   const { pathname } = useLocation();
   const { alerts } = useFleet();
   const [navOpen, setNavOpen] = useState(prefersOpenByDefault);
+  // Set by the pages that fill the screen with a map (see useMapBackdrop).
+  const [overMap, setOverMap] = useState(false);
 
   // A section this account doesn't include isn't just hidden from the menu: typing its address leads back to
   // the first one that is allowed (the server refuses the data anyway).
@@ -53,8 +56,8 @@ export function AppLayout() {
 
   return (
     <div className="app-shell app-wallpaper relative flex h-screen overflow-hidden">
-      {/* The dark theme's living backdrop (space with the Earth turning); the light theme keeps its pearl wallpaper. */}
-      <SpaceBackdrop theme={theme} />
+      {/* The living backdrop (space with the Earth turning, by night or by day); behind a full-screen map, only the starry sky. */}
+      <SpaceBackdrop layout={overMap ? "map" : "app"} theme={theme} />
       <aside
         // The side menu is for tablets and up: on a phone the bottom bar and the start take its place. On a tablet it is a slim rail of
         // icons; on a laptop it is the full menu, which can be folded away. In the light theme it is frosted glass over the wallpaper.
@@ -198,7 +201,9 @@ export function AppLayout() {
 
         {/* Each page scrolls here (pages that manage their own scrolling, like the map or Ajustes, simply fill this box). */}
         <main className="styled-scrollbar min-h-0 flex-1 overflow-y-auto">
-          <Outlet />
+          <MapBackdropContext.Provider value={setOverMap}>
+            <Outlet />
+          </MapBackdropContext.Provider>
         </main>
         <BottomNav />
       </div>
