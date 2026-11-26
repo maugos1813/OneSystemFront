@@ -141,7 +141,7 @@ export function GeofencesPage() {
   const visibleExisting = geofences.filter((g) => !(g.id === draft?.id && draft?.type === "circle"));
 
   return (
-    <div className="h-full overflow-y-auto p-4 sm:p-6 lg:p-8 dark:bg-[#0a0e1a]">
+    <div className="h-full overflow-y-auto p-4 sm:p-6 lg:p-8">
       <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t("geo.title")}</h1>

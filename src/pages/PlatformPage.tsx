@@ -223,7 +223,7 @@ export function PlatformPage() {
   if (currentUser && !currentUser.isPlatform) return <Navigate to="/" replace />;
 
   return (
-    <div className="h-full overflow-y-auto dark:bg-[#0a0e1a]">
+    <div className="h-full overflow-y-auto">
       <div className="p-4 sm:p-6 lg:p-8">
         <h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t("platform.title")}</h1>
         <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">

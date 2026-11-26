@@ -94,12 +94,12 @@ body {
 }
 
 .dark body {
-  background: #0a0e1a;
+  background: #05070f;
 }
 
 /*
- * Light theme: the app sits on a soft pearl wallpaper and its panels are frosted white glass over it. The dark theme keeps its solid
- * navy. `app-wallpaper` goes on the full-screen container of the app (and of the screens shown before it).
+ * The app sits on a wallpaper (soft pearl waves in the light theme, night waves with a rainbow rim in the dark one) and its panels are
+ * frosted glass over it. `app-wallpaper` goes on the full-screen container of the app (and of the screens shown outside it).
  */
 .app-wallpaper {
   background-color: #eef0f8;
@@ -109,8 +109,8 @@ body {
   background-repeat: no-repeat;
 }
 .dark .app-wallpaper {
-  background-color: #0a0e1a;
-  background-image: none;
+  background-color: #05070f;
+  background-image: url("/backgrounds/onetrack-dark.webp");
 }
 
 /*
@@ -127,6 +127,16 @@ html:not(.dark) main :is(.rounded-2xl, .rounded-3xl).bg-white {
     inset 0 1px 0 rgba(255, 255, 255, 0.95),
     0 10px 30px -12px rgba(79, 70, 229, 0.16),
     0 2px 6px rgba(15, 23, 42, 0.04);
+}
+
+/* The same cards in the dark theme: smoked navy glass over the night wallpaper instead of solid navy. */
+html.dark main :is(.rounded-2xl, .rounded-3xl).bg-white {
+  position: relative;
+  background-color: rgba(15, 20, 36, 0.62);
+  border-color: rgba(255, 255, 255, 0.07);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 14px 34px -14px rgba(0, 0, 0, 0.7);
 }
 
 /*
@@ -226,9 +236,11 @@ html:not(.dark) main :is(.rounded-2xl, .rounded-3xl).bg-white {
       0 2px 6px rgba(15, 23, 42, 0.04);
   }
   .dark .glass {
-    border-color: rgba(255, 255, 255, 0.08);
-    background: #111729;
-    box-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.5);
+    border-color: rgba(255, 255, 255, 0.07);
+    background: linear-gradient(180deg, rgba(22, 28, 48, 0.7) 0%, rgba(12, 16, 30, 0.6) 100%);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.06),
+      0 14px 34px -14px rgba(0, 0, 0, 0.7);
   }
 
   /* The round white "pebble" an icon sits in on the glass cards. */
@@ -268,7 +280,7 @@ html:not(.dark) main :is(.rounded-2xl, .rounded-3xl).bg-white {
    * a ::before masked to its border, so it never covers the content (and never clashes with .glow, which uses ::after).
    */
   :is(.glass, .glass-bubble, .nav-pill-active)::before,
-  html:not(.dark) main :is(.rounded-2xl, .rounded-3xl).bg-white::before {
+  main :is(.rounded-2xl, .rounded-3xl).bg-white::before {
     content: "";
     position: absolute;
     inset: 0;
@@ -292,7 +304,8 @@ html:not(.dark) main :is(.rounded-2xl, .rounded-3xl).bg-white {
     mask-composite: exclude;
     pointer-events: none;
   }
-  .dark :is(.glass, .glass-bubble, .nav-pill-active)::before {
+  .dark :is(.glass, .glass-bubble, .nav-pill-active)::before,
+  html.dark main :is(.rounded-2xl, .rounded-3xl).bg-white::before {
     background:
       radial-gradient(circle 150px at var(--lx, -999px) var(--ly, -999px), rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.5) 18%, transparent 60%),
       radial-gradient(

@@ -45,7 +45,7 @@ export function CockpitPage() {
       : null;
 
   return (
-    <div className="flex h-full flex-col gap-3 overflow-y-auto bg-violet-50 p-3 sm:p-4 lg:overflow-hidden dark:bg-[#0a0e1a]">
+    <div className="flex h-full flex-col gap-3 overflow-y-auto p-3 sm:p-4 lg:overflow-hidden">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
         <AreaFilterPills />
         {vehicle && vehicles.length > 1 && (

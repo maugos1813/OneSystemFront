@@ -24,9 +24,9 @@ export function PageTabs({ tabs }: { tabs: PageTab[] }) {
   }
 
   return (
-    <div className="flex h-full flex-col dark:bg-[#0a0e1a]">
+    <div className="flex h-full flex-col">
       {tabs.length > 1 && (
-        <div role="tablist" className="flex shrink-0 gap-1 overflow-x-auto border-b border-white/70 bg-white/45 px-4 pt-2 sm:px-6 lg:px-8 dark:border-white/5 dark:bg-[#0d1220]">
+        <div role="tablist" className="flex shrink-0 gap-1 overflow-x-auto border-b border-white/70 bg-white/45 px-4 pt-2 sm:px-6 lg:px-8 dark:border-white/5 dark:bg-white/[0.03]">
           {tabs.map((tab) => {
             const selected = tab.key === active.key;
             return (
