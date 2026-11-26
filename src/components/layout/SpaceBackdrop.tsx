@@ -25,6 +25,7 @@ precision highp float;
 uniform vec2 uRes;
 uniform float uTime;
 uniform vec2 uParallax;
+uniform vec3 uGlobe;
 uniform sampler2D uDay;
 uniform sampler2D uNight;
 
@@ -96,11 +97,9 @@ void main() {
   vec2 uv = (gl_FragCoord.xy - 0.5 * uRes) / uRes.y;
   float aspect = uRes.x / uRes.y;
 
-  // Where the globe sits: right of centre on a wide screen (the menu and the cards are on the left), lower and smaller on a phone.
-  // Framed as in OneTrack's wallpaper: a big globe a little right of centre, almost the height of the screen.
-  vec2 c = aspect > 1.0 ? vec2(0.158 * aspect, 0.014) : vec2(0.12 * aspect, -0.06);
-  float r = aspect > 1.0 ? 0.48 : 0.30;
-  c += uParallax;
+  // Where the globe sits and its radius (see globeFrame), already moved by the parallax.
+  vec2 c = uGlobe.xy;
+  float r = uGlobe.z;
 
   // Deep space: a blue glow around the planet, a violet haze in the far corner, and three layers of stars.
   vec3 col = vec3(0.006, 0.010, 0.028);
@@ -350,16 +349,29 @@ const dot = (a: Vec3, b: Vec3) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 const cross = (a: Vec3, b: Vec3): Vec3 => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
 const normalize = (a: Vec3): Vec3 => scale(a, 1 / (Math.hypot(a[0], a[1], a[2]) || 1));
 
+/** Where the app's pages are drawn over the backdrop, or the sign-in page. */
+export type BackdropLayout = "app" | "login";
+
+/**
+ * Where the globe sits (its centre and radius, in the shader's screen units). Framed as in OneTrack's wallpaper: on a wide screen a big
+ * globe a little right of centre, almost the height of the screen (the menu and the cards are on the left). On a phone or a tablet held
+ * upright it is smaller and a little low in the app; on the sign-in page it goes up behind the logo, so the ship's pass in front of it
+ * runs above the sign-in card instead of under it.
+ */
+function globeFrame(aspect: number, layout: BackdropLayout, parallaxX: number, parallaxY: number): Vec3 {
+  if (aspect > 1) return [0.158 * aspect + parallaxX, 0.014 + parallaxY, 0.48];
+  if (layout === "login") return [0.04 * aspect + parallaxX, 0.27 + parallaxY, 0.24];
+  return [0.12 * aspect + parallaxX, -0.06 + parallaxY, 0.3];
+}
+
 /**
  * Where the ship is and how it is turned, in the shader's screen units (the screen's height is 1, the middle is 0; depth grows into the
  * screen, the planet's centre at 0). The blue orbit is a circle on a tilted plane seen from a little above: its picture is the shader's
  * ellipse, and the ship flies along the circle at the head of the orbit's spark. It weaves a little up and down and in and out, pitches
  * with the weave and banks into the turn.
  */
-function shipPose(time: number, aspect: number, parallaxX: number, parallaxY: number) {
-  const wide = aspect > 1;
-  const r = wide ? 0.48 : 0.3;
-  const planet: Vec3 = [(wide ? 0.158 * aspect : 0.12 * aspect) + parallaxX, (wide ? 0.014 : -0.06) + parallaxY, r];
+function shipPose(time: number, planet: Vec3) {
+  const r = planet[2];
   // The shader's o1: centre c + (-0.19, 0.07)·2r, radius 1.59r, flatness 0.36, turned 0.08 rad, 0.16 rad a second.
   const orbitCentre: Vec3 = [planet[0] - 0.38 * r, planet[1] + 0.14 * r, 0];
   const radius = r * 1.59;
@@ -468,7 +480,7 @@ function loadTexture(gl: WebGLRenderingContext, unit: number, url: string, onRea
   return texture;
 }
 
-export function SpaceBackdrop() {
+export function SpaceBackdrop({ layout = "app" }: { layout?: BackdropLayout }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -527,9 +539,9 @@ export function SpaceBackdrop() {
       target.y = (event.clientY / window.innerHeight - 0.5) * 0.025;
     };
 
-    const drawShip = (time: number, aspect: number) => {
+    const drawShip = (time: number, aspect: number, globe: Vec3) => {
       if (!ship || !flame) return;
-      const pose = shipPose(time, aspect, parallax.x, parallax.y);
+      const pose = shipPose(time, globe);
 
       gl.enable(gl.DEPTH_TEST);
       gl.depthFunc(gl.LEQUAL);
@@ -612,9 +624,11 @@ export function SpaceBackdrop() {
       gl.uniform2f(at(scene, "uRes"), canvas.width, canvas.height);
       gl.uniform1f(at(scene, "uTime"), time);
       gl.uniform2f(at(scene, "uParallax"), parallax.x, parallax.y);
+      const globe = globeFrame(aspect, layout, parallax.x, parallax.y);
+      gl.uniform3f(at(scene, "uGlobe"), globe[0], globe[1], globe[2]);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
       gl.disableVertexAttribArray(sceneA);
-      drawShip(time, aspect);
+      drawShip(time, aspect, globe);
     };
     const loop = (now: number) => {
       frame = requestAnimationFrame(loop);
@@ -646,7 +660,7 @@ export function SpaceBackdrop() {
       for (const program of [scene, ship, flame]) if (program) gl.deleteProgram(program);
       for (const buffer of [quad, mesh, corners]) gl.deleteBuffer(buffer);
     };
-  }, []);
+  }, [layout]);
 
   return <canvas ref={canvasRef} aria-hidden className="pointer-events-none absolute inset-0 z-0 h-full w-full" />;
 }

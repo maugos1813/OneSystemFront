@@ -11,7 +11,7 @@ export function OneTrackLogin() {
   return (
     <main className="relative flex min-h-dvh flex-col items-center app-wallpaper-night overflow-hidden overflow-y-auto px-[8%] pt-[max(env(safe-area-inset-top),2rem)] pb-[max(env(safe-area-inset-bottom),1.25rem)] sm:px-6">
       {/* The same living space as the app's dark theme: the Earth turning, its orbits and OneTrack's icon flying round it. */}
-      <SpaceBackdrop />
+      <SpaceBackdrop layout="login" />
       <header className="relative z-[1] flex w-full max-w-md flex-col items-center pt-2 text-center sm:pt-6">
         <div className="relative flex h-32 w-32 items-center justify-center sm:h-40 sm:w-40">
           <span aria-hidden className="absolute inset-0 rounded-full border border-sky-300/25" />
