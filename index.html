@@ -16,6 +16,8 @@
       content="Controllo della flotta in tempo reale, in un unico sistema."
     />
     <meta property="og:image" content="/logos/onetrack-icon.png" />
+    <!-- The Content-Security-Policy in vercel.json allows this script by its sha256 hash: changing even one character of it
+         (spaces included) means recomputing that hash there, or the policy will block it. -->
     <script>
       // Applied before paint so a saved dark preference doesn't flash light first.
       if (localStorage.getItem("onesystem.theme") === "dark") {
