@@ -138,7 +138,7 @@ export function AppLayout() {
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex items-center justify-between gap-3 border-b border-white/60 bg-white/40 px-4 py-3 sm:px-6 md:border-transparent md:bg-transparent lg:px-8 lg:pt-5 dark:border-white/[0.06] dark:bg-[#070a14]/60 md:dark:border-transparent md:dark:bg-transparent">
+        <header className="flex items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8 lg:pt-5">
           <div className="flex min-w-0 items-center gap-3">
             <img src="/logos/onetrack-icon.png" alt="OneTrack" className="h-8 w-8 shrink-0 rounded-xl object-cover md:hidden" />
             {!navOpen && (

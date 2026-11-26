@@ -169,12 +169,13 @@ html:not(.dark) :is(.glass, main :is(.rounded-2xl, .rounded-3xl).bg-white)::afte
     rgba(255, 255, 255, 0.28) 100%
   );
   box-shadow:
-    inset 0 2px 1px rgba(255, 255, 255, 0.95),
-    inset 0 -2px 2px rgba(255, 255, 255, 0.5),
-    inset 2px 0 2px -1px rgba(255, 255, 255, 0.55),
-    inset -2px 0 2px -1px rgba(255, 255, 255, 0.4),
-    inset 0 0 22px rgba(255, 255, 255, 0.5),
-    inset 0 -14px 24px -16px rgba(99, 102, 241, 0.22);
+    inset 0 3px 2px -1px rgba(255, 255, 255, 1),
+    inset 0 -3px 3px -1px rgba(255, 255, 255, 0.7),
+    inset 3px 0 3px -2px rgba(255, 255, 255, 0.75),
+    inset -3px 0 3px -2px rgba(255, 255, 255, 0.6),
+    inset 0 0 0 4px rgba(255, 255, 255, 0.18),
+    inset 0 0 26px rgba(255, 255, 255, 0.6),
+    inset 0 -16px 26px -16px rgba(99, 102, 241, 0.28);
 }
 /* The small pieces (round buttons, the active pill) a little more solid, so their icon and text stay crisp. */
 html:not(.dark) :is(.glass-bubble, .nav-pill-active)::after {
@@ -356,7 +357,8 @@ html.dark :is(.glass-bubble, .nav-pill-active)::after {
   /*
    * Metal edge: a fine brushed-silver rim drawn just inside the edge of every glass component, lit by the cursor as if it gave off light.
    * src/lib/metalLight.ts sets --lx/--ly (the pointer, relative to the component) and the rim shines where it faces it, with a thin
-   * rainbow glint around the shine, like light on polished metal. Without a pointer (phone, pointer away) it is plain silver. The ring is
+   * rainbow glint around the shine, like light on polished metal. Even without a pointer (a phone) the rim is bright polished glass with
+   * two rainbow glints on opposite corners, where the light breaks in its edge. The ring is
    * a ::before masked to its border, so it never covers the content (and never clashes with .glow, which uses ::after).
    */
   :is(.glass, .glass-night, .glass-bubble, .nav-pill-active)::before,
@@ -365,7 +367,7 @@ html.dark :is(.glass-bubble, .nav-pill-active)::after {
     position: absolute;
     inset: 0;
     border-radius: inherit;
-    padding: 1.5px;
+    padding: 2px;
     background:
       radial-gradient(circle 150px at var(--lx, -999px) var(--ly, -999px), rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0.85) 18%, transparent 60%),
       radial-gradient(
@@ -376,7 +378,20 @@ html.dark :is(.glass-bubble, .nav-pill-active)::after {
         rgba(253, 186, 116, 0.85) 60%,
         transparent 70%
       ),
-      linear-gradient(160deg, #eef0f3 0%, #7c8290 18%, #dde0e5 38%, #474e5c 62%, #b4b9c2 82%, #5b6270 100%);
+      conic-gradient(
+        from 200deg,
+        transparent 0deg,
+        rgba(56, 189, 248, 0.95) 22deg,
+        rgba(139, 92, 246, 0.9) 38deg,
+        rgba(244, 114, 182, 0.85) 52deg,
+        transparent 74deg,
+        transparent 165deg,
+        rgba(253, 186, 116, 0.9) 188deg,
+        rgba(250, 204, 21, 0.6) 200deg,
+        rgba(56, 189, 248, 0.8) 214deg,
+        transparent 236deg
+      ),
+      linear-gradient(160deg, #ffffff 0%, #b9bec8 22%, #ffffff 42%, #8d94a1 66%, #eef0f4 86%, #a9afba 100%);
     -webkit-mask:
       linear-gradient(#000 0 0) content-box,
       linear-gradient(#000 0 0);
@@ -397,7 +412,19 @@ html.dark :is(.glass-bubble, .nav-pill-active)::after {
         rgba(253, 186, 116, 0.6) 60%,
         transparent 70%
       ),
-      linear-gradient(160deg, #4b5366 0%, #232a3a 30%, #3d4556 55%, #161b27 80%, #2e3545 100%);
+      conic-gradient(
+        from 200deg,
+        transparent 0deg,
+        rgba(56, 189, 248, 0.7) 22deg,
+        rgba(139, 92, 246, 0.7) 38deg,
+        rgba(244, 114, 182, 0.6) 52deg,
+        transparent 74deg,
+        transparent 165deg,
+        rgba(253, 186, 116, 0.65) 188deg,
+        rgba(56, 189, 248, 0.6) 214deg,
+        transparent 236deg
+      ),
+      linear-gradient(160deg, #5b6478 0%, #262d3e 30%, #4a5368 55%, #171c29 80%, #353d50 100%);
   }
 
   /* Soft lift + colored halo on hover, for floating glass cards. */

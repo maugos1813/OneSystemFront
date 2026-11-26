@@ -13,31 +13,23 @@ export function BottomNav() {
   const items = bottomNav(currentUser);
 
   return (
-    <nav
-      aria-label="OneTrack"
-      className="relative z-10 shrink-0 border-t border-white/80 bg-white/55 backdrop-blur-2xl backdrop-saturate-150 pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_24px_-16px_rgba(79,70,229,0.3)] md:hidden dark:border-white/[0.06] dark:bg-[#070a14]/80 dark:shadow-none"
-    >
-      <ul className="mx-auto flex max-w-xl items-stretch justify-around px-1">
+    <nav aria-label="OneTrack" className="relative z-10 shrink-0 px-3 pt-1 pb-[max(env(safe-area-inset-bottom),0.5rem)] md:hidden">
+      {/* A floating pane of glass, clear of the screen's edges, like the rest of the app's glass. */}
+      <ul className="glass mx-auto flex max-w-xl items-stretch justify-around rounded-[1.75rem] px-1.5 py-1">
         {items.map(({ to, label, icon: Icon, end }) => (
           <li key={to} className="min-w-0 flex-1">
             <NavLink
               to={to}
               end={end}
               className={({ isActive }) =>
-                `flex flex-col items-center gap-0.5 px-1 pt-2 pb-1.5 text-[11px] font-medium transition ${
-                  isActive ? "text-blue-600 dark:text-blue-400" : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white"
+                `flex flex-col items-center gap-0.5 rounded-[1.25rem] px-1 py-1.5 text-[11px] font-medium transition ${
+                  isActive ? "nav-pill-active font-semibold text-blue-600 dark:text-white" : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
                 }`
               }
             >
               {({ isActive }) => (
                 <>
-                  <span
-                    className={`flex h-8 w-14 items-center justify-center rounded-full transition ${
-                      isActive ? "nav-pill-active" : ""
-                    }`}
-                  >
-                    <Icon className="h-[22px] w-[22px]" strokeWidth={isActive ? 2.4 : 2} />
-                  </span>
+                  <Icon className="h-[22px] w-[22px]" strokeWidth={isActive ? 2.4 : 2} />
                   <span className="max-w-full truncate">{t(label)}</span>
                 </>
               )}

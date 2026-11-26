@@ -10,7 +10,25 @@ import { thresholdsFromSettings, vehicleStatus, type VehicleStatus } from "../li
 
 /** A frosted glass card over the light wallpaper (solid navy in the dark theme). */
 const CARD = "glass glow rounded-[1.75rem] p-5";
-const LINK = "flex items-center gap-1 text-sm font-medium text-blue-600 transition hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300";
+/** "Dettagli →", "Vedi tutti →"…: a small glass pill. */
+const LINK =
+  "glass-bubble flex shrink-0 items-center gap-1 rounded-full px-3.5 py-1.5 text-sm font-semibold text-blue-600 transition hover:text-blue-700 active:scale-95 dark:text-sky-300 dark:hover:text-sky-200";
+
+/** The icon in front of a section's title, in its own glass pebble. */
+function TitleIcon({ icon: Icon, className = "text-slate-600 dark:text-slate-300" }: { icon: typeof Car; className?: string }) {
+  return (
+    <span className={`glass-bubble flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${className}`}>
+      <Icon className="h-[18px] w-[18px]" />
+    </span>
+  );
+}
+
+/** The share of each state, as a tinted glass pill. */
+const SHARE_PILL: Record<VehicleStatus, string> = {
+  moving: "bg-emerald-50/80 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300",
+  stopped: "bg-slate-100/80 text-slate-600 dark:bg-white/10 dark:text-slate-300",
+  offline: "bg-violet-50/80 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300",
+};
 
 /** The colour of each state on the ring and in its legend. */
 const STATE_COLOR: Record<VehicleStatus, string> = { moving: "#22c55e", stopped: "#cbd5e1", offline: "#8b5cf6" };
@@ -119,8 +137,11 @@ export function HomePage() {
                     <Icon className="h-6 w-6" />
                   </span>
                   <div className="min-w-0">
-                    <p className="flex items-center gap-1.5 truncate text-sm font-medium text-slate-600 dark:text-slate-300">
-                      <Icon className={`h-4 w-4 sm:hidden ${tone}`} />
+                    <p className="flex items-center gap-2 text-[13px] leading-tight font-semibold text-slate-700 sm:gap-2.5 sm:text-sm dark:text-slate-200">
+                      {/* On a phone the pebble sits beside the label (there is no room for the big one at the side). */}
+                      <span className={`glass-bubble flex h-8 w-8 shrink-0 items-center justify-center rounded-full sm:hidden ${tone}`}>
+                        <Icon className="h-4 w-4" />
+                      </span>
                       {label}
                     </p>
                     <p className="mt-1 text-4xl leading-none font-semibold tracking-tight text-slate-900 tabular-nums dark:text-white">{value}</p>
@@ -145,7 +166,7 @@ export function HomePage() {
             <section className={CARD}>
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-white">
-                  <ShieldCheck className="h-5 w-5 text-slate-500 dark:text-slate-400" />
+                  <TitleIcon icon={ShieldCheck} />
                   {t("home.fleetState")}
                 </h2>
                 <Link to="/gps" className={LINK}>
@@ -160,7 +181,9 @@ export function HomePage() {
                       <span className="h-3 w-3 shrink-0 rounded-full" style={{ background: STATE_COLOR[status] }} />
                       <span className="flex-1 font-medium text-slate-700 dark:text-slate-200">{t(`home.${status}`)}</span>
                       <span className="w-10 text-right text-lg font-semibold text-slate-900 tabular-nums dark:text-white">{summary.counts[status]}</span>
-                      <span className="w-12 text-right text-slate-500 tabular-nums dark:text-slate-400">{Math.round((summary.counts[status] / total) * 100)}%</span>
+                      <span className={`min-w-14 rounded-full px-2.5 py-1 text-center text-xs font-bold tabular-nums shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_4px_10px_-6px_rgba(15,23,42,0.3)] ring-1 ring-white/80 dark:shadow-none dark:ring-white/10 ${SHARE_PILL[status]}`}>
+                        {Math.round((summary.counts[status] / total) * 100)}%
+                      </span>
                     </li>
                   ))}
                 </ul>
@@ -170,7 +193,7 @@ export function HomePage() {
             <section className={CARD}>
               <div className="mb-2 flex items-center justify-between">
                 <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-white">
-                  <AlertTriangle className="h-5 w-5 text-red-500" />
+                  <TitleIcon icon={AlertTriangle} className="text-red-500" />
                   {t("home.needAttention")}
                 </h2>
                 <Link to="/alertas" className={LINK}>
@@ -203,7 +226,7 @@ export function HomePage() {
           <section className={CARD}>
             <div className="mb-3 flex items-center justify-between">
               <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-white">
-                <MapPin className="h-5 w-5 text-slate-500 dark:text-slate-400" />
+                <TitleIcon icon={MapPin} />
                 {t("home.movingNow")}
               </h2>
               <Link to="/gps" className={LINK}>
@@ -234,7 +257,7 @@ export function HomePage() {
       {shortcuts.length > 0 && (
         <section>
           <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-white">
-            <Zap className="h-5 w-5 text-slate-500 dark:text-slate-400" />
+            <TitleIcon icon={Zap} className="text-amber-500" />
             {t("home.shortcuts")}
           </h2>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6 lg:gap-4">
@@ -274,9 +297,9 @@ function FleetRing({ counts, total, label }: { counts: Record<VehicleStatus, num
       return arc;
     });
   return (
-    <div className="glass-bubble relative flex h-40 w-40 shrink-0 items-center justify-center rounded-full">
+    <div className="glass-bubble relative flex h-44 w-44 shrink-0 items-center justify-center rounded-full">
       <svg viewBox="0 0 128 128" className="absolute inset-2 -rotate-90" role="img" aria-label={`${total} ${label}`}>
-        <circle cx="64" cy="64" r={radius} fill="none" stroke="currentColor" strokeWidth="10" className="text-slate-100 dark:text-white/10" />
+        <circle cx="64" cy="64" r={radius} fill="none" stroke="currentColor" strokeWidth="13" className="text-slate-200/80 dark:text-white/10" />
         {arcs.map(({ status, length, offset: start }) => (
           <circle
             key={status}
@@ -285,7 +308,7 @@ function FleetRing({ counts, total, label }: { counts: Record<VehicleStatus, num
             r={radius}
             fill="none"
             stroke={STATE_COLOR[status]}
-            strokeWidth="10"
+            strokeWidth="13"
             strokeLinecap="round"
             strokeDasharray={`${length} ${circumference}`}
             strokeDashoffset={-start}
