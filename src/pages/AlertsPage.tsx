@@ -76,7 +76,7 @@ export function AlertsPage() {
   }, {});
 
   return (
-    <div className="h-full overflow-y-auto bg-[#f5f6fb] p-4 sm:p-6 lg:p-8 dark:bg-[#0a0e1a]">
+    <div className="h-full overflow-y-auto p-4 sm:p-6 lg:p-8 dark:bg-[#0a0e1a]">
       <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t("alerts.title")}</h1>

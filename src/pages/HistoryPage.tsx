@@ -87,7 +87,7 @@ function HistoryView({
   // The route fills the screen: a slim header, then the map taking all the room that is left and the controls beside it (laptop) or
   // right under it (phone), where the page scrolls to the rest. No panels, titles or margins around the map.
   return (
-    <div className="flex h-full flex-col overflow-y-auto bg-[#f5f6fb] lg:overflow-hidden dark:bg-[#0a0e1a]">
+    <div className="flex h-full flex-col overflow-y-auto lg:overflow-hidden dark:bg-[#0a0e1a]">
       {/* The vehicle is already chosen: no list of fleets or plates here, just which one it is and a way back to choose another. */}
       <div className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-2 px-3 pt-3 sm:px-4 lg:px-5">
         <button
@@ -227,7 +227,7 @@ function ChooseDates({
   const days = start && last ? Math.round((new Date(`${last}T12:00:00`).getTime() - new Date(`${start}T12:00:00`).getTime()) / DAY_MS) + 1 : 0;
 
   return (
-    <div className="h-full overflow-y-auto bg-[#f5f6fb] p-4 sm:p-6 lg:p-8 dark:bg-[#0a0e1a]">
+    <div className="h-full overflow-y-auto p-4 sm:p-6 lg:p-8 dark:bg-[#0a0e1a]">
       <div className="mx-auto max-w-3xl">
         <div className="mb-5 flex flex-wrap items-center gap-x-4 gap-y-2">
           <button

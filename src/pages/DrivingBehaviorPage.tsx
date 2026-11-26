@@ -157,7 +157,7 @@ export function DrivingBehaviorPage() {
   const chosen = vehicles.find((v) => v.id === selectedVehicleId);
 
   return (
-    <div className="h-full overflow-y-auto bg-[#f5f6fb] p-4 sm:p-6 lg:p-8 dark:bg-[#0a0e1a]">
+    <div className="h-full overflow-y-auto p-4 sm:p-6 lg:p-8 dark:bg-[#0a0e1a]">
       <div className="mb-4 flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t("driving.title")}</h1>

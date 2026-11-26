@@ -18,7 +18,7 @@ export interface HubView {
 export function SectionHub({ title, hint, views }: { title: string; hint?: string; views: HubView[] }) {
   const [params, setParams] = useSearchParams();
   // Only one view (the rest are not available to this account): no middle screen to choose on.
-  if (views.length === 1) return <div className="styled-scrollbar h-full overflow-y-auto bg-[#f5f6fb] dark:bg-[#0a0e1a]">{views[0]!.content}</div>;
+  if (views.length === 1) return <div className="styled-scrollbar h-full overflow-y-auto dark:bg-[#0a0e1a]">{views[0]!.content}</div>;
   const active = views.find((view) => view.key === params.get("tab"));
 
   /** Each screen starts clean: what a view put in the address (a chosen vehicle…) does not follow to the next one. */
@@ -28,8 +28,8 @@ export function SectionHub({ title, hint, views }: { title: string; hint?: strin
 
   if (active) {
     return (
-      <div className="flex h-full flex-col bg-[#f5f6fb] dark:bg-[#0a0e1a]">
-        <div className="shrink-0 border-b border-violet-100 bg-white px-4 py-2.5 sm:px-6 lg:px-8 dark:border-white/5 dark:bg-[#0d1220]">
+      <div className="flex h-full flex-col dark:bg-[#0a0e1a]">
+        <div className="shrink-0 border-b border-white/70 bg-white/45 px-4 py-2.5 sm:px-6 lg:px-8 dark:border-white/5 dark:bg-[#0d1220]">
           <button
             type="button"
             onClick={() => go(null)}
@@ -44,7 +44,7 @@ export function SectionHub({ title, hint, views }: { title: string; hint?: strin
   }
 
   return (
-    <div className="styled-scrollbar h-full overflow-y-auto bg-[#f5f6fb] p-4 sm:p-6 lg:p-8 dark:bg-[#0a0e1a]">
+    <div className="styled-scrollbar h-full overflow-y-auto p-4 sm:p-6 lg:p-8 dark:bg-[#0a0e1a]">
       <h1 className="text-xl font-semibold text-slate-900 dark:text-white">{title}</h1>
       {hint && <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">{hint}</p>}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">

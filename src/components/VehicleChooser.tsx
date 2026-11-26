@@ -18,7 +18,7 @@ export function VehicleChooser({ title, subtitle, onSelect }: { title: string; s
     .sort((a, b) => (a.plate ?? a.name).localeCompare(b.plate ?? b.name));
 
   return (
-    <div className="h-full overflow-y-auto bg-[#f5f6fb] p-4 sm:p-6 lg:p-8 dark:bg-[#0a0e1a]">
+    <div className="h-full overflow-y-auto p-4 sm:p-6 lg:p-8 dark:bg-[#0a0e1a]">
       <div className="mx-auto max-w-6xl">
         <h1 className="text-xl font-semibold text-slate-900 dark:text-white">{title}</h1>
         <p className="mb-5 text-sm text-slate-500 dark:text-slate-400">{subtitle}</p>

@@ -28,7 +28,7 @@ function SignedIn() {
 
   if (hasOneTrack === null) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[#f5f6fb] text-sm text-slate-400 dark:bg-[#0a0e1a] dark:text-slate-500">
+      <div className="flex h-screen items-center justify-center app-wallpaper text-sm text-slate-400 dark:text-slate-500">
         {t("common.loading")}
       </div>
     );
@@ -53,7 +53,7 @@ function NoOneTrack() {
   const t = useT();
   const { logout } = useAuth();
   return (
-    <div className="app-shell flex h-screen flex-col items-center justify-center gap-4 bg-[#f5f6fb] p-6 text-center dark:bg-[#0a0e1a]">
+    <div className="app-shell flex h-screen flex-col items-center justify-center gap-4 app-wallpaper p-6 text-center">
       <p className="max-w-xs text-sm text-slate-600 dark:text-slate-300">{t("workspace.noOneTrack")}</p>
       <button
         onClick={logout}
