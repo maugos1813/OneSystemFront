@@ -58,7 +58,7 @@ export function AppLayout() {
       <aside
         // The side menu is for tablets and up: on a phone the bottom bar and the start take its place. On a tablet it is a slim rail of
         // icons; on a laptop it is the full menu, which can be folded away. In the light theme it is frosted glass over the wallpaper.
-        className={`relative z-[1] hidden overflow-hidden border-r border-white/70 bg-white/40 backdrop-blur-2xl backdrop-saturate-150 shadow-[8px_0_30px_-20px_rgba(79,70,229,0.25)] transition-all duration-200 md:block dark:border-white/[0.06] dark:bg-[#070a14]/55 dark:shadow-[8px_0_30px_-20px_rgba(0,0,0,0.8)] ${
+        className={`relative z-[1] hidden overflow-hidden border-r border-white/70 bg-white/85 backdrop-blur-2xl backdrop-saturate-150 shadow-[8px_0_30px_-20px_rgba(79,70,229,0.25)] transition-all duration-200 md:block dark:border-white/[0.06] dark:bg-[#070a14]/55 dark:shadow-[8px_0_30px_-20px_rgba(0,0,0,0.8)] ${
           navOpen ? "md:w-[4.75rem] lg:w-64" : "md:w-[4.75rem] lg:w-0 lg:border-transparent"
         }`}
       >
@@ -166,9 +166,10 @@ export function AppLayout() {
                 <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">{currentUser?.orgName || "..."}</p>
               </div>
             </div>
+            {/* Right on the space backdrop (dark in both themes), so light text. */}
             <div className="min-w-0 md:hidden">
-              <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">{name || "..."}</p>
-              <OneSystecMark className="flex" />
+              <p className="truncate text-sm font-semibold text-white">{name || "..."}</p>
+              <OneSystecMark className="flex text-slate-300! [&_.font-semibold]:text-slate-100!" />
             </div>
           </div>
 
@@ -182,9 +183,9 @@ export function AppLayout() {
             </button>
             <AlertsPanel />
             <span className="hidden h-7 w-px bg-slate-300/70 sm:block dark:bg-white/10" />
-            {/* Who is signed in: initials in a ring and the name (the email on hover). */}
-            <div className="hidden items-center gap-2.5 sm:flex" title={currentUser?.email}>
-              <span className="glass-bubble flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold text-slate-700 ring-2 ring-violet-200/70 dark:text-white dark:ring-white/10">
+            {/* Who is signed in: initials in a ring and the name (the email on hover), on a glass pill so they read over the space. */}
+            <div className="glass hidden items-center gap-2.5 rounded-full p-1 sm:flex lg:pr-4" title={currentUser?.email}>
+              <span className="glass-bubble flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-slate-700 ring-2 ring-violet-200/70 dark:text-white dark:ring-white/10">
                 {initials}
               </span>
               <span className="hidden max-w-[10rem] truncate text-sm font-semibold text-slate-800 lg:inline dark:text-white">{name}</span>

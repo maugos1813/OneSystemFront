@@ -6,8 +6,8 @@ import { useEffect, useRef } from "react";
  * menu backgrounds of a space strategy game. OneTrack's arrow, made a small 3D ship with a burning thruster, flies round the Earth on
  * the blue orbit: it weaves a little up and down and side to side, banks into the turn, grows as it passes in front and shrinks as it
  * goes round the back, and shows its tail and engine as it flies away. The globe leans a little toward the pointer (parallax) on a
- * computer. In the light theme the same scene is a daytime Earth in a pale sky: true colours, thick white clouds, a white halo and fine
- * white orbit lines.
+ * computer. In the light theme the same space holds the Earth by day: vivid true colours, crisp white clouds, the night side with its
+ * cities along the lower right edge, a bright blue atmosphere, and the Milky Way across the sky behind it.
  *
  * The scene is one small WebGL fragment shader on a single canvas (no 3D library): a ray hits a sphere per pixel and reads
  * NASA's public-domain day and night textures (public/backgrounds/earth-*.jpg), wrapped around it and turned with time. It runs at a
@@ -30,7 +30,7 @@ uniform vec2 uParallax;
 uniform vec3 uGlobe;
 uniform sampler2D uDay;
 uniform sampler2D uNight;
-// 1 for the light theme: a daytime Earth in a pale sky instead of the night one in deep space.
+// 1 for the light theme: the Earth by day (with the Milky Way behind it) instead of at night; both in deep space.
 uniform float uLight;
 
 const float PI = 3.14159265;
@@ -97,12 +97,22 @@ vec4 orbit(vec2 uv, vec2 c, float radius, float flatness, float angle, float spe
   return vec4(light, q.y < 0.0 ? 1.0 : 0.0);
 }
 
-// An orbit's light over the scene. At night it simply adds up; by day it would wash out to white, so the line is laid over the sky in
-// its own colour instead, as much as it shines.
-vec3 addLight(vec3 col, vec3 light) {
-  if (uLight < 0.5) return col + light;
-  float a = clamp(max(light.r, max(light.g, light.b)), 0.0, 1.0);
-  return a > 0.0 ? mix(col, light / max(max(light.r, max(light.g, light.b)), 1e-4), a) : col;
+// The Milky Way across the upper left of the sky (in the light theme): a soft band of violet, blue and warm haze, mottled with dust,
+// with a dense powder of small stars in it.
+vec3 milkyWay(vec2 sp, float aspect) {
+  vec2 dir = normalize(vec2(1.0, 0.42));
+  vec2 origin = vec2(-0.55 * aspect, 0.18);
+  float across = dot(sp - origin, vec2(-dir.y, dir.x));
+  float along = dot(sp - origin, dir);
+  float band = exp(-across * across / 0.035) * smoothstep(-1.2, 0.0, along) * (1.0 - smoothstep(0.4, 1.4, along));
+  if (band < 0.002) return vec3(0.0);
+  float cloud = fbm(vec3(sp * 3.2, 1.7));
+  float dust = smoothstep(0.45, 0.75, fbm(vec3(sp * 7.0, 4.3)));
+  vec3 haze = mix(vec3(0.30, 0.22, 0.55), vec3(0.20, 0.38, 0.75), cloud);
+  haze = mix(haze, vec3(0.75, 0.60, 0.50), smoothstep(0.55, 0.8, cloud) * 0.5);
+  vec3 light = haze * band * (0.45 + 0.95 * cloud) * (1.0 - 0.55 * dust);
+  light += stars(sp, 160.0, 0.0, 0.78) * band * 1.1;
+  return light;
 }
 
 void main() {
@@ -115,19 +125,15 @@ void main() {
 
   // Deep space: a blue glow around the planet, a violet haze in the far corner, and three layers of stars.
   vec3 col;
-  if (uLight > 0.5) {
-    // By day: a pale sky, bluer toward the lower right, whitening into a bright haze round the planet.
-    col = mix(vec3(0.93, 0.96, 1.0), vec3(0.72, 0.83, 0.96), smoothstep(-0.7, 0.9, uv.x / aspect * 1.2 - uv.y));
-    col = mix(col, vec3(1.0), exp(-length(uv - c) * 2.2) * 0.35);
-  } else {
-    col = vec3(0.006, 0.010, 0.028);
-    col += vec3(0.02, 0.06, 0.16) * exp(-length(uv - c) * 1.6);
-    col += vec3(0.05, 0.02, 0.09) * exp(-length(uv - vec2(-0.9 * aspect, -0.6)) * 2.2);
-    vec2 sp = uv - uParallax * 0.4;
-    col += stars(sp, 38.0, 0.010, 0.86) * 0.9;
-    col += stars(sp, 70.0, 0.006, 0.90) * 0.6;
-    col += stars(sp, 120.0, 0.003, 0.93) * 0.45;
-  }
+  // Both themes are set in real space, black with stars; the light theme adds the Milky Way and a brighter blue glow.
+  col = vec3(0.006, 0.010, 0.028);
+  col += vec3(0.02, 0.06, 0.16) * exp(-length(uv - c) * 1.6) * (1.0 + uLight * 0.6);
+  col += vec3(0.05, 0.02, 0.09) * exp(-length(uv - vec2(-0.9 * aspect, -0.6)) * 2.2);
+  vec2 sp = uv - uParallax * 0.4;
+  col += stars(sp, 38.0, 0.010, 0.86) * 0.9;
+  col += stars(sp, 70.0, 0.006, 0.90) * 0.6;
+  col += stars(sp, 120.0, 0.003, 0.93) * 0.45;
+  if (uLight > 0.5) col += milkyWay(sp, aspect);
 
   vec2 p = (uv - c) / r;
   float d = length(p);
@@ -138,25 +144,18 @@ void main() {
   // The blue orbit; OneTrack's ship rides it (worked out again in shipPose below: keep the two in step).
   vec2 o1c = c + vec2(-0.19, 0.07) * r * 2.0;
   float o1r = r * 1.59, o1flat = 0.36, o1angle = 0.08, o1speed = 0.16;
-  // By day the blue orbit is a fine white line with a white spark, as in the light wallpaper.
-  vec3 o1line = uLight > 0.5 ? vec3(0.96, 0.98, 1.0) : vec3(0.25, 0.55, 1.0);
-  vec3 o1spark = uLight > 0.5 ? vec3(1.0) : vec3(0.65, 0.85, 1.0);
-  vec4 o1 = orbit(uv, o1c, o1r, o1flat, o1angle, o1speed, 0.0, o1line, o1spark);
+  vec4 o1 = orbit(uv, o1c, o1r, o1flat, o1angle, o1speed, 0.0, vec3(0.25, 0.55, 1.0) * (1.0 + uLight * 0.4), vec3(0.65, 0.85, 1.0));
   vec4 o2 = orbit(uv, c + vec2(-0.05, -0.02), r * 2.05, 0.42, 0.30, -0.11, 2.4, vec3(1.0, 0.55, 0.22) * 0.45, vec3(1.0, 0.60, 0.25));
 
   // The far halves of the orbits pass behind the planet (drawn now, then covered by it); the near halves come after it.
   float outside = smoothstep(1.0 - px, 1.0 + px, d);
-  col = addLight(col, o1.rgb * (1.0 - o1.a) * outside);
-  col = addLight(col, o2.rgb * (1.0 - o2.a) * outside);
+  col += o1.rgb * (1.0 - o1.a) * outside;
+  col += o2.rgb * (1.0 - o2.a) * outside;
 
-  // The atmosphere outside the disc: a tight bright rim and a wide soft halo (by day, white glow fading into the sky).
+  // The atmosphere outside the disc: a tight bright rim and a wide soft halo (brighter round the daytime Earth).
   if (d > 1.0) {
-    if (uLight > 0.5) {
-      col = mix(col, vec3(1.0), exp(-(d - 1.0) * 16.0) * 0.85);
-      col = mix(col, vec3(0.90, 0.95, 1.0), exp(-(d - 1.0) * 3.0) * 0.35);
-    } else {
-      col += vec3(0.18, 0.48, 1.0) * (exp(-(d - 1.0) * 18.0) * 0.6 + exp(-(d - 1.0) * 3.5) * 0.10);
-    }
+    float k = 1.0 + uLight * 0.7;
+    col += vec3(0.18, 0.48, 1.0) * (exp(-(d - 1.0) * 18.0) * 0.6 + exp(-(d - 1.0) * 3.5) * 0.10) * k;
   }
 
   if (d < 1.0 + px) {
@@ -206,25 +205,29 @@ void main() {
       vec3 land = clamp(mix(vec3(dl), day, 1.25) * 1.32, 0.0, 1.0);
       // Smooth open sea (the picture's sea-floor relief only faintly), lighter in the shallows along the coasts.
       vec3 sea = mix(vec3(0.04, 0.32, 0.74), vec3(0.14, 0.58, 0.96), smoothstep(0.40, 0.70, day.b + day.g * 0.5) * 0.7);
-      float shade = 0.62 + 0.55 * max(light, 0.0);
-      planet = mix(land, sea, ocean) * shade;
+      // The sun a little further round than at night, so the lower right edge falls into night: there the night side shows, its
+      // cities glowing gold, as on a photograph from orbit.
+      float sunSide = dot(n, normalize(vec3(-0.6, 0.55, 0.42)));
+      float shade = 0.62 + 0.55 * max(sunSide, 0.0);
+      vec3 dayside = mix(land, sea, ocean) * shade;
       vec3 glintDir = normalize(sun + vec3(0.0, 0.0, 1.0));
-      planet += vec3(0.75, 0.88, 1.0) * pow(max(dot(n, glintDir), 0.0), 30.0) * 0.35 * ocean;
-      planet = mix(planet, vec3(1.0) * (0.88 + 0.12 * shade), cloud * 0.95);
-      planet = mix(planet, vec3(0.02, 0.18, 0.52), smoothstep(0.6, 1.0, d) * 0.3);
-      planet = mix(planet, vec3(0.80, 0.93, 1.0), pow(1.0 - z, 4.0) * 0.95);
+      dayside += vec3(0.75, 0.88, 1.0) * pow(max(dot(n, glintDir), 0.0), 30.0) * 0.35 * ocean;
+      dayside = mix(dayside, vec3(1.0) * (0.88 + 0.12 * shade), cloud * 0.95);
+      vec3 nightside = base * 0.9 + cities * (1.0 - 0.7 * cloud);
+      planet = mix(nightside, dayside, smoothstep(-0.18, 0.22, sunSide));
+      planet = mix(planet, vec3(0.02, 0.16, 0.48), smoothstep(0.6, 1.0, d) * 0.3);
+      // A blue atmosphere at the rim, bright on the sunlit side.
+      planet = mix(planet, vec3(0.45, 0.75, 1.0), pow(1.0 - z, 3.0) * (0.55 + 0.4 * smoothstep(-0.2, 0.4, sunSide)));
     }
     float edge = 1.0 - smoothstep(1.0 - px, 1.0 + px, d);
     col = mix(col, planet, edge);
   }
 
   // The near halves of the orbits run in front of the planet.
-  col = addLight(col, o1.rgb * o1.a);
-  col = addLight(col, o2.rgb * o2.a);
+  col += o1.rgb * o1.a + o2.rgb * o2.a;
 
-  // Dark edges at night, so the scene sinks into the frame; by day a light haze instead.
-  float frame = smoothstep(0.55, 1.25, length(uv * vec2(0.8, 1.0)));
-  col = uLight > 0.5 ? mix(col, vec3(0.94, 0.97, 1.0), frame * 0.35) : col * (1.0 - 0.35 * frame);
+  // Dark edges, so the scene sinks into the frame.
+  col *= 1.0 - 0.35 * smoothstep(0.55, 1.25, length(uv * vec2(0.8, 1.0)));
   gl_FragColor = vec4(col, 1.0);
 }
 `;
@@ -698,12 +701,20 @@ export function SpaceBackdrop({ layout = "app", theme = "dark" }: { layout?: Bac
     };
     const redraw = () => requestAnimationFrame(draw);
 
-    // The picture each theme shows in full gets the sharp version: the daytime Earth by day, the night one at night (where the day
-    // picture only tints the sunlit corner). A GPU that can't hold 4096-pixel pictures keeps the small ones.
+    // The picture each theme shows in full gets the sharp version: the daytime Earth by day (where the night picture only lights the
+    // cities along the dark edge), the night one at night (where the day picture only tints the sunlit corner). A GPU that can't hold 4096-pixel pictures keeps the small ones.
     const sharp = (gl.getParameter(gl.MAX_TEXTURE_SIZE) as number) >= 4096;
+    // (index.html starts downloading the same pictures before the app's code, so they usually come straight from the cache.)
+    // The scene stays hidden, over the wallpaper's plain sky, until the theme's own picture of the Earth is in, then fades in: no
+    // blank planet first.
+    canvas.style.opacity = "0";
+    const reveal = () => {
+      redraw();
+      requestAnimationFrame(() => requestAnimationFrame(() => (canvas.style.opacity = "1")));
+    };
     const textures = [
-      loadTexture(gl, 0, ["/backgrounds/earth-day.jpg", ...(light && sharp ? ["/backgrounds/earth-day-4k.jpg"] : [])], redraw),
-      loadTexture(gl, 1, light ? [] : ["/backgrounds/earth-night.jpg", ...(sharp ? ["/backgrounds/earth-night-4k.jpg"] : [])], redraw),
+      loadTexture(gl, 0, ["/backgrounds/earth-day.jpg", ...(light && sharp ? ["/backgrounds/earth-day-4k.jpg"] : [])], light ? reveal : redraw),
+      loadTexture(gl, 1, ["/backgrounds/earth-night.jpg", ...(!light && sharp ? ["/backgrounds/earth-night-4k.jpg"] : [])], light ? redraw : reveal),
     ];
 
     const onVisibility = () => {
@@ -728,5 +739,5 @@ export function SpaceBackdrop({ layout = "app", theme = "dark" }: { layout?: Bac
     };
   }, [layout, theme]);
 
-  return <canvas ref={canvasRef} aria-hidden className="pointer-events-none absolute inset-0 z-0 h-full w-full" />;
+  return <canvas ref={canvasRef} aria-hidden className="pointer-events-none absolute inset-0 z-0 h-full w-full opacity-0 transition-opacity duration-700" />;
 }

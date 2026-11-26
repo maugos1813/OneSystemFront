@@ -1,17 +1,20 @@
+import { useTheme } from "../../context/ThemeContext";
 import { useT } from "../../i18n";
 import { LoginCard } from "./LoginCard";
 import { SpaceBackdrop } from "./SpaceBackdrop";
 
 /**
- * The OneTrack app's sign-in: OneTrack's own symbol and name above the form (a pane of the app's smoked glass over the living space
- * backdrop, with radar rings behind the logo) and the signature of who made it at the foot.
+ * The OneTrack app's sign-in: OneTrack's own symbol and name above the form (a pane of the app's smoked glass over the living
+ * backdrop, with radar rings behind the logo) and the signature of who made it at the foot. The backdrop follows the theme like the
+ * app's: the Earth by day or at night, always in deep space; the sign-in card is the same smoked glass in both.
  */
 export function OneTrackLogin() {
   const t = useT();
+  const { theme } = useTheme();
   return (
-    <main className="relative flex min-h-dvh flex-col items-center app-wallpaper-night overflow-hidden overflow-y-auto px-[8%] pt-[max(env(safe-area-inset-top),2rem)] pb-[max(env(safe-area-inset-bottom),1.25rem)] sm:px-6">
-      {/* The same living space as the app's dark theme: the Earth turning, its orbits and OneTrack's icon flying round it. */}
-      <SpaceBackdrop layout="login" />
+    <main className="relative flex min-h-dvh flex-col items-center app-wallpaper overflow-hidden overflow-y-auto px-[8%] pt-[max(env(safe-area-inset-top),2rem)] pb-[max(env(safe-area-inset-bottom),1.25rem)] sm:px-6">
+      {/* The same living scene as the app's: the Earth turning, its orbits and OneTrack's ship flying round it. */}
+      <SpaceBackdrop layout="login" theme={theme} />
       <header className="relative z-[1] flex w-full max-w-md flex-col items-center pt-2 text-center sm:pt-6">
         <div className="relative flex h-32 w-32 items-center justify-center sm:h-40 sm:w-40">
           <span aria-hidden className="absolute inset-0 rounded-full border border-sky-300/25" />

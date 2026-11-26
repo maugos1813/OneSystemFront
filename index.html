@@ -19,10 +19,22 @@
     <!-- The Content-Security-Policy in vercel.json allows this script by its sha256 hash: changing even one character of it
          (spaces included) means recomputing that hash there, or the policy will block it. -->
     <script>
-      // Applied before paint so a saved dark preference doesn't flash light first.
-      if (localStorage.getItem("onesystem.theme") === "dark") {
-        document.documentElement.classList.add("dark");
-      }
+      // Applied before paint so a saved dark preference doesn't flash light first. It also starts downloading the backdrop's pictures
+      // of the Earth (the theme's own: the day one by day, the night one at night, each with the other's small one) at once, before the app's code: the small one first,
+      // the sharp one after it, so the planet is there as soon as the app first draws.
+      (function () {
+        var dark = localStorage.getItem("onesystem.theme") === "dark";
+        if (dark) document.documentElement.classList.add("dark");
+        var pictures = dark ? ["earth-night.jpg", "earth-day.jpg", "earth-night-4k.jpg"] : ["earth-day.jpg", "earth-night.jpg", "earth-day-4k.jpg"];
+        pictures.forEach(function (name, i) {
+          var link = document.createElement("link");
+          link.rel = "preload";
+          link.as = "image";
+          link.href = "/backgrounds/" + name;
+          link.setAttribute("fetchpriority", i === 0 ? "high" : "low");
+          document.head.appendChild(link);
+        });
+      })();
     </script>
   </head>
   <body>

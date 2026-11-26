@@ -98,25 +98,27 @@ body {
 }
 
 /*
- * The app sits on a wallpaper (soft pearl waves in the light theme, night waves with a rainbow rim in the dark one) and its panels are
- * frosted glass over it. `app-wallpaper` goes on the full-screen container of the app (and of the screens shown outside it).
+ * The app sits on the turning Earth in space (SpaceBackdrop) and its panels are frosted glass over it. `app-wallpaper` goes on the
+ * full-screen container of the app (and of the screens shown outside it): it is the scene's own deep space, drawn by CSS, which shows at
+ * once on the first paint while the Earth is still on its way (the globe then fades in over it). Space is black in both themes: the light
+ * theme is light in its panels, not in its sky.
  */
-.app-wallpaper {
-  background-color: #eef0f8;
-  background-image: url("/backgrounds/onetrack-light.webp");
-  background-size: cover;
-  background-position: center top;
-  background-repeat: no-repeat;
-}
-.dark .app-wallpaper,
+.app-wallpaper,
 .app-wallpaper-night {
-  background-color: #05070f;
-  background-image: url("/backgrounds/onetrack-dark.webp");
+  background-color: #02040b;
+  background-image: radial-gradient(ellipse 50% 65% at 66% 50%, #0a1a3f 0%, #050a1c 45%, #02040b 75%);
 }
-.app-wallpaper-night {
-  background-size: cover;
-  background-position: center top;
-  background-repeat: no-repeat;
+
+/*
+ * Light theme: what sits right on the dark space, outside any panel (page titles, the line under them, section titles), is white, with a
+ * soft shadow so it reads over the bright Earth too. Anything inside a card, a glass pane, a tab bar or a dialog keeps its own colours.
+ */
+html:not(.dark) main :is(h1, h2, h1 + p, header p:not(.glass)):not(:is(.glass, .glass-bubble, .nav-pill-active, [class*="bg-white"], [class*="bg-slate-"], .rounded-lg, .rounded-xl, .rounded-2xl, .rounded-3xl, [role="dialog"]) *) {
+  color: #fff;
+  text-shadow: 0 1px 12px rgba(2, 6, 23, 0.6);
+}
+html:not(.dark) main :is(h1 + p, header p:not(.glass)):not(:is(.glass, .glass-bubble, [class*="bg-white"], [class*="bg-slate-"], .rounded-lg, .rounded-xl, .rounded-2xl, .rounded-3xl, [role="dialog"]) *) {
+  color: rgba(226, 232, 240, 0.92);
 }
 
 /*
@@ -158,16 +160,16 @@ html:not(.dark) :is(.glass, main :is(.rounded-2xl, .rounded-3xl).bg-white) {
     0 8px 16px -8px rgba(15, 23, 42, 0.1),
     0 26px 50px -22px rgba(79, 70, 229, 0.3);
 }
-/* Frosted enough that the turning Earth behind it stays a soft blur of colour and the text over it reads easily. */
+/* White frosted glass over the dark space: the Earth behind it shows only as a soft blur of colour, and the text reads easily. */
 html:not(.dark) :is(.glass, main :is(.rounded-2xl, .rounded-3xl).bg-white)::after {
   -webkit-backdrop-filter: blur(22px) saturate(150%) brightness(1.06);
   backdrop-filter: blur(22px) saturate(150%) brightness(1.06);
   background: linear-gradient(
     145deg,
-    rgba(255, 255, 255, 0.74) 0%,
-    rgba(255, 255, 255, 0.56) 38%,
-    rgba(255, 255, 255, 0.5) 62%,
-    rgba(255, 255, 255, 0.62) 100%
+    rgba(255, 255, 255, 0.94) 0%,
+    rgba(255, 255, 255, 0.87) 38%,
+    rgba(255, 255, 255, 0.84) 62%,
+    rgba(255, 255, 255, 0.9) 100%
   );
   box-shadow:
     inset 0 3px 2px -1px rgba(255, 255, 255, 1),
@@ -180,7 +182,7 @@ html:not(.dark) :is(.glass, main :is(.rounded-2xl, .rounded-3xl).bg-white)::afte
 }
 /* The small pieces (round buttons, the active pill) a little more solid, so their icon and text stay crisp. */
 html:not(.dark) :is(.glass-bubble, .nav-pill-active)::after {
-  background: linear-gradient(160deg, rgba(255, 255, 255, 0.78) 0%, rgba(255, 255, 255, 0.42) 55%, rgba(241, 243, 251, 0.58) 100%);
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.8) 55%, rgba(241, 243, 251, 0.88) 100%);
   box-shadow:
     inset 0 2px 1px rgba(255, 255, 255, 1),
     inset 0 -2px 3px rgba(99, 102, 241, 0.12),
