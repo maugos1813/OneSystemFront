@@ -4,7 +4,6 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useFleet } from "../context/FleetContext";
 import { useLanguage, useT } from "../i18n";
-import { trackGlow } from "../lib/glow";
 import { homeShortcuts } from "../lib/oneTrackNav";
 import { formatDate } from "../lib/time";
 import { thresholdsFromSettings, vehicleStatus, type VehicleStatus } from "../lib/vehicleStatus";
@@ -131,7 +130,7 @@ export function HomePage() {
               );
               // With nothing in it (no vehicle without signal, no alert) there is nothing to open: an empty map or list would only confuse.
               return value > 0 ? (
-                <Link key={label} to={to} onMouseMove={trackGlow} className={`${CARD} float-card block active:scale-[0.98]`}>
+                <Link key={label} to={to} className={`${CARD} float-card block active:scale-[0.98]`}>
                   {body}
                 </Link>
               ) : (
@@ -240,7 +239,7 @@ export function HomePage() {
           </h2>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6 lg:gap-4">
             {shortcuts.map(({ to, label, hint, icon: Icon }, index) => (
-              <Link key={to} to={to} onMouseMove={trackGlow} className={`${CARD} float-card group block p-4 active:scale-[0.98]`}>
+              <Link key={to} to={to} className={`${CARD} float-card group block p-4 active:scale-[0.98]`}>
                 <span className={`glass-bubble flex h-11 w-11 items-center justify-center rounded-2xl ${SHORTCUT_TINTS[index % SHORTCUT_TINTS.length]}`}>
                   <Icon className="h-5 w-5" />
                 </span>

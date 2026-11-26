@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import { trackGlow } from "../../lib/glow";
 
 export function Panel({
   title,
@@ -14,7 +13,6 @@ export function Panel({
 }) {
   return (
     <div
-      onMouseMove={trackGlow}
       className={`glow float-card rounded-[28px] border border-white bg-white p-4 shadow-lg shadow-slate-200/50 sm:p-6 dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40 ${className}`}
     >
       <div className="mb-4 flex items-center justify-between">

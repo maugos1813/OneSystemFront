@@ -7,7 +7,6 @@ import { useAuth } from "../context/AuthContext";
 import { useFleet } from "../context/FleetContext";
 import { useT } from "../i18n";
 import { getVehicleProfile, setVehicleOdometer, updateVehicle } from "../lib/api";
-import { trackGlow } from "../lib/glow";
 import { formatKm } from "../lib/maintenance";
 import { FUEL_TYPES, type FuelType, type VehicleOdometer, type VehicleProfile } from "../lib/types";
 import { formatDate } from "../lib/time";
@@ -225,7 +224,7 @@ function OdometerCard({
           : t("vehicleProfile.sourceNone");
 
   return (
-    <section onMouseMove={trackGlow} className={CARD}>
+    <section className={CARD}>
       <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white">
         <Gauge className="h-4 w-4 text-slate-400" />
         {t("vehicleProfile.kmTitle")}
@@ -381,7 +380,7 @@ function DataCard({ profile, canEdit, onSaved }: { profile: VehicleProfile; canE
   );
 
   return (
-    <form onSubmit={save} onMouseMove={trackGlow} className={CARD}>
+    <form onSubmit={save} className={CARD}>
       <h2 className="mb-3 text-sm font-semibold text-slate-900 dark:text-white">{t("vehicleProfile.dataTitle")}</h2>
       <div className="grid gap-3 sm:grid-cols-2">
         {field("vp-name", t("common.name"), name, setName, { max: 100 })}

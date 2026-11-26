@@ -1,7 +1,6 @@
 import { ArrowLeft, ChevronRight, type LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { useSearchParams } from "react-router-dom";
-import { trackGlow } from "../lib/glow";
 
 export interface HubView {
   key: string;
@@ -54,7 +53,6 @@ export function SectionHub({ title, hint, views }: { title: string; hint?: strin
             key={key}
             type="button"
             onClick={() => go(key)}
-            onMouseMove={trackGlow}
             className="glow float-card flex items-center gap-4 rounded-2xl border border-white bg-white p-5 text-left shadow-lg shadow-slate-200/50 transition active:scale-[0.99] dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40"
           >
             <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-violet-100 text-violet-600 dark:bg-violet-500/15 dark:text-violet-300">

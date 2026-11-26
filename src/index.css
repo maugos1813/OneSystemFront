@@ -190,28 +190,11 @@ html:not(.dark) main :is(.rounded-2xl, .rounded-3xl).bg-white {
     box-shadow: none;
   }
 
-  /* Spotlight that tracks the cursor — set --glow-x/--glow-y from onMouseMove (see src/lib/glow.ts). */
+  /* Base of a card that holds layers above its content (the metallic rim is the light that follows the cursor now; see "Metal edge"). */
   .glow {
     position: relative;
     overflow: hidden;
     isolation: isolate;
-  }
-  .glow::after {
-    content: "";
-    position: absolute;
-    left: var(--glow-x, 50%);
-    top: var(--glow-y, 50%);
-    width: 280px;
-    height: 280px;
-    transform: translate(-50%, -50%);
-    background: radial-gradient(circle, rgba(56, 189, 248, 0.22), rgba(124, 58, 237, 0.12) 45%, transparent 70%);
-    opacity: 0;
-    transition: opacity 0.35s ease;
-    pointer-events: none;
-    z-index: 0;
-  }
-  .glow:hover::after {
-    opacity: 1;
   }
   .glow > * {
     position: relative;

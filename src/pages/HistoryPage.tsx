@@ -70,6 +70,10 @@ function HistoryView({
     seek: handleSeek,
   } = usePlayback(history, `${selectedVehicleId}|${rangeKey}`);
   const vehicle = vehicles.find((v) => v.id === selectedVehicleId) ?? null;
+  // Every hook runs before the early return below: otherwise the first render after the fleet finishes loading would call more hooks
+  // than the one before it, and React would stop the page.
+  const [mapFull, toggleMapFull] = useInAppFullscreen();
+  const summary = useMemo(() => routeSummary(history), [history]);
 
   if (fleetLoading) {
     return (
@@ -77,8 +81,6 @@ function HistoryView({
     );
   }
 
-  const [mapFull, toggleMapFull] = useInAppFullscreen();
-  const summary = useMemo(() => routeSummary(history), [history]);
   const time = (iso: string) => formatTime(iso, locale);
   const dayTime = (iso: string) => formatDateTime(iso, locale, { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
 

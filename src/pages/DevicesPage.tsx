@@ -11,7 +11,6 @@ import { useLanguage, type MessageKey, type Translate } from "../i18n";
 import { isLowVoltage, isOffline } from "../lib/alerts";
 import { ApiError, claimDevice } from "../lib/api";
 import { DEVICE_MODELS, hasProfile, modelProfile } from "../lib/deviceModels";
-import { trackGlow } from "../lib/glow";
 import { AVL_ID, type Device, type DeviceSource } from "../lib/types";
 import { isReadOnlyView } from "../lib/viewMode";
 import { formatDateTime } from "../lib/time";
@@ -182,7 +181,6 @@ export function DevicesPage() {
         <>
           <form
             onSubmit={handleClaim}
-            onMouseMove={trackGlow}
             className="glow float-card mb-6 flex flex-col gap-3 rounded-2xl border border-white bg-white p-4 shadow-lg shadow-slate-200/50 sm:flex-row sm:items-end dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40"
           >
             <div className="flex-1">

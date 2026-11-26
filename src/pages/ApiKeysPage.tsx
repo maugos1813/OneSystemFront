@@ -3,7 +3,6 @@ import { useEffect, useState, type FormEvent } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../i18n";
 import { createApiKey, listApiKeys, revokeApiKey } from "../lib/api";
-import { trackGlow } from "../lib/glow";
 import { useFleetGroups } from "../lib/useFleetGroups";
 import type { ApiKey, CreatedApiKey } from "../lib/types";
 import { formatDateTime } from "../lib/time";
@@ -131,7 +130,6 @@ export function ApiKeysPage() {
 
       <form
         onSubmit={handleCreate}
-        onMouseMove={trackGlow}
         className="glow float-card mb-6 flex flex-col gap-3 rounded-2xl border border-white bg-white p-4 shadow-lg shadow-slate-200/50 sm:flex-row sm:items-end dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40"
       >
         <div className="flex-1">

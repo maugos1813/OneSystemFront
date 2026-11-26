@@ -15,7 +15,6 @@ import { AreaFilterPills } from "../components/AreaFilterPills";
 import { useFleet } from "../context/FleetContext";
 import { useT, type MessageKey, type Translate } from "../i18n";
 import type { Alert, AlertType } from "../lib/alerts";
-import { trackGlow } from "../lib/glow";
 
 const ALERT_META: Record<AlertType, { label: MessageKey; color: string; icon: typeof WifiOff }> = {
   offline: { label: "alertType.offline", color: "#64748b", icon: WifiOff },
@@ -43,7 +42,6 @@ function AlertCard({ alert }: { alert: Alert }) {
   const Icon = meta.icon;
   return (
     <div
-      onMouseMove={trackGlow}
       className="glow float-card flex items-center gap-3 rounded-2xl border border-white bg-white p-4 shadow-lg shadow-slate-200/50 dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40"
     >
       <div

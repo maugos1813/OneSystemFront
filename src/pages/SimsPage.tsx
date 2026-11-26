@@ -13,7 +13,6 @@ import {
   updateSim,
   type SimInput,
 } from "../lib/api";
-import { trackGlow } from "../lib/glow";
 import type { PlatformOrganization, SimCard, SimSecrets } from "../lib/types";
 
 const SECRETS_VISIBLE_MS = 15_000;
@@ -224,7 +223,6 @@ export function SimsPage() {
       {editing && (
         <form
           onSubmit={handleSubmit}
-          onMouseMove={trackGlow}
           className="glow float-card mb-6 rounded-2xl border border-white bg-white p-4 shadow-lg shadow-slate-200/50 sm:p-6 dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40"
         >
           <div className="mb-4 flex items-center justify-between">

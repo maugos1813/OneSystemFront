@@ -10,7 +10,6 @@ import {
   removeDriverBeacon,
   updateDriverBeacon,
 } from "../lib/api";
-import { trackGlow } from "../lib/glow";
 import { formatRelativeTime } from "../lib/relativeTime";
 import type { BeaconInVehicle, DriverBeacon, VehicleBeacons } from "../lib/types";
 
@@ -177,7 +176,6 @@ function VehicleCard({
 
   return (
     <section
-      onMouseMove={trackGlow}
       className="glow float-card mb-4 break-inside-avoid rounded-2xl border border-white bg-white p-4 shadow-lg shadow-slate-200/50 dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40"
     >
       <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
@@ -256,7 +254,6 @@ function BeaconOffer() {
     <div className="p-4 sm:p-6 lg:p-8">
       <h1 className="mb-4 text-xl font-semibold text-slate-900 dark:text-white">{t("nav.drivers")}</h1>
       <div
-        onMouseMove={trackGlow}
         className="glow float-card max-w-2xl rounded-2xl border border-violet-200 bg-violet-50/60 p-5 text-sm text-slate-600 dark:border-violet-400/20 dark:bg-violet-500/10 dark:text-slate-300"
       >
         <div className="flex items-start gap-3">
@@ -333,7 +330,6 @@ export function DriversPage() {
       </p>
 
       <div
-        onMouseMove={trackGlow}
         className="glow float-card mb-6 rounded-2xl border border-white bg-white p-4 text-sm text-slate-600 shadow-lg shadow-slate-200/50 dark:border-white/10 dark:bg-[#111729] dark:text-slate-300 dark:shadow-black/40"
       >
         <p className="mb-1 font-semibold text-slate-900 dark:text-white">{t("beacons.howTitle")}</p>

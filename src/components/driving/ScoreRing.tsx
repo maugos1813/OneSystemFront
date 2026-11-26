@@ -1,6 +1,5 @@
 import { NO_SCORE_COLOR, scoreColor } from "../../lib/drivingBehavior";
 import { useT } from "../../i18n";
-import { trackGlow } from "../../lib/glow";
 
 const SIZE = 60;
 const STROKE = 6;
@@ -28,7 +27,6 @@ export function ScoreRing({ label, score, count, countLabel, active, onClick }: 
   return (
     <button
       onClick={onClick}
-      onMouseMove={trackGlow}
       className={`glow relative flex min-w-0 items-center gap-3 rounded-3xl border border-white bg-white p-4 text-left shadow-lg shadow-slate-200/50 transition-all duration-200 dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40 ${
         active
           ? "z-10 -translate-y-1 shadow-2xl shadow-slate-300/70 sm:scale-[1.04] dark:shadow-black/60"

@@ -9,7 +9,6 @@ import { useTheme } from "../context/ThemeContext";
 import { useT } from "../i18n";
 import { createGeofence, deleteGeofence, updateGeofence, type UpdateGeofenceInput } from "../lib/api";
 import { geofenceZoneColor } from "../lib/geo";
-import { trackGlow } from "../lib/glow";
 import { DARK_MAP_STYLE, MUTED_MAP_STYLE } from "../lib/mapStyle";
 import type { Geofence, GeofenceType } from "../lib/types";
 
@@ -311,7 +310,6 @@ export function GeofencesPage() {
           {geofences.map((g) => (
             <div
               key={g.id}
-              onMouseMove={trackGlow}
               className="glow float-card flex items-center gap-3 rounded-2xl border border-white bg-white p-3 shadow-sm shadow-slate-200/50 dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40"
             >
               <div

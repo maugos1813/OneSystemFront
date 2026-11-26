@@ -12,7 +12,6 @@ import { describeEvent } from "../lib/deviceEvents";
 import { buildChecklist, type CheckState } from "../lib/deviceChecklist";
 import { hasSetupGuide, modelOptions, modelProfile } from "../lib/deviceModels";
 import { currentLocale, rememberedLanguage, translate, useT } from "../i18n";
-import { trackGlow } from "../lib/glow";
 import type { DeviceDetail } from "../lib/types";
 import { ModalPortal } from "../components/ModalPortal";
 import { isReadOnlyView } from "../lib/viewMode";
@@ -57,7 +56,7 @@ function Fact({ label, children }: { label: string; children: ReactNode }) {
 
 function Section({ title, children, action }: { title: string; children: ReactNode; action?: ReactNode }) {
   return (
-    <section onMouseMove={trackGlow} className={CARD}>
+    <section className={CARD}>
       <div className="mb-2 flex items-center justify-between">
         <h2 className="text-sm font-semibold text-slate-900 dark:text-white">{title}</h2>
         {action}
@@ -288,7 +287,7 @@ export function DeviceDetailPage() {
       </div>
 
       {hasSetupGuide(device.model) && (
-        <details onMouseMove={trackGlow} className={`${CARD} group mt-4`}>
+        <details className={`${CARD} group mt-4`}>
           <summary className="cursor-pointer text-sm font-semibold text-slate-900 dark:text-white">
             {t("dd.setupGuide", { model: device.model })}
           </summary>
@@ -307,7 +306,7 @@ export function DeviceDetailPage() {
         </details>
       )}
 
-      <section onMouseMove={trackGlow} className={`${CARD} mt-4`}>
+      <section className={`${CARD} mt-4`}>
         <h2 className="mb-2 text-sm font-semibold text-slate-900 dark:text-white">{t("dd.events")}</h2>
         {detail.events.length === 0 ? (
           <p className="text-sm text-slate-500 dark:text-slate-400">
@@ -340,7 +339,7 @@ export function DeviceDetailPage() {
       </section>
 
       {isPlatform && (
-        <section onMouseMove={trackGlow} className={`${CARD} mt-4`}>
+        <section className={`${CARD} mt-4`}>
           <div className="mb-1 flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-sm font-semibold text-slate-900 dark:text-white">{t("dd.sending")}</h2>
             <input

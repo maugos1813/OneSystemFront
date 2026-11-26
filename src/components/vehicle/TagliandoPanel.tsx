@@ -3,7 +3,6 @@ import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useLanguage } from "../../i18n";
 import { deleteMaintenancePlan, getTagliando, listMaintenance, saveTagliando } from "../../lib/api";
-import { trackGlow } from "../../lib/glow";
 import { formatKm, STATE_BADGE, STATE_BAR, STATE_LABEL } from "../../lib/maintenance";
 import type { MaintenancePlan, Tagliando } from "../../lib/types";
 import { fleetToday, formatDate } from "../../lib/time";
@@ -90,7 +89,7 @@ export function TagliandoPanel({ vehicleId }: { vehicleId: string }) {
 
   return (
     <div className="space-y-4">
-      <section onMouseMove={trackGlow} className={CARD}>
+      <section className={CARD}>
         <div className="mb-3 flex flex-wrap items-center gap-2">
           <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white">
             <Wrench className="h-4 w-4 text-slate-400" />
@@ -135,7 +134,7 @@ export function TagliandoPanel({ vehicleId }: { vehicleId: string }) {
       </section>
 
       {canManage && (
-        <form onSubmit={(e) => void save("new", e)} onMouseMove={trackGlow} className={CARD}>
+        <form onSubmit={(e) => void save("new", e)} className={CARD}>
           <h2 className="mb-1 text-sm font-semibold text-slate-900 dark:text-white">
             {data.lastKm === null ? t("tagliando.noteLast") : t("tagliando.didOne")}
           </h2>
@@ -172,7 +171,7 @@ export function TagliandoPanel({ vehicleId }: { vehicleId: string }) {
       )}
 
       {data.history.length > 0 && (
-        <section onMouseMove={trackGlow} className={CARD}>
+        <section className={CARD}>
           <h2 className="mb-2 text-sm font-semibold text-slate-900 dark:text-white">{t("tagliando.done")}</h2>
           <ul className="divide-y divide-slate-100 text-sm dark:divide-white/10">
             {data.history.map((record) => (

@@ -12,7 +12,6 @@ import { useFleet } from "../context/FleetContext";
 import { useSmoothedPosition } from "../hooks/useSmoothedPosition";
 import { useTodayDrivingStyle } from "../hooks/useTodayDrivingStyle";
 import { classifyVehicleState } from "../lib/fleetStats";
-import { trackGlow } from "../lib/glow";
 import { AVL_ID } from "../lib/types";
 import { formatTime } from "../lib/time";
 
@@ -90,7 +89,7 @@ export function CockpitPage() {
             </div>
           </div>
 
-          <div onMouseMove={trackGlow} className="glow float-card rounded-2xl bg-white p-4 lg:hidden dark:bg-[#111729]">
+          <div className="glow float-card rounded-2xl bg-white p-4 lg:hidden dark:bg-[#111729]">
             <p className="mb-3 text-xs font-semibold tracking-wide text-slate-400 uppercase dark:text-slate-500">
               Estado del vehículo
             </p>
@@ -99,7 +98,6 @@ export function CockpitPage() {
 
           <div className="grid shrink-0 grid-cols-2 gap-3 lg:grid-cols-12">
             <div
-              onMouseMove={trackGlow}
               className="glow float-card col-span-1 flex items-center justify-center rounded-3xl border border-white bg-white p-4 shadow-lg shadow-slate-200/50 lg:col-span-2 dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40"
             >
               <GForceGauge eventCount={harshEventCount} />
@@ -108,7 +106,6 @@ export function CockpitPage() {
               <MileageCard label="Total recorrido" km={totalKm} />
             </div>
             <div
-              onMouseMove={trackGlow}
               className="glow float-card col-span-2 rounded-3xl border border-white bg-white p-4 shadow-lg shadow-slate-200/50 lg:col-span-4 dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40"
             >
               <DrivingScoreCard style={todayStyle} loading={styleLoading} />
@@ -117,7 +114,6 @@ export function CockpitPage() {
               <MileageCard label="Recorrido hoy" km={todayStyle?.distanceKm ?? null} />
             </div>
             <div
-              onMouseMove={trackGlow}
               className="glow float-card col-span-1 flex items-center justify-center rounded-3xl border border-white bg-white p-4 shadow-lg shadow-slate-200/50 lg:col-span-2 dark:border-white/10 dark:bg-[#111729] dark:shadow-black/40"
             >
               <StatePills current={state} />

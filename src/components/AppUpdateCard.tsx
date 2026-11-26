@@ -1,7 +1,6 @@
 import { CheckCircle2, Download, RefreshCw, Smartphone } from "lucide-react";
 import { useAppUpdate } from "../context/AppUpdateContext";
 import { useT } from "../i18n";
-import { trackGlow } from "../lib/glow";
 
 /**
  * "Aplicación Android" in the configuration: inside the app it shows the installed version and looks for a newer one;
@@ -23,7 +22,6 @@ export function AppUpdateCard() {
 
   return (
     <div
-      onMouseMove={trackGlow}
       className="glow rounded-2xl border border-slate-200 p-4 sm:col-span-2 dark:border-white/10"
     >
       <div className="flex items-start gap-3">

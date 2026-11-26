@@ -3,7 +3,6 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useFleet } from "../context/FleetContext";
 import { useBackToClose } from "../hooks/useBackToClose";
 import { useT } from "../i18n";
-import { trackGlow } from "../lib/glow";
 import { formatRelativeTime } from "../lib/relativeTime";
 import type { Device, Position, SharedVehicle, Vehicle } from "../lib/types";
 import { isIdling, matchesSearch, thresholdsFromSettings, vehicleStatus, type VehicleStatus } from "../lib/vehicleStatus";
@@ -161,7 +160,6 @@ export function VehicleList({
                 onSelect(vehicle.id);
                 done();
               }}
-              onMouseMove={trackGlow}
               className={`glow flex w-full items-center justify-between gap-2 border-b border-slate-100 px-4 py-3 text-left transition last:border-b-0 dark:border-white/5 ${
                 selected ? "brand-gradient-soft dark:bg-blue-500/15" : "hover:bg-slate-50 dark:hover:bg-white/5"
               }`}
@@ -204,7 +202,6 @@ export function VehicleList({
                 onSelectShared?.(vehicle.plate);
                 done();
               }}
-              onMouseMove={trackGlow}
               className={`glow flex w-full items-center justify-between gap-2 border-b border-slate-100 px-4 py-3 text-left transition last:border-b-0 dark:border-white/5 ${
                 selectedSharedPlate === vehicle.plate ? "brand-gradient-soft dark:bg-blue-500/15" : "hover:bg-slate-50 dark:hover:bg-white/5"
               }`}
