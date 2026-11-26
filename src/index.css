@@ -357,8 +357,8 @@ html.dark :is(.glass-bubble, .nav-pill-active)::after {
   /*
    * Metal edge: a fine brushed-silver rim drawn just inside the edge of every glass component, lit by the cursor as if it gave off light.
    * src/lib/metalLight.ts sets --lx/--ly (the pointer, relative to the component) and the rim shines where it faces it, with a thin
-   * rainbow glint around the shine, like light on polished metal. Even without a pointer (a phone) the rim is bright polished glass with
-   * two rainbow glints on opposite corners, where the light breaks in its edge. The ring is
+   * cool glint around the shine, like light on polished metal. Even without a pointer (a phone) the rim is bright polished glass with
+   * two quiet ice-blue glints on opposite corners, where the light catches its edge (no warm colours: sober, not rainbow). The ring is
    * a ::before masked to its border, so it never covers the content (and never clashes with .glow, which uses ::after).
    */
   :is(.glass, .glass-night, .glass-bubble, .nav-pill-active)::before,
@@ -373,23 +373,22 @@ html.dark :is(.glass-bubble, .nav-pill-active)::after {
       radial-gradient(
         circle 230px at var(--lx, -999px) var(--ly, -999px),
         transparent 34%,
-        rgba(56, 189, 248, 0.85) 44%,
-        rgba(167, 139, 250, 0.85) 52%,
-        rgba(253, 186, 116, 0.85) 60%,
+        rgba(186, 230, 253, 0.9) 44%,
+        rgba(147, 197, 253, 0.8) 52%,
+        rgba(165, 180, 252, 0.7) 60%,
         transparent 70%
       ),
       conic-gradient(
         from 200deg,
         transparent 0deg,
-        rgba(56, 189, 248, 0.95) 22deg,
-        rgba(139, 92, 246, 0.9) 38deg,
-        rgba(244, 114, 182, 0.85) 52deg,
+        rgba(186, 230, 253, 0.75) 22deg,
+        rgba(147, 197, 253, 0.65) 38deg,
+        rgba(165, 180, 252, 0.5) 52deg,
         transparent 74deg,
         transparent 165deg,
-        rgba(253, 186, 116, 0.9) 188deg,
-        rgba(250, 204, 21, 0.6) 200deg,
-        rgba(56, 189, 248, 0.8) 214deg,
-        transparent 236deg
+        rgba(255, 255, 255, 0.9) 188deg,
+        rgba(191, 219, 254, 0.6) 204deg,
+        transparent 230deg
       ),
       linear-gradient(160deg, #ffffff 0%, #b9bec8 22%, #ffffff 42%, #8d94a1 66%, #eef0f4 86%, #a9afba 100%);
     -webkit-mask:
@@ -407,22 +406,21 @@ html.dark :is(.glass-bubble, .nav-pill-active)::after {
       radial-gradient(
         circle 230px at var(--lx, -999px) var(--ly, -999px),
         transparent 34%,
-        rgba(56, 189, 248, 0.6) 44%,
-        rgba(167, 139, 250, 0.6) 52%,
-        rgba(253, 186, 116, 0.6) 60%,
+        rgba(186, 230, 253, 0.55) 44%,
+        rgba(147, 197, 253, 0.45) 52%,
+        rgba(165, 180, 252, 0.4) 60%,
         transparent 70%
       ),
       conic-gradient(
         from 200deg,
         transparent 0deg,
-        rgba(56, 189, 248, 0.7) 22deg,
-        rgba(139, 92, 246, 0.7) 38deg,
-        rgba(244, 114, 182, 0.6) 52deg,
-        transparent 74deg,
+        rgba(147, 197, 253, 0.45) 22deg,
+        rgba(165, 180, 252, 0.35) 40deg,
+        transparent 66deg,
         transparent 165deg,
-        rgba(253, 186, 116, 0.65) 188deg,
-        rgba(56, 189, 248, 0.6) 214deg,
-        transparent 236deg
+        rgba(226, 232, 240, 0.45) 190deg,
+        rgba(147, 197, 253, 0.3) 206deg,
+        transparent 230deg
       ),
       linear-gradient(160deg, #5b6478 0%, #262d3e 30%, #4a5368 55%, #171c29 80%, #353d50 100%);
   }
