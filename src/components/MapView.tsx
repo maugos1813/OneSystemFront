@@ -1,14 +1,14 @@
-import { ColorScheme, ControlPosition, Map, MapControl, Marker, Polygon, Polyline, RenderingType, useMap, type MapCameraChangedEvent } from "@vis.gl/react-google-maps";
-import { Compass } from "lucide-react";
-import { MapFullscreenButton, MapResizeOnChange } from "./MapFullscreenControl";
+import { ColorScheme, Map, Marker, Polygon, Polyline, RenderingType, useMap, type MapCameraChangedEvent } from "@vis.gl/react-google-maps";
+import { MapResizeOnChange } from "./MapFullscreenControl";
+import { MapHud, MapVignette, unrotated, useMapOrientation } from "./map/MapHud";
 import { MapsProvider } from "./MapsProvider";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useFleet } from "../context/FleetContext";
 import { useTheme } from "../context/ThemeContext";
 import { useT } from "../i18n";
 import { useSmoothedPosition } from "../hooks/useSmoothedPosition";
 import { geofenceZoneColor, isRomeZtl } from "../lib/geo";
-import { MAP_ID } from "../lib/mapConfig";
+import { fitBoundsKeepingView, MAP_ID, prefersThreeD, PRO_TILT } from "../lib/mapConfig";
 import { fleetClass, fleetTagCss, GAMONAL_FLEET } from "../lib/fleetBrand";
 import { getBrokenIcon, getVehicleIcon } from "../lib/markerIcon";
 import { AVL_ID, type Position, type SharedVehicle, type Vehicle, type VehicleEta } from "../lib/types";
@@ -63,7 +63,7 @@ function FitFleet({ points, signal, auto }: { points: Array<{ lat: number; lng: 
     }
     const bounds = new google.maps.LatLngBounds();
     for (const point of points) bounds.extend(point);
-    map.fitBounds(bounds, 72);
+    fitBoundsKeepingView(map, bounds, 72);
   }, [map, points]);
 
   useEffect(() => {
@@ -80,56 +80,7 @@ function FitFleet({ points, signal, auto }: { points: Array<{ lat: number; lng: 
   return null;
 }
 
-/** How far the person has turned and tilted the map. A turn made with the fingers doesn't always fire the heading
- * event on a vector map, but it always moves the view, so the view's own events are listened to as well. A vehicle's
- * arrow is drawn against the screen, not the map, so it has to turn the other way by the heading to keep pointing where
- * the vehicle is really going. */
-function useMapOrientation(): { heading: number; tilt: number } {
-  const map = useMap();
-  const [view, setView] = useState({ heading: 0, tilt: 0 });
-  useEffect(() => {
-    if (!map) return;
-    const read = () => {
-      const heading = map.getHeading() ?? 0;
-      const tilt = map.getTilt() ?? 0;
-      setView((current) => (current.heading === heading && current.tilt === tilt ? current : { heading, tilt }));
-    };
-    read();
-    const listeners = ["heading_changed", "tilt_changed", "bounds_changed", "idle"].map((event) => map.addListener(event, read));
-    return () => listeners.forEach((l) => l.remove());
-  }, [map]);
-  return view;
-}
-
 const useMapHeading = () => useMapOrientation().heading;
-
-/** Shows once the map is turned or tilted, and one tap puts north back up and the view flat. The needle keeps
- * pointing north whichever way the map is turned. */
-function ResetNorthControl() {
-  const t = useT();
-  const map = useMap();
-  const view = useMapOrientation();
-  if (view.heading === 0 && view.tilt === 0) return null;
-  return (
-    // Left, midway: the top right belongs to the filters button and the bottom left to the full-screen button.
-    <MapControl position={ControlPosition.LEFT_CENTER}>
-      <button
-        type="button"
-        onClick={() => {
-          map?.setHeading(0);
-          map?.setTilt(0);
-        }}
-        title={t("map.resetNorth")}
-        aria-label={t("map.resetNorth")}
-        className="m-2.5 flex h-10 w-10 items-center justify-center rounded-sm bg-white text-slate-700 shadow-md hover:bg-slate-50"
-      >
-        <Compass className="h-5 w-5" style={{ transform: `rotate(${-view.heading}deg)` }} />
-      </button>
-    </MapControl>
-  );
-}
-
-const unrotated = (angle: number, heading: number) => (((angle - heading) % 360) + 360) % 360;
 
 /** Pans (and zooms in on) the selected vehicle's position whenever the selection
  * changes, so picking one out of a cluster of markers doesn't require manually hunting
@@ -196,7 +147,7 @@ function RouteLayer({ route }: { route: VehicleEta }) {
       for (const point of path) bounds.extend(point);
       bounds.extend(route.from);
       bounds.extend(route.destination);
-      map.fitBounds(bounds, freeMapPadding(map.getDiv()));
+      fitBoundsKeepingView(map, bounds, freeMapPadding(map.getDiv()));
     }, 120);
     return () => window.clearTimeout(timer);
   }, [map, route, path]);
@@ -264,7 +215,8 @@ function SharedVehicleMarker({
       position={{ lat: vehicle.lat, lng: vehicle.lng }}
       title={title}
       onClick={() => onSelect?.(vehicle.plate)}
-      icon={getVehicleIcon(position, selected ? 1 : 0.6)}
+      icon={getVehicleIcon(position, selected ? 1 : 0.6, selected)}
+      optimized={false}
       label={{ text: vehicle.plate, className: `vehicle-plate-label ${fleetClass(GAMONAL_FLEET)}`, color: theme === "dark" ? "#e2e8f0" : "#0f172a" }}
     />
   );
@@ -293,7 +245,10 @@ function AnimatedVehicleMarker({ vehicle, position, selected, onSelect, theme }:
       position={{ lat: smoothed.lat, lng: smoothed.lng }}
       title={vehicle.name}
       onClick={() => onSelect(vehicle.id)}
-      icon={getVehicleIcon({ ...position, angle: unrotated(smoothed.angle, heading) }, selected ? 1 : 0.75)}
+      icon={getVehicleIcon({ ...position, angle: unrotated(smoothed.angle, heading) }, selected ? 1 : 0.85, selected)}
+      // Drawn as a page element (not baked into the map's canvas) so the moving vehicle's ground ring animates.
+      optimized={false}
+      zIndex={selected ? 900 : undefined}
       label={{
         text: vehicle.plate ?? vehicle.name,
         // The fleet's coloured tag ("DH", "UN"…) is drawn in CSS from this class — see fleetBrand.ts.
@@ -375,7 +330,7 @@ export function MapView({
           defaultCenter={camera.current?.center ?? saved.current?.center ?? (center ? { lat: center.lat, lng: center.lng } : DEFAULT_CENTER)}
           defaultZoom={camera.current?.zoom ?? saved.current?.zoom ?? (center ? 14 : 4)}
           defaultHeading={camera.current?.heading ?? saved.current?.heading ?? 0}
-          defaultTilt={camera.current?.tilt ?? saved.current?.tilt ?? 0}
+          defaultTilt={camera.current?.tilt ?? saved.current?.tilt ?? (prefersThreeD() ? PRO_TILT : 0)}
           onCameraChanged={(e: MapCameraChangedEvent) => {
             const { center: c, zoom, heading, tilt } = e.detail;
             camera.current = { center: c, zoom, heading, tilt };
@@ -384,22 +339,14 @@ export function MapView({
             saveTimer.current = setTimeout(() => camera.current && saveCamera(camera.current), 600);
           }}
           gestureHandling="greedy"
-          disableDefaultUI={false}
-          // Map/satellite and the street-view figure are left out: the map is the point, so the centre stays clear.
-          mapTypeControl={false}
-          streetViewControl={false}
-          // The camera button at the bottom right (pan/zoom arrows) is not used: pinching and dragging already do it.
-          cameraControl={false}
-          // Google's own full-screen button needs the browser's Fullscreen API, which a phone does not have: ours (bottom left, so the
-          // top right stays clear for the filters) is the page's.
-          fullscreenControl={false}
+          // None of Google's buttons: the map's own glass column (MapHud) does 3D, turning, north, zoom and full screen.
+          disableDefaultUI
           mapId={MAP_ID}
           renderingType={RenderingType.VECTOR}
           headingInteractionEnabled
           tiltInteractionEnabled
           colorScheme={theme === "dark" ? ColorScheme.DARK : ColorScheme.LIGHT}
         >
-          <ResetNorthControl />
           <MapResizeOnChange trigger={fullscreen} />
           <FitFleet points={fitPoints} signal={fitSignal} auto={frameFleetOnLoad.current === true} />
           <MapCenterOnSelect selectedVehicleId={selectedVehicleId} positions={positions} />
@@ -449,9 +396,10 @@ export function MapView({
             />
           ))}
         </Map>
+        <MapVignette />
+        {/* Left, midway: the top left is the vehicle search, the top right the filters, the right side the vehicle's panel. */}
+        <MapHud className="top-1/2 left-2.5 -translate-y-1/2" fullscreen={fullscreen} onToggleFullscreen={onToggleFullscreen} />
       </MapsProvider>
-      {/* Over the map, bottom left above Google's logo (the top right is for the filters). */}
-      {onToggleFullscreen && <MapFullscreenButton full={fullscreen} onToggle={onToggleFullscreen} className="bottom-9 left-2.5" />}
     </div>
   );
 }

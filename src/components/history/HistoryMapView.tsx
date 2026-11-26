@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { ColorScheme, InfoWindow, Map, Marker, Polyline, RenderingType, useMap } from "@vis.gl/react-google-maps";
-import { Box, Map as MapIcon } from "lucide-react";
-import { MapFullscreenButton, MapResizeOnChange } from "../MapFullscreenControl";
+import { Box, Crosshair, Map as MapIcon, Route } from "lucide-react";
+import { MapResizeOnChange } from "../MapFullscreenControl";
+import { MapHud, MapVignette, unrotated, useMapOrientation } from "../map/MapHud";
 import { MapsProvider } from "../MapsProvider";
 import { useTheme } from "../../context/ThemeContext";
 import { useLanguage } from "../../i18n";
@@ -17,7 +18,8 @@ import {
   TILT,
   zoomForSpeed,
 } from "../../lib/driveCamera";
-import { MAP_ID } from "../../lib/mapConfig";
+import { animateCamera, fitBoundsKeepingView, MAP_ID, prefersThreeD, PRO_TILT } from "../../lib/mapConfig";
+import { getPlaybackIcon, getRouteEndIcon } from "../../lib/markerIcon";
 import { buildRouteSegments } from "../../lib/speedTimeline";
 import type { Position } from "../../lib/types";
 import { formatDateTime } from "../../lib/time";
@@ -46,17 +48,29 @@ function incidentIcon(type: Incident["type"]): google.maps.Icon | undefined {
   };
 }
 
-function currentPositionIcon(overLimit: boolean, drive: boolean): google.maps.Symbol | undefined {
-  if (typeof google === "undefined" || !google.maps?.SymbolPath) return undefined;
-  // In the 3D view the map turns with the vehicle, so an arrow that always points up reads as "forward".
-  return {
-    path: drive ? google.maps.SymbolPath.FORWARD_CLOSED_ARROW : google.maps.SymbolPath.CIRCLE,
-    scale: drive ? 7 : 8,
-    fillColor: overLimit ? "#dc2626" : "#7c3aed",
-    fillOpacity: 1,
-    strokeColor: "#fff",
-    strokeWeight: 2.5,
-  };
+/** The replayed vehicle: the 3D pin with its arrow turned the way it goes on screen, whichever way the map is turned. */
+function PlaybackMarker({ position, overLimit }: { position: Position; overLimit: boolean }) {
+  const { heading } = useMapOrientation();
+  return (
+    <Marker
+      position={{ lat: position.lat, lng: position.lng }}
+      icon={getPlaybackIcon(unrotated(position.angle, heading), position.speed > 0, overLimit)}
+      // A page element rather than part of the map's canvas, so its ground ring animates.
+      optimized={false}
+      zIndex={1000}
+    />
+  );
+}
+
+/** A stretch of the route drawn like light: a wide soft glow, the coloured line and a thin bright core. */
+function NeonLine({ path, color }: { path: google.maps.LatLngLiteral[]; color: string }) {
+  return (
+    <>
+      <Polyline path={path} strokeColor={color} strokeOpacity={0.16} strokeWeight={16} clickable={false} />
+      <Polyline path={path} strokeColor={color} strokeOpacity={0.95} strokeWeight={5} clickable={false} />
+      <Polyline path={path} strokeColor="#ffffff" strokeOpacity={0.55} strokeWeight={1.5} clickable={false} />
+    </>
+  );
 }
 
 type Mode = "overview" | "drive";
@@ -128,10 +142,10 @@ function MapCamera({ positions, currentPosition, currentIndex, mode, follow, onU
     map.panTo({ lat: currentPosition.lat, lng: currentPosition.lng });
   }, [map, mode, follow, currentPosition]);
 
-  // Back to the overview: level the camera and point north again.
+  // Back to the overview: north up again, tilted in 3D unless the person chose the flat map.
   useEffect(() => {
     if (!map || mode !== "overview") return;
-    map.moveCamera({ tilt: 0, heading: 0 });
+    animateCamera(map, { tilt: prefersThreeD() ? PRO_TILT : 0, heading: 0 });
   }, [map, mode]);
 
   // Drive: where the camera should be for the current report.
@@ -185,8 +199,8 @@ function MapCamera({ positions, currentPosition, currentIndex, mode, follow, onU
     if (!map || fitSignal === 0 || positions.length === 0) return;
     const bounds = new google.maps.LatLngBounds();
     for (const p of positions) bounds.extend({ lat: p.lat, lng: p.lng });
-    map.moveCamera({ tilt: 0, heading: 0 });
-    map.fitBounds(bounds, 40);
+    // The whole route, keeping the 3D tilt: the far end just lies further back.
+    fitBoundsKeepingView(map, bounds, { top: 72, right: 72, bottom: 40, left: 40 });
   }, [map, fitSignal, positions]);
 
   return null;
@@ -240,10 +254,8 @@ export function HistoryMapView({
     }
   }
   const buttonClass = (active = false) =>
-    `flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium shadow ring-1 ring-black/10 transition ${
-      active
-        ? "brand-button"
-        : "bg-white/95 text-slate-700 hover:bg-white dark:bg-slate-800/95 dark:text-slate-100 dark:ring-white/10 dark:hover:bg-slate-800"
+    `glass-bubble flex items-center gap-1.5 rounded-full px-3.5 py-2 text-xs font-semibold transition active:scale-95 ${
+      active ? "text-blue-600 ring-2 ring-blue-400/50 dark:text-sky-300 dark:ring-sky-400/40" : "text-slate-700 hover:text-slate-950 dark:text-slate-200 dark:hover:text-white"
     }`;
 
   return (
@@ -254,11 +266,10 @@ export function HistoryMapView({
           className="h-full"
           defaultCenter={{ lat: center.lat, lng: center.lng }}
           defaultZoom={14}
+          defaultTilt={prefersThreeD() ? PRO_TILT : 0}
           gestureHandling="greedy"
+          // None of Google's buttons: the map's own glass column (MapHud) does 3D, turning, north, zoom and full screen.
           disableDefaultUI
-          zoomControl
-          // Google's own full-screen button needs the browser's Fullscreen API, which a phone does not have: ours is the page's.
-          fullscreenControl={false}
           mapId={MAP_ID}
           renderingType={RenderingType.VECTOR}
           colorScheme={theme === "dark" ? ColorScheme.DARK : ColorScheme.LIGHT}
@@ -275,14 +286,20 @@ export function HistoryMapView({
           />
 
           {segments.map((segment, i) => (
-            <Polyline
-              key={i}
-              path={segment.path}
-              strokeColor={segment.violation ? "#dc2626" : "#3b82f6"}
-              strokeOpacity={0.85}
-              strokeWeight={segment.violation ? 5 : 4}
-            />
+            <NeonLine key={i} path={segment.path} color={segment.violation ? "#ef4444" : "#3b82f6"} />
           ))}
+
+          {positions.length > 1 && (
+            <>
+              <Marker position={{ lat: positions[0]!.lat, lng: positions[0]!.lng }} icon={getRouteEndIcon("start")} title={t("history.mapStart")} zIndex={5} />
+              <Marker
+                position={{ lat: positions[positions.length - 1]!.lat, lng: positions[positions.length - 1]!.lng }}
+                icon={getRouteEndIcon("end")}
+                title={t("history.mapEnd")}
+                zIndex={5}
+              />
+            </>
+          )}
 
           {incidents.map((incident, i) => (
             <Marker
@@ -314,22 +331,18 @@ export function HistoryMapView({
             </InfoWindow>
           )}
 
-          {currentPosition && (
-            <Marker
-              position={{ lat: currentPosition.lat, lng: currentPosition.lng }}
-              icon={currentPositionIcon(currentPosition.speed > speedLimit, mode === "drive")}
-            />
-          )}
+          {currentPosition && <PlaybackMarker position={currentPosition} overLimit={currentPosition.speed > speedLimit} />}
         </Map>
-        {onToggleFullscreen && <MapFullscreenButton full={fullscreen} onToggle={onToggleFullscreen} className="top-3 right-3" />}
-        <div className="absolute top-3 left-3 flex flex-wrap gap-2">
+        <MapVignette />
+        <MapHud className="top-1/2 right-3 -translate-y-1/2" fullscreen={fullscreen} onToggleFullscreen={onToggleFullscreen} />
+        <div className="absolute top-3 left-3 z-10 flex flex-wrap gap-2 pr-16">
           <button type="button" className={buttonClass(mode === "overview")} onClick={() => chooseMode("overview")}>
             <MapIcon className="h-3.5 w-3.5" />
-            Vista general
+            {t("history.mapOverview")}
           </button>
           <button type="button" className={buttonClass(mode === "drive")} onClick={() => chooseMode("drive")}>
             <Box className="h-3.5 w-3.5" />
-            Conducción 3D
+            {t("history.mapDrive")}
           </button>
           {mode === "overview" && (
             <button
@@ -340,12 +353,14 @@ export function HistoryMapView({
                 setFitSignal((n) => n + 1);
               }}
             >
-              Ver recorrido completo
+              <Route className="h-3.5 w-3.5" />
+              {t("history.mapFullRoute")}
             </button>
           )}
           {!follow && (
             <button type="button" className={buttonClass()} onClick={() => setFollow(true)}>
-              Seguir vehículo
+              <Crosshair className="h-3.5 w-3.5" />
+              {t("history.mapFollow")}
             </button>
           )}
         </div>
