@@ -1,15 +1,18 @@
 import { useT } from "../../i18n";
 import { LoginCard } from "./LoginCard";
+import { SpaceBackdrop } from "./SpaceBackdrop";
 
 /**
- * The OneTrack app's sign-in: OneTrack's own symbol and name above the form (a pane of the app's smoked glass over the night
- * wallpaper, with radar rings behind the logo) and the signature of who made it at the foot.
+ * The OneTrack app's sign-in: OneTrack's own symbol and name above the form (a pane of the app's smoked glass over the living space
+ * backdrop, with radar rings behind the logo) and the signature of who made it at the foot.
  */
 export function OneTrackLogin() {
   const t = useT();
   return (
     <main className="relative flex min-h-dvh flex-col items-center app-wallpaper-night overflow-hidden overflow-y-auto px-[8%] pt-[max(env(safe-area-inset-top),2rem)] pb-[max(env(safe-area-inset-bottom),1.25rem)] sm:px-6">
-      <header className="relative flex w-full max-w-md flex-col items-center pt-2 text-center sm:pt-6">
+      {/* The same living space as the app's dark theme: the Earth turning, its orbits and OneTrack's icon flying round it. */}
+      <SpaceBackdrop />
+      <header className="relative z-[1] flex w-full max-w-md flex-col items-center pt-2 text-center sm:pt-6">
         <div className="relative flex h-32 w-32 items-center justify-center sm:h-40 sm:w-40">
           <span aria-hidden className="absolute inset-0 rounded-full border border-sky-300/25" />
           <span aria-hidden className="absolute -inset-5 rounded-full border border-sky-300/15" />
@@ -22,13 +25,13 @@ export function OneTrackLogin() {
         <p className="mt-1 text-sm text-sky-100/80">{t("login.onetrackTagline")}</p>
       </header>
 
-      <div className="relative flex w-full max-w-md flex-1 items-center py-6 sm:py-8">
+      <div className="relative z-[1] flex w-full max-w-md flex-1 items-center py-6 sm:py-8">
         <div className="w-full">
           <LoginCard />
         </div>
       </div>
 
-      <footer className="relative flex items-center gap-2 text-xs text-sky-100/70">
+      <footer className="relative z-[1] flex items-center gap-2 text-xs text-sky-100/70">
         <img src="/logo.jpg" alt="" className="h-5 w-5 rounded object-cover" />
         <span>
           created by <span className="font-semibold tracking-wide text-white">ONE SYSTEC</span>
