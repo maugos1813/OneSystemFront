@@ -16,6 +16,7 @@ import { useFleet } from "../../context/FleetContext";
 import { allowedNav, canOpen, NAV_GROUP_LABEL, navItemForPath } from "../../lib/oneTrackNav";
 import { AlertsPanel } from "../AlertsPanel";
 import { OneSystecMark } from "../OneSystecMark";
+import { SpaceBackdrop } from "./SpaceBackdrop";
 import { BottomNav } from "./BottomNav";
 import { SUPPORT_EMAIL } from "./LoginCard";
 
@@ -52,10 +53,12 @@ export function AppLayout() {
 
   return (
     <div className="app-shell app-wallpaper relative flex h-screen overflow-hidden">
+      {/* The dark theme's living backdrop (space with the Earth turning); the light theme keeps its pearl wallpaper. */}
+      {theme === "dark" && <SpaceBackdrop />}
       <aside
         // The side menu is for tablets and up: on a phone the bottom bar and the start take its place. On a tablet it is a slim rail of
         // icons; on a laptop it is the full menu, which can be folded away. In the light theme it is frosted glass over the wallpaper.
-        className={`hidden overflow-hidden border-r border-white/70 bg-white/40 backdrop-blur-2xl backdrop-saturate-150 shadow-[8px_0_30px_-20px_rgba(79,70,229,0.25)] transition-all duration-200 md:block dark:border-white/[0.06] dark:bg-[#070a14]/55 dark:shadow-[8px_0_30px_-20px_rgba(0,0,0,0.8)] ${
+        className={`relative z-[1] hidden overflow-hidden border-r border-white/70 bg-white/40 backdrop-blur-2xl backdrop-saturate-150 shadow-[8px_0_30px_-20px_rgba(79,70,229,0.25)] transition-all duration-200 md:block dark:border-white/[0.06] dark:bg-[#070a14]/55 dark:shadow-[8px_0_30px_-20px_rgba(0,0,0,0.8)] ${
           navOpen ? "md:w-[4.75rem] lg:w-64" : "md:w-[4.75rem] lg:w-0 lg:border-transparent"
         }`}
       >
@@ -137,7 +140,7 @@ export function AppLayout() {
         </div>
       </aside>
 
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="relative z-[1] flex min-w-0 flex-1 flex-col">
         <header className="flex items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8 lg:pt-5">
           <div className="flex min-w-0 items-center gap-3">
             <img src="/logos/onetrack-icon.png" alt="OneTrack" className="h-8 w-8 shrink-0 rounded-xl object-cover md:hidden" />
