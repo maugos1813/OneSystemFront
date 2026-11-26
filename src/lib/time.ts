@@ -112,3 +112,6 @@ export const fleetStartOfDay = (day: FleetDay): Date => fleetWallClock(day, 0, 0
 
 /** 23:59:59.999 of a fleet-time day. */
 export const fleetEndOfDay = (day: FleetDay): Date => fleetWallClock(day, 23, 59, 59, 999);
+
+/** 00:00:00 of today, in fleet time: where "today" starts for the counters and summaries. */
+export const fleetStartOfToday = (): Date => fleetStartOfDay(fleetToday());

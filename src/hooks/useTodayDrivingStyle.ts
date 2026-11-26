@@ -1,9 +1,7 @@
 import { useEffect, useState } from "react";
 import { getDrivingStyle } from "../lib/api";
 import type { VehicleDrivingStyle } from "../lib/types";
-import { fleetStartOfDay, fleetToday } from "../lib/time";
-
-const startOfToday = (): Date => fleetStartOfDay(fleetToday());
+import { fleetStartOfToday } from "../lib/time";
 
 /** Today's driving style for one vehicle, calculated on the server (same rules as the
  * Conducción page and the public API). `style` is null while loading or if it fails. */
@@ -14,7 +12,7 @@ export function useTodayDrivingStyle(vehicleId: string | null) {
     if (!vehicleId) return;
     let cancelled = false;
 
-    getDrivingStyle({ from: startOfToday() })
+    getDrivingStyle({ from: fleetStartOfToday() })
       .then((result) => {
         if (!cancelled) setLoaded({ vehicleId, style: result.vehicles.find((v) => v.vehicleId === vehicleId) ?? null });
       })

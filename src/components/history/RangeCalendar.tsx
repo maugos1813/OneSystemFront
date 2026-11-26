@@ -1,12 +1,14 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useState } from "react";
 import { useLanguage } from "../../i18n";
+import { fleetToday, type FleetDay } from "../../lib/time";
 
-/** A day as yyyy-mm-dd in the person's own calendar: what a date means to them, with no hour or time zone to trip over. */
-export type Day = string;
+/** A day as yyyy-mm-dd of the fleet's calendar (Italy, like the history it picks from): a plain date with no hour or time zone to trip over. */
+export type Day = FleetDay;
 
 const pad = (n: number) => String(n).padStart(2, "0");
-export const dayOf = (date: Date): Day => `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+// The helpers below only do calendar arithmetic on those labels (noon keeps a change of hour from moving the date), never "what day is it now".
+const dayOf = (date: Date): Day => `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 const parse = (day: Day) => new Date(`${day}T12:00:00`);
 export const addDays = (day: Day, n: number): Day => {
   const date = parse(day);
@@ -41,6 +43,8 @@ function Month({
   onPick: (day: Day) => void;
 }) {
   const { t, locale } = useLanguage();
+  // "Today" is the fleet's today, the same one that caps `max`: the device's own date would mark another day for someone outside Italy.
+  const today = fleetToday();
   return (
     <div>
       <p className="mb-2 text-center text-sm font-semibold text-slate-800 capitalize dark:text-white">{new Intl.DateTimeFormat(locale, { month: "long", year: "numeric" }).format(new Date(year, month, 1))}</p>
@@ -72,7 +76,7 @@ function Month({
                     : disabled
                       ? "text-slate-300 dark:text-slate-700"
                       : "rounded-full text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-white/10"
-              } ${day === dayOf(new Date()) && !isStart && !isEnd ? "font-bold text-blue-600 dark:text-blue-400" : ""}`}
+              } ${day === today && !isStart && !isEnd ? "font-bold text-blue-600 dark:text-blue-400" : ""}`}
             >
               {Number(day.slice(8))}
             </button>
